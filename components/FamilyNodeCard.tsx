@@ -34,17 +34,18 @@ export default function FamilyNodeCard({
   const content = (
     <div
       onClick={onClickCard}
-      className={`group py-2 px-1 w-20 sm:w-24 md:w-28 flex flex-col items-center justify-start transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative bg-white/70 rounded-2xl
+      className={`group py-2 px-1 w-20 sm:w-24 md:w-28 flex flex-col items-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative bg-white/70 rounded-2xl
         ${isDeceased ? "grayscale-[0.4] opacity-80" : ""}
+        ${showAvatar ? "min-h-22 sm:min-h-28 md:min-h-28 justify-start" : "min-h-10 sm:min-h-10 md:min-h-12 justify-center"}
       `}
     >
       {isRingVisible && (
-        <div className="absolute top-[15%] -left-2.5 sm:-left-4 size-5 sm:size-6 rounded-full shadow-sm bg-white z-100 flex items-center justify-center text-[10px] sm:text-sm">
+        <div className="absolute top-[15%] -left-2.5 sm:-left-3 size-5 sm:size-6 rounded-full shadow-sm bg-white z-1 flex items-center justify-center text-[10px] sm:text-sm">
           <span className="leading-none pt-px pl-0.5">💍</span>
         </div>
       )}
       {isPlusVisible && (
-        <div className="absolute top-[15%] -left-2.5 sm:-left-4 size-5 sm:size-6 rounded-full shadow-sm bg-white z-100 flex items-center justify-center text-[10px] sm:text-sm font-medium text-stone-500">
+        <div className="absolute top-[15%] -left-2.5 sm:-left-3 size-5 sm:size-6 rounded-full shadow-sm bg-white z-1 flex items-center justify-center text-[10px] sm:text-sm font-medium text-stone-500">
           <span className="leading-none mb-px pl-0.5">+</span>
         </div>
       )}
