@@ -5,11 +5,12 @@ import MemberForm from "@/components/MemberForm";
 import { Person } from "@/types";
 import { createClient } from "@/utils/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, ArrowLeft, Edit2, ExternalLink, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, Edit2, ExternalLink, Trash, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useDashboard } from "./DashboardContext";
+import DeleteMemberButton from "./DeleteMemberButton";
 
 export default function MemberDetailModal() {
   const { memberModalId: memberId, setMemberModalId } = useDashboard();
@@ -195,6 +196,7 @@ export default function MemberDetailModal() {
                       <Edit2 className="size-4" />
                       <span className="hidden sm:inline">Chỉnh sửa</span>
                     </button>
+                    <DeleteMemberButton memberId={person.id} />
                   </>
                 )
               )}

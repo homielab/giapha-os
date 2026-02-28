@@ -393,9 +393,11 @@ export default function RelationshipManager({
         full_name: string;
         gender: "male" | "female" | "other";
         birth_year?: number;
+        is_in_law: boolean;
       } = {
         full_name: newSpouseName.trim(),
         gender: newSpouseGender,
+        is_in_law: true,
       };
 
       if (newSpouseBirthYear.trim() !== "") {
