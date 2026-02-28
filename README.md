@@ -51,6 +51,7 @@ Chỉ cần khoảng 10 -> 15 phút là bạn có thể tự dựng hệ thống
 4. Vào **Project Settings → API**, giữ lại 2 giá trị này để dùng ở bước tiếp theo:
    - `Project URL`
    - `Project API Keys`
+5. Tạo bucket có tên "avartars" và chọn chế độ public
 
 ---
 
