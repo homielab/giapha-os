@@ -1,3 +1,14 @@
+# Các thay đổi so với git gốc của homielab
+- Thêm số thế hệ hiển thị (ví dụ chỉ hiển thị 3 đời từ gốc hiển thị)
+- Thêm hiển thị thông tin liên hệ tại trang đăng nhập, giới thiệu (admin có thể thay đổi) để người trong dòng họ biết liên hệ
+- Cải thiện UI với người tên dài, người tên ngắn
+- Khi thêm nhanh vợ/chồng, người được thêm mặc định là dâu rể
+- Khi đăng ký mặc định chưa phê duyệt, cần admin phê duyệt mới có thể đăng nhập
+- Thêm robots.txt chặn các hệ thống tìm kiếm
+- Thêm cấu hình triển khai bằng docker (xem thêm tại mục docker)
+![Chọn thế hệ hiển thị](docs/screenshots/modified/level-graph.png)
+![Hiển thêm thông tin liên hệ](docs/screenshots/modified/contact-info.png)
+
 # Gia Phả OS (Gia Phả Open Source)
 
 Đây là mã nguồn mở cho ứng dụng quản lý gia phả dòng họ, cung cấp giao diện trực quan để xem sơ đồ phả hệ, quản lý thành viên và tìm kiếm danh xưng.
@@ -96,6 +107,30 @@ bun run dev
 ```
 
 Mở trình duyệt và truy cập: `http://localhost:3000`
+
+---
+
+## Cách 3: Chạy docker
+
+Yêu cầu: máy đã cài [Docker]([https://nodejs.org/en](https://docs.docker.com/engine/install/))
+
+1. Clone hoặc tải project về máy.
+2. Đổi tên file `.env.example` thành `.env.local`.
+3. Mở file `.env.local` và điền các giá trị đã lưu ở **bước 1**.
+
+```env
+NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY="your-anon-key"
+```
+
+4. Cấu hình port cho docker (nếu cần)
+
+```bash
+docker-compose build
+docker-compose up -d
+```
+
+Mở trình duyệt và truy cập: `http://localhost:port` hoặc cài thêm traefik docker và trỏ tên miền
 
 ---
 
