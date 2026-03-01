@@ -91,7 +91,7 @@ export default async function DashboardLayout({
       {children}
       <Footer
         className="mt-auto bg-white border-t border-stone-200"
-        showDisclaimer={true}
+        showDisclaimer={false}
       />
     </div>
   );

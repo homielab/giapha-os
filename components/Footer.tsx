@@ -9,7 +9,7 @@ export default function Footer({
 }: FooterProps) {
   return (
     <footer
-      className={`py-8 text-center text-sm text-stone-500 ${className} backdrop-blur-sm`}
+      className={`py-2 text-center text-sm text-stone-500 ${className} backdrop-blur-sm`}
     >
       <div className="max-w-7xl mx-auto px-4">
         {showDisclaimer && (
@@ -48,6 +48,14 @@ export default function Footer({
           >
             HomieLab
           </a>
+          | Modified by
+          <a
+            href="https://fb.com/ngochoaitn"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-green-600 hover:text-amber-700 transition-colors inline-flex items-center gap-1.5"
+          >
+            ngochoaitn</a>
         </p>
       </div>
     </footer>
