@@ -128,7 +128,7 @@ export default function LoginPage() {
           }
         }
       }
-    } catch (err: any) {
+    } catch (err) {
       setError("An unexpected error occurred");
       console.error(err);
     } finally {

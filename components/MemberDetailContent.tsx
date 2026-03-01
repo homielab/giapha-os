@@ -7,6 +7,8 @@ import {
   calculateAge,
   formatDisplayDate,
   getLunarDateString,
+  getZodiacSign,
+  getZodiacAnimal,
 } from "@/utils/dateHelpers";
 import { motion, Variants } from "framer-motion";
 import {
@@ -164,6 +166,14 @@ export default function MemberDetailContent({
                 </span>
               )}
             </h1>
+            {person.other_names && (
+              <p className="mt-1.5 text-sm sm:text-base text-stone-600 font-medium italic">
+                Tên khác:{" "}
+                <span className="font-semibold not-italic text-stone-700">
+                  {person.other_names}
+                </span>
+              </p>
+            )}
 
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               {/* Birth Card */}
@@ -171,11 +181,25 @@ export default function MemberDetailContent({
                 variants={itemVariants}
                 className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-stone-200/60 shadow-sm transition-all hover:shadow-md hover:border-amber-200/60"
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
-                  <h3 className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">
-                    Sinh
-                  </h3>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
+                    <h3 className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">
+                      Sinh
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {person.birth_year && getZodiacAnimal(person.birth_year, person.birth_month, person.birth_day) && (
+                      <span className="text-[10px] font-sans font-bold text-rose-700 bg-rose-50 border border-rose-200/60 rounded-md px-1.5 py-0.5 whitespace-nowrap shadow-xs tracking-wider">
+                        Tuổi {getZodiacAnimal(person.birth_year, person.birth_month, person.birth_day)}
+                      </span>
+                    )}
+                    {person.birth_day && person.birth_month && getZodiacSign(person.birth_day, person.birth_month) && (
+                      <span className="text-[10px] font-sans font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/60 rounded-md px-1.5 py-0.5 whitespace-nowrap shadow-xs tracking-wider">
+                        {getZodiacSign(person.birth_day, person.birth_month)}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-1.5 pl-4 border-l-2 border-stone-100">
                   <p className="text-stone-800 font-semibold text-sm sm:text-base">

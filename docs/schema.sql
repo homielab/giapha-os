@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS public.persons (
   is_in_law BOOLEAN NOT NULL DEFAULT FALSE,
   birth_order INT,
   generation INT,
+  other_names TEXT,
   avatar_url TEXT,
   note TEXT,
   
@@ -107,14 +108,24 @@ CREATE TABLE IF NOT EXISTS public.relationships (
 
 CREATE TABLE IF NOT EXISTS public.settings (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  key TEXT,
+  key TEXT UNIQUE,
   value TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-ALTER TABLE public.settings
-ADD CONSTRAINT settings_key_unique UNIQUE (key);
+-- CUSTOM_EVENTS (User-created events)
+CREATE TABLE IF NOT EXISTS public.custom_events (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  content TEXT,
+  event_date DATE NOT NULL,
+  location TEXT,
+  created_by UUID REFERENCES public.profiles(id) DEFAULT auth.uid(),
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 -- ==========================================
 -- INDEXES
@@ -135,6 +146,10 @@ CREATE INDEX IF NOT EXISTS idx_persons_birth_year ON public.persons(birth_year);
 -- Profile lookups
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
 CREATE INDEX IF NOT EXISTS idx_profiles_is_active ON public.profiles(is_active);
+
+-- Custom events lookups
+CREATE INDEX IF NOT EXISTS idx_custom_events_date ON public.custom_events(event_date);
+CREATE INDEX IF NOT EXISTS idx_custom_events_created_by ON public.custom_events(created_by);
 
 -- ==========================================
 -- RLS POLICIES
@@ -203,6 +218,21 @@ DROP POLICY IF EXISTS "Allow authenticated update settings" ON public.settings;
 CREATE POLICY "Allow public read settings" ON public.settings FOR SELECT TO public USING (true);
 CREATE POLICY "Allow authenticated update settings" ON public.settings FOR UPDATE TO authenticated USING (public.is_admin());
 
+-- CUSTOM_EVENTS POLICIES
+ALTER TABLE public.custom_events ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON public.custom_events;
+CREATE POLICY "Enable read access for authenticated users" ON public.custom_events FOR SELECT TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can insert custom events" ON public.custom_events;
+CREATE POLICY "Authenticated users can insert custom events" ON public.custom_events FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
+
+DROP POLICY IF EXISTS "Users can update own custom events" ON public.custom_events;
+CREATE POLICY "Users can update own custom events" ON public.custom_events FOR UPDATE TO authenticated USING (auth.uid() = created_by OR public.is_admin());
+
+DROP POLICY IF EXISTS "Users can delete own custom events" ON public.custom_events;
+CREATE POLICY "Users can delete own custom events" ON public.custom_events FOR DELETE TO authenticated USING (auth.uid() = created_by OR public.is_admin());
+
 -- ==========================================
 -- TRIGGERS
 -- ==========================================
@@ -219,6 +249,9 @@ CREATE TRIGGER tr_person_details_private_updated_at BEFORE UPDATE ON public.pers
 
 DROP TRIGGER IF EXISTS tr_relationships_updated_at ON public.relationships;
 CREATE TRIGGER tr_relationships_updated_at BEFORE UPDATE ON public.relationships FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS tr_custom_events_updated_at ON public.custom_events;
+CREATE TRIGGER tr_custom_events_updated_at BEFORE UPDATE ON public.custom_events FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();
 
 -- 2. Handle new user signup (Profile creation)
 CREATE OR REPLACE FUNCTION public.handle_new_user()

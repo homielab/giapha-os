@@ -26,6 +26,7 @@ interface PersonExport {
   is_in_law: boolean;
   birth_order: number | null;
   generation: number | null;
+  other_names: string | null;
   avatar_url: string | null;
   note: string | null;
   // DB-managed fields (kept in export for traceability, stripped on import)
@@ -90,6 +91,7 @@ function sanitizePerson(
     is_in_law: p.is_in_law ?? false,
     birth_order: p.birth_order ?? null,
     generation: p.generation ?? null,
+    other_names: p.other_names ?? null,
     avatar_url: p.avatar_url ?? null,
     note: p.note ?? null,
   };
@@ -119,7 +121,7 @@ export async function exportData(
   const { data: allPersons, error: personsError } = await supabase
     .from("persons")
     .select(
-      "id, full_name, gender, birth_year, birth_month, birth_day, death_year, death_month, death_day, is_deceased, is_in_law, birth_order, generation, avatar_url, note, created_at, updated_at",
+      "id, full_name, gender, birth_year, birth_month, birth_day, death_year, death_month, death_day, is_deceased, is_in_law, birth_order, generation, other_names, avatar_url, note, created_at, updated_at",
     )
     .order("created_at", { ascending: true });
 

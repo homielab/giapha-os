@@ -42,6 +42,7 @@ export default function MemberForm({
 
   // Form states
   const [fullName, setFullName] = useState(initialData?.full_name || "");
+  const [otherNames, setOtherNames] = useState(initialData?.other_names || "");
   const [gender, setGender] = useState<Gender>(initialData?.gender || "male");
   const [birthYear, setBirthYear] = useState<number | "">(
     initialData?.birth_year || "",
@@ -173,6 +174,7 @@ export default function MemberForm({
         is_deceased: isDeceased,
         is_in_law: isInLaw,
         birth_order: birthOrder === "" ? null : Number(birthOrder),
+        other_names: otherNames || null,
         avatar_url: finalAvatarUrl || null,
         note: note || null,
       };
@@ -253,7 +255,7 @@ export default function MemberForm({
           Thông tin chung
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="md:col-span-2">
+          <div className="md:col-span-1">
             <label className="block text-sm font-semibold text-stone-700 mb-1.5">
               Họ và Tên <span className="text-red-500">*</span>
             </label>
@@ -264,6 +266,19 @@ export default function MemberForm({
               onChange={(e) => setFullName(e.target.value)}
               className={inputClasses}
               placeholder="Nhập họ và tên..."
+            />
+          </div>
+
+          <div className="md:col-span-1">
+            <label className="block text-sm font-semibold text-stone-700 mb-1.5">
+              Tên gọi khác
+            </label>
+            <input
+              type="text"
+              value={otherNames}
+              onChange={(e) => setOtherNames(e.target.value)}
+              className={inputClasses}
+              placeholder="Nickname, tên thánh, bí danh..."
             />
           </div>
 
