@@ -96,6 +96,14 @@ CRON_SECRET=your-random-secret-min-32-chars
 
 # AI platform key (tuỳ chọn — người dùng có thể nhập key riêng)
 PLATFORM_AI_API_KEY=sk-...
+
+# Zalo OA webhook security — HMAC-SHA256 signature verification (tuỳ chọn)
+ZALO_OA_SECRET=your-zalo-oa-app-secret
+
+# Demo mode — tự động điền thông tin đăng nhập trên demo site (tuỳ chọn)
+EXAMPLE_EMAIL=demo@example.com
+EXAMPLE_PASSWORD=demo@123
+DEMO_DOMAIN=your-demo-domain.vercel.app
 ```
 
 ---

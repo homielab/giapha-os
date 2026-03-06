@@ -6,6 +6,100 @@ Format theo [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.5.3] — 2026-03-06
+
+> **Security & Reliability**: Atomic rate limiter, Zalo HMAC verification, import validation, reminder logs admin UI.
+
+### 🔒 Security
+
+- **Atomic AI Rate Limiter** ([#101](https://github.com/minhtuancn/giapha-os/pull/101) — closes [#95](https://github.com/minhtuancn/giapha-os/issues/95), [#99](https://github.com/minhtuancn/giapha-os/issues/99))
+  - PostgreSQL function `check_and_increment_ai_quota()` dùng `SELECT FOR UPDATE` — atomic, thread-safe
+  - Loại bỏ race condition SELECT→UPDATE tách rời trong code cũ
+  - Fallback về non-atomic path nếu RPC chưa deploy (backward compatible)
+  - `docs/schema.sql` bổ sung function + `GRANT EXECUTE TO authenticated`
+
+- **Zalo Webhook HMAC-SHA256** ([#101](https://github.com/minhtuancn/giapha-os/pull/101) — closes [#96](https://github.com/minhtuancn/giapha-os/issues/96))
+  - `verifyZaloSignature()` kiểm tra header `X-Zalo-Signature` bằng HMAC-SHA256
+  - Constant-time comparison ngăn timing attacks
+  - Cấu hình qua env `ZALO_OA_SECRET`; bỏ qua nếu chưa set (backward compatible)
+
+### ✨ Added
+
+- **Reminder Logs Admin Page** ([#101](https://github.com/minhtuancn/giapha-os/pull/101) — closes [#98](https://github.com/minhtuancn/giapha-os/issues/98))
+  - Trang `/admin/reminder-logs` với stats (sent/failed/pending counts)
+  - Bảng log 200 bản ghi gần nhất: loại nhắc, platform, ngày, trạng thái, chi tiết lỗi
+  - `logReminder()` nay lưu `error_message` khi status = failed
+  - `reminder_logs` thêm cột `error_message TEXT`
+  - Link từ `/admin` dashboard
+
+- **Import Data Validation** ([#101](https://github.com/minhtuancn/giapha-os/pull/101) — closes [#97](https://github.com/minhtuancn/giapha-os/issues/97))
+  - Validation toàn diện trước khi xoá/ghi DB: UUID format, kiểu dữ liệu, range năm
+  - Kiểm tra referential integrity (person_a/b phải tồn tại trong persons list)
+  - Phát hiện trùng ID, giới hạn 50,000 persons / 200,000 relationships
+  - Cross-validation: death_year không được nhỏ hơn birth_year
+
+### 🗄️ Database Migration
+
+```sql
+-- Chạy trong Supabase SQL Editor:
+ALTER TABLE public.reminder_logs ADD COLUMN IF NOT EXISTS error_message TEXT;
+
+-- Tạo atomic quota function:
+CREATE OR REPLACE FUNCTION public.check_and_increment_ai_quota()
+-- (xem docs/schema.sql phần "v1.5.3" để có full SQL)
+```
+
+---
+
+## [1.5.2] — 2026-03-06
+
+> **Security Patch**: Sửa thông tin đăng nhập demo, bảo vệ server actions, cải thiện xử lý lỗi reminder.
+
+### 🔒 Security
+
+- **Auth Guards cho Server Actions** ([#100](https://github.com/minhtuancn/giapha-os/pull/100))
+  - Thêm `requireAdmin()` vào tất cả 7 user management server actions
+  - Bao gồm: `changeUserRole`, `deleteUser`, `adminCreateUser`, `toggleUserStatus`, `approveUser`, `rejectUser`, `batchApproveUsers`
+  - Password validation tối thiểu 8 ký tự trong `adminCreateUser`
+
+- **Demo Credentials** ([#100](https://github.com/minhtuancn/giapha-os/pull/100))
+  - Xoá hardcoded password `"giaphaos"` khỏi source code
+  - Dùng `config.exampleEmail || "demo@example.com"` và `config.examplePassword || "demo@123"`
+  - Hỗ trợ env vars `EXAMPLE_EMAIL` và `EXAMPLE_PASSWORD` để override
+
+### 🐛 Fixed
+
+- **Reminder Cron Error Handling** ([#100](https://github.com/minhtuancn/giapha-os/pull/100))
+  - Toàn bộ 3 loại nhắc nhở (giỗ, sự kiện, sinh nhật) được bọc try/catch
+  - Ghi log status `"failed"` vào `reminder_logs` khi gửi thất bại
+  - Cron không bị crash giữa chừng khi một reminder fail
+
+---
+
+## [1.5.1] — 2026-03-05
+
+> **Demo & UI Improvements**: Cập nhật URL demo, thông tin nhà phát triển, cải thiện navigation.
+
+### ✨ Added
+
+- **Developer Contact** ([#94](https://github.com/minhtuancn/giapha-os/pull/94) — closes [#92](https://github.com/minhtuancn/giapha-os/issues/92))
+  - Trang `/about`: developer card với tên, email, WhatsApp, địa điểm (Ninh Bình, Việt Nam), GitHub
+  - Footer: tên tác giả "Minh Tuấn", link email `vietkeynet@gmail.com`
+  - README, wiki Home: thông tin liên hệ đầy đủ
+
+- **UI Improvements** ([#94](https://github.com/minhtuancn/giapha-os/pull/94) — closes [#93](https://github.com/minhtuancn/giapha-os/issues/93))
+  - HeaderMenu: link `/admin` (Shield icon) hiển thị với admin users
+  - LandingHero: nút "Xem Demo" → `giapha-os-rose.vercel.app`
+  - Dashboard: +Timeline, Bản đồ địa lý, Bản đồ mộ phần trong publicFeatures
+  - Dashboard: +Settings, Bot, Super Admin trong adminFeatures
+
+### 🔄 Changed
+
+- Demo URL: `giapha-os.homielab.com` → `giapha-os-rose.vercel.app`
+- `app/config.ts`: `demoDomain` default cập nhật
+
+---
+
 ## [1.5.0] — 2026
 
 > **Phase 11 — i18n + AI Bot Module**: Chuẩn hoá đa ngôn ngữ, bot Telegram/Zalo AI per-nhánh, nhắc nhở tự động, quản lý subscription.

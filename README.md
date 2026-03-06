@@ -108,14 +108,22 @@ Yêu cầu: máy đã cài [Node.js](https://nodejs.org/en) và [Bun](https://bu
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY="your-anon-key"
 
-# Dành cho cron job nhắc nhở (tuỳ chọn, khuyến khích đặt trong môi trường production)
+# Dành cho cron job nhắc nhở & server actions (bắt buộc)
 SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+
+# Bảo mật cron job (khuyến khích đặt trong môi trường production)
 CRON_SECRET="your-random-secret"
 
-# AI Bot (tuỳ chọn)
-SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
-CRON_SECRET="your-random-secret-here"
+# AI Bot — tùy chọn
 SITE_URL="https://your-domain.com"
+
+# Demo mode — tùy chọn (tự động điền thông tin đăng nhập demo)
+EXAMPLE_EMAIL="demo@example.com"
+EXAMPLE_PASSWORD="demo@123"
+DEMO_DOMAIN="your-demo-domain.vercel.app"
+
+# Zalo OA — tùy chọn, bảo mật webhook bằng HMAC-SHA256
+ZALO_OA_SECRET="your-zalo-oa-app-secret"
 ```
 
 4. Cài thư viện

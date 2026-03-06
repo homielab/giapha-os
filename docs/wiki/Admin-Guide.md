@@ -192,6 +192,18 @@ Cho phép Admin cấu hình AI key dùng chung cho toàn platform:
 
 Admin có thể thay đổi plan, đặt giới hạn tuỳ chỉnh và reset quota hàng tháng.
 
+> **Kỹ thuật:** Rate limiting dùng PostgreSQL function `check_and_increment_ai_quota()` với `SELECT FOR UPDATE` — atomic, không có race condition khi nhiều request đồng thời.
+
+### Reminder Logs (`/admin/reminder-logs`)
+
+Xem lịch sử gửi nhắc nhở qua bot (giỗ, sự kiện, sinh nhật):
+
+- **Thống kê:** Số lượt gửi thành công / thất bại / đang chờ
+- **Bảng log:** Loại nhắc, platform, ngày lên lịch, thời gian gửi, chi tiết lỗi
+- Giúp debug khi bot không gửi tin nhắc nhở
+
+> **Ghi chú:** Nếu có lượt gửi thất bại, hệ thống sẽ tự động retry vào lần chạy cron tiếp theo (daily). Xem chi tiết lỗi trong cột "Lỗi" để troubleshoot (ví dụ: token bot hết hạn, chat_id sai).
+
 ---
 
 ## Troubleshooting

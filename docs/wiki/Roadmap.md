@@ -1,6 +1,6 @@
 # 🗺️ Roadmap — Kế Hoạch Phát Triển Tương Lai
 
-> Trạng thái: **v1.5.0 Released** — i18n + AI Bot Module hoàn thành. v1.6.0 đang lên kế hoạch.
+> Trạng thái: **v1.5.3 Released** — Security & Reliability. 0 open issues. v1.6.0 đang lên kế hoạch.
 
 ---
 
@@ -59,6 +59,30 @@
 | #84 | ⏰ Scheduled Reminders — giỗ 3x, sự kiện | ✅ |
 | #85 | 🔑 Subscription & Rate Limiting, /admin | ✅ |
 | #86 | 🌐 Zalo OA + BotPlatform multi-platform | ✅ |
+
+### ✅ v1.5.1 — Demo & UI Improvements (Đã hoàn thành)
+
+- Demo URL cập nhật → `giapha-os-rose.vercel.app`
+- Thông tin liên hệ nhà phát triển (Minh Tuấn, Ninh Bình)
+- Trang `/about` bổ sung developer card
+- HeaderMenu: link `/admin` cho admin users
+- LandingHero: nút "Xem Demo"
+
+### ✅ v1.5.2 — Security Patch (Đã hoàn thành)
+
+- Demo credentials: `demo@example.com` / `demo@123`
+- `requireAdmin()` guard trên tất cả 7 server actions quản lý user
+- Password validation tối thiểu 8 ký tự
+- Reminder cron: try/catch toàn diện cho cả 3 loại nhắc nhở
+
+### ✅ v1.5.3 — Security & Reliability (Đã hoàn thành)
+
+| Issue | Fix |
+|-------|-----|
+| #95/#99 | ⚡ Atomic rate limiter: PostgreSQL RPC `check_and_increment_ai_quota()` với `SELECT FOR UPDATE` |
+| #96 | 🔒 Zalo webhook HMAC-SHA256 signature verification (`ZALO_OA_SECRET`) |
+| #97 | ✅ Import data: validation toàn diện (UUID, types, referential integrity, limits) |
+| #98 | 📊 Reminder Logs admin page `/admin/reminder-logs` + `error_message` column |
 
 ---
 
