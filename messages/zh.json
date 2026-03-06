@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "dashboard": "總覽",
+    "members": "族員",
+    "tree": "家譜圖",
+    "timeline": "年表",
+    "map": "地圖",
+    "history": "歷史",
+    "settings": "設置",
+    "events": "事件",
+    "about": "簡介"
+  },
+  "actions": {
+    "save": "存",
+    "cancel": "取消",
+    "delete": "刪除",
+    "edit": "編輯",
+    "create": "創建",
+    "search": "搜索",
+    "logout": "退出"
+  },
+  "common": {
+    "loading": "載入中…",
+    "noData": "無資料",
+    "confirm": "確認",
+    "account": "賬戶",
+    "lightMode": "亮色模式",
+    "darkMode": "暗色模式",
+    "language": "語言"
+  }
+}

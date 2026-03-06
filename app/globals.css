@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -53,4 +55,26 @@ select {
 
 .title {
   @apply text-2xl sm:text-3xl font-serif font-bold text-stone-800;
+}
+
+@media print {
+  nav,
+  header,
+  .no-print,
+  [data-no-print] {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  .print-show {
+    display: block !important;
+  }
+
+  @page {
+    margin: 1cm;
+    size: A4 landscape;
+  }
 }

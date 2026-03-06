@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "dashboard": "Tổng quan",
+    "members": "Thành viên",
+    "tree": "Cây gia phả",
+    "timeline": "Dòng thời gian",
+    "map": "Bản đồ",
+    "history": "Lịch sử",
+    "settings": "Cài đặt",
+    "events": "Sự kiện",
+    "about": "Giới thiệu"
+  },
+  "actions": {
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "create": "Tạo mới",
+    "search": "Tìm kiếm",
+    "logout": "Đăng xuất"
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "noData": "Không có dữ liệu",
+    "confirm": "Xác nhận",
+    "account": "Tài khoản",
+    "lightMode": "Chế độ sáng",
+    "darkMode": "Chế độ tối",
+    "language": "Ngôn ngữ"
+  }
+}

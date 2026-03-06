@@ -11,16 +11,21 @@
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.98.0",
+    "@swc/helpers": "^0.5.19",
+    "@types/leaflet": "^1.9.21",
     "framer-motion": "^12.35.0",
     "html-to-image": "^1.11.13",
     "jspdf": "^4.2.0",
     "jszip": "^3.10.1",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",
     "lunar-javascript": "^1.7.7",
     "next": "16.1.6",
+    "next-intl": "^4.8.3",
     "papaparse": "^5.5.3",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",

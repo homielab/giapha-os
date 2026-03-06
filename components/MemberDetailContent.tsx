@@ -1,6 +1,8 @@
 "use client";
 
 import DefaultAvatar from "@/components/DefaultAvatar";
+import MemberPhotoGallery from "@/components/MemberPhotoGallery";
+import NoteRenderer from "@/components/NoteRenderer";
 import RelationshipManager from "@/components/RelationshipManager";
 import { Person } from "@/types";
 import {
@@ -13,6 +15,7 @@ import {
 import { motion, Variants } from "framer-motion";
 import {
   Briefcase,
+  Camera,
   ChevronDown,
   Info,
   Leaf,
@@ -329,9 +332,10 @@ export default function MemberDetailContent({
                         duration: 0.4,
                       }}
                     >
-                      <p className="text-stone-600 whitespace-pre-wrap text-sm sm:text-base leading-relaxed">
-                        {note}
-                      </p>
+                      <NoteRenderer
+                        content={note}
+                        className="whitespace-pre-wrap"
+                      />
                       {/* Gradient fade overlay when collapsed */}
                       {!isNoteExpanded && isNoteLong && (
                         <div className="absolute bottom-0 left-0 right-0 h-16 bg-linear-to-t from-white/95 via-white/40 to-transparent pointer-events-none" />
@@ -375,6 +379,16 @@ export default function MemberDetailContent({
                   canEdit={canEdit}
                   personGender={person.gender}
                 />
+              </div>
+            </motion.section>
+
+            <motion.section variants={itemVariants}>
+              <h2 className="text-base sm:text-lg font-bold text-stone-800 mb-4 flex items-center gap-2">
+                <Camera className="size-5 text-amber-600" />
+                Thư viện ảnh
+              </h2>
+              <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-2xl border border-stone-200/60 shadow-sm">
+                <MemberPhotoGallery personId={person.id} canEdit={canEdit} />
               </div>
             </motion.section>
           </div>

@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "members": "Members",
+    "tree": "Family Tree",
+    "timeline": "Timeline",
+    "map": "Map",
+    "history": "History",
+    "settings": "Settings",
+    "events": "Events",
+    "about": "About"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create New",
+    "search": "Search",
+    "logout": "Logout"
+  },
+  "common": {
+    "loading": "Loading...",
+    "noData": "No data",
+    "confirm": "Confirm",
+    "account": "Account",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "language": "Language"
+  }
+}

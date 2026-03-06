@@ -76,11 +76,11 @@ export default async function DashboardLayout({
 
   return (
     <UserProvider user={user} profile={profile}>
-      <div className="min-h-screen bg-stone-50 text-stone-900 flex flex-col font-sans">
+      <div className="min-h-screen bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 flex flex-col font-sans">
         <DashboardHeader />
         {children}
         <Footer
-          className="mt-auto bg-white border-t border-stone-200"
+          className="mt-auto bg-white dark:bg-stone-900 border-t border-stone-200 dark:border-stone-700"
           showDisclaimer={true}
         />
       </div>

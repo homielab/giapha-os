@@ -19,7 +19,17 @@ interface RelationshipManagerProps {
 interface EnrichedRelationship {
   id: string;
   type: RelationshipType;
-  direction: "parent" | "child" | "spouse" | "child_in_law";
+  direction:
+    | "parent"
+    | "child"
+    | "spouse"
+    | "child_in_law"
+    | "step_parent"
+    | "step_child"
+    | "sibling"
+    | "half_sibling"
+    | "godparent"
+    | "godchild";
   targetPerson: Person;
   note: string | null;
 }
@@ -54,7 +64,15 @@ export default function RelationshipManager({
   const [newRelType, setNewRelType] =
     useState<RelationshipType>("biological_child");
   const [newRelDirection, setNewRelDirection] = useState<
-    "parent" | "child" | "spouse"
+    | "parent"
+    | "child"
+    | "spouse"
+    | "step_parent"
+    | "step_child"
+    | "sibling"
+    | "half_sibling"
+    | "godparent"
+    | "godchild"
   >("parent");
   const [newRelNote, setNewRelNote] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -103,10 +121,16 @@ export default function RelationshipManager({
 
       // Process Rels where I am Person A
       relsA?.forEach((r) => {
-        let direction: "parent" | "child" | "spouse" = "spouse";
+        let direction: EnrichedRelationship["direction"] = "spouse";
         if (r.type === "marriage") direction = "spouse";
         else if (r.type === "biological_child" || r.type === "adopted_child")
           direction = "child"; // I am A (Parent), B is Child
+        else if (r.type === "step_parent")
+          direction = "step_child"; // I am A (step-parent), B is my step-child
+        else if (r.type === "sibling") direction = "sibling";
+        else if (r.type === "half_sibling") direction = "half_sibling";
+        else if (r.type === "godparent")
+          direction = "godchild"; // I am A (godparent), B is my godchild
 
         formattedRels.push({
           id: r.id,
@@ -119,10 +143,16 @@ export default function RelationshipManager({
 
       // Process Rels where I am Person B
       relsB?.forEach((r) => {
-        let direction: "parent" | "child" | "spouse" = "spouse";
+        let direction: EnrichedRelationship["direction"] = "spouse";
         if (r.type === "marriage") direction = "spouse";
         else if (r.type === "biological_child" || r.type === "adopted_child")
           direction = "parent"; // I am B (Child), A is Parent
+        else if (r.type === "step_parent")
+          direction = "step_parent"; // I am B (step-child), A is my step-parent
+        else if (r.type === "sibling") direction = "sibling";
+        else if (r.type === "half_sibling") direction = "half_sibling";
+        else if (r.type === "godparent")
+          direction = "godparent"; // I am B (godchild), A is my godparent
 
         formattedRels.push({
           id: r.id,
@@ -253,12 +283,49 @@ export default function RelationshipManager({
         // I am Parent (A), Target is Child (B)
         personA = personId;
         personB = selectedTargetId;
+      } else if (newRelDirection === "step_parent") {
+        // Target is step-parent (A), I am step-child (B)
+        personA = selectedTargetId;
+        personB = personId;
+      } else if (newRelDirection === "step_child") {
+        // I am step-parent (A), Target is step-child (B)
+        personA = personId;
+        personB = selectedTargetId;
+      } else if (newRelDirection === "godparent") {
+        // Target is godparent (A), I am godchild (B)
+        personA = selectedTargetId;
+        personB = personId;
+      } else if (newRelDirection === "godchild") {
+        // I am godparent (A), Target is godchild (B)
+        personA = personId;
+        personB = selectedTargetId;
       }
+      // sibling / half_sibling: default (personA=personId, personB=target)
 
       // Determine Type
       let type: RelationshipType = "biological_child";
-      if (newRelDirection === "spouse") type = "marriage";
-      else if (newRelType === "adopted_child") type = "adopted_child";
+      if (newRelDirection === "spouse") {
+        type = "marriage";
+      } else if (
+        newRelDirection === "parent" ||
+        newRelDirection === "child"
+      ) {
+        type = newRelType === "adopted_child" ? "adopted_child" : "biological_child";
+      } else if (
+        newRelDirection === "step_parent" ||
+        newRelDirection === "step_child"
+      ) {
+        type = "step_parent";
+      } else if (newRelDirection === "sibling") {
+        type = "sibling";
+      } else if (newRelDirection === "half_sibling") {
+        type = "half_sibling";
+      } else if (
+        newRelDirection === "godparent" ||
+        newRelDirection === "godchild"
+      ) {
+        type = "godparent";
+      }
 
       const { error } = await supabase.from("relationships").insert({
         person_a: personA,
@@ -481,13 +548,30 @@ export default function RelationshipManager({
   return (
     <div className="space-y-6">
       {/* List Sections */}
-      {["parent", "spouse", "child", "child_in_law"].map((group) => {
+      {[
+        "parent",
+        "step_parent",
+        "spouse",
+        "child",
+        "step_child",
+        "child_in_law",
+        "sibling",
+        "half_sibling",
+        "godparent",
+        "godchild",
+      ].map((group) => {
         const items = groupByType(group);
         let title = "";
         if (group === "parent") title = "Bố / Mẹ";
+        if (group === "step_parent") title = "Cha dượng / Mẹ kế";
         if (group === "spouse") title = "Vợ / Chồng";
         if (group === "child") title = "Con cái";
+        if (group === "step_child") title = "Con riêng";
         if (group === "child_in_law") title = "Con dâu / Con rể";
+        if (group === "sibling") title = "Anh/Chị/Em";
+        if (group === "half_sibling") title = "Anh/Chị/Em cùng cha khác mẹ";
+        if (group === "godparent") title = "Cha/Mẹ đỡ đầu";
+        if (group === "godchild") title = "Con đỡ đầu";
 
         if (items.length === 0 && !isAdmin) return null; // Hide empty sections for members? Or show empty state?
 
@@ -676,14 +760,45 @@ export default function RelationshipManager({
                   value={newRelDirection}
                   onChange={(e) =>
                     setNewRelDirection(
-                      e.target.value as "parent" | "child" | "spouse",
+                      e.target.value as
+                        | "parent"
+                        | "child"
+                        | "spouse"
+                        | "step_parent"
+                        | "step_child"
+                        | "sibling"
+                        | "half_sibling"
+                        | "godparent"
+                        | "godchild",
                     )
                   }
                   className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 sm:p-2.5 border transition-colors"
                 >
-                  <option value="parent">Người này là Con của...</option>
-                  <option value="spouse">Người này là Vợ/Chồng của...</option>
-                  <option value="child">Người này là Bố/Mẹ của...</option>
+                  <optgroup label="Quan hệ chính">
+                    <option value="parent">Người này là Con của...</option>
+                    <option value="spouse">Người này là Vợ/Chồng của...</option>
+                    <option value="child">Người này là Bố/Mẹ của...</option>
+                  </optgroup>
+                  <optgroup label="Quan hệ khác">
+                    <option value="step_parent">
+                      Người này là Con riêng của...
+                    </option>
+                    <option value="step_child">
+                      Người này là Cha dượng/Mẹ kế của...
+                    </option>
+                    <option value="sibling">
+                      Người này là Anh/Chị/Em của...
+                    </option>
+                    <option value="half_sibling">
+                      Người này là Anh/Chị/Em cùng cha khác mẹ của...
+                    </option>
+                    <option value="godparent">
+                      Người này là Con đỡ đầu của...
+                    </option>
+                    <option value="godchild">
+                      Người này là Cha/Mẹ đỡ đầu của...
+                    </option>
+                  </optgroup>
                 </select>
               </div>
             </div>

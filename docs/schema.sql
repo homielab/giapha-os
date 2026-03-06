@@ -15,10 +15,18 @@ END $$;
 
 -- Relationship types between family members
 DO $$ BEGIN
-    CREATE TYPE public.relationship_type_enum AS ENUM ('marriage', 'biological_child', 'adopted_child');
+    CREATE TYPE public.relationship_type_enum AS ENUM (
+      'marriage', 'biological_child', 'adopted_child',
+      'step_parent', 'sibling', 'half_sibling', 'godparent'
+    );
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
+-- Add new values to existing databases (idempotent)
+DO $$ BEGIN ALTER TYPE public.relationship_type_enum ADD VALUE IF NOT EXISTS 'step_parent'; EXCEPTION WHEN others THEN null; END $$;
+DO $$ BEGIN ALTER TYPE public.relationship_type_enum ADD VALUE IF NOT EXISTS 'sibling'; EXCEPTION WHEN others THEN null; END $$;
+DO $$ BEGIN ALTER TYPE public.relationship_type_enum ADD VALUE IF NOT EXISTS 'half_sibling'; EXCEPTION WHEN others THEN null; END $$;
+DO $$ BEGIN ALTER TYPE public.relationship_type_enum ADD VALUE IF NOT EXISTS 'godparent'; EXCEPTION WHEN others THEN null; END $$;
 
 -- System user roles
 DO $$ BEGIN
@@ -72,6 +80,7 @@ CREATE TABLE IF NOT EXISTS public.persons (
   birth_order INT,
   generation INT,
   other_names TEXT,
+  place_of_birth TEXT,
   avatar_url TEXT,
   note TEXT,
   
@@ -456,3 +465,173 @@ BEGIN
     WHERE id = target_user_id;
 END;
 $$;
+
+-- ==========================================
+-- AUDIT LOG (Edit History / Lịch sử chỉnh sửa)
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS public.audit_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  person_id UUID REFERENCES public.persons(id) ON DELETE SET NULL,
+  person_name TEXT,
+  action TEXT NOT NULL, -- 'create', 'update', 'delete'
+  field_changed TEXT,
+  old_value TEXT,
+  new_value TEXT,
+  changed_by UUID REFERENCES auth.users(id),
+  changed_by_email TEXT,
+  changed_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_changed_at ON public.audit_log(changed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_person_id ON public.audit_log(person_id);
+
+-- RLS: Only authenticated users can insert; only admins can read
+ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can insert audit logs"
+  ON public.audit_log FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = changed_by);
+
+CREATE POLICY "Admins can read audit logs"
+  ON public.audit_log FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- ==========================================
+-- FAMILY SETTINGS (Public Share / Cài đặt chia sẻ công khai)
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS public.family_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  setting_key TEXT UNIQUE NOT NULL,
+  setting_value TEXT,
+  updated_by UUID REFERENCES auth.users(id),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.family_settings ENABLE ROW LEVEL SECURITY;
+
+-- Authenticated users can read all settings (for admin UI)
+CREATE POLICY "Authenticated users can read family settings"
+  ON public.family_settings FOR SELECT TO authenticated
+  USING (true);
+
+-- Anonymous users can only read non-sensitive settings (for public share token validation)
+CREATE POLICY "Anon can read non-sensitive settings"
+  ON public.family_settings FOR SELECT TO anon
+  USING (setting_key NOT IN ('api_key_value', 'public_share_token'));
+
+-- Only admins can create/update/delete settings
+CREATE POLICY "Admins can manage family settings"
+  ON public.family_settings FOR ALL TO authenticated
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+-- Allow anonymous users to read persons when public sharing is enabled
+-- This is required for the public family tree view (/public/[token])
+DROP POLICY IF EXISTS "Public can read persons when share is enabled" ON public.persons;
+CREATE POLICY "Public can read persons when share is enabled"
+  ON public.persons FOR SELECT TO anon
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.family_settings
+      WHERE setting_key = 'public_share_enabled' AND setting_value = 'true'
+    )
+  );
+
+-- Allow anonymous users to read persons when the REST API is enabled
+-- Application-level API key validation happens in the route handler.
+-- This policy enables the anon Supabase client used by route handlers to access data.
+DROP POLICY IF EXISTS "API can read persons when API key is enabled" ON public.persons;
+CREATE POLICY "API can read persons when API key is enabled"
+  ON public.persons FOR SELECT TO anon
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.family_settings
+      WHERE setting_key = 'api_key_enabled' AND setting_value = 'true'
+    )
+  );
+
+-- Allow anonymous users to read relationships when the REST API is enabled
+DROP POLICY IF EXISTS "API can read relationships when API key is enabled" ON public.relationships;
+CREATE POLICY "API can read relationships when API key is enabled"
+  ON public.relationships FOR SELECT TO anon
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.family_settings
+      WHERE setting_key = 'api_key_enabled' AND setting_value = 'true'
+    )
+  );
+
+-- ==========================================
+-- PERSON PHOTOS (Gallery Ảnh Thành Viên)
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS person_photos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  person_id UUID NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+  storage_path TEXT NOT NULL,
+  caption TEXT,
+  uploaded_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_person_photos_person_id ON person_photos(person_id);
+
+ALTER TABLE person_photos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can view photos" ON person_photos FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Editors and admins can insert photos" ON person_photos FOR INSERT TO authenticated WITH CHECK (
+  EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'editor'))
+);
+
+CREATE POLICY "Editors and admins can delete photos" ON person_photos FOR DELETE USING (
+  EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'editor'))
+);
+
+-- ==========================================
+-- EMAIL NOTIFICATION SETTINGS & LOG
+-- ==========================================
+
+-- NOTIFICATION_SETTINGS (Single-row config for email reminders)
+CREATE TABLE IF NOT EXISTS public.notification_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  enabled BOOLEAN NOT NULL DEFAULT false,
+  days_before INT[] NOT NULL DEFAULT '{7}',
+  email_recipients TEXT[] NOT NULL DEFAULT '{}',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.notification_settings ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can manage notification settings" ON public.notification_settings;
+CREATE POLICY "Admins can manage notification settings"
+  ON public.notification_settings FOR ALL TO authenticated
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+-- NOTIFICATION_LOG (Tracks sent reminders to prevent duplicates)
+CREATE TABLE IF NOT EXISTS public.notification_log (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  person_id UUID REFERENCES public.persons(id) ON DELETE CASCADE,
+  event_type TEXT NOT NULL,
+  scheduled_date DATE NOT NULL,
+  sent_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notification_log_lookup
+  ON public.notification_log(person_id, event_type, scheduled_date);
+
+ALTER TABLE public.notification_log ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can manage notification log" ON public.notification_log;
+CREATE POLICY "Admins can manage notification log"
+  ON public.notification_log FOR ALL TO authenticated
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());

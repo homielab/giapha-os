@@ -25,7 +25,6 @@ export default function BaseToolbar({
   setHideMales,
   hideFemales,
   setHideFemales,
-  canEdit,
   children,
 }: BaseToolbarProps) {
   const { showAvatar, setShowAvatar } = useDashboard();
@@ -140,8 +139,8 @@ export default function BaseToolbar({
         </AnimatePresence>
       </div>
 
-      {/* Export Button */}
-      {canEdit && <ExportButton />}
+      {/* Export Button — available to all authenticated users (read-only action) */}
+      <ExportButton />
     </div>,
     portalNode,
   );
