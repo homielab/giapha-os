@@ -5,7 +5,7 @@ import GraveSection from "@/components/GraveSection";
 import MemberPhotoGallery from "@/components/MemberPhotoGallery";
 import NoteRenderer from "@/components/NoteRenderer";
 import RelationshipManager from "@/components/RelationshipManager";
-import { Person, GraveRecord } from "@/types";
+import { Person, GraveRecord, Religion } from "@/types";
 import {
   calculateAge,
   formatDisplayDate,
@@ -18,11 +18,13 @@ import {
   Briefcase,
   Camera,
   ChevronDown,
+  Cross,
   Info,
   Leaf,
   MapPin,
   Moon,
   Phone,
+  Star,
   Users,
 } from "lucide-react";
 import Image from "next/image";
@@ -47,9 +49,23 @@ export default function MemberDetailContent({
   persons = [],
 }: MemberDetailContentProps) {
   const [isNoteExpanded, setIsNoteExpanded] = useState(false);
+  const [isCareerExpanded, setIsCareerExpanded] = useState(false);
   const fullPerson = { ...person, ...privateData };
   const note = (fullPerson.note as string) || "";
   const isNoteLong = note.length > 300;
+  const careerDescription = (person.career_description as string) || "";
+  const isCareerLong = careerDescription.length > 300;
+
+  const RELIGION_LABELS: Record<Religion, string> = {
+    none: "Không theo tôn giáo",
+    buddhist: "Phật giáo",
+    catholic: "Công giáo",
+    protestant: "Tin lành",
+    islam: "Hồi giáo",
+    cao_dai: "Cao Đài",
+    hoa_hao: "Hòa Hảo",
+    other: "Tôn giáo khác",
+  };
 
   const isDeceased =
     !!person.death_year || !!person.death_month || !!person.death_day;
@@ -183,6 +199,20 @@ export default function MemberDetailContent({
                 </span>
               </p>
             )}
+            {person.civil_title || person.religious_title ? (
+              <p className="mt-1 text-sm text-stone-500 flex items-center gap-1.5 flex-wrap">
+                {person.civil_title && (
+                  <span className="inline-flex items-center gap-1 bg-blue-50 border border-blue-200/60 text-blue-700 rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider">
+                    <Star className="size-3" />{person.civil_title}
+                  </span>
+                )}
+                {person.religious_title && (
+                  <span className="inline-flex items-center gap-1 bg-purple-50 border border-purple-200/60 text-purple-700 rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider">
+                    <Cross className="size-3" />{person.religious_title}
+                  </span>
+                )}
+              </p>
+            ) : null}
 
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               {/* Birth Card */}
@@ -372,6 +402,101 @@ export default function MemberDetailContent({
                 )}
               </div>
             </motion.section>
+
+            {/* Extended Profile: religion, titles, career */}
+            {(person.birth_name || person.common_name || person.religion || person.civil_title || person.religious_title || careerDescription) && (
+              <motion.section variants={itemVariants}>
+                <h2 className="text-base sm:text-lg font-bold text-stone-800 mb-4 flex items-center gap-2">
+                  <Star className="size-5 text-amber-600" />
+                  Hồ sơ mở rộng
+                </h2>
+                <div className="bg-white/80 backdrop-blur-sm p-5 sm:p-6 rounded-2xl border border-stone-200/60 shadow-sm space-y-4">
+                  {(person.birth_name || person.common_name) && (
+                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      {person.birth_name && (
+                        <div>
+                          <dt className="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">Tên khai sinh</dt>
+                          <dd className="font-semibold text-stone-800">{person.birth_name}</dd>
+                        </div>
+                      )}
+                      {person.common_name && (
+                        <div>
+                          <dt className="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">Tên gọi thường</dt>
+                          <dd className="font-semibold text-stone-800">{person.common_name}</dd>
+                        </div>
+                      )}
+                    </dl>
+                  )}
+
+                  {(person.religion || person.saint_name || person.religious_title || person.civil_title) && (
+                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm border-t border-stone-100 pt-4">
+                      {person.religion && person.religion !== "none" && (
+                        <div className="flex items-start gap-2">
+                          <Cross className="size-3.5 mt-0.5 text-stone-400 shrink-0" />
+                          <div>
+                            <dt className="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">Tôn giáo</dt>
+                            <dd className="font-semibold text-stone-800">{RELIGION_LABELS[person.religion as Religion] ?? person.religion}</dd>
+                          </div>
+                        </div>
+                      )}
+                      {person.saint_name && (
+                        <div>
+                          <dt className="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">Tên thánh</dt>
+                          <dd className="font-semibold text-stone-800">{person.saint_name}</dd>
+                        </div>
+                      )}
+                      {person.religious_title && (
+                        <div>
+                          <dt className="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">Chức sắc tôn giáo</dt>
+                          <dd className="font-semibold text-stone-800">{person.religious_title}</dd>
+                        </div>
+                      )}
+                      {person.civil_title && (
+                        <div>
+                          <dt className="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">Chức danh</dt>
+                          <dd className="font-semibold text-stone-800">{person.civil_title}</dd>
+                        </div>
+                      )}
+                    </dl>
+                  )}
+
+                  {careerDescription && (
+                    <div className="border-t border-stone-100 pt-4">
+                      <dt className="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <Briefcase className="size-3.5" />
+                        Sự nghiệp / Tiểu sử
+                      </dt>
+                      <div className="relative overflow-hidden">
+                        <motion.div
+                          initial={false}
+                          animate={{ height: !isCareerExpanded && isCareerLong ? "120px" : "auto" }}
+                          className="overflow-hidden"
+                          transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                        >
+                          <NoteRenderer content={careerDescription} className="whitespace-pre-wrap text-sm text-stone-700" />
+                          {!isCareerExpanded && isCareerLong && (
+                            <div className="absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-white/95 to-transparent pointer-events-none" />
+                          )}
+                        </motion.div>
+                        {isCareerLong && (
+                          <button
+                            onClick={() => setIsCareerExpanded(!isCareerExpanded)}
+                            className="mt-2 text-amber-600 hover:text-amber-700 text-[13px] font-bold flex items-center gap-1.5 transition-colors relative z-10"
+                          >
+                            <span className="underline underline-offset-4 decoration-amber-600/30">
+                              {isCareerExpanded ? "Thu gọn" : "Xem thêm"}
+                            </span>
+                            <motion.div animate={{ rotate: isCareerExpanded ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                              <ChevronDown className="size-3.5" />
+                            </motion.div>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.section>
+            )}
 
             <motion.section variants={itemVariants}>
               <h2 className="text-base sm:text-lg font-bold text-stone-800 mb-4 flex items-center gap-2">

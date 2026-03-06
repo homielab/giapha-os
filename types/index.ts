@@ -9,7 +9,7 @@ export type RelationshipType =
   | "godparent";
 export type UserRole = "admin" | "editor" | "member";
 export type MaritalStatus = "single" | "married" | "divorced" | "widowed" | "unknown";
-export type Religion = "buddhist" | "catholic" | "protestant" | "islam" | "none" | "other";
+export type Religion = "buddhist" | "catholic" | "protestant" | "islam" | "cao_dai" | "hoa_hao" | "none" | "other";
 export type PrivacyLevel = "public" | "masked" | "private";
 
 export interface Profile {
