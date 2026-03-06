@@ -537,3 +537,30 @@ CREATE POLICY "Public can read persons when share is enabled"
       WHERE setting_key = 'public_share_enabled' AND setting_value = 'true'
     )
   );
+
+-- ==========================================
+-- PERSON PHOTOS (Gallery Ảnh Thành Viên)
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS person_photos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  person_id UUID NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+  storage_path TEXT NOT NULL,
+  caption TEXT,
+  uploaded_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_person_photos_person_id ON person_photos(person_id);
+
+ALTER TABLE person_photos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can view photos" ON person_photos FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Editors and admins can insert photos" ON person_photos FOR INSERT TO authenticated WITH CHECK (
+  EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'editor'))
+);
+
+CREATE POLICY "Editors and admins can delete photos" ON person_photos FOR DELETE USING (
+  EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'editor'))
+);

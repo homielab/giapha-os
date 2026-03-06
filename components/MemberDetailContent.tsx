@@ -1,6 +1,7 @@
 "use client";
 
 import DefaultAvatar from "@/components/DefaultAvatar";
+import MemberPhotoGallery from "@/components/MemberPhotoGallery";
 import NoteRenderer from "@/components/NoteRenderer";
 import RelationshipManager from "@/components/RelationshipManager";
 import { Person } from "@/types";
@@ -14,6 +15,7 @@ import {
 import { motion, Variants } from "framer-motion";
 import {
   Briefcase,
+  Camera,
   ChevronDown,
   Info,
   Leaf,
@@ -377,6 +379,16 @@ export default function MemberDetailContent({
                   canEdit={canEdit}
                   personGender={person.gender}
                 />
+              </div>
+            </motion.section>
+
+            <motion.section variants={itemVariants}>
+              <h2 className="text-base sm:text-lg font-bold text-stone-800 mb-4 flex items-center gap-2">
+                <Camera className="size-5 text-amber-600" />
+                Thư viện ảnh
+              </h2>
+              <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-2xl border border-stone-200/60 shadow-sm">
+                <MemberPhotoGallery personId={person.id} canEdit={canEdit} />
               </div>
             </motion.section>
           </div>
