@@ -99,6 +99,9 @@ export default function RelationshipManager({
   const [newSpouseName, setNewSpouseName] = useState("");
   const [newSpouseBirthYear, setNewSpouseBirthYear] = useState("");
   const [newSpouseNote, setNewSpouseNote] = useState("");
+  const [newSpouseMarriageOrder, setNewSpouseMarriageOrder] = useState(1);
+  const [newSpouseMarriageStartYear, setNewSpouseMarriageStartYear] = useState("");
+  const [newSpouseMarriageEndYear, setNewSpouseMarriageEndYear] = useState("");
 
   // Fetch relationships
   const fetchRelationships = useCallback(async () => {
@@ -490,6 +493,9 @@ export default function RelationshipManager({
         person_b: newSpouseId,
         type: "marriage",
         note: newSpouseNote.trim() || null,
+        marriage_order: newSpouseMarriageOrder,
+        marriage_start_year: newSpouseMarriageStartYear ? parseInt(newSpouseMarriageStartYear) : null,
+        marriage_end_year: newSpouseMarriageEndYear ? parseInt(newSpouseMarriageEndYear) : null,
       });
 
       if (relError) throw relError;
@@ -498,6 +504,9 @@ export default function RelationshipManager({
       setNewSpouseName("");
       setNewSpouseBirthYear("");
       setNewSpouseNote("");
+      setNewSpouseMarriageOrder(1);
+      setNewSpouseMarriageStartYear("");
+      setNewSpouseMarriageEndYear("");
       fetchRelationships();
       router.refresh();
     } catch (err: unknown) {
@@ -1116,6 +1125,37 @@ export default function RelationshipManager({
               />
             </div>
 
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="block text-xs font-medium text-rose-700 mb-1">Thứ tự</label>
+                <select
+                  value={newSpouseMarriageOrder}
+                  onChange={(e) => setNewSpouseMarriageOrder(parseInt(e.target.value))}
+                  className="bg-white text-stone-900 block w-full text-sm rounded-md border-stone-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 border transition-colors"
+                >
+                  {[1,2,3,4,5].map(n => (
+                    <option key={n} value={n}>{n === 1 ? 'Cả' : n === 2 ? 'Hai' : n === 3 ? 'Ba' : n === 4 ? 'Tư' : 'Năm'}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-rose-700 mb-1">Năm kết hôn</label>
+                <input type="number" placeholder="VD: 1990"
+                  value={newSpouseMarriageStartYear}
+                  onChange={(e) => setNewSpouseMarriageStartYear(e.target.value)}
+                  className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md border-stone-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 border transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-rose-700 mb-1">Năm kết thúc</label>
+                <input type="number" placeholder="Nếu có"
+                  value={newSpouseMarriageEndYear}
+                  onChange={(e) => setNewSpouseMarriageEndYear(e.target.value)}
+                  className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md border-stone-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 border transition-colors"
+                />
+              </div>
+            </div>
+
             <p className="text-xs text-stone-500 italic mt-1">
               * Giới tính sẽ tự động gán là{" "}
               {personGender === "male"
@@ -1140,6 +1180,9 @@ export default function RelationshipManager({
                   setNewSpouseName("");
                   setNewSpouseBirthYear("");
                   setNewSpouseNote("");
+                  setNewSpouseMarriageOrder(1);
+                  setNewSpouseMarriageStartYear("");
+                  setNewSpouseMarriageEndYear("");
                 }}
                 className="px-4 py-2 sm:py-2.5 bg-white border border-stone-300 text-stone-700 rounded-md sm:rounded-lg text-sm hover:bg-stone-50 transition-colors"
               >

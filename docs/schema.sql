@@ -820,3 +820,196 @@ CREATE POLICY "Editors can manage grave photos"
   WITH CHECK (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'editor'))
   );
+
+-- ==========================================
+-- PHASE 6 MIGRATIONS
+-- ==========================================
+
+-- #57: Enhanced Statistics — marital status & polygamy support
+-- Add marital_status to persons
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS marital_status TEXT
+  CHECK (marital_status IN ('single','married','divorced','widowed','unknown'))
+  DEFAULT 'unknown';
+
+-- Add marriage metadata to relationships
+ALTER TABLE public.relationships ADD COLUMN IF NOT EXISTS marriage_order INT DEFAULT 1;
+ALTER TABLE public.relationships ADD COLUMN IF NOT EXISTS marriage_start_year INT;
+ALTER TABLE public.relationships ADD COLUMN IF NOT EXISTS marriage_end_year INT;
+
+-- #59: Extended Personal Profile
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS birth_name TEXT;
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS common_name TEXT;
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS saint_name TEXT;
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS religion TEXT
+  CHECK (religion IN ('buddhist','catholic','protestant','islam','none','other'));
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS religious_title TEXT;
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS civil_title TEXT;
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS career_description TEXT;
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS work_history JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS education_history JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS awards TEXT;
+
+-- #58: Privacy Controls
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS privacy_level TEXT
+  CHECK (privacy_level IN ('public','masked','private'))
+  DEFAULT 'masked';
+
+-- #66: CCCD Unique ID (in person_details_private)
+ALTER TABLE public.person_details_private ADD COLUMN IF NOT EXISTS national_id TEXT;
+ALTER TABLE public.person_details_private ADD COLUMN IF NOT EXISTS national_id_verified BOOLEAN DEFAULT false;
+ALTER TABLE public.person_details_private ADD COLUMN IF NOT EXISTS national_id_verified_at TIMESTAMPTZ;
+ALTER TABLE public.person_details_private ADD COLUMN IF NOT EXISTS national_id_verified_by UUID REFERENCES public.profiles(id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_private_national_id
+  ON public.person_details_private(national_id) WHERE national_id IS NOT NULL;
+
+-- #65: Admin Approval Workflow
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS account_status TEXT
+  CHECK (account_status IN ('pending','active','rejected','suspended'))
+  DEFAULT 'active';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone_number TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS approved_by UUID REFERENCES public.profiles(id);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT false;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS linked_person_id UUID REFERENCES public.persons(id);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_score INT DEFAULT 0;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_attempts INT DEFAULT 0;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_locked_until TIMESTAMPTZ;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verified_father_id UUID REFERENCES public.persons(id);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verified_mother_id UUID REFERENCES public.persons(id);
+
+-- #60: Branch/Chi Management
+CREATE TABLE IF NOT EXISTS public.branches (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  root_person_id UUID REFERENCES public.persons(id) ON DELETE SET NULL,
+  display_order INT DEFAULT 0,
+  created_by UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.persons ADD COLUMN IF NOT EXISTS branch_id UUID REFERENCES public.branches(id) ON DELETE SET NULL;
+
+-- #64: Invitation System
+CREATE TABLE IF NOT EXISTS public.invitations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  token TEXT UNIQUE NOT NULL DEFAULT encode(gen_random_bytes(32), 'hex'),
+  branch_id UUID REFERENCES public.branches(id) ON DELETE SET NULL,
+  invited_by UUID REFERENCES public.profiles(id),
+  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member','editor')),
+  email TEXT,
+  max_uses INT DEFAULT 1,
+  uses_count INT DEFAULT 0,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS invited_via_token TEXT;
+
+-- #67: User Preferences
+CREATE TABLE IF NOT EXISTS public.user_preferences (
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE PRIMARY KEY,
+  default_root_person_id UUID REFERENCES public.persons(id) ON DELETE SET NULL,
+  default_branch_id UUID REFERENCES public.branches(id) ON DELETE SET NULL,
+  tree_view_mode TEXT DEFAULT 'tree',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- #61: Family Events
+CREATE TABLE IF NOT EXISTS public.family_events (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  event_type TEXT NOT NULL DEFAULT 'other'
+    CHECK (event_type IN ('gio_ho','wedding','funeral','reunion','ceremony','other')),
+  event_date DATE NOT NULL,
+  location TEXT,
+  description TEXT,
+  organizer_person_id UUID REFERENCES public.persons(id) ON DELETE SET NULL,
+  branch_id UUID REFERENCES public.branches(id) ON DELETE SET NULL,
+  is_public BOOLEAN DEFAULT false,
+  created_by UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.family_event_photos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  event_id UUID REFERENCES public.family_events(id) ON DELETE CASCADE,
+  storage_path TEXT NOT NULL,
+  caption TEXT,
+  uploaded_by UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.family_event_attendees (
+  event_id UUID REFERENCES public.family_events(id) ON DELETE CASCADE,
+  person_id UUID REFERENCES public.persons(id) ON DELETE CASCADE,
+  PRIMARY KEY (event_id, person_id)
+);
+
+-- #62: Activity Feed
+CREATE TABLE IF NOT EXISTS public.activity_feed (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  activity_type TEXT NOT NULL,
+  actor_user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  subject_person_id UUID REFERENCES public.persons(id) ON DELETE CASCADE,
+  related_id UUID,
+  related_type TEXT,
+  message TEXT NOT NULL,
+  meta JSONB,
+  is_public BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_activity_feed_created ON public.activity_feed(created_at DESC);
+
+-- RLS for new tables
+ALTER TABLE public.branches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.invitations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.family_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.family_event_photos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.family_event_attendees ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.activity_feed ENABLE ROW LEVEL SECURITY;
+
+-- branches: authenticated read all, admin/editor manage
+DROP POLICY IF EXISTS "Authenticated can view branches" ON public.branches;
+CREATE POLICY "Authenticated can view branches" ON public.branches FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Editors can manage branches" ON public.branches;
+CREATE POLICY "Editors can manage branches" ON public.branches FOR ALL TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','editor')))
+  WITH CHECK (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','editor')));
+
+-- user_preferences: each user manages their own
+DROP POLICY IF EXISTS "Users manage own preferences" ON public.user_preferences;
+CREATE POLICY "Users manage own preferences" ON public.user_preferences FOR ALL TO authenticated
+  USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+
+-- family_events: authenticated read, editor/admin manage
+DROP POLICY IF EXISTS "Authenticated view events" ON public.family_events;
+CREATE POLICY "Authenticated view events" ON public.family_events FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Anon view public events" ON public.family_events;
+CREATE POLICY "Anon view public events" ON public.family_events FOR SELECT TO anon USING (is_public = true);
+DROP POLICY IF EXISTS "Editors manage events" ON public.family_events;
+CREATE POLICY "Editors manage events" ON public.family_events FOR ALL TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','editor')))
+  WITH CHECK (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','editor')));
+
+-- family_event_photos: same as events
+DROP POLICY IF EXISTS "Authenticated view event photos" ON public.family_event_photos;
+CREATE POLICY "Authenticated view event photos" ON public.family_event_photos FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Editors manage event photos" ON public.family_event_photos;
+CREATE POLICY "Editors manage event photos" ON public.family_event_photos FOR ALL TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','editor')))
+  WITH CHECK (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','editor')));
+
+-- activity_feed: authenticated read
+DROP POLICY IF EXISTS "Authenticated view activity" ON public.activity_feed;
+CREATE POLICY "Authenticated view activity" ON public.activity_feed FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Authenticated insert activity" ON public.activity_feed;
+CREATE POLICY "Authenticated insert activity" ON public.activity_feed FOR INSERT TO authenticated WITH CHECK (true);
+
+-- invitations: admin/editor manage, anyone can read by token
+DROP POLICY IF EXISTS "Editors manage invitations" ON public.invitations;
+CREATE POLICY "Editors manage invitations" ON public.invitations FOR ALL TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','editor')))
+  WITH CHECK (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','editor')));

@@ -11,6 +11,8 @@ import {
   Skull,
   Users,
   Venus,
+  BookHeart,
+  BarChart2,
 } from "lucide-react";
 import { useMemo } from "react";
 
@@ -114,6 +116,7 @@ export default function FamilyStats({
 }: FamilyStatsProps) {
   const stats = useMemo(() => {
     const total = persons.length;
+    const now = new Date().getFullYear();
 
     // Gender
     const male = persons.filter((p) => p.gender === "male").length;
@@ -135,14 +138,20 @@ export default function FamilyStats({
 
     // Married / unmarried (based on marriage relationships)
     const marriedIds = new Set<string>();
+    const spouseCountMap = new Map<string, number>();
     relationships
       .filter((r) => r.type === "marriage")
       .forEach((r) => {
         marriedIds.add(r.person_a);
         marriedIds.add(r.person_b);
+        spouseCountMap.set(r.person_a, (spouseCountMap.get(r.person_a) ?? 0) + 1);
+        spouseCountMap.set(r.person_b, (spouseCountMap.get(r.person_b) ?? 0) + 1);
       });
     const married = persons.filter((p) => marriedIds.has(p.id)).length;
     const unmarried = total - married;
+
+    // Polygamy: people with 2+ spouses
+    const polygamyCount = Array.from(spouseCountMap.values()).filter((c) => c >= 2).length;
 
     // Generation breakdown
     const genMap = new Map<number, number>();
@@ -155,6 +164,43 @@ export default function FamilyStats({
       .sort(([a], [b]) => a - b)
       .map(([gen, count]) => ({ gen, count }));
 
+    // Age bracket distribution (living persons with birth_year)
+    const ageBrackets = [
+      { label: "< 18", min: 0, max: 17, count: 0, color: "bg-emerald-400" },
+      { label: "18–30", min: 18, max: 30, count: 0, color: "bg-sky-400" },
+      { label: "31–50", min: 31, max: 50, count: 0, color: "bg-violet-400" },
+      { label: "51–70", min: 51, max: 70, count: 0, color: "bg-amber-400" },
+      { label: "71–90", min: 71, max: 90, count: 0, color: "bg-rose-400" },
+      { label: "> 90", min: 91, max: 999, count: 0, color: "bg-red-500" },
+    ];
+    persons
+      .filter((p) => !p.is_deceased && p.birth_year)
+      .forEach((p) => {
+        const age = now - p.birth_year!;
+        const bracket = ageBrackets.find((b) => age >= b.min && age <= b.max);
+        if (bracket) bracket.count++;
+      });
+    const maxAgeBracket = Math.max(...ageBrackets.map((b) => b.count), 1);
+
+    // Religion breakdown
+    const religionMap = new Map<string, number>();
+    persons.forEach((p) => {
+      if (p.religion) {
+        religionMap.set(p.religion, (religionMap.get(p.religion) ?? 0) + 1);
+      }
+    });
+    const religionLabels: Record<string, string> = {
+      buddhist: "Phật giáo 🪷",
+      catholic: "Thiên Chúa ✝️",
+      protestant: "Tin Lành",
+      islam: "Hồi giáo ☪️",
+      none: "Không tôn giáo",
+      other: "Khác",
+    };
+    const religionBreakdown = Array.from(religionMap.entries())
+      .sort(([, a], [, b]) => b - a)
+      .map(([key, count]) => ({ label: religionLabels[key] ?? key, count }));
+
     return {
       total,
       male,
@@ -165,7 +211,11 @@ export default function FamilyStats({
       firstBorn,
       married,
       unmarried,
+      polygamyCount,
       generationBreakdown,
+      ageBrackets,
+      maxAgeBracket,
+      religionBreakdown,
     };
   }, [persons, relationships]);
 
@@ -224,6 +274,12 @@ export default function FamilyStats({
       icon: <Crown className="size-5 text-amber-500" />,
       color: "bg-amber-400",
     },
+    ...(stats.polygamyCount > 0 ? [{
+      label: "Đa thê/đa phu",
+      value: stats.polygamyCount,
+      icon: <BookHeart className="size-5 text-violet-500" />,
+      color: "bg-violet-400",
+    }] : []),
   ];
 
   return (
@@ -242,6 +298,36 @@ export default function FamilyStats({
           />
         ))}
       </div>
+
+      {/* Age Bracket Distribution */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.4 }}
+        className="bg-white/80 border border-stone-200/60 rounded-2xl p-6 shadow-sm"
+      >
+        <h2 className="text-base font-bold text-stone-700 mb-5 flex items-center gap-2">
+          <BarChart2 className="size-4 text-sky-500" />
+          Phân bố độ tuổi (người còn sống)
+        </h2>
+        <div className="space-y-3">
+          {stats.ageBrackets.map((bracket, i) => (
+            <div key={bracket.label} className="flex items-center gap-3">
+              <span className="text-xs text-stone-500 w-14 shrink-0">{bracket.label}</span>
+              <div className="flex-1 bg-stone-100 rounded-full h-5 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${stats.maxAgeBracket > 0 ? (bracket.count / stats.maxAgeBracket) * 100 : 0}%` }}
+                  transition={{ duration: 0.6, delay: 0.45 + i * 0.07 }}
+                  className={`h-full ${bracket.color} rounded-full`}
+                />
+              </div>
+              <span className="text-sm font-bold text-stone-700 w-8 text-right">{bracket.count}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-stone-400 mt-4 italic">* Chỉ tính người còn sống có năm sinh</p>
+      </motion.div>
 
       {/* Generation Breakdown */}
       {stats.generationBreakdown.length > 0 && (
@@ -320,6 +406,78 @@ export default function FamilyStats({
           </span>
         </div>
       </motion.div>
+
+      {/* Marital status breakdown */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.75 }}
+        className="bg-white/80 border border-stone-200/60 rounded-2xl p-6 shadow-sm"
+      >
+        <h2 className="text-base font-bold text-stone-700 mb-5 flex items-center gap-2">
+          <Heart className="size-4 text-red-400" />
+          Tình trạng hôn nhân
+        </h2>
+        <div className="flex h-5 rounded-full overflow-hidden gap-px mb-3">
+          {stats.total > 0 && (
+            <>
+              <motion.div initial={{ flex: 0 }} animate={{ flex: stats.married }}
+                transition={{ duration: 0.7, delay: 0.8 }}
+                className="bg-red-400" title={`Đã kết hôn: ${stats.married}`} />
+              <motion.div initial={{ flex: 0 }} animate={{ flex: stats.unmarried }}
+                transition={{ duration: 0.7, delay: 0.8 }}
+                className="bg-stone-300" title={`Chưa kết hôn: ${stats.unmarried}`} />
+            </>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-4 text-sm">
+          <span className="flex items-center gap-2 text-stone-600">
+            <span className="size-3 rounded-full bg-red-400 inline-block" />
+            Đã kết hôn — {stats.married} ({stats.total > 0 ? Math.round(stats.married / stats.total * 100) : 0}%)
+          </span>
+          <span className="flex items-center gap-2 text-stone-600">
+            <span className="size-3 rounded-full bg-stone-300 inline-block" />
+            Chưa kết hôn — {stats.unmarried} ({stats.total > 0 ? Math.round(stats.unmarried / stats.total * 100) : 0}%)
+          </span>
+          {stats.polygamyCount > 0 && (
+            <span className="flex items-center gap-2 text-violet-600 font-medium">
+              <BookHeart className="size-3.5" />
+              Đa thê/đa phu — {stats.polygamyCount} người
+            </span>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Religion breakdown */}
+      {stats.religionBreakdown.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.85 }}
+          className="bg-white/80 border border-stone-200/60 rounded-2xl p-6 shadow-sm"
+        >
+          <h2 className="text-base font-bold text-stone-700 mb-5 flex items-center gap-2">
+            <span className="text-base">🙏</span>
+            Tôn giáo
+          </h2>
+          <div className="space-y-3">
+            {stats.religionBreakdown.map(({ label, count }, i) => (
+              <div key={label} className="flex items-center gap-3">
+                <span className="text-xs text-stone-500 w-32 shrink-0 truncate">{label}</span>
+                <div className="flex-1 bg-stone-100 rounded-full h-4 overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(count / stats.total) * 100}%` }}
+                    transition={{ duration: 0.6, delay: 0.9 + i * 0.06 }}
+                    className="h-full bg-amber-400 rounded-full"
+                  />
+                </div>
+                <span className="text-sm font-bold text-stone-700 w-8 text-right">{count}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
