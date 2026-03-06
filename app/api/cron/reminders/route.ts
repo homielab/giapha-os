@@ -93,6 +93,7 @@ async function logReminder(
   daysBefore: number,
   scheduledDate: string,
   status: "sent" | "failed" = "sent",
+  errorMessage?: string,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from("reminder_logs") as any).insert({
@@ -103,6 +104,7 @@ async function logReminder(
     scheduled_date: scheduledDate,
     platform: "telegram",
     status,
+    ...(errorMessage ? { error_message: errorMessage } : {}),
   });
 }
 
@@ -161,8 +163,9 @@ async function processDeathAnniversaries(
         await sendTelegramMessage(bot.bot_token, bot.chat_id, message);
         await logReminder(supabase, bot.id, "anniversary", person.id, offset, anniversaryDate, "sent");
       } catch (sendErr) {
+        const errMsg = sendErr instanceof Error ? sendErr.message : String(sendErr);
         console.error(`[reminders] Failed to send anniversary reminder for ${person.full_name}:`, sendErr);
-        try { await logReminder(supabase, bot.id, "anniversary", person.id, offset, anniversaryDate, "failed"); } catch { /* ignore */ }
+        try { await logReminder(supabase, bot.id, "anniversary", person.id, offset, anniversaryDate, "failed", errMsg); } catch { /* ignore */ }
       }
     }
   }
@@ -211,8 +214,9 @@ async function processFamilyEvents(
       await sendTelegramMessage(bot.bot_token, bot.chat_id, message);
       await logReminder(supabase, bot.id, "event", event.id, daysBefore, event.event_date, "sent");
     } catch (sendErr) {
+      const errMsg = sendErr instanceof Error ? sendErr.message : String(sendErr);
       console.error(`[reminders] Failed to send event reminder for ${event.title}:`, sendErr);
-      try { await logReminder(supabase, bot.id, "event", event.id, daysBefore, event.event_date, "failed"); } catch { /* ignore */ }
+      try { await logReminder(supabase, bot.id, "event", event.id, daysBefore, event.event_date, "failed", errMsg); } catch { /* ignore */ }
     }
   }
 }
@@ -255,8 +259,9 @@ async function processBirthdays(
       await sendTelegramMessage(bot.bot_token, bot.chat_id, message);
       await logReminder(supabase, bot.id, "birthday", person.id, 0, todayStr, "sent");
     } catch (sendErr) {
+      const errMsg = sendErr instanceof Error ? sendErr.message : String(sendErr);
       console.error(`[reminders] Failed to send birthday reminder for ${person.full_name}:`, sendErr);
-      try { await logReminder(supabase, bot.id, "birthday", person.id, 0, todayStr, "failed"); } catch { /* ignore */ }
+      try { await logReminder(supabase, bot.id, "birthday", person.id, 0, todayStr, "failed", errMsg); } catch { /* ignore */ }
     }
   }
 }

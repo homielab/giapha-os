@@ -49,6 +49,108 @@ interface BackupPayload {
   relationships: RelationshipExport[];
 }
 
+// ─── Validation ───────────────────────────────────────────────────────────────
+
+const VALID_GENDERS = new Set(["male", "female", "other"]);
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const VALID_RELATIONSHIP_TYPES = new Set([
+  "parent_child", "spouse", "sibling", "adopted", "step_parent",
+  "parent", "child", "husband", "wife", "other",
+]);
+
+function isNullableInt(v: unknown): boolean {
+  return v === null || (typeof v === "number" && Number.isInteger(v));
+}
+
+function validatePerson(p: unknown, index: number): string | null {
+  if (typeof p !== "object" || p === null) return `persons[${index}]: không phải object`;
+  const obj = p as Record<string, unknown>;
+
+  if (typeof obj.id !== "string" || !UUID_REGEX.test(obj.id))
+    return `persons[${index}]: id phải là UUID hợp lệ`;
+  if (typeof obj.full_name !== "string" || obj.full_name.trim().length === 0)
+    return `persons[${index}]: full_name không được rỗng`;
+  if (obj.full_name.length > 255)
+    return `persons[${index}]: full_name quá dài (tối đa 255 ký tự)`;
+  if (typeof obj.gender !== "string" || !VALID_GENDERS.has(obj.gender))
+    return `persons[${index}] "${obj.full_name}": gender phải là male/female/other`;
+  if (!isNullableInt(obj.birth_year)) return `persons[${index}]: birth_year phải là số nguyên hoặc null`;
+  if (!isNullableInt(obj.birth_month)) return `persons[${index}]: birth_month phải là số nguyên hoặc null`;
+  if (!isNullableInt(obj.birth_day)) return `persons[${index}]: birth_day phải là số nguyên hoặc null`;
+  if (!isNullableInt(obj.death_year)) return `persons[${index}]: death_year phải là số nguyên hoặc null`;
+  if (!isNullableInt(obj.death_month)) return `persons[${index}]: death_month phải là số nguyên hoặc null`;
+  if (!isNullableInt(obj.death_day)) return `persons[${index}]: death_day phải là số nguyên hoặc null`;
+
+  const birthYear = obj.birth_year as number | null;
+  const deathYear = obj.death_year as number | null;
+  if (birthYear !== null && (birthYear < 1 || birthYear > 2100))
+    return `persons[${index}]: birth_year ngoài phạm vi hợp lệ (1–2100)`;
+  if (deathYear !== null && birthYear !== null && deathYear < birthYear)
+    return `persons[${index}] "${obj.full_name}": death_year (${deathYear}) không thể nhỏ hơn birth_year (${birthYear})`;
+
+  return null;
+}
+
+function validateRelationship(r: unknown, index: number, personIds: Set<string>): string | null {
+  if (typeof r !== "object" || r === null) return `relationships[${index}]: không phải object`;
+  const obj = r as Record<string, unknown>;
+
+  if (typeof obj.type !== "string" || (!VALID_RELATIONSHIP_TYPES.has(obj.type) && !obj.type))
+    return `relationships[${index}]: type không hợp lệ`;
+  if (typeof obj.person_a !== "string" || !UUID_REGEX.test(obj.person_a))
+    return `relationships[${index}]: person_a phải là UUID hợp lệ`;
+  if (typeof obj.person_b !== "string" || !UUID_REGEX.test(obj.person_b))
+    return `relationships[${index}]: person_b phải là UUID hợp lệ`;
+  if (obj.person_a === obj.person_b)
+    return `relationships[${index}]: person_a và person_b không được giống nhau`;
+  if (!personIds.has(obj.person_a as string))
+    return `relationships[${index}]: person_a (${obj.person_a}) không tồn tại trong danh sách persons`;
+  if (!personIds.has(obj.person_b as string))
+    return `relationships[${index}]: person_b (${obj.person_b}) không tồn tại trong danh sách persons`;
+
+  return null;
+}
+
+/** Validate import payload structure and data integrity. Returns error string or null. */
+function validateImportPayload(payload: unknown): string | null {
+  if (typeof payload !== "object" || payload === null)
+    return "Dữ liệu không hợp lệ: phải là object JSON.";
+
+  const obj = payload as Record<string, unknown>;
+
+  if (!Array.isArray(obj.persons))
+    return "Dữ liệu không hợp lệ: thiếu mảng persons.";
+  if (!Array.isArray(obj.relationships))
+    return "Dữ liệu không hợp lệ: thiếu mảng relationships.";
+  if (obj.persons.length === 0)
+    return "File backup trống — không có thành viên nào để phục hồi.";
+  if (obj.persons.length > 50_000)
+    return `Quá nhiều bản ghi persons (${obj.persons.length}). Tối đa 50,000.`;
+  if (obj.relationships.length > 200_000)
+    return `Quá nhiều bản ghi relationships (${obj.relationships.length}). Tối đa 200,000.`;
+
+  // Validate persons
+  for (let i = 0; i < obj.persons.length; i++) {
+    const err = validatePerson(obj.persons[i], i);
+    if (err) return err;
+  }
+
+  // Check for duplicate IDs
+  const personIds = new Set<string>();
+  for (const p of obj.persons as Array<{ id: string }>) {
+    if (personIds.has(p.id)) return `persons: trùng id "${p.id}"`;
+    personIds.add(p.id);
+  }
+
+  // Validate relationships (referential integrity check)
+  for (let i = 0; i < obj.relationships.length; i++) {
+    const err = validateRelationship(obj.relationships[i], i, personIds);
+    if (err) return err;
+  }
+
+  return null;
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 // Các field được phép insert vào bảng persons (loại bỏ created_at/updated_at)
@@ -191,15 +293,9 @@ export async function importData(
 
   const supabase = await getSupabase();
 
-  if (!importPayload?.persons || !importPayload?.relationships) {
-    return { error: "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại file JSON." };
-  }
-
-  if (importPayload.persons.length === 0) {
-    return {
-      error: "File backup trống — không có thành viên nào để phục hồi.",
-    };
-  }
+  // Validate payload structure and data integrity before touching the database
+  const validationError = validateImportPayload(importPayload);
+  if (validationError) return { error: validationError };
 
   // 1. Xoá relationships trước (FK constraint)
   const { error: delRelError } = await supabase

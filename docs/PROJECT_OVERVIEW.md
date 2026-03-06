@@ -2,6 +2,7 @@
 
 > Phiên bản fork: [minhtuancn/giapha-os](https://github.com/minhtuancn/giapha-os)  
 > Upstream gốc: [homielab/giapha-os](https://github.com/homielab/giapha-os)  
+> Phiên bản hiện tại: **v1.5.0** — i18n + AI Bot Module  
 > Stack: **Next.js · Supabase · TypeScript · Tailwind CSS**
 
 ---
@@ -29,6 +30,15 @@
 │              Supabase                   │
 │  PostgreSQL · Auth · Storage (avatars)  │
 │  RLS policies · RPC functions           │
+└─────────────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────┐
+│         AI Bot Module (v1.5.0)          │
+│  Telegram Bot API · Zalo OA API         │
+│  OpenAI / Anthropic / OpenRouter /      │
+│  LiteLLM — BYOK hoặc platform key      │
+│  Vercel Cron — nhắc giỗ / sinh nhật    │
+│  Subscription: Free / Pro / Enterprise  │
 └─────────────────────────────────────────┘
 ```
 

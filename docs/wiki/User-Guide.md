@@ -21,7 +21,9 @@ Dashboard (/)
 ├── Bản đồ            — vị trí địa lý
 ├── Lịch sử           — audit log (admin)
 ├── Dữ liệu           — import/export
-└── Cài đặt           — admin settings
+├── Cài đặt           — admin settings
+├── Bot Settings     — cài đặt Telegram/Zalo bot (admin)
+└── /admin           — super admin panel (admin)
 ```
 
 ---
@@ -329,3 +331,28 @@ Hệ thống tự động gửi email nhắc nhở:
 - **Đúng ngày** Tết Thanh Minh
 
 Email liệt kê danh sách tất cả mộ trong hệ thống kèm địa chỉ, toạ độ và link tưởng niệm.
+
+---
+
+## 🤖 Bot Gia Phả (Telegram & Zalo)
+
+Mỗi nhánh họ có thể có bot riêng trên Telegram hoặc Zalo.
+
+### Lệnh Bot
+
+| Lệnh | Chức năng |
+|------|----------|
+| `/lichgio` | Danh sách giỗ trong 30 ngày tới |
+| `/sukien` | Sự kiện họ tộc sắp diễn ra |
+| `/sinhvien <tên>` | Tìm kiếm thành viên theo tên |
+| `/help` | Hướng dẫn sử dụng |
+| *(tin nhắn bất kỳ)* | Chat với AI (nếu admin đã bật AI) |
+
+### Nhắc Nhở Tự Động
+
+Bot tự động gửi vào nhóm Telegram/Zalo:
+- **7 ngày trước giỗ**: Thông báo chuẩn bị
+- **3 ngày trước giỗ**: Nhắc lại
+- **1 ngày trước giỗ**: Nhắc lần cuối
+- **Ngày giỗ**: Thông báo chính thức với tên người và thứ giỗ
+- **Sinh nhật & Sự kiện**: Nhắc 1 ngày trước

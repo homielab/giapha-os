@@ -129,6 +129,71 @@ Tất cả bảng đều bật RLS. Chính sách:
 
 ---
 
+---
+
+## Bot Telegram & Zalo
+
+### Thiết Lập Bot Cho Nhánh Họ
+
+**Dashboard → Cài đặt → Nhánh họ → [tên nhánh] → Bot**:
+
+1. **Telegram Bot**:
+   - Tạo bot qua @BotFather → lấy Bot Token
+   - Dán token → **Đăng ký Webhook** (tự động cấu hình webhook URL)
+   - Thêm bot vào nhóm Telegram của gia đình
+
+2. **Zalo OA**:
+   - Tạo Zalo Official Account → lấy Access Token
+   - Dán token → **Lưu cài đặt**
+
+### Cấu Hình AI Cho Bot
+
+**Dashboard → Cài đặt → Nhánh họ → [tên nhánh] → Bot → AI**:
+
+| Cài đặt | Mô tả |
+|---------|-------|
+| **Nhà cung cấp** | openai / anthropic / openrouter / litellm |
+| **Model** | gpt-4o, claude-3-5-sonnet, v.v. |
+| **API Key riêng (BYOK)** | Nhập key cá nhân — bypass giới hạn thuê bao |
+| **System Prompt** | Tùy chỉnh nhân cách bot (mặc định: Trợ lý gia phả) |
+
+### Nhắc Nhở Tự Động
+
+Cron job chạy lúc 7:00 AM (GMT+7) mỗi ngày:
+- **Lịch giỗ**: Nhắc 3 lần (7 ngày / 3 ngày / 1 ngày trước) + thông báo ngày giỗ
+- **Sinh nhật**: Nhắc 1 ngày trước
+- **Sự kiện họ tộc**: Nhắc 1 ngày trước
+
+Cần đặt `CRON_SECRET` trong env và `SITE_URL` để bot gửi đúng địa chỉ.
+
+---
+
+## Quản Lý Super Admin
+
+Tài khoản có `role = 'admin'` có thể truy cập **/admin**:
+
+### Dashboard Admin (`/admin`)
+- Tổng số gia đình / nhánh / bot đang hoạt động
+- Thống kê request AI theo ngày
+
+### Cài Đặt AI Platform (`/admin/ai-settings`)
+
+Cho phép Admin cấu hình AI key dùng chung cho toàn platform:
+- Mọi gia đình có thể dùng key này (trừ những gia đình dùng BYOK)
+- Hỗ trợ: OpenAI, Anthropic, OpenRouter, LiteLLM
+
+### Quản Lý Thuê Bao (`/admin/subscriptions`)
+
+| Plan | AI Requests/tháng | Lưu trữ | Số Bot |
+|------|------------------|---------|--------|
+| **Free** | 100 | 100 MB | 1 |
+| **Pro** | 1,000 | 1 GB | 5 |
+| **Enterprise** | Không giới hạn | Không giới hạn | Không giới hạn |
+
+Admin có thể thay đổi plan, đặt giới hạn tuỳ chỉnh và reset quota hàng tháng.
+
+---
+
 ## Troubleshooting
 
 ### Người dùng không thể đăng nhập

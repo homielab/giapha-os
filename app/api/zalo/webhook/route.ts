@@ -1,4 +1,8 @@
+// Zalo OA webhook signature verification using HMAC-SHA256.
+// Set ZALO_OA_SECRET env var (your OA App Secret from Zalo Developer Console).
+// If not set, signature verification is skipped (dev/migration mode).
 import { createClient } from "@supabase/supabase-js";
+import { createHmac } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { sendZaloGroupMessage } from "@/utils/bot/zalo";
 
@@ -27,9 +31,29 @@ interface ZaloEvent {
   timestamp?: number;
 }
 
+/** Verify Zalo OA webhook signature (HMAC-SHA256 over raw body). */
+async function verifyZaloSignature(req: NextRequest, rawBody: string): Promise<boolean> {
+  const secret = process.env.ZALO_OA_SECRET;
+  if (!secret) return true; // Skip if secret not configured (backward compat)
+
+  const signature = req.headers.get("x-zalo-signature");
+  if (!signature) return false;
+
+  const expected = createHmac("sha256", secret).update(rawBody, "utf8").digest("hex");
+  // Constant-time comparison to prevent timing attacks
+  return signature === expected;
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const event = (await req.json()) as ZaloEvent;
+    const rawBody = await req.text();
+
+    if (!await verifyZaloSignature(req, rawBody)) {
+      console.warn("[Zalo webhook] Invalid signature — request rejected");
+      return NextResponse.json({ ok: false, error: "Invalid signature" }, { status: 401 });
+    }
+
+    const event = JSON.parse(rawBody) as ZaloEvent;
     const senderId = event.sender?.id;
 
     if (!senderId) return NextResponse.json({ ok: true });

@@ -1122,7 +1122,8 @@ CREATE TABLE IF NOT EXISTS public.reminder_logs (
   days_before INT NOT NULL, -- 7, 3, 1, 0
   scheduled_date DATE NOT NULL, -- the actual event date
   platform TEXT NOT NULL DEFAULT 'telegram',
-  status TEXT NOT NULL DEFAULT 'sent', -- 'sent' | 'failed'
+  status TEXT NOT NULL DEFAULT 'sent', -- 'sent' | 'failed' | 'pending'
+  error_message TEXT, -- populated when status = 'failed'
   sent_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -1188,3 +1189,71 @@ CREATE POLICY "Admins manage subscriptions" ON public.subscriptions
 
 ALTER TABLE public.branch_bots ADD COLUMN IF NOT EXISTS zalo_oa_id TEXT;
 ALTER TABLE public.branch_bots ADD COLUMN IF NOT EXISTS zalo_refresh_token TEXT;
+
+-- ============================================================
+-- v1.5.3: Security & reliability improvements
+-- ============================================================
+
+-- Add error_message column to reminder_logs (for failed status detail)
+ALTER TABLE public.reminder_logs ADD COLUMN IF NOT EXISTS error_message TEXT;
+
+-- ============================================================
+-- v1.5.3: Atomic AI quota check RPC (fixes race condition #99)
+-- ============================================================
+
+-- Drop and recreate to ensure idempotency
+DROP FUNCTION IF EXISTS public.check_and_increment_ai_quota();
+
+CREATE OR REPLACE FUNCTION public.check_and_increment_ai_quota()
+RETURNS TABLE(allowed boolean, remaining int, reason text)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  sub public.subscriptions%ROWTYPE;
+BEGIN
+  -- Lock the row atomically to prevent race conditions
+  SELECT * INTO sub
+  FROM public.subscriptions
+  WHERE is_active = true
+  LIMIT 1
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT
+      false::boolean,
+      0::int,
+      'Chưa có gói thuê bao. Vui lòng cấu hình API key riêng (BYOK) hoặc liên hệ admin.'::text;
+    RETURN;
+  END IF;
+
+  -- Enterprise unlimited
+  IF sub.ai_requests_limit = -1 THEN
+    RETURN QUERY SELECT true::boolean, (-1)::int, NULL::text;
+    RETURN;
+  END IF;
+
+  -- Quota exhausted
+  IF sub.ai_requests_used >= sub.ai_requests_limit THEN
+    RETURN QUERY SELECT
+      false::boolean,
+      0::int,
+      ('Đã hết quota AI tháng này (' || sub.ai_requests_used || '/' || sub.ai_requests_limit || ' requests). Quota sẽ reset vào đầu tháng sau.')::text;
+    RETURN;
+  END IF;
+
+  -- Atomically increment
+  UPDATE public.subscriptions
+  SET ai_requests_used = ai_requests_used + 1,
+      updated_at = now()
+  WHERE id = sub.id;
+
+  RETURN QUERY SELECT
+    true::boolean,
+    (sub.ai_requests_limit - sub.ai_requests_used - 1)::int,
+    NULL::text;
+END;
+$$;
+
+-- Grant execute to authenticated users (RLS on subscriptions enforces access)
+GRANT EXECUTE ON FUNCTION public.check_and_increment_ai_quota() TO authenticated;

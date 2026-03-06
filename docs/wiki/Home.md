@@ -37,6 +37,9 @@ Giapha-OS là ứng dụng web mã nguồn mở giúp các gia đình Việt Nam
 - **Theo dõi** sinh nhật, ngày giỗ theo âm lịch và dương lịch
 - **Quản lý mộ phần**: GPS, ảnh 360°, tưởng niệm công khai, nhắc Thanh Minh *(v1.1)*
 - **Chia sẻ** gia phả công khai hoặc qua REST API
+- **Bot Telegram & Zalo** *(v1.5)*: Mỗi nhánh họ có bot riêng, nhắc giỗ tự động, chat AI, tìm kiếm
+- **Tích hợp AI** *(v1.5)*: OpenAI / Anthropic / OpenRouter / LiteLLM, hỗ trợ BYOK
+- **Đa ngôn ngữ** *(v1.5)*: Giao diện vi/en/zh
 
 ### Tech Stack
 
@@ -45,6 +48,9 @@ Frontend:  Next.js 15 (App Router) + React 19 + TypeScript
 UI:        Tailwind CSS 4 + Lucide Icons
 Backend:   Supabase (PostgreSQL + Auth + Storage + RLS)
 i18n:      next-intl (Tiếng Việt / English / 漢字)
+Bot:       Telegram Bot API + Zalo OA API
+AI:        OpenAI-compatible (OpenAI / Anthropic / OpenRouter / LiteLLM)
+Cron:      Vercel Cron (0 0 * * *)
 Deploy:    Coolify / Vercel / Docker
 ```
 
@@ -62,7 +68,8 @@ npm install
 
 # 3. Cấu hình env
 cp .env.example .env.local
-# Điền NEXT_PUBLIC_SUPABASE_URL và NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+# Điền NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+# (Tuỳ chọn) SUPABASE_SERVICE_ROLE_KEY, CRON_SECRET, SITE_URL
 
 # 4. Chạy DB schema
 # Vào Supabase SQL Editor, chạy file docs/schema.sql

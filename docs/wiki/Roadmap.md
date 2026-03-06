@@ -1,6 +1,6 @@
 # 🗺️ Roadmap — Kế Hoạch Phát Triển Tương Lai
 
-> Trạng thái: **v1.3 In Progress** — Phase 7 (Public Dashboard) hoàn thành, còn #61–#66 đang triển khai.
+> Trạng thái: **v1.5.0 Released** — i18n + AI Bot Module hoàn thành. v1.6.0 đang lên kế hoạch.
 
 ---
 
@@ -48,6 +48,17 @@
 | 🔄 📅 Family Events & Photos | — | #61 |
 | 🔄 📋 Activity Auto-Timeline | — | #62 |
 | 🔄 💬 Telegram & Zalo Notifications | — | #63 |
+
+### ✅ v1.5.0 — i18n + AI Bot Module (Đã hoàn thành)
+
+| # | Tính năng | Status |
+|---|-----------|--------|
+| #81 | 🌐 i18n 211 keys, 12 namespaces, vi/en/zh | ✅ |
+| #82 | 🤖 Per-branch Telegram Bot + webhook | ✅ |
+| #83 | 🧠 AI Chat BYOK/OpenAI/Anthropic/OpenRouter | ✅ |
+| #84 | ⏰ Scheduled Reminders — giỗ 3x, sự kiện | ✅ |
+| #85 | 🔑 Subscription & Rate Limiting, /admin | ✅ |
+| #86 | 🌐 Zalo OA + BotPlatform multi-platform | ✅ |
 
 ---
 
@@ -160,3 +171,16 @@ Checklist tốt cho một feature request:
 - [ ] Đề xuất giải pháp
 - [ ] Mockup / wireframe (nếu có)
 - [ ] Mức độ ưu tiên (must-have / nice-to-have)
+
+---
+
+## 🔮 v1.6.0 — Phase 12 (Kế Hoạch)
+
+| Tính năng | Mô tả |
+|-----------|-------|
+| 📱 PWA | Cài đặt như app trên điện thoại, offline cache |
+| 🌙 Dark Mode | Chế độ tối / sáng |
+| 🖨️ Print Mode | Xuất cây gia phả PDF A3/A2 |
+| 🗺️ Map View | Bản đồ gốc địa lý (quê quán, nơi sinh) |
+| 🔌 Public API | REST API + API key management |
+| 🤖 Bot Enhancement | Hỗ trợ nhóm Telegram native, WhatsApp |

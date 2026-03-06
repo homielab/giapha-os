@@ -80,3 +80,31 @@ Sau khi đăng nhập với tài khoản admin:
 - 📋 [Hướng dẫn sử dụng chi tiết](User-Guide.md) — tất cả tính năng
 - ⚙️ [Hướng dẫn Admin](Admin-Guide.md) — phân quyền, backup
 - 🚀 [Deploy lên Coolify](../DEPLOY_COOLIFY.md) — production deployment
+
+---
+
+### Biến Môi Trường Bot & AI (Tuỳ Chọn)
+
+```env
+# Cần thiết cho Telegram/Zalo Bot và Cron jobs
+SUPABASE_SERVICE_ROLE_KEY=eyJhbG...
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
+SITE_URL=https://your-domain.com
+
+# Bảo vệ cron endpoint (khuyến khích đặt trong production)
+CRON_SECRET=your-random-secret-min-32-chars
+
+# AI platform key (tuỳ chọn — người dùng có thể nhập key riêng)
+PLATFORM_AI_API_KEY=sk-...
+```
+
+---
+
+## 8. Thiết Lập Bot Telegram (Tuỳ Chọn)
+
+1. Mở Telegram → tìm **@BotFather** → gõ `/newbot`
+2. Đặt tên và username cho bot → nhận **Bot Token**
+3. **Dashboard → Cài đặt → Nhánh họ → [tên nhánh] → Bot**
+4. Dán **Bot Token** vào ô tương ứng → nhấn **Đăng ký Webhook**
+5. Thêm bot vào nhóm Telegram của gia đình → cấp quyền gửi tin
+6. (Tuỳ chọn) Cấu hình AI: chọn nhà cung cấp, nhập API key hoặc dùng key platform

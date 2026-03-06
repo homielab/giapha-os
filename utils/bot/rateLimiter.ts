@@ -14,11 +14,32 @@ export interface RateLimitResult {
   remaining?: number;
 }
 
-/** Check if an AI request is allowed. If BYOK, always allow. */
+/**
+ * Check if an AI request is allowed and atomically increment quota.
+ * Uses Supabase RPC `check_and_increment_ai_quota` to avoid SELECT→UPDATE
+ * race condition. Falls back to non-atomic path if RPC not available.
+ * BYOK users bypass quota entirely.
+ */
 export async function checkRateLimit(isByok: boolean): Promise<RateLimitResult> {
   if (isByok) return { allowed: true };
 
   const supabase = getServiceSupabase();
+
+  // Atomic check-and-increment via database function (prevents race condition)
+  const { data, error } = await supabase.rpc("check_and_increment_ai_quota");
+
+  if (!error && data && Array.isArray(data) && data.length > 0) {
+    const row = data[0] as { allowed: boolean; remaining: number; reason: string | null };
+    return {
+      allowed: row.allowed,
+      reason: row.reason ?? undefined,
+      remaining: row.remaining >= 0 ? row.remaining : undefined,
+    };
+  }
+
+  // Fallback: non-atomic path (used before RPC is deployed)
+  console.warn("[rateLimiter] RPC check_and_increment_ai_quota unavailable, using fallback:", error?.message);
+
   const { data: sub } = await supabase
     .from("subscriptions")
     .select("*")

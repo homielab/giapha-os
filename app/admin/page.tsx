@@ -1,5 +1,5 @@
 import { getProfile } from "@/utils/supabase/queries";
-import { Cpu, CreditCard, BarChart3, ChevronRight } from "lucide-react";
+import { Cpu, CreditCard, BarChart3, Bell, ChevronRight } from "lucide-react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
@@ -19,6 +19,14 @@ const ADMIN_LINKS = [
     description: "Quản lý gói dịch vụ, quota AI và rate limiting",
     color: "text-blue-600",
     bg: "bg-blue-50",
+  },
+  {
+    href: "/admin/reminder-logs",
+    icon: Bell,
+    title: "Reminder Logs",
+    description: "Lịch sử gửi nhắc nhở qua bot — giỗ, sự kiện, sinh nhật",
+    color: "text-orange-600",
+    bg: "bg-orange-50",
   },
   {
     href: "/admin/analytics",

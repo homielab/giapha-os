@@ -34,6 +34,11 @@ Phù hợp với người Việt Nam.
 - **Sao lưu dữ liệu**: Xuất/nhập file JSON, CSV, GEDCOM để lưu trữ hoặc di chuyển dễ dàng.
 - **Bảo mật**: Phân quyền (Admin, Editor, Member) và bảo vệ dữ liệu bằng Supabase.
 - **Đa thiết bị**: Giao diện hiện đại, tối ưu cho cả máy tính và điện thoại.
+- **Đa ngôn ngữ** *(v1.5)*: Giao diện hỗ trợ Tiếng Việt, English, 中文 (next-intl)
+- **Bot Telegram / Zalo** *(v1.5)*: Mỗi nhánh họ có bot riêng — nhắc giỗ tự động, chat AI, tìm kiếm thành viên
+- **Nhắc Nhở Tự Động** *(v1.5)*: Cron job hàng ngày — nhắc lịch giỗ 3 lần (7 ngày/3 ngày/1 ngày trước), sinh nhật, sự kiện họ tộc
+- **Tích Hợp AI** *(v1.5)*: Bot chat AI dùng OpenAI, Anthropic, OpenRouter hoặc LiteLLM. Hỗ trợ BYOK (tự nhập key riêng)
+- **Quản Lý Thuê Bao** *(v1.5)*: Super Admin quản lý plan Free/Pro/Enterprise cho từng gia đình
 
 ## Demo
 
@@ -106,6 +111,11 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY="your-anon-key"
 # Dành cho cron job nhắc nhở (tuỳ chọn, khuyến khích đặt trong môi trường production)
 SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 CRON_SECRET="your-random-secret"
+
+# AI Bot (tuỳ chọn)
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+CRON_SECRET="your-random-secret-here"
+SITE_URL="https://your-domain.com"
 ```
 
 4. Cài thư viện
