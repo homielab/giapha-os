@@ -515,10 +515,15 @@ CREATE TABLE IF NOT EXISTS public.family_settings (
 
 ALTER TABLE public.family_settings ENABLE ROW LEVEL SECURITY;
 
--- Anyone (including anonymous users) can read settings to validate share tokens
-CREATE POLICY "Anyone can read family settings"
-  ON public.family_settings FOR SELECT
+-- Authenticated users can read all settings (for admin UI)
+CREATE POLICY "Authenticated users can read family settings"
+  ON public.family_settings FOR SELECT TO authenticated
   USING (true);
+
+-- Anonymous users can only read non-sensitive settings (for public share token validation)
+CREATE POLICY "Anon can read non-sensitive settings"
+  ON public.family_settings FOR SELECT TO anon
+  USING (setting_key NOT IN ('api_key_value', 'public_share_token'));
 
 -- Only admins can create/update/delete settings
 CREATE POLICY "Admins can manage family settings"
@@ -535,6 +540,30 @@ CREATE POLICY "Public can read persons when share is enabled"
     EXISTS (
       SELECT 1 FROM public.family_settings
       WHERE setting_key = 'public_share_enabled' AND setting_value = 'true'
+    )
+  );
+
+-- Allow anonymous users to read persons when the REST API is enabled
+-- Application-level API key validation happens in the route handler.
+-- This policy enables the anon Supabase client used by route handlers to access data.
+DROP POLICY IF EXISTS "API can read persons when API key is enabled" ON public.persons;
+CREATE POLICY "API can read persons when API key is enabled"
+  ON public.persons FOR SELECT TO anon
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.family_settings
+      WHERE setting_key = 'api_key_enabled' AND setting_value = 'true'
+    )
+  );
+
+-- Allow anonymous users to read relationships when the REST API is enabled
+DROP POLICY IF EXISTS "API can read relationships when API key is enabled" ON public.relationships;
+CREATE POLICY "API can read relationships when API key is enabled"
+  ON public.relationships FOR SELECT TO anon
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.family_settings
+      WHERE setting_key = 'api_key_enabled' AND setting_value = 'true'
     )
   );
 

@@ -1,6 +1,7 @@
 import { getProfile, getSupabase } from "@/utils/supabase/queries";
 import { Settings } from "lucide-react";
 import { redirect } from "next/navigation";
+import ApiKeySettings from "./ApiKeySettings";
 import PublicShareSettings from "./PublicShareSettings";
 
 export default async function SettingsPage() {
@@ -39,6 +40,11 @@ export default async function SettingsPage() {
       <PublicShareSettings
         initialEnabled={settingsMap.public_share_enabled === "true"}
         initialToken={settingsMap.public_share_token ?? null}
+      />
+
+      <ApiKeySettings
+        initialEnabled={settingsMap.api_key_enabled === "true"}
+        initialApiKey={settingsMap.api_key_value ?? null}
       />
     </main>
   );
