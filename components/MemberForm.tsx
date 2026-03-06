@@ -1,6 +1,7 @@
 "use client";
 
 import { logAudit } from "@/utils/auditLog";
+import RichNoteEditor from "@/components/RichNoteEditor";
 import { Gender, Person } from "@/types";
 import { createClient } from "@/utils/supabase/client";
 import { AnimatePresence, motion, Variants } from "framer-motion";
@@ -719,12 +720,10 @@ export default function MemberForm({
             <label className="block text-sm font-semibold text-stone-700 mb-1.5">
               Ghi chú
             </label>
-            <textarea
-              rows={3}
+            <RichNoteEditor
               value={note}
-              onChange={(e) => setNote(e.target.value)}
+              onChange={setNote}
               placeholder="Thêm thông tin bổ sung, tiểu sử..."
-              className={`${inputClasses} resize-none`}
             />
           </div>
         </div>

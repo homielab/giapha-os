@@ -1,6 +1,7 @@
 "use client";
 
 import DefaultAvatar from "@/components/DefaultAvatar";
+import NoteRenderer from "@/components/NoteRenderer";
 import RelationshipManager from "@/components/RelationshipManager";
 import { Person } from "@/types";
 import {
@@ -329,9 +330,10 @@ export default function MemberDetailContent({
                         duration: 0.4,
                       }}
                     >
-                      <p className="text-stone-600 whitespace-pre-wrap text-sm sm:text-base leading-relaxed">
-                        {note}
-                      </p>
+                      <NoteRenderer
+                        content={note}
+                        className="whitespace-pre-wrap"
+                      />
                       {/* Gradient fade overlay when collapsed */}
                       {!isNoteExpanded && isNoteLong && (
                         <div className="absolute bottom-0 left-0 right-0 h-16 bg-linear-to-t from-white/95 via-white/40 to-transparent pointer-events-none" />
