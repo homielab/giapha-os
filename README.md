@@ -38,8 +38,8 @@ Phù hợp với người Việt Nam.
 ## Demo
 
 - Demo: [giapha-os-rose.vercel.app](https://giapha-os-rose.vercel.app)
-- Tài khoản: `giaphaos@homielab.com`
-- Mật khẩu: `giaphaos`
+- Tài khoản: `demo@example.com`
+- Mật khẩu: `demo@123`
 
 ## Hình ảnh Giao diện
 
