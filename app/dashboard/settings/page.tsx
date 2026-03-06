@@ -1,7 +1,7 @@
 import NotificationSettings from "@/components/NotificationSettings";
 import PublicDashboardSettings from "@/components/PublicDashboardSettings";
 import { getProfile, getSupabase } from "@/utils/supabase/queries";
-import { GitBranch, Settings } from "lucide-react";
+import { GitBranch, Link2, Settings } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getNotificationSettings } from "./actions";
@@ -92,6 +92,23 @@ export default async function SettingsPage() {
           </p>
         </div>
         <span className="ml-auto text-stone-300 group-hover:text-amber-500 transition-colors">→</span>
+      </Link>
+
+      {/* Invitation Links quick link */}
+      <Link
+        href="/dashboard/settings/invitations"
+        className="flex items-center gap-4 p-5 bg-white rounded-2xl border border-stone-200 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all group"
+      >
+        <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-700 group-hover:bg-emerald-100 transition-colors">
+          <Link2 className="size-5" />
+        </div>
+        <div>
+          <p className="font-semibold text-stone-800">Quản lý Lời mời</p>
+          <p className="text-sm text-stone-500 mt-0.5">
+            Tạo link mời để thành viên mới tham gia đúng nhánh dòng họ
+          </p>
+        </div>
+        <span className="ml-auto text-stone-300 group-hover:text-emerald-500 transition-colors">→</span>
       </Link>
     </main>
   );
