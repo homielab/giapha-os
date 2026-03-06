@@ -157,8 +157,13 @@ async function processDeathAnniversaries(
         message = `🕯️ Hôm nay ngày giỗ <b>${person.full_name}</b> (${ddmm}). Kính mời toàn thể con cháu tưởng nhớ. 🙏`;
       }
 
-      await sendTelegramMessage(bot.bot_token, bot.chat_id, message);
-      await logReminder(supabase, bot.id, "anniversary", person.id, offset, anniversaryDate);
+      try {
+        await sendTelegramMessage(bot.bot_token, bot.chat_id, message);
+        await logReminder(supabase, bot.id, "anniversary", person.id, offset, anniversaryDate, "sent");
+      } catch (sendErr) {
+        console.error(`[reminders] Failed to send anniversary reminder for ${person.full_name}:`, sendErr);
+        try { await logReminder(supabase, bot.id, "anniversary", person.id, offset, anniversaryDate, "failed"); } catch { /* ignore */ }
+      }
     }
   }
 }
@@ -202,8 +207,13 @@ async function processFamilyEvents(
       message = `🎉 Hôm nay có sự kiện: <b>${event.title}</b>${locationPart}. Kính mời tham dự!`;
     }
 
-    await sendTelegramMessage(bot.bot_token, bot.chat_id, message);
-    await logReminder(supabase, bot.id, "event", event.id, daysBefore, event.event_date);
+    try {
+      await sendTelegramMessage(bot.bot_token, bot.chat_id, message);
+      await logReminder(supabase, bot.id, "event", event.id, daysBefore, event.event_date, "sent");
+    } catch (sendErr) {
+      console.error(`[reminders] Failed to send event reminder for ${event.title}:`, sendErr);
+      try { await logReminder(supabase, bot.id, "event", event.id, daysBefore, event.event_date, "failed"); } catch { /* ignore */ }
+    }
   }
 }
 
@@ -241,8 +251,13 @@ async function processBirthdays(
     if (alreadySent) continue;
 
     const message = `🎂 Chúc mừng sinh nhật <b>${person.full_name}</b>! Chúc sức khỏe và hạnh phúc! 🎉`;
-    await sendTelegramMessage(bot.bot_token, bot.chat_id, message);
-    await logReminder(supabase, bot.id, "birthday", person.id, 0, todayStr);
+    try {
+      await sendTelegramMessage(bot.bot_token, bot.chat_id, message);
+      await logReminder(supabase, bot.id, "birthday", person.id, 0, todayStr, "sent");
+    } catch (sendErr) {
+      console.error(`[reminders] Failed to send birthday reminder for ${person.full_name}:`, sendErr);
+      try { await logReminder(supabase, bot.id, "birthday", person.id, 0, todayStr, "failed"); } catch { /* ignore */ }
+    }
   }
 }
 

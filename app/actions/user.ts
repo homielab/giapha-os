@@ -1,10 +1,16 @@
 "use server";
 
 import { UserRole } from "@/types";
-import { getSupabase } from "@/utils/supabase/queries";
+import { getIsAdmin, getSupabase } from "@/utils/supabase/queries";
 import { revalidatePath } from "next/cache";
 
+async function requireAdmin() {
+  const isAdmin = await getIsAdmin();
+  if (!isAdmin) throw new Error("Unauthorized: Admin role required");
+}
+
 export async function changeUserRole(userId: string, newRole: UserRole) {
+  try { await requireAdmin(); } catch { return { error: "Không có quyền thực hiện." }; }
   const supabase = await getSupabase();
   const { error } = await supabase.rpc("set_user_role", {
     target_user_id: userId,
@@ -21,6 +27,7 @@ export async function changeUserRole(userId: string, newRole: UserRole) {
 }
 
 export async function deleteUser(userId: string) {
+  try { await requireAdmin(); } catch { return { error: "Không có quyền thực hiện." }; }
   const supabase = await getSupabase();
   const { error } = await supabase.rpc("delete_user", {
     target_user_id: userId,
@@ -36,6 +43,7 @@ export async function deleteUser(userId: string) {
 }
 
 export async function adminCreateUser(formData: FormData) {
+  try { await requireAdmin(); } catch { return { error: "Không có quyền thực hiện." }; }
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
   const role = formData.get("role")?.toString() || "member";
@@ -49,6 +57,10 @@ export async function adminCreateUser(formData: FormData) {
 
   if (!email || !password) {
     return { error: "Email và mật khẩu là bắt buộc." };
+  }
+
+  if (password.length < 8) {
+    return { error: "Mật khẩu phải có ít nhất 8 ký tự." };
   }
 
   const supabase = await getSupabase();
@@ -70,6 +82,7 @@ export async function adminCreateUser(formData: FormData) {
 }
 
 export async function toggleUserStatus(userId: string, newStatus: boolean) {
+  try { await requireAdmin(); } catch { return { error: "Không có quyền thực hiện." }; }
   const supabase = await getSupabase();
   const { error } = await supabase.rpc("set_user_active_status", {
     target_user_id: userId,
@@ -86,6 +99,7 @@ export async function toggleUserStatus(userId: string, newStatus: boolean) {
 }
 
 export async function approveUser(userId: string) {
+  try { await requireAdmin(); } catch { return { error: "Không có quyền thực hiện." }; }
   const supabase = await getSupabase();
   const { error } = await supabase
     .from("profiles")
@@ -103,6 +117,7 @@ export async function approveUser(userId: string) {
 }
 
 export async function rejectUser(userId: string) {
+  try { await requireAdmin(); } catch { return { error: "Không có quyền thực hiện." }; }
   const supabase = await getSupabase();
   const { error } = await supabase
     .from("profiles")
@@ -120,6 +135,7 @@ export async function rejectUser(userId: string) {
 }
 
 export async function batchApproveUsers(userIds: string[]) {
+  try { await requireAdmin(); } catch { return { error: "Không có quyền thực hiện." }; }
   const supabase = await getSupabase();
   const { error } = await supabase
     .from("profiles")
