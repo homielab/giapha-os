@@ -67,7 +67,7 @@ export default function GlobalSearch() {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
-        open ? closeSearch() : openSearch();
+        if (open) { closeSearch(); } else { openSearch(); }
       }
       if (e.key === "Escape" && open) closeSearch();
     };

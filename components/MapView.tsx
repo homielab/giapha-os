@@ -8,8 +8,11 @@ import type { Person } from "@/types";
 
 // Fix Leaflet's broken default marker icons in webpack/Next.js
 L.Icon.Default.mergeOptions({
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   iconUrl: require("leaflet/dist/images/marker-icon.png"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
 });
 

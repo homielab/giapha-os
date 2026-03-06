@@ -54,6 +54,7 @@ export default function MemberPhotoGallery({ personId, canEdit }: MemberPhotoGal
   }, [personId, supabase]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchPhotos();
   }, [fetchPhotos]);
 
@@ -253,10 +254,13 @@ export default function MemberPhotoGallery({ personId, canEdit }: MemberPhotoGal
             className="relative max-w-4xl max-h-[85vh] w-full flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
+            <Image
               src={photos[lightboxIndex].publicUrl}
               alt={photos[lightboxIndex].caption ?? `Ảnh ${lightboxIndex + 1}`}
+              width={1200}
+              height={900}
               className="max-w-full max-h-[80vh] rounded-xl object-contain shadow-2xl"
+              unoptimized
             />
             {photos[lightboxIndex].caption && (
               <p className="absolute bottom-0 left-0 right-0 text-center text-white text-sm py-2 px-4 bg-black/40 rounded-b-xl">

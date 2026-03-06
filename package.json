@@ -11,6 +11,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.98.0",
+    "@swc/helpers": "^0.5.19",
     "@types/leaflet": "^1.9.21",
     "framer-motion": "^12.35.0",
     "html-to-image": "^1.11.13",

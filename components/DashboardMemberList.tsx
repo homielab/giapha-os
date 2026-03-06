@@ -158,7 +158,7 @@ export default function DashboardMemberList({
           const allSelected = rangeIds.every((rid) => next.has(rid));
           rangeIds.forEach((rid) => (allSelected ? next.delete(rid) : next.add(rid)));
         } else {
-          next.has(id) ? next.delete(id) : next.add(id);
+          if (next.has(id)) { next.delete(id); } else { next.add(id); }
         }
         return next;
       });

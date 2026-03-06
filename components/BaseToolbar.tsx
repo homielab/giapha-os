@@ -25,7 +25,6 @@ export default function BaseToolbar({
   setHideMales,
   hideFemales,
   setHideFemales,
-  canEdit,
   children,
 }: BaseToolbarProps) {
   const { showAvatar, setShowAvatar } = useDashboard();
