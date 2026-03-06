@@ -14,6 +14,7 @@ import {
   Clock,
   Flower,
   MapPin,
+  Pencil,
   Plus,
   Star,
 } from "lucide-react";
@@ -45,6 +46,12 @@ const DAY_LABELS: Record<number, string> = {
 
 function daysUntilLabel(days: number): string {
   if (days in DAY_LABELS) return DAY_LABELS[days];
+  if (days < 0) {
+    const abs = Math.abs(days);
+    if (abs <= 30) return `${abs} ngày trước`;
+    if (abs <= 60) return `${Math.ceil(abs / 7)} tuần trước`;
+    return `${Math.ceil(abs / 30)} tháng trước`;
+  }
   if (days <= 30) return `${days} ngày nữa`;
   if (days <= 60) return `${Math.ceil(days / 7)} tuần nữa`;
   return `${Math.ceil(days / 30)} tháng nữa`;
@@ -163,14 +170,23 @@ function EventCard({
         className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold ${
           isToday
             ? "bg-amber-400 text-white"
-            : isSoon
-              ? "bg-red-100 text-red-600"
-              : "bg-stone-100 text-stone-500"
+            : event.daysUntil < 0
+              ? "bg-stone-100 text-stone-400"
+              : isSoon
+                ? "bg-red-100 text-red-600"
+                : "bg-stone-100 text-stone-500"
         }`}
       >
         <Clock className="size-3" />
         {daysUntilLabel(event.daysUntil)}
       </div>
+
+      {/* Edit hint for custom events */}
+      {isCustom && (
+        <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Pencil className="size-3.5 text-purple-400" />
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -246,8 +262,10 @@ export default function EventsList({
     return result;
   }, [allEvents, filter, showDeceasedBirthdays]);
 
-  // Split into upcoming (within 365 days) and far away
-  const upcoming = filtered.filter((e) => e.daysUntil <= 365);
+  // Split into upcoming (daysUntil >= 0, within 365 days), past custom events, and far future
+  const upcoming = filtered.filter((e) => e.daysUntil >= 0 && e.daysUntil <= 365);
+  const pastCustom = filtered.filter((e) => e.type === "custom_event" && e.daysUntil < 0)
+    .sort((a, b) => b.daysUntil - a.daysUntil); // most recent first
   const visible = upcoming.slice(0, showCount);
 
   const todayCount = allEvents.filter((e) => e.daysUntil === 0).length;
@@ -390,6 +408,25 @@ export default function EventsList({
         >
           Xem thêm {upcoming.length - showCount} sự kiện…
         </button>
+      )}
+
+      {/* Past custom events */}
+      {pastCustom.length > 0 && (
+        <div className="mt-6">
+          <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 mb-3 px-1">
+            Sự kiện đã qua
+          </p>
+          <div className="space-y-2.5 opacity-60">
+            {pastCustom.map((event, i) => (
+              <EventCard
+                key={`past-${event.personId}-${event.eventDateLabel}`}
+                event={event}
+                index={i}
+                onEditCustomEvent={handleOpenEditModal}
+              />
+            ))}
+          </div>
+        </div>
       )}
 
       <CustomEventModal
