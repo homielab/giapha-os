@@ -1,6 +1,6 @@
 # 🗺️ Roadmap — Kế Hoạch Phát Triển Tương Lai
 
-> Trạng thái: **v1.1 Released** — Phase 5 (Grave Module) hoàn thành.
+> Trạng thái: **v1.2 In Progress** — Phase 6 (Extended Profiles & Privacy) đang triển khai.
 
 ---
 
@@ -27,9 +27,22 @@
 | 🔔 Tết Thanh Minh Reminders | #54 | #49 |
 | 📸 Grave Photos & 360° Panorama Viewer | #55 | #47 |
 
+### v1.2 (Phase 6 — Extended Profiles & Privacy) — Đang triển khai
+
+| Tính năng | PR | Issue |
+|-----------|-----|-------|
+| ✅ 📊 Enhanced Statistics (age, marital, polygamy, religion) | #68 | #57 |
+| ✅ 🧑‍💼 Extended Personal Profile (religion, titles, career) | #69 | #59 |
+| ✅ 🔒 Privacy Controls (name masking, privacy_level) | #70 | #58 |
+| ✅ 🌿 Branch/Chi Management | #71 | #60 |
+| ✅ ⚙️ User View Preferences (default root, branch, generation) | #72 | #67 |
+| 🔄 🛡️ Admin Approval Workflow | — | #65 |
+| 🔄 🔑 Invitation + Onboarding + Verification | — | #64 |
+| 🔄 🆔 CCCD Unique ID | — | #66 |
+
 ---
 
-## 🚀 v1.2 — Cải Tiến UX (Ngắn Hạn)
+## 🚀 Phase 7+ — Tiếp Theo
 
 ### 🔔 Notifications Nâng Cao
 - [ ] Push notifications (Web Push API) — nhận thông báo ngay trên trình duyệt

@@ -6,6 +6,50 @@ Format theo [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.0] — Chưa phát hành
+
+> **Phase 6 — Extended Profiles & Privacy**: Hồ sơ mở rộng, bảo mật thông tin, quản lý chi/nhánh, tùy chọn cá nhân.
+
+### ✨ Added — Phase 6 (Extended Profiles & Privacy)
+
+- **📊 Thống Kê Nâng Cao** ([#68](https://github.com/minhtuancn/giapha-os/pull/68) — closes [#57](https://github.com/minhtuancn/giapha-os/issues/57))
+  - Biểu đồ phân bố độ tuổi theo 6 nhóm (<18, 18-30, 31-50, 51-70, 71-90, >90)
+  - Thẻ thống kê tình trạng hôn nhân (độc thân / đã kết hôn / góa / ly hôn)
+  - Thẻ số người đa thê/đa phu (marriage_order > 1)
+  - Biểu đồ tôn giáo phân bổ trong gia đình
+  - `RelationshipManager`: trường `marriage_order` (cả/hai/ba/tư/năm), `marriage_start_year`, `marriage_end_year`
+  - Schema: `marital_status` ENUM, `marriage_order` trên `relationships`
+
+- **🧑‍💼 Hồ Sơ Cá Nhân Mở Rộng** ([#69](https://github.com/minhtuancn/giapha-os/pull/69) — closes [#59](https://github.com/minhtuancn/giapha-os/issues/59))
+  - Trường mới trong `MemberForm`: tên khai sinh, tên gọi thường, tôn giáo, tên thánh (conditional Công giáo), chức sắc tôn giáo, chức danh dân sự, mô tả sự nghiệp (rich text)
+  - `MemberDetailContent`: section "Hồ sơ mở rộng" hiển thị tôn giáo, chức danh, tiểu sử có expand/collapse
+  - Badge chức danh và chức sắc hiển thị ngay dưới tên
+  - Hỗ trợ tôn giáo: Phật giáo, Công giáo, Tin lành, Hồi giáo, Cao Đài, Hòa Hảo
+  - Schema: `birth_name`, `common_name`, `saint_name`, `religion`, `religious_title`, `civil_title`, `career_description` trên `persons`
+
+- **🔒 Bảo Mật Thông Tin Cá Nhân** ([#70](https://github.com/minhtuancn/giapha-os/pull/70) — closes [#58](https://github.com/minhtuancn/giapha-os/issues/58))
+  - `utils/privacy.ts`: `maskName()` che phần cuối tên (e.g. "Đoàn Minh T\*\*n"), `maskPhone()` ẩn 4 số đuôi, `shouldMask()` logic quyết định
+  - Trang `/public/[token]`: áp dụng maskName cho người còn sống
+  - Người đã mất luôn hiển thị đầy đủ (privacy_level tự động = public)
+  - `MemberForm`: selector chế độ hiển thị `privacy_level` (công khai / ẩn một phần / riêng tư) trong admin section
+  - Schema: `privacy_level` ENUM trên `persons`
+
+- **🌿 Quản Lý Chi / Nhánh** ([#71](https://github.com/minhtuancn/giapha-os/pull/71) — closes [#60](https://github.com/minhtuancn/giapha-os/issues/60))
+  - `components/BranchManager.tsx`: CRUD chi/nhánh với người gốc chi và mô tả
+  - Trang `/dashboard/settings/branches`: admin quản lý danh sách chi
+  - Settings page: card quick-link đến quản lý chi
+  - `MemberForm`: selector gán thành viên vào chi (hiển thị khi có chi)
+  - Schema: bảng `branches` (id, name, description, root_person_id), `persons.branch_id` FK
+
+- **⚙️ Tùy Chọn Cá Nhân** ([#72](https://github.com/minhtuancn/giapha-os/pull/72) — closes [#67](https://github.com/minhtuancn/giapha-os/issues/67))
+  - Trang `/dashboard/preferences`: cho phép mọi người dùng lưu tùy chọn xem
+  - Cài đặt: người gốc mặc định khi xem cây, chi/nhánh mặc định, hiển thị từ đời thứ
+  - Members page: ưu tiên `user_preferences.default_root_person_id` khi không có `?rootId=` trong URL
+  - `HeaderMenu`: link "Tùy chọn cá nhân" hiển thị cho mọi người dùng
+  - Schema: bảng `user_preferences` (user_id, default_root_person_id, default_branch_id, default_generation_from)
+
+---
+
 ## [1.1.0] — 2026-03-06
 
 > **Phase 5 — Grave Module**: Quản lý mộ phần toàn diện.
