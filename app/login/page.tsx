@@ -28,8 +28,8 @@ export default function LoginPage() {
       const hostname = window.location.hostname;
       if (hostname === config.demoDomain) {
         setIsDemo(true);
-        setEmail(config.exampleEmail || "demo@giapha-os-rose.vercel.app");
-        setPassword("giaphaos");
+        setEmail(config.exampleEmail || "demo@example.com");
+        setPassword(config.examplePassword || "demo@123");
       }
     }
   }, []);
