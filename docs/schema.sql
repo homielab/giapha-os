@@ -594,3 +594,44 @@ CREATE POLICY "Editors and admins can insert photos" ON person_photos FOR INSERT
 CREATE POLICY "Editors and admins can delete photos" ON person_photos FOR DELETE USING (
   EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'editor'))
 );
+
+-- ==========================================
+-- EMAIL NOTIFICATION SETTINGS & LOG
+-- ==========================================
+
+-- NOTIFICATION_SETTINGS (Single-row config for email reminders)
+CREATE TABLE IF NOT EXISTS public.notification_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  enabled BOOLEAN NOT NULL DEFAULT false,
+  days_before INT[] NOT NULL DEFAULT '{7}',
+  email_recipients TEXT[] NOT NULL DEFAULT '{}',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.notification_settings ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can manage notification settings" ON public.notification_settings;
+CREATE POLICY "Admins can manage notification settings"
+  ON public.notification_settings FOR ALL TO authenticated
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+-- NOTIFICATION_LOG (Tracks sent reminders to prevent duplicates)
+CREATE TABLE IF NOT EXISTS public.notification_log (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  person_id UUID REFERENCES public.persons(id) ON DELETE CASCADE,
+  event_type TEXT NOT NULL,
+  scheduled_date DATE NOT NULL,
+  sent_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notification_log_lookup
+  ON public.notification_log(person_id, event_type, scheduled_date);
+
+ALTER TABLE public.notification_log ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can manage notification log" ON public.notification_log;
+CREATE POLICY "Admins can manage notification log"
+  ON public.notification_log FOR ALL TO authenticated
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());

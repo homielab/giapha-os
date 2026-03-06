@@ -1,6 +1,8 @@
+import NotificationSettings from "@/components/NotificationSettings";
 import { getProfile, getSupabase } from "@/utils/supabase/queries";
 import { Settings } from "lucide-react";
 import { redirect } from "next/navigation";
+import { getNotificationSettings } from "./actions";
 import ApiKeySettings from "./ApiKeySettings";
 import PublicShareSettings from "./PublicShareSettings";
 
@@ -22,6 +24,13 @@ export default async function SettingsPage() {
       s.setting_value,
     ]),
   );
+
+  const notificationSettings = await getNotificationSettings().catch(() => ({
+    id: null,
+    enabled: false,
+    days_before: [7],
+    email_recipients: [] as string[],
+  }));
 
   return (
     <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-8">
@@ -45,6 +54,12 @@ export default async function SettingsPage() {
       <ApiKeySettings
         initialEnabled={settingsMap.api_key_enabled === "true"}
         initialApiKey={settingsMap.api_key_value ?? null}
+      />
+
+      <NotificationSettings
+        initialEnabled={notificationSettings.enabled}
+        initialDaysBefore={notificationSettings.days_before}
+        initialEmailRecipients={notificationSettings.email_recipients}
       />
     </main>
   );
