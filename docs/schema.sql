@@ -500,3 +500,40 @@ CREATE POLICY "Admins can read audit logs"
       WHERE id = auth.uid() AND role = 'admin'
     )
   );
+
+-- ==========================================
+-- FAMILY SETTINGS (Public Share / Cài đặt chia sẻ công khai)
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS public.family_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  setting_key TEXT UNIQUE NOT NULL,
+  setting_value TEXT,
+  updated_by UUID REFERENCES auth.users(id),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.family_settings ENABLE ROW LEVEL SECURITY;
+
+-- Anyone (including anonymous users) can read settings to validate share tokens
+CREATE POLICY "Anyone can read family settings"
+  ON public.family_settings FOR SELECT
+  USING (true);
+
+-- Only admins can create/update/delete settings
+CREATE POLICY "Admins can manage family settings"
+  ON public.family_settings FOR ALL TO authenticated
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+-- Allow anonymous users to read persons when public sharing is enabled
+-- This is required for the public family tree view (/public/[token])
+DROP POLICY IF EXISTS "Public can read persons when share is enabled" ON public.persons;
+CREATE POLICY "Public can read persons when share is enabled"
+  ON public.persons FOR SELECT TO anon
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.family_settings
+      WHERE setting_key = 'public_share_enabled' AND setting_value = 'true'
+    )
+  );

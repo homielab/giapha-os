@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, GitCommitVertical, History, Info, Network, UserCircle } from "lucide-react";
+import { ChevronDown, GitCommitVertical, History, Info, Network, Settings, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import LogoutButton from "./LogoutButton";
@@ -87,6 +87,17 @@ export default function HeaderMenu() {
                 >
                   <History className="size-4" />
                   Lịch sử
+                </Link>
+              )}
+
+              {isAdmin && (
+                <Link
+                  href="/dashboard/settings"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 dark:text-stone-300 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-stone-700 transition-colors"
+                >
+                  <Settings className="size-4" />
+                  Cài đặt
                 </Link>
               )}
 
