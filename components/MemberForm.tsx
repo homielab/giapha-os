@@ -30,6 +30,7 @@ interface MemberFormProps {
   initialData?: Person;
   isEditing?: boolean;
   isAdmin?: boolean;
+  branches?: Array<{ id: string; name: string }>;
   /** Called with the saved person's ID after a successful save. Overrides default router.push. */
   onSuccess?: (personId: string) => void;
   /** Called when user clicks Cancel. Overrides default router.back(). */
@@ -40,6 +41,7 @@ export default function MemberForm({
   initialData,
   isEditing = false,
   isAdmin = false,
+  branches = [],
   onSuccess,
   onCancel,
 }: MemberFormProps) {
@@ -105,6 +107,7 @@ export default function MemberForm({
   const [privacyLevel, setPrivacyLevel] = useState<PrivacyLevel>(
     initialData?.privacy_level ?? (initialData?.is_deceased ? "public" : "masked")
   );
+  const [branchId, setBranchId] = useState(initialData?.branch_id || "");
 
   // Private fields
   const [phoneNumber, setPhoneNumber] = useState(
@@ -256,6 +259,7 @@ export default function MemberForm({
         civil_title: civilTitle || null,
         career_description: careerDescription || null,
         privacy_level: isDeceased ? "public" : privacyLevel,
+        branch_id: branchId || null,
       };
 
       let personId = initialData?.id;
@@ -934,6 +938,26 @@ export default function MemberForm({
                 className={inputClasses}
               />
             </div>
+
+            {branches.length > 0 && (
+              <div className="md:col-span-2">
+                <label className="flex items-center gap-1.5 text-sm font-semibold text-amber-900/80 mb-1.5">
+                  Chi / Nhánh
+                </label>
+                <div className="relative">
+                  <select
+                    value={branchId}
+                    onChange={(e) => setBranchId(e.target.value)}
+                    className={`${inputClasses} appearance-none`}
+                  >
+                    <option value="">— Chưa phân chi —</option>
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
 
             <div className="md:col-span-2">
               <label className="flex items-center gap-1.5 text-sm font-semibold text-amber-900/80 mb-1.5">

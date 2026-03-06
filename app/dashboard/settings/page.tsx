@@ -1,6 +1,7 @@
 import NotificationSettings from "@/components/NotificationSettings";
 import { getProfile, getSupabase } from "@/utils/supabase/queries";
-import { Settings } from "lucide-react";
+import { GitBranch, Settings } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getNotificationSettings } from "./actions";
 import ApiKeySettings from "./ApiKeySettings";
@@ -63,6 +64,23 @@ export default async function SettingsPage() {
         initialEmailRecipients={notificationSettings.email_recipients}
         initialThanhMinhEnabled={notificationSettings.thanh_minh_enabled ?? false}
       />
+
+      {/* Branch / Chi Management quick link */}
+      <Link
+        href="/dashboard/settings/branches"
+        className="flex items-center gap-4 p-5 bg-white rounded-2xl border border-stone-200 shadow-sm hover:border-amber-300 hover:shadow-md transition-all group"
+      >
+        <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-100 text-amber-700 group-hover:bg-amber-100 transition-colors">
+          <GitBranch className="size-5" />
+        </div>
+        <div>
+          <p className="font-semibold text-stone-800">Quản lý Chi / Nhánh</p>
+          <p className="text-sm text-stone-500 mt-0.5">
+            Phân chia dòng họ theo các chi, nhánh để dễ quản lý thành viên
+          </p>
+        </div>
+        <span className="ml-auto text-stone-300 group-hover:text-amber-500 transition-colors">→</span>
+      </Link>
     </main>
   );
 }

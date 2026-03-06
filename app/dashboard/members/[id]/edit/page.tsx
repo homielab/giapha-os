@@ -50,12 +50,13 @@ export default async function EditMemberPage({ params }: PageProps) {
 
   const initialData = { ...person, ...privateData };
 
+  const { data: branches } = await supabase
+    .from("branches")
+    .select("id, name")
+    .order("name", { ascending: true });
+
   return (
     <div className="flex-1 w-full relative flex flex-col pb-8">
-      {/* Decorative background blurs */}
-      {/* <div className="absolute -top-[20%] -left-[10%] w-[500px] h-[500px] bg-amber-200/20 rounded-full blur-[120px] pointer-events-none" /> */}
-      {/* <div className="absolute top-[40%] -right-[10%] w-[400px] h-[400px] bg-stone-300/20 rounded-full blur-[100px] pointer-events-none" /> */}
-
       <div className="w-full relative z-20 py-4 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
@@ -70,7 +71,7 @@ export default async function EditMemberPage({ params }: PageProps) {
       </div>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 relative z-10 w-full flex-1">
-        <MemberForm initialData={initialData} isEditing={true} isAdmin={true} />
+        <MemberForm initialData={initialData} isEditing={true} isAdmin={true} branches={branches ?? []} />
       </main>
     </div>
   );
