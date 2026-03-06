@@ -2,6 +2,7 @@ import { getProfile, getSupabase } from "@/utils/supabase/queries";
 import { Bot } from "lucide-react";
 import { redirect } from "next/navigation";
 import BotSettings from "@/components/BotSettings";
+import BotAISettings from "@/components/BotAISettings";
 
 export default async function BotSettingsPage({
   params,
@@ -44,6 +45,8 @@ export default async function BotSettingsPage({
       </div>
 
       <BotSettings branchId={id} branchName={branch.name} initialBot={botConfig} />
+
+      <BotAISettings branchId={id} branchName={branch.name} initialBot={botConfig} />
     </div>
   );
 }
