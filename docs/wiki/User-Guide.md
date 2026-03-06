@@ -244,3 +244,88 @@ Hỗ trợ **chế độ offline** — xem dữ liệu đã cache khi mất mạ
 - Biểu đồ phân bố theo **thế hệ**
 - Biểu đồ phân bố theo **độ tuổi**
 - Số sự kiện sắp tới trong 30 ngày
+
+---
+
+## 🪦 Quản Lý Mộ Phần *(v1.1)*
+
+> Chỉ hiển thị cho **thành viên đã mất** (`is_deceased = true` hoặc có năm mất).
+
+**Dashboard → Thành viên → [Tên] → Tab "Mộ phần"**
+
+### Thông Tin Mộ
+
+| Trường | Mô tả |
+|--------|-------|
+| **Loại táng** | Địa táng / Hỏa táng / Hỏa táng (bình) / Thủy táng |
+| **Trạng thái mộ** | Chưa có mộ / Đã xây mộ / Đã cải táng / Tro cốt |
+| **Tình trạng hài cốt** | Còn trong đất / Đã bốc mộ / Tro cốt / Bình tại nhà |
+| **Loại mộ xây** | Mô tả chất liệu (đá, xi măng...) |
+| **Nghĩa trang** | Tên nghĩa trang |
+| **Địa chỉ** | Địa chỉ đầy đủ |
+| **Toạ độ GPS** | Lat/Lng — click để xem trên OpenStreetMap |
+| **Câu khắc bia** | Epitaph |
+| **Người chăm mộ** | Chọn từ danh sách thành viên |
+| **Trưởng họ nhánh** | Chọn từ danh sách thành viên |
+| **Công khai** | Bật để hiển thị trên trang tưởng niệm |
+
+### Dòng Thời Gian An Táng
+
+Ghi lại các mốc quan trọng theo thứ tự thời gian:
+- ⚰️ Ngày chôn cất
+- 🏗️ Ngày xây mộ
+- 🔄 Ngày bốc mộ / cải táng
+- ✨ Và các sự kiện tùy chỉnh khác
+
+### Ảnh Mộ & 360° Panorama
+
+- Upload nhiều ảnh mộ (tối đa 20MB/ảnh)
+- Gán nhãn ảnh: mặt trước, mặt bên, toàn cảnh, chi tiết
+- **Ảnh 360°**: Upload ảnh panorama equirectangular → click "Xem 360°" để trải nghiệm toàn cảnh tương tác
+
+---
+
+## 🗺️ Bản Đồ Mộ Phần *(v1.1)*
+
+**Dashboard → Bản đồ mộ phần** (`/dashboard/cemetery-map`)
+
+- Hiển thị tất cả mộ có toạ độ GPS trên bản đồ
+- Màu marker theo trạng thái:
+  - 🔴 Đỏ — Chưa có mộ
+  - 🟢 Xanh — Đã xây mộ
+  - 🟠 Cam — Đã cải táng
+  - 🔵 Xanh dương — Tro cốt
+  - ⚫ Xám — Chưa rõ
+- Sidebar nhóm danh sách mộ theo nghĩa trang
+- Click marker để xem popup, click link để đến hồ sơ thành viên
+
+---
+
+## 🕯️ Trang Tưởng Niệm Công Khai *(v1.1)*
+
+Khi `public_memorial = true` trong thông tin mộ, thành viên sẽ có trang tưởng niệm tại:
+
+```
+https://yourdomain.com/memorial/[member-id]
+```
+
+Trang bao gồm:
+- Ảnh đại diện, tên đầy đủ, năm sinh–mất
+- Tiểu sử đầy đủ
+- Thông tin mộ (loại táng, nghĩa trang, địa chỉ, GPS)
+- Dòng thời gian sự kiện
+- Thư viện ảnh mộ
+- **QR Code** — tải PNG về để in dán lên bia mộ
+- Open Graph meta — chia sẻ đẹp lên Facebook, Zalo
+
+---
+
+## 🔔 Nhắc Tết Thanh Minh *(v1.1)*
+
+**Dashboard → Cài đặt → Thông báo → Toggle "Nhắc Tết Thanh Minh"**
+
+Hệ thống tự động gửi email nhắc nhở:
+- **7 ngày trước** ngày 3/3 âm lịch
+- **Đúng ngày** Tết Thanh Minh
+
+Email liệt kê danh sách tất cả mộ trong hệ thống kèm địa chỉ, toạ độ và link tưởng niệm.

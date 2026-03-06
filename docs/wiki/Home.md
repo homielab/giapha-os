@@ -35,6 +35,7 @@ Giapha-OS là ứng dụng web mã nguồn mở giúp các gia đình Việt Nam
 - **Trực quan hoá** cây gia phả dạng cây phân cấp và mindmap
 - **Tính toán** xưng hô tiếng Việt tự động (ông/bà/chú/thím...)
 - **Theo dõi** sinh nhật, ngày giỗ theo âm lịch và dương lịch
+- **Quản lý mộ phần**: GPS, ảnh 360°, tưởng niệm công khai, nhắc Thanh Minh *(v1.1)*
 - **Chia sẻ** gia phả công khai hoặc qua REST API
 
 ### Tech Stack

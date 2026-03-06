@@ -6,6 +6,55 @@ Format theo [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.0] — 2026-03-06
+
+> **Phase 5 — Grave Module**: Quản lý mộ phần toàn diện.
+
+### ✨ Added — Phase 5 (Grave Module)
+
+- **🪦 Quản lý Mộ Phần** ([#50](https://github.com/minhtuancn/giapha-os/pull/50), [#51](https://github.com/minhtuancn/giapha-os/pull/51))
+  - Schema DB: bảng `grave_records`, `grave_events`, `grave_photos` với 4 ENUM types
+  - RLS policy: anon chỉ đọc mộ `public_memorial=true`; editor/admin full CRUD
+  - TypeScript types: `GraveRecord`, `GraveEvent`, `GravePhoto`, `GraveRecordWithDetails`
+  - Server actions: upsert/delete grave record, events, photos
+  - UI component `GraveSection`: form đầy đủ (loại táng, trạng thái mộ, hài cốt, GPS, nghĩa trang, liên lạc)
+  - Badges trạng thái: `GraveStatusBadge`, `BurialTypeBadge`, `RemainsStatusBadge`
+  - Dòng thời gian `GraveTimeline`: chôn → xây mộ → bốc cốt → cải táng với emoji và ngày
+  - Chỉ hiển thị với thành viên đã mất (`is_deceased` hoặc có `death_year`)
+
+- **🗺️ Bản Đồ Mộ Phần** ([#52](https://github.com/minhtuancn/giapha-os/pull/52))
+  - Trang `/dashboard/cemetery-map` với Leaflet markers màu theo trạng thái mộ
+  - Sidebar nhóm danh sách mộ theo nghĩa trang
+  - Marker popup: tên người, năm mất, nghĩa trang, link hồ sơ
+  - SSR-safe: `CemeteryMapWrapper` dùng `dynamic()` + `ssr: false`
+  - Link "Bản đồ mộ phần" trên HeaderMenu (icon Landmark)
+
+- **📸 Ảnh Mộ & 360° Panorama** ([#55](https://github.com/minhtuancn/giapha-os/pull/55))
+  - Upload nhiều ảnh mộ lên Supabase Storage bucket `grave-photos`
+  - Lightbox full-screen với điều hướng bàn phím (← → Esc)
+  - Tag ảnh: mặt trước, mặt bên, toàn cảnh, chi tiết, bản đồ vị trí
+  - Ảnh 360° equirectangular với `@photo-sphere-viewer/core`
+  - Viewer in-page: zoom + fullscreen, touch-enabled
+  - SSR-safe: `PanoramaViewer` wrapper dùng `dynamic()` + `ssr: false`
+
+- **🕯️ Trang Tưởng Niệm Công Khai** ([#53](https://github.com/minhtuancn/giapha-os/pull/53))
+  - Trang `/memorial/[id]` công khai (không cần đăng nhập)
+  - 404 nếu `public_memorial = false` — bảo vệ quyền riêng tư
+  - Hero section: ảnh đại diện, tên, năm sinh–mất, tiểu sử
+  - Thông tin mộ phần, dòng thời gian, thư viện ảnh
+  - QR code canvas (download PNG) để in dán lên bia mộ
+  - Open Graph meta tags cho chia sẻ mạng xã hội (`og:image`, `og:description`)
+
+- **🔔 Nhắc Tết Thanh Minh** ([#54](https://github.com/minhtuancn/giapha-os/pull/54))
+  - Tự động tính ngày 3/3 âm lịch → dương lịch via `lunar-javascript`
+  - Gửi email nhắc nhở 7 ngày trước và đúng ngày Thanh Minh
+  - Email liệt kê tất cả mộ có địa chỉ, toạ độ GPS, link tưởng niệm
+  - Deduplication qua `notification_log` (event_type `thanh_minh`)
+  - Toggle `thanh_minh_enabled` trong Settings UI
+  - Schema: `ALTER TABLE notification_settings ADD COLUMN IF NOT EXISTS thanh_minh_enabled`
+
+---
+
 ## [1.0.0] — 2026-03-06
 
 > **Release đầu tiên** — Toàn bộ roadmap Phase 0–4 hoàn thành.

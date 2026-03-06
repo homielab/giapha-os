@@ -28,6 +28,9 @@ Phù hợp với người Việt Nam.
 - **Quản lý thành viên**: Lưu trữ thông tin, avatar và sắp xếp thứ tự nhánh dòng họ.
 - **Quản lý quan hệ**: Quản lý các mối quan hệ trong gia phả (hỗ trợ các trường hợp đặc biệt như đa thê, đa phu,...).
 - **Thống kê & Sự kiện**: Theo dõi ngày giỗ và các chỉ số nhân khẩu học của dòng họ.
+- **Quản lý mộ phần** *(v1.1)*: Lưu thông tin mộ, toạ độ GPS, ảnh mộ 360°, dòng thời gian an táng, nhắc Tết Thanh Minh.
+- **Bản đồ mộ phần** *(v1.1)*: Xem vị trí toàn bộ mộ trên bản đồ, nhóm theo nghĩa trang.
+- **Trang tưởng niệm công khai** *(v1.1)*: Trang web công khai cho người đã mất, chia sẻ qua QR code.
 - **Sao lưu dữ liệu**: Xuất/nhập file JSON, CSV, GEDCOM để lưu trữ hoặc di chuyển dễ dàng.
 - **Bảo mật**: Phân quyền (Admin, Editor, Member) và bảo vệ dữ liệu bằng Supabase.
 - **Đa thiết bị**: Giao diện hiện đại, tối ưu cho cả máy tính và điện thoại.

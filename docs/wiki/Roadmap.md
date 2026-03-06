@@ -1,10 +1,12 @@
 # 🗺️ Roadmap — Kế Hoạch Phát Triển Tương Lai
 
-> Trạng thái: **v1.0 Released** — Các tính năng dưới đây là định hướng cho v1.x và v2.0.
+> Trạng thái: **v1.1 Released** — Phase 5 (Grave Module) hoàn thành.
 
 ---
 
-## ✅ Đã Hoàn Thành (v1.0)
+## ✅ Đã Hoàn Thành
+
+### v1.0 (Phase 0–4)
 
 | Phase | Tính năng | PR |
 |-------|-----------|-----|
@@ -14,9 +16,20 @@
 | 3 | PWA, DB Migration, Photo Gallery, REST API | #34–#37 |
 | 4 | Map View, i18n (VI/EN/漢字), Email Notifications | #38–#41 |
 
+### v1.1 (Phase 5 — Grave Module)
+
+| Tính năng | PR | Issue |
+|-----------|-----|-------|
+| 🪦 Grave Records Schema & Actions | #50 | #44 |
+| 🪦 Grave Detail UI (badges, timeline, form) | #51 | #45 |
+| 🗺️ Cemetery Map với GPS markers | #52 | #46 |
+| 🕯️ Public Memorial Page + QR Code | #53 | #48 |
+| 🔔 Tết Thanh Minh Reminders | #54 | #49 |
+| 📸 Grave Photos & 360° Panorama Viewer | #55 | #47 |
+
 ---
 
-## 🚀 v1.1 — Cải Tiến UX (Ngắn Hạn)
+## 🚀 v1.2 — Cải Tiến UX (Ngắn Hạn)
 
 ### 🔔 Notifications Nâng Cao
 - [ ] Push notifications (Web Push API) — nhận thông báo ngay trên trình duyệt
@@ -35,9 +48,16 @@
 - [ ] Link liên kết với hồ sơ mạng xã hội
 - [ ] QR code danh thiếp điện tử
 
+### 🪦 Grave Module Nâng Cao
+- [ ] So sánh / hiển thị nhiều mộ trên cùng bản đồ
+- [ ] Xem mộ 3D (Three.js / model upload)
+- [ ] Chia sẻ link tưởng niệm qua mạng xã hội (đã có OG tags)
+- [ ] Nhắc ngày giỗ + chăm mộ định kỳ (ngoài Thanh Minh)
+- [ ] Upload nhiều ảnh 360° (gallery panorama)
+
 ---
 
-## 🚀 v1.2 — Cộng Tác & Chia Sẻ
+## 🚀 v1.3 — Cộng Tác & Chia Sẻ
 
 ### 👨‍👩‍👧‍👦 Multi-Family Support
 - [ ] Nhiều gia đình trong một instance
