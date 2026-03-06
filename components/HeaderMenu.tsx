@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, GitCommitVertical, History, Info, Landmark, Map, Network, Settings, Settings2, UserCircle } from "lucide-react";
+import { ChevronDown, GitCommitVertical, History, Info, Landmark, Map, Network, Settings, Settings2, Shield, UserCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -98,6 +98,17 @@ export default function HeaderMenu() {
                 <Landmark className="size-4" />
                 Bản đồ mộ phần
               </Link>
+
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 dark:text-stone-300 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-stone-700 transition-colors"
+                >
+                  <Shield className="size-4" />
+                  Super Admin
+                </Link>
+              )}
 
               {isAdmin && (
                 <Link

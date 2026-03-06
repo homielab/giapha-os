@@ -82,6 +82,16 @@ export default function LandingHero({ siteName }: LandingHeroProps) {
               <ArrowRight className="size-5 group-hover:translate-x-1.5 transition-transform" />
             </span>
           </Link>
+
+          <a
+            href="https://giapha-os-rose.vercel.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group inline-flex items-center justify-center gap-2 px-8 py-4 sm:px-10 sm:py-5 text-base sm:text-lg font-semibold text-stone-700 bg-white border border-stone-200 hover:border-amber-300 hover:text-amber-700 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 active:translate-y-0 w-full sm:w-auto"
+          >
+            Xem Demo
+            <ArrowRight className="size-5 group-hover:translate-x-1.5 transition-transform opacity-60" />
+          </a>
         </motion.div>
 
         <motion.div

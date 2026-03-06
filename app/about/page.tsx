@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowLeft, Info, Mail, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Info, Mail, MapPin, MessageCircle, ShieldAlert, User } from "lucide-react";
 import Link from "next/link";
 
 export default function AboutPage() {
@@ -84,7 +84,7 @@ export default function AboutPage() {
                     <strong className="text-stone-800">Demo công khai:</strong>{" "}
                     Trang demo tại{" "}
                     <code className="bg-white border border-stone-200 px-1 py-0.5 rounded text-[13px] text-amber-700">
-                      giapha-os.homielab.com
+                      giapha-os-rose.vercel.app
                     </code>{" "}
                     sử dụng dữ liệu mẫu hư cấu, không chứa thông tin của người
                     thật. Không nên nhập thông tin cá nhân thật vào trang demo.
@@ -101,17 +101,66 @@ export default function AboutPage() {
                 </h2>
               </div>
 
-              <p className="text-stone-600 leading-relaxed text-[15px] mb-8">
+              <p className="text-stone-600 leading-relaxed text-[15px] mb-6">
                 Nếu bạn có bất kỳ thắc mắc, đề xuất tính năng, báo lỗi khi sử
-                dụng phần mềm, hoặc muốn thảo luận thì xin vui lòng gửi email về
-                địa chỉ:{` `}
-                <a
-                  href="mailto:giaphaos@homielab.com"
-                  className="font-semibold text-amber-700 hover:text-amber-600 transition-colors inline-flex items-center gap-1.5 mt-2"
-                >
-                  giaphaos@homielab.com
-                </a>
+                dụng phần mềm, hoặc muốn thảo luận thì xin vui lòng liên hệ:
               </p>
+
+              {/* Developer card */}
+              <div className="bg-gradient-to-br from-amber-50 to-white border border-amber-200/60 rounded-2xl p-6 mb-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-amber-100 text-amber-700 rounded-xl">
+                    <User className="size-5" />
+                  </div>
+                  <h3 className="font-bold text-stone-800 text-base">Nhà phát triển</h3>
+                </div>
+                <div className="space-y-3 text-[14.5px]">
+                  <div className="flex items-center gap-3 text-stone-700">
+                    <span className="font-semibold text-stone-900 w-20">Tên:</span>
+                    <span>Minh Tuấn</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-stone-700">
+                    <span className="font-semibold text-stone-900 w-20">Email:</span>
+                    <a
+                      href="mailto:vietkeynet@gmail.com"
+                      className="font-medium text-amber-700 hover:text-amber-600 transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <Mail className="size-3.5" />
+                      vietkeynet@gmail.com
+                    </a>
+                  </div>
+                  <div className="flex items-center gap-3 text-stone-700">
+                    <span className="font-semibold text-stone-900 w-20">WhatsApp:</span>
+                    <a
+                      href="https://wa.me/84912537003"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-green-700 hover:text-green-600 transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <MessageCircle className="size-3.5" />
+                      0912 537 003
+                    </a>
+                  </div>
+                  <div className="flex items-center gap-3 text-stone-700">
+                    <span className="font-semibold text-stone-900 w-20">Địa chỉ:</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <MapPin className="size-3.5 text-rose-500" />
+                      Ninh Bình, Việt Nam
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-stone-700">
+                    <span className="font-semibold text-stone-900 w-20">GitHub:</span>
+                    <a
+                      href="https://github.com/minhtuancn/giapha-os"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-stone-700 hover:text-amber-700 transition-colors inline-flex items-center gap-1.5"
+                    >
+                      minhtuancn/giapha-os
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>

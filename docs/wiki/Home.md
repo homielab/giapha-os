@@ -78,5 +78,7 @@ Truy cập [http://localhost:3000](http://localhost:3000)
 ## 📬 Liên Hệ & Đóng Góp
 
 - **GitHub Issues:** [minhtuancn/giapha-os/issues](https://github.com/minhtuancn/giapha-os/issues)
+- **Developer:** Minh Tuấn — vietkeynet@gmail.com — Ninh Bình, Việt Nam
+- **WhatsApp:** [0912 537 003](https://wa.me/84912537003)
 - **Upstream:** [homielab/giapha-os](https://github.com/homielab/giapha-os)
 - **License:** MIT
