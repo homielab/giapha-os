@@ -7,6 +7,7 @@ import {
   deleteGraveEvent,
 } from "@/app/dashboard/members/[id]/grave/actions";
 import GraveEventForm from "@/components/GraveEventForm";
+import GravePhotoGallery from "@/components/GravePhotoGallery";
 import GraveTimeline from "@/components/GraveTimeline";
 import {
   GraveStatusBadge,
@@ -397,6 +398,22 @@ export default function GraveSection({
             loadEvents();
           }}
         />
+      )}
+
+      {/* Photos & 360° Panorama */}
+      {record && (
+        <div>
+          <hr className="border-stone-100 mb-4" />
+          <h4 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-4">Ảnh mộ phần</h4>
+          <GravePhotoGallery
+            graveId={record.id}
+            canEdit={canEdit}
+            panoramaUrl={record.panorama_url}
+            onPanoramaChange={(url) => {
+              setRecord((prev) => prev ? { ...prev, panorama_url: url } : prev);
+            }}
+          />
+        </div>
       )}
     </div>
   );
