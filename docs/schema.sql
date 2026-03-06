@@ -635,3 +635,184 @@ CREATE POLICY "Admins can manage notification log"
   ON public.notification_log FOR ALL TO authenticated
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
+
+-- ==========================================
+-- GRAVE RECORDS & EVENTS (Module Mồ Mả v1.1)
+-- ==========================================
+
+-- ENUMS for grave module
+DO $$ BEGIN
+    CREATE TYPE public.burial_type_enum AS ENUM ('burial', 'cremation', 'cremation_urn', 'sea_burial', 'other');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE public.grave_status_enum AS ENUM ('no_grave', 'has_grave', 'grave_moved', 'cremated_urn', 'unknown');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE public.remains_status_enum AS ENUM ('in_ground', 'exhumed', 'cremated_ashes', 'urn_home', 'unknown');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE public.grave_event_type_enum AS ENUM (
+      'burial', 'exhumation', 'grave_construction', 'grave_renovation',
+      'cremation', 'urn_placement', 'cleaning', 'other'
+    );
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+-- GRAVE_RECORDS (One per deceased person)
+CREATE TABLE IF NOT EXISTS public.grave_records (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  person_id UUID NOT NULL UNIQUE REFERENCES public.persons(id) ON DELETE CASCADE,
+
+  -- Burial info
+  burial_type public.burial_type_enum,
+  grave_status public.grave_status_enum NOT NULL DEFAULT 'unknown',
+  remains_status public.remains_status_enum NOT NULL DEFAULT 'unknown',
+
+  -- Grave details (for physical graves)
+  grave_type TEXT,               -- e.g. "Đá hoa cương", "Gạch", "Đất đắp"
+  cemetery_name TEXT,
+  cemetery_address TEXT,
+  gps_lat DOUBLE PRECISION,
+  gps_lng DOUBLE PRECISION,
+
+  -- Context
+  cause_of_death TEXT,
+  epitaph TEXT,                  -- Bia ký / câu thơ tưởng nhớ
+  caretaker_person_id UUID REFERENCES public.persons(id) ON DELETE SET NULL,
+  branch_head_person_id UUID REFERENCES public.persons(id) ON DELETE SET NULL,
+
+  -- Media
+  panorama_url TEXT,             -- URL ảnh 360° trong Supabase Storage
+
+  -- Public memorial
+  public_memorial BOOLEAN NOT NULL DEFAULT false,
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_grave_records_person_id ON public.grave_records(person_id);
+CREATE INDEX IF NOT EXISTS idx_grave_records_cemetery ON public.grave_records(cemetery_name);
+CREATE INDEX IF NOT EXISTS idx_grave_records_public ON public.grave_records(public_memorial) WHERE public_memorial = true;
+
+CREATE TRIGGER grave_records_updated_at
+  BEFORE UPDATE ON public.grave_records
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- GRAVE_EVENTS (Timeline: burial → exhumation → construction → renovation...)
+CREATE TABLE IF NOT EXISTS public.grave_events (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  grave_id UUID NOT NULL REFERENCES public.grave_records(id) ON DELETE CASCADE,
+
+  event_type public.grave_event_type_enum NOT NULL,
+  event_date DATE,               -- Solar date
+  event_lunar_day INT,           -- Âm lịch: ngày
+  event_lunar_month INT,         -- Âm lịch: tháng
+  event_lunar_year INT,          -- Âm lịch: năm
+  event_lunar_is_leap BOOLEAN DEFAULT false,
+
+  notes TEXT,
+  conducted_by TEXT,             -- Người thực hiện (free text)
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_grave_events_grave_id ON public.grave_events(grave_id);
+CREATE INDEX IF NOT EXISTS idx_grave_events_date ON public.grave_events(event_date);
+
+-- GRAVE_PHOTOS (Photos attached to a grave record)
+CREATE TABLE IF NOT EXISTS public.grave_photos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  grave_id UUID NOT NULL REFERENCES public.grave_records(id) ON DELETE CASCADE,
+  storage_path TEXT NOT NULL,
+  caption TEXT,
+  photo_tag TEXT,                -- 'construction', 'current', 'exhumation', 'other'
+  is_panorama BOOLEAN NOT NULL DEFAULT false,
+  uploaded_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_grave_photos_grave_id ON public.grave_photos(grave_id);
+
+-- RLS POLICIES
+
+ALTER TABLE public.grave_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.grave_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.grave_photos ENABLE ROW LEVEL SECURITY;
+
+-- grave_records: authenticated users read all
+DROP POLICY IF EXISTS "Authenticated users can view grave records" ON public.grave_records;
+CREATE POLICY "Authenticated users can view grave records"
+  ON public.grave_records FOR SELECT TO authenticated USING (true);
+
+-- grave_records: anon can read only public memorial records
+DROP POLICY IF EXISTS "Anon can view public memorial records" ON public.grave_records;
+CREATE POLICY "Anon can view public memorial records"
+  ON public.grave_records FOR SELECT TO anon
+  USING (public_memorial = true);
+
+-- grave_records: editor/admin can insert/update/delete
+DROP POLICY IF EXISTS "Editors can manage grave records" ON public.grave_records;
+CREATE POLICY "Editors can manage grave records"
+  ON public.grave_records FOR ALL TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'editor'))
+  )
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'editor'))
+  );
+
+-- grave_events: authenticated read all
+DROP POLICY IF EXISTS "Authenticated users can view grave events" ON public.grave_events;
+CREATE POLICY "Authenticated users can view grave events"
+  ON public.grave_events FOR SELECT TO authenticated USING (true);
+
+-- grave_events: anon can read events for public memorial records
+DROP POLICY IF EXISTS "Anon can view events for public memorials" ON public.grave_events;
+CREATE POLICY "Anon can view events for public memorials"
+  ON public.grave_events FOR SELECT TO anon
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.grave_records gr
+      WHERE gr.id = grave_id AND gr.public_memorial = true
+    )
+  );
+
+-- grave_events: editor/admin manage
+DROP POLICY IF EXISTS "Editors can manage grave events" ON public.grave_events;
+CREATE POLICY "Editors can manage grave events"
+  ON public.grave_events FOR ALL TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'editor'))
+  )
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'editor'))
+  );
+
+-- grave_photos: authenticated read all
+DROP POLICY IF EXISTS "Authenticated users can view grave photos" ON public.grave_photos;
+CREATE POLICY "Authenticated users can view grave photos"
+  ON public.grave_photos FOR SELECT TO authenticated USING (true);
+
+-- grave_photos: anon can read photos for public memorials
+DROP POLICY IF EXISTS "Anon can view photos for public memorials" ON public.grave_photos;
+CREATE POLICY "Anon can view photos for public memorials"
+  ON public.grave_photos FOR SELECT TO anon
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.grave_records gr
+      WHERE gr.id = grave_id AND gr.public_memorial = true
+    )
+  );
+
+-- grave_photos: editor/admin manage
+DROP POLICY IF EXISTS "Editors can manage grave photos" ON public.grave_photos;
+CREATE POLICY "Editors can manage grave photos"
+  ON public.grave_photos FOR ALL TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'editor'))
+  )
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'editor'))
+  );
