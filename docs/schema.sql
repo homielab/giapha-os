@@ -314,6 +314,20 @@ CREATE POLICY "Users can update avatars." ON storage.objects FOR UPDATE USING ( 
 DROP POLICY IF EXISTS "Users can delete avatars." ON storage.objects;
 CREATE POLICY "Users can delete avatars." ON storage.objects FOR DELETE USING ( bucket_id = 'avatars' AND auth.role() = 'authenticated' );
 
+-- Initialize 'shared-photos' bucket
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('shared-photos', 'shared-photos', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "Shared photos are publicly accessible." ON storage.objects;
+CREATE POLICY "Shared photos are publicly accessible." ON storage.objects FOR SELECT USING ( bucket_id = 'shared-photos' );
+
+DROP POLICY IF EXISTS "Authenticated users can upload shared photos." ON storage.objects;
+CREATE POLICY "Authenticated users can upload shared photos." ON storage.objects FOR INSERT WITH CHECK ( bucket_id = 'shared-photos' AND auth.role() = 'authenticated' );
+
+DROP POLICY IF EXISTS "Admins can delete shared photos." ON storage.objects;
+CREATE POLICY "Admins can delete shared photos." ON storage.objects FOR DELETE USING ( bucket_id = 'shared-photos' AND public.is_admin() );
+
 -- ==========================================
 -- ADMIN RPC FUNCTIONS
 -- ==========================================

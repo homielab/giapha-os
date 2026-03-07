@@ -9,11 +9,19 @@ import {
   Database,
   Flower2,
   GitMerge,
+  Images,
   Network,
   Star,
   Users,
 } from "lucide-react";
 import Link from "next/link";
+
+const WEEKDAY_VI = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+function getWeekday(daysUntil: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysUntil);
+  return WEEKDAY_VI[d.getDay()];
+}
 
 /* ── Event type helpers ───────────────────────────────────────────── */
 const eventTypeConfig = {
@@ -80,15 +88,6 @@ export default async function DashboardLaunchpad() {
     //   hoverColor: "hover:border-emerald-400 hover:shadow-emerald-100",
     // },
     {
-      title: "Tra cứu danh xưng",
-      description: "Hệ thống gọi tên họ hàng chuẩn xác",
-      icon: <GitMerge className="size-8 text-blue-600" />,
-      href: "/dashboard/kinship",
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200/60",
-      hoverColor: "hover:border-blue-400 hover:shadow-blue-100",
-    },
-    {
       title: "Thống kê gia phả",
       description: "Tổng quan dữ liệu và biểu đồ phân tích",
       icon: <BarChart2 className="size-8 text-purple-600" />,
@@ -96,6 +95,24 @@ export default async function DashboardLaunchpad() {
       bgColor: "bg-purple-50",
       borderColor: "border-purple-200/60",
       hoverColor: "hover:border-purple-400 hover:shadow-purple-100",
+    },
+    {
+      title: "Chia sẻ ảnh",
+      description: "Lưu giữ và chia sẻ ảnh gia đình, dòng tộc",
+      icon: <Images className="size-8 text-pink-600" />,
+      href: "/dashboard/photos",
+      bgColor: "bg-pink-50",
+      borderColor: "border-pink-200/60",
+      hoverColor: "hover:border-pink-400 hover:shadow-pink-100",
+    },
+        {
+      title: "Tra cứu danh xưng",
+      description: "Hệ thống gọi tên họ hàng chuẩn xác",
+      icon: <GitMerge className="size-8 text-blue-600" />,
+      href: "/dashboard/kinship",
+      bgColor: "bg-blue-50",
+      borderColor: "border-blue-200/60",
+      hoverColor: "hover:border-blue-400 hover:shadow-blue-100",
     },
     // {
     //   title: "Giới thiệu & Liên hệ",
@@ -212,8 +229,8 @@ export default async function DashboardLaunchpad() {
                             {evt.daysUntil === 0
                               ? "Hôm nay"
                               : evt.daysUntil === 1
-                                ? "Ngày mai"
-                                : `${evt.daysUntil} ngày nữa`}{" "}
+                                ? `Ngày mai · ${getWeekday(evt.daysUntil)}`
+                                : `${evt.daysUntil} ngày nữa · ${getWeekday(evt.daysUntil)}`}{" "}
                             · {evt.eventDateLabel}
                           </span>
                         </div>
