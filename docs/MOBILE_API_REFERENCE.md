@@ -434,3 +434,300 @@ All error responses follow this format:
 - Batch mutation endpoint for offline changes
 - Pagination for large datasets
 - Webhooks for real-time sync
+
+---
+
+### Push Notifications
+
+#### POST /notifications/tokens
+
+Register a push notification token (device token from Expo/Firebase).
+
+**Request:**
+```json
+{
+  "token": "ExponentPushToken[abc123...]",
+  "platform": "ios",
+  "device_name": "iPhone 15 Pro",
+  "device_os_version": "18.2"
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "token": "ExponentPushToken[abc123...]",
+  "platform": "ios",
+  "created_at": "2026-03-07T21:59:00Z"
+}
+```
+
+**Code Examples:**
+
+**TypeScript (React Native/Expo):**
+```typescript
+import * as Notifications from 'expo-notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+async function registerPushToken(accessToken: string) {
+  // Get Expo push token
+  const { data: token } = await Notifications.getExpoPushTokenAsync({
+    projectId: Constants.expoConfig?.extra?.eas.projectId,
+  });
+
+  const response = await fetch('https://giapha-os.vercel.app/api/v1/notifications/tokens', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      token,
+      platform: Platform.OS,
+      device_name: Constants.deviceName,
+      device_os_version: Platform.Version.toString(),
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to register token');
+  }
+
+  const data = await response.json();
+  console.log('Token registered:', data.id);
+  return data;
+}
+
+// Register on app start and after login
+useEffect(() => {
+  (async () => {
+    const token = await AsyncStorage.getItem('access_token');
+    if (token) {
+      await registerPushToken(token);
+    }
+  })();
+}, []);
+```
+
+---
+
+#### GET /notifications/tokens
+
+List all registered push notification tokens for current user.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response (200 OK):**
+```json
+{
+  "tokens": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "token": "ExponentPushToken[abc123...]",
+      "platform": "ios",
+      "device_name": "iPhone 15 Pro",
+      "is_active": true,
+      "last_used_at": "2026-03-07T21:55:00Z",
+      "created_at": "2026-03-07T21:59:00Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+---
+
+#### DELETE /notifications/tokens?token=<token>
+
+Unregister a push notification token (e.g., when user logs out).
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response (200 OK):**
+```json
+{
+  "message": "Token deleted successfully"
+}
+```
+
+**Code Example:**
+
+**TypeScript (React Native):**
+```typescript
+async function unregisterPushToken(accessToken: string, token: string) {
+  const response = await fetch(
+    `https://giapha-os.vercel.app/api/v1/notifications/tokens?token=${encodeURIComponent(token)}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to unregister token');
+  }
+
+  return await response.json();
+}
+
+// Call when user logs out
+async function logout() {
+  const token = await Notifications.getExpoPushTokenAsync();
+  const accessToken = await AsyncStorage.getItem('access_token');
+  
+  await unregisterPushToken(accessToken!, token.data);
+  await AsyncStorage.removeItem('access_token');
+  await AsyncStorage.removeItem('refresh_token');
+}
+```
+
+---
+
+## Mobile Sync Strategy
+
+### Data Flow
+1. **Auth Phase**
+   - User provides email/password
+   - Receive JWT (valid 1 hour) + refresh token (valid 7 days)
+   - Store refresh token in SecureStore
+
+2. **Sync Phase**
+   - Query `since=<last_sync_timestamp>`
+   - Receive persons, relationships, custom_events
+   - Apply changes to local SQLite DB
+   - Use last-write-wins for conflicts
+
+3. **Push Notifications**
+   - Register device token on app start
+   - Server sends notifications when family events occur
+   - User can opt-in/out in app settings
+
+### Offline Handling
+- All reads use local SQLite database
+- All writes are queued locally
+- When online, batch changes to server
+- Sync endpoint merges conflicts
+
+### Rate Limits Applied
+- Login: 3 attempts per 5 minutes per IP
+- Sync: 100 requests per hour per user
+- Notifications: No limit on receipt (server-side rate limited)
+
+---
+
+## Implementation Checklist
+
+### Week 1: Authentication ✅
+- [x] POST /auth/login endpoint
+- [x] POST /auth/refresh endpoint
+- [x] JWT token generation and validation
+- [x] Rate limiting for login
+- [x] Token storage in refresh_tokens table
+
+### Week 2: Sync ✅
+- [x] GET /sync endpoint
+- [x] Incremental sync by timestamp
+- [x] Conflict resolution (last-write-wins)
+- [x] Sync logging for monitoring
+- [x] Branch filtering support
+
+### Week 3: Push Notifications ✅
+- [x] POST /notifications/tokens endpoint
+- [x] GET /notifications/tokens endpoint
+- [x] DELETE /notifications/tokens endpoint
+- [x] POST /notifications/send endpoint (internal)
+- [x] Notification token CRUD
+- [x] Token expiration and cleanup
+
+### Testing (Recommended)
+- [ ] cURL or Postman tests for each endpoint
+- [ ] Integration tests with sample data
+- [ ] Performance testing with 10k+ users
+- [ ] End-to-end tests with Expo app
+
+---
+
+## Troubleshooting
+
+### "Invalid JSON in request body"
+- Verify Content-Type header is `application/json`
+- Check JSON is valid (use jq or online validator)
+- Ensure body is not empty
+
+### "Too many login attempts"
+- Wait for Retry-After seconds (check response header)
+- Verify email/password before retrying
+- Consider suggesting password reset to user
+
+### "Token refresh failed"
+- Refresh token may be expired (7 days)
+- User logged in from multiple devices (token invalidated)
+- User explicitly revoked token in settings
+- Solution: Redirect to login screen
+
+### "Failed to fetch tokens"
+- User may not have registered any devices yet
+- Check Authorization header is correct
+- Verify user has valid access token
+
+### Notifications not arriving
+- Device token may be invalid (check is_active flag)
+- Check if push service (Expo/Firebase) is correctly configured
+- Verify notification_logs table for delivery status
+- Check OS notification settings on device
+
+---
+
+## Security Best Practices
+
+1. **Token Storage**
+   - Store refresh tokens in SecureStore, NOT SharedPreferences
+   - Store access tokens in memory only
+   - Clear tokens on logout
+
+2. **Network Security**
+   - Always use HTTPS (not HTTP)
+   - Implement certificate pinning for production
+   - Add request signing to prevent tampering
+
+3. **Input Validation**
+   - Validate email format on client
+   - Validate password minimum length (8 chars)
+   - Sanitize user input in custom_events
+
+4. **Rate Limiting**
+   - Respect Retry-After headers
+   - Implement exponential backoff for failed requests
+   - Don't hammer endpoints with rapid requests
+
+5. **Error Handling**
+   - Don't expose detailed error messages to user
+   - Log errors for debugging
+   - Show generic "Something went wrong" message
+
+---
+
+## What's Next
+
+### Phase 3: Mobile App MVP (Q2 2026)
+- React Native project setup
+- Auth + Secure Storage integration
+- SQLite offline database
+- Family tree visualization
+- App Store + Play Store launch
+
+### Future Enhancements
+- Batch mutation endpoint for offline changes
+- Pagination for large datasets
+- Webhooks for real-time sync
+- Vector clocks for concurrent edit resolution
+- E2E encryption for sensitive data
