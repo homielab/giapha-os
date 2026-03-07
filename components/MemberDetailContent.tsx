@@ -382,61 +382,52 @@ export default function MemberDetailContent({
           {/* Sidebar / Private Info */}
           <div className="space-y-6">
             <motion.div variants={itemVariants}>
-              {isAdmin ? (
-                <div className="bg-stone-50 p-5 sm:p-6 rounded-2xl border border-stone-200/80 shadow-sm">
-                  <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2 text-sm sm:text-base border-b border-stone-200/60 pb-3">
-                    <span className="bg-amber-100/80 text-amber-700 p-1.5 rounded-lg border border-amber-200/50">
-                      🔒
-                    </span>
-                    Thông tin liên hệ
-                  </h3>
-                  <dl className="space-y-4 text-sm sm:text-base">
-                    <div>
-                      <dt className="text-[11px] font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5 mb-1">
-                        <Phone className="w-3.5 h-3.5" /> Số điện thoại
-                      </dt>
-                      <dd className="text-stone-900 font-medium bg-white px-3 py-2 rounded-lg border border-stone-200/60 shadow-xs">
-                        {(fullPerson.phone_number as string) || (
-                          <span className="text-stone-400 font-normal">
-                            Chưa cập nhật
-                          </span>
-                        )}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[11px] font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5 mb-1">
-                        <Briefcase className="w-3.5 h-3.5" /> Nghề nghiệp
-                      </dt>
-                      <dd className="text-stone-900 font-medium bg-white px-3 py-2 rounded-lg border border-stone-200/60 shadow-xs">
-                        {(fullPerson.occupation as string) || (
-                          <span className="text-stone-400 font-normal">
-                            Chưa cập nhật
-                          </span>
-                        )}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[11px] font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5 mb-1">
-                        <MapPin className="w-3.5 h-3.5" /> Nơi ở hiện tại
-                      </dt>
-                      <dd className="text-stone-900 font-medium bg-white px-3 py-2 rounded-lg border border-stone-200/60 shadow-xs">
-                        {(fullPerson.current_residence as string) || (
-                          <span className="text-stone-400 font-normal">
-                            Chưa cập nhật
-                          </span>
-                        )}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              ) : (
-                <div className="bg-stone-50/50 p-5 rounded-2xl border border-stone-200 border-dashed flex flex-col items-center justify-center text-center gap-2">
-                  <span className="text-2xl opacity-50">🔒</span>
-                  <p className="text-sm font-medium text-stone-500">
-                    Thông tin liên hệ chỉ hiển thị với Quản trị viên.
-                  </p>
-                </div>
-              )}
+              <div className="bg-stone-50 p-5 sm:p-6 rounded-2xl border border-stone-200/80 shadow-sm">
+                <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2 text-sm sm:text-base border-b border-stone-200/60 pb-3">
+                  <span className="bg-amber-100/80 text-amber-700 p-1.5 rounded-lg border border-amber-200/50">
+                    📋
+                  </span>
+                  Thông tin liên hệ
+                </h3>
+                <dl className="space-y-4 text-sm sm:text-base">
+                  <div>
+                    <dt className="text-[11px] font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                      <Phone className="w-3.5 h-3.5" /> Số điện thoại
+                    </dt>
+                    <dd className="text-stone-900 font-medium bg-white px-3 py-2 rounded-lg border border-stone-200/60 shadow-xs">
+                      {(fullPerson.phone_number as string) || (
+                        <span className="text-stone-400 font-normal">
+                          Chưa cập nhật
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[11px] font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                      <Briefcase className="w-3.5 h-3.5" /> Nghề nghiệp
+                    </dt>
+                    <dd className="text-stone-900 font-medium bg-white px-3 py-2 rounded-lg border border-stone-200/60 shadow-xs">
+                      {(fullPerson.occupation as string) || (
+                        <span className="text-stone-400 font-normal">
+                          Chưa cập nhật
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[11px] font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                      <MapPin className="w-3.5 h-3.5" /> Nơi ở hiện tại
+                    </dt>
+                    <dd className="text-stone-900 font-medium bg-white px-3 py-2 rounded-lg border border-stone-200/60 shadow-xs">
+                      {(fullPerson.current_residence as string) || (
+                        <span className="text-stone-400 font-normal">
+                          Chưa cập nhật
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
             </motion.div>
           </div>
         </div>

@@ -185,7 +185,8 @@ CREATE POLICY "Admins can delete persons" ON public.persons FOR DELETE TO authen
 
 -- PERSON_DETAILS_PRIVATE POLICIES
 DROP POLICY IF EXISTS "Admins can view private details" ON public.person_details_private;
-CREATE POLICY "Admins can view private details" ON public.person_details_private FOR SELECT TO authenticated USING (public.is_admin());
+DROP POLICY IF EXISTS "Authenticated users can view private details" ON public.person_details_private;
+CREATE POLICY "Authenticated users can view private details" ON public.person_details_private FOR SELECT TO authenticated USING (true);
 
 DROP POLICY IF EXISTS "Admins can manage private details" ON public.person_details_private;
 CREATE POLICY "Admins can manage private details" ON public.person_details_private FOR ALL TO authenticated USING (public.is_admin());
