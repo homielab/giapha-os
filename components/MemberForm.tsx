@@ -644,14 +644,12 @@ export default function MemberForm({
           <Lock className="absolute -right-6 -bottom-6 w-32 h-32 text-amber-500/5 rotate-12" />
 
           <h3 className="text-lg sm:text-xl font-serif font-bold text-amber-900 mb-6 border-b border-amber-200/50 pb-4 flex items-center gap-2 relative z-10">
-            <span className="p-1.5 bg-amber-100/80 text-amber-700 rounded-lg shadow-xs">
-              <Lock className="size-4" />
+            <span className="bg-amber-100/80 text-amber-700 p-1.5 rounded-lg border border-amber-200/50">
+              📋
             </span>
-            <span>Thông tin riêng tư</span>
-            <span className="text-[10px] ml-auto sm:ml-2 font-bold bg-amber-200/80 text-amber-800 uppercase tracking-wider px-2.5 py-1 rounded-md shadow-xs border border-amber-300/60">
-              Chỉ Admin
-            </span>
+            Thông tin liên hệ
           </h3>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
             <div>
               <label className="flex items-center gap-1.5 text-sm font-semibold text-amber-900/80 mb-1.5">
