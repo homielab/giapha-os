@@ -19,7 +19,9 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const profile = await getProfile(user.id);
+  // Call without args so React cache() key matches getIsAdmin() → getProfile()
+  // in child pages — avoids a duplicate profile DB query.
+  const profile = await getProfile();
 
   if (!profile?.is_active) {
     return (

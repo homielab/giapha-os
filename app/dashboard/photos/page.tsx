@@ -3,15 +3,17 @@ import { getIsAdmin, getProfile, getSupabase } from "@/utils/supabase/queries";
 
 export default async function PhotosPage() {
   const supabase = await getSupabase();
-  const profile = await getProfile();
-  const isAdmin = await getIsAdmin();
 
-  const [{ data: files }, { data: avatarFiles }] = await Promise.all([
-    supabase.storage
-      .from("shared-photos")
-      .list("", { sortBy: { column: "created_at", order: "desc" } }),
-    supabase.storage.from("avatars").list(""),
-  ]);
+  const [[profile, isAdmin], [{ data: files }, { data: avatarFiles }]] =
+    await Promise.all([
+      Promise.all([getProfile(), getIsAdmin()]),
+      Promise.all([
+        supabase.storage
+          .from("shared-photos")
+          .list("", { sortBy: { column: "created_at", order: "desc" } }),
+        supabase.storage.from("avatars").list(""),
+      ]),
+    ]);
 
   const validFiles = (files ?? []).filter(
     (f) => f.name !== ".emptyFolderPlaceholder",

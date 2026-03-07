@@ -256,3 +256,79 @@ export async function importData(
     },
   };
 }
+
+// ─── Reset Data ───────────────────────────────────────────────────────────────
+
+export interface ResetOptions {
+  photos: boolean;
+  events: boolean;
+  relationships: boolean;
+  persons: boolean;
+}
+
+export async function resetData(
+  options: ResetOptions,
+): Promise<{ success?: true; error?: string }> {
+  const isAdmin = await getIsAdmin();
+  if (!isAdmin) return { error: "Bạn không có quyền thực hiện thao tác này." };
+
+  const supabase = await getSupabase();
+  const DUMMY = "00000000-0000-0000-0000-000000000000";
+
+  if (options.photos) {
+    const { data: files } = await supabase.storage
+      .from("shared-photos")
+      .list("", { limit: 10000 });
+    const validFiles = (files ?? []).filter(
+      (f) => f.name !== ".emptyFolderPlaceholder",
+    );
+    if (validFiles.length > 0) {
+      const { error } = await supabase.storage
+        .from("shared-photos")
+        .remove(validFiles.map((f) => f.name));
+      if (error) return { error: "Lỗi khi xóa ảnh: " + error.message };
+    }
+  }
+
+  if (options.events) {
+    const { error } = await supabase
+      .from("custom_events")
+      .delete()
+      .neq("id", DUMMY);
+    if (error) return { error: "Lỗi khi xóa sự kiện: " + error.message };
+  }
+
+  if (options.relationships) {
+    const { error } = await supabase
+      .from("relationships")
+      .delete()
+      .neq("id", DUMMY);
+    if (error) return { error: "Lỗi khi xóa quan hệ: " + error.message };
+  }
+
+  if (options.persons) {
+    // Must delete relationships first (FK), but if already deleted above skip
+    if (!options.relationships) {
+      const { error } = await supabase
+        .from("relationships")
+        .delete()
+        .neq("id", DUMMY);
+      if (error)
+        return {
+          error: "Lỗi khi xóa quan hệ (cascade): " + error.message,
+        };
+    }
+    const { error } = await supabase
+      .from("persons")
+      .delete()
+      .neq("id", DUMMY);
+    if (error) return { error: "Lỗi khi xóa thành viên: " + error.message };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/members");
+  revalidatePath("/dashboard/data");
+  revalidatePath("/dashboard/photos");
+
+  return { success: true };
+}

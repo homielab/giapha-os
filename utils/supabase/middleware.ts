@@ -55,8 +55,9 @@ export async function updateSession(request: NextRequest) {
 
   const isLoginPage = request.nextUrl.pathname.startsWith("/login");
 
-  // Check if DB schema is initialized by checking if profiles table exists
-  if (isProtectedPath || isLoginPage) {
+  // Check if DB schema is initialized — skip if already verified via cookie
+  const isSetupVerified = request.cookies.get("db_setup")?.value === "1";
+  if (!isSetupVerified && (isProtectedPath || isLoginPage)) {
     const { error: profileError } = await supabase
       .from("profiles")
       .select("id")
@@ -70,6 +71,13 @@ export async function updateSession(request: NextRequest) {
       url.pathname = "/setup";
       return NextResponse.redirect(url);
     }
+
+    // Cache result for 1 hour to avoid repeated DB checks
+    supabaseResponse.cookies.set("db_setup", "1", {
+      maxAge: 3600,
+      httpOnly: true,
+      sameSite: "lax",
+    });
   }
 
   if (isProtectedPath && !user) {

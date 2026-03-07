@@ -10,22 +10,20 @@ interface PageProps {
 export default async function FamilyTreePage({ searchParams }: PageProps) {
   const { rootId } = await searchParams;
 
-  const profile = await getProfile();
-  const canEdit = profile?.role === "admin" || profile?.role === "editor";
-
-  // If view is list, we only need persons, not relationships.
-  // We fetch persons for all views to pass down as a prop if we want, or let components fetch.
-  // Actually, to make transitions fast and avoid duplicate fetching across components,
-  // we will fetch data here and pass it down as props.
   const supabase = await getSupabase();
 
-  const [personsRes, relsRes] = await Promise.all([
-    supabase
-      .from("persons")
-      .select("*")
-      .order("birth_year", { ascending: true, nullsFirst: false }),
-    supabase.from("relationships").select("*"),
+  const [profile, [personsRes, relsRes]] = await Promise.all([
+    getProfile(),
+    Promise.all([
+      supabase
+        .from("persons")
+        .select("*")
+        .order("birth_year", { ascending: true, nullsFirst: false }),
+      supabase.from("relationships").select("*"),
+    ]),
   ]);
+
+  const canEdit = profile?.role === "admin" || profile?.role === "editor";
 
   const persons = personsRes.data || [];
   const relationships = relsRes.data || [];

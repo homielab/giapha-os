@@ -8,10 +8,10 @@ export const metadata = {
 export default async function StatsPage() {
   const supabase = await getSupabase();
 
-  const { data: persons } = await supabase.from("persons").select("*");
-  const { data: relationships } = await supabase
-    .from("relationships")
-    .select("*");
+  const [{ data: persons }, { data: relationships }] = await Promise.all([
+    supabase.from("persons").select("*"),
+    supabase.from("relationships").select("*"),
+  ]);
 
   return (
     <div className="flex-1 w-full relative flex flex-col pb-12">

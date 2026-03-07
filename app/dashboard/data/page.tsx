@@ -1,4 +1,5 @@
 import DataImportExport from "@/components/DataImportExport";
+import ResetDataCard from "@/components/ResetDataCard";
 import { getProfile } from "@/utils/supabase/queries";
 import { redirect } from "next/navigation";
 
@@ -28,6 +29,10 @@ export default async function DataManagementPage() {
         </div>
 
         <DataImportExport />
+
+        <div className="mt-8">
+          <ResetDataCard />
+        </div>
       </div>
     </main>
   );
