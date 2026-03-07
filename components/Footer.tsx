@@ -3,6 +3,8 @@ export interface FooterProps {
   showDisclaimer?: boolean;
 }
 
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "1.7.0-beta.1";
+
 export default function Footer({
   className = "",
   showDisclaimer = false,
@@ -39,6 +41,9 @@ export default function Footer({
             </svg>
             Gia Phả OS
           </a>
+          <span className="text-stone-400 text-xs font-mono bg-stone-100 px-1.5 py-0.5 rounded">
+            v{APP_VERSION}
+          </span>
           by
           <a
             href="mailto:vietkeynet@gmail.com"
