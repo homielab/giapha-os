@@ -1,6 +1,5 @@
 import { createPublicClient } from "@/utils/supabase/public";
 import JoinForm from "./JoinForm";
-import { redirect } from "next/navigation";
 import config from "@/app/config";
 import Link from "next/link";
 

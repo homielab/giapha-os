@@ -25,7 +25,7 @@ interface GraveEventFormProps {
 
 export default function GraveEventForm({
   graveId,
-  personId,
+  personId: _personId,
   onClose,
   onSaved,
 }: GraveEventFormProps) {

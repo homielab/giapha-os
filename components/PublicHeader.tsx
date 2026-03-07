@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, TreeDeciduous, LogIn, Home, Info, BookOpen } from "lucide-react";
+import { Menu, X, TreeDeciduous, LogIn, Home, Info } from "lucide-react";
 
 interface PublicHeaderProps {
   siteName: string;

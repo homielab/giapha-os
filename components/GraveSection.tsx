@@ -20,7 +20,6 @@ import type {
   BurialType,
   GraveStatus,
   RemainsStatus,
-  Person,
 } from "@/types";
 import { MapPin, Edit3, Trash2, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";

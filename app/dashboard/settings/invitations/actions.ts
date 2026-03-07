@@ -48,7 +48,7 @@ export async function deleteInvitation(id: string) {
   revalidatePath("/dashboard/settings/invitations");
 }
 
-export async function useInvitationToken(
+export async function redeemInvitationToken(
   token: string,
   userData: { full_name: string; phone_number: string },
 ) {

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useInvitationToken } from "@/app/dashboard/settings/invitations/actions";
+import { redeemInvitationToken } from "@/app/dashboard/settings/invitations/actions";
 import { Loader2, LogIn } from "lucide-react";
 import Link from "next/link";
 
@@ -24,7 +24,7 @@ export default function JoinForm({ token, invitedRole }: Props) {
     setSaving(true);
     setError(null);
     try {
-      await useInvitationToken(token, { full_name: fullName, phone_number: phoneNumber });
+      await redeemInvitationToken(token, { full_name: fullName, phone_number: phoneNumber });
       setStep("success");
       setTimeout(() => router.push("/dashboard"), 2000);
     } catch (err) {

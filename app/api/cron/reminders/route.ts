@@ -314,9 +314,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   // Send email digest if Resend is configured
   if (resendApiKey && notificationEmail) {
-    const today = getVietnamDate(0);
-    const todayMonth = today.getUTCMonth() + 1;
-    const todayDay = today.getUTCDate();
     const formatDDMMVal = (m: number, d: number) =>
       `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}`;
 
