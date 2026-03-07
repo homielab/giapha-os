@@ -453,6 +453,29 @@ BEGIN
 END;
 $function$;
 
+-- ==========================================
+-- PAGE VIEWS (Visit Tracking)
+-- ==========================================
+
+-- One row per user per day — upsert on conflict does nothing
+CREATE TABLE IF NOT EXISTS public.page_views (
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  visited_date DATE DEFAULT CURRENT_DATE,
+  PRIMARY KEY (user_id, visited_date)
+);
+
+ALTER TABLE public.page_views ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can upsert own views" ON public.page_views;
+CREATE POLICY "Users can upsert own views"
+  ON public.page_views FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Authenticated users can read count" ON public.page_views;
+CREATE POLICY "Authenticated users can read count"
+  ON public.page_views FOR SELECT TO authenticated
+  USING (true);
+
 -- 5. Set User Active Status (Approve/Block)
 CREATE OR REPLACE FUNCTION public.set_user_active_status(target_user_id uuid, new_status boolean)
 RETURNS void

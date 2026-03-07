@@ -3,7 +3,7 @@ import DashboardHeader from "@/components/DashboardHeader";
 import Footer from "@/components/Footer";
 import LogoutButton from "@/components/LogoutButton";
 import { UserProvider } from "@/components/UserProvider";
-import { getProfile, getUser } from "@/utils/supabase/queries";
+import { getProfile, getSupabase, getUser } from "@/utils/supabase/queries";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -22,6 +22,15 @@ export default async function DashboardLayout({
   // Call without args so React cache() key matches getIsAdmin() → getProfile()
   // in child pages — avoids a duplicate profile DB query.
   const profile = await getProfile();
+
+  // Track visit (once per user per day) + fetch total count in parallel
+  const supabase = await getSupabase();
+  const today = new Date().toISOString().split("T")[0];
+  const [, countRes] = await Promise.all([
+    supabase.from("page_views").insert({ user_id: user.id, visited_date: today }),
+    supabase.from("page_views").select("*", { count: "exact", head: true }),
+  ]);
+  const pageViewCount = countRes.count ?? 0;
 
   if (!profile?.is_active) {
     return (
@@ -84,6 +93,7 @@ export default async function DashboardLayout({
         <Footer
           className="mt-auto bg-white border-t border-stone-200"
           showDisclaimer={true}
+          pageViewCount={pageViewCount}
         />
       </div>
     </UserProvider>
