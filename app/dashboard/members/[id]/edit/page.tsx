@@ -70,7 +70,7 @@ export default async function EditMemberPage({ params }: PageProps) {
       </div>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 relative z-10 w-full flex-1">
-        <MemberForm initialData={initialData} isEditing={true} isAdmin={true} />
+        <MemberForm initialData={initialData} isEditing={true} canEditPrivate={true} />
       </main>
     </div>
   );

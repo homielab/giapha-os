@@ -163,6 +163,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+CREATE OR REPLACE FUNCTION public.is_admin_or_editor()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role IN ('admin', 'editor')
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- PROFILES POLICIES
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
@@ -179,8 +189,8 @@ DROP POLICY IF EXISTS "Admins can insert persons" ON public.persons;
 DROP POLICY IF EXISTS "Admins can update persons" ON public.persons;
 DROP POLICY IF EXISTS "Admins can delete persons" ON public.persons;
 
-CREATE POLICY "Admins can insert persons" ON public.persons FOR INSERT TO authenticated WITH CHECK (public.is_admin());
-CREATE POLICY "Admins can update persons" ON public.persons FOR UPDATE TO authenticated USING (public.is_admin());
+CREATE POLICY "Admins can insert persons" ON public.persons FOR INSERT TO authenticated WITH CHECK (public.is_admin_or_editor());
+CREATE POLICY "Admins can update persons" ON public.persons FOR UPDATE TO authenticated USING (public.is_admin_or_editor());
 CREATE POLICY "Admins can delete persons" ON public.persons FOR DELETE TO authenticated USING (public.is_admin());
 
 -- PERSON_DETAILS_PRIVATE POLICIES
@@ -189,7 +199,7 @@ DROP POLICY IF EXISTS "Authenticated users can view private details" ON public.p
 CREATE POLICY "Authenticated users can view private details" ON public.person_details_private FOR SELECT TO authenticated USING (true);
 
 DROP POLICY IF EXISTS "Admins can manage private details" ON public.person_details_private;
-CREATE POLICY "Admins can manage private details" ON public.person_details_private FOR ALL TO authenticated USING (public.is_admin());
+CREATE POLICY "Admins can manage private details" ON public.person_details_private FOR ALL TO authenticated USING (public.is_admin_or_editor());
 
 -- RELATIONSHIPS POLICIES
 DROP POLICY IF EXISTS "Enable read access for authenticated users" ON public.relationships;
@@ -200,8 +210,8 @@ DROP POLICY IF EXISTS "Admins can insert relationships" ON public.relationships;
 DROP POLICY IF EXISTS "Admins can update relationships" ON public.relationships;
 DROP POLICY IF EXISTS "Admins can delete relationships" ON public.relationships;
 
-CREATE POLICY "Admins can insert relationships" ON public.relationships FOR INSERT TO authenticated WITH CHECK (public.is_admin());
-CREATE POLICY "Admins can update relationships" ON public.relationships FOR UPDATE TO authenticated USING (public.is_admin());
+CREATE POLICY "Admins can insert relationships" ON public.relationships FOR INSERT TO authenticated WITH CHECK (public.is_admin_or_editor());
+CREATE POLICY "Admins can update relationships" ON public.relationships FOR UPDATE TO authenticated USING (public.is_admin_or_editor());
 CREATE POLICY "Admins can delete relationships" ON public.relationships FOR DELETE TO authenticated USING (public.is_admin());
 
 -- CUSTOM_EVENTS POLICIES
@@ -351,7 +361,7 @@ SECURITY DEFINER
 SET search_path = public, auth
 AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin') THEN
+    IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'editor')) THEN
         RAISE EXCEPTION 'Access denied.';
     END IF;
 

@@ -1,6 +1,6 @@
 import { getTodayLunar } from "@/utils/dateHelpers";
 import { computeEvents } from "@/utils/eventHelpers";
-import { getIsAdmin, getSupabase } from "@/utils/supabase/queries";
+import { getIsAdmin, getProfile, getSupabase } from "@/utils/supabase/queries";
 import {
   ArrowRight,
   BarChart2,
@@ -49,8 +49,9 @@ export default async function DashboardLaunchpad() {
   const supabase = await getSupabase();
 
   /* ── Fetch all data in parallel ───────────────────────────────── */
-  const [isAdmin, { data: persons }, { data: customEvents }] =
+  const [profile, isAdmin, { data: persons }, { data: customEvents }] =
     await Promise.all([
+      getProfile(),
       getIsAdmin(),
       supabase.from("persons").select(
         "id, full_name, birth_year, birth_month, birth_day, death_year, death_month, death_day, is_deceased",
@@ -292,7 +293,7 @@ export default async function DashboardLaunchpad() {
           </div>
         </section>
 
-        {isAdmin && (
+        {(isAdmin || profile?.role === "editor") && (
           <section>
             <h3 className="text-xl font-serif font-bold text-rose-800 mb-6 flex items-center gap-2">
               <span className="w-8 h-px bg-rose-200 rounded-full"></span>

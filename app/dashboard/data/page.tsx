@@ -6,9 +6,11 @@ import { redirect } from "next/navigation";
 export default async function DataManagementPage() {
   const profile = await getProfile();
 
-  if (profile?.role !== "admin") {
+  if (profile?.role !== "admin" && profile?.role !== "editor") {
     redirect("/dashboard");
   }
+
+  const isAdmin = profile?.role === "admin";
 
   return (
     <main className="flex-1 overflow-auto bg-stone-50/50 flex flex-col pt-8 relative w-full">
@@ -30,9 +32,11 @@ export default async function DataManagementPage() {
 
         <DataImportExport />
 
-        <div className="mt-8">
-          <ResetDataCard />
-        </div>
+        {isAdmin && (
+          <div className="mt-8">
+            <ResetDataCard />
+          </div>
+        )}
       </div>
     </main>
   );

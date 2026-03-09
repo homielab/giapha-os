@@ -21,7 +21,7 @@ import { useState } from "react";
 interface MemberFormProps {
   initialData?: Person;
   isEditing?: boolean;
-  isAdmin?: boolean;
+  canEditPrivate?: boolean;
   /** Called with the saved person's ID after a successful save. Overrides default router.push. */
   onSuccess?: (personId: string) => void;
   /** Called when user clicks Cancel. Overrides default router.back(). */
@@ -31,7 +31,7 @@ interface MemberFormProps {
 export default function MemberForm({
   initialData,
   isEditing = false,
-  isAdmin = false,
+  canEditPrivate = false,
   onSuccess,
   onCancel,
 }: MemberFormProps) {
@@ -202,7 +202,7 @@ export default function MemberForm({
       }
 
       // 2. Upsert private data (only if admin and personId exists)
-      if (isAdmin && personId) {
+      if (canEditPrivate && personId) {
         const privateData = {
           person_id: personId,
           phone_number: phoneNumber || null,
@@ -632,7 +632,7 @@ export default function MemberForm({
       </motion.div>
 
       {/* Private Information Section (Admin Only) */}
-      {isAdmin && (
+      {canEditPrivate && (
         <motion.div
           variants={formSectionVariants}
           initial="hidden"

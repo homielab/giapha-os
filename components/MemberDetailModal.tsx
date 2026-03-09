@@ -236,7 +236,7 @@ export default function MemberDetailModal() {
                     >[0]["initialData"]
                   }
                   isEditing={true}
-                  isAdmin={isAdmin}
+                  canEditPrivate={canEdit}
                   onSuccess={handleEditSuccess}
                   onCancel={() => setIsEditing(false)}
                 />
@@ -248,7 +248,7 @@ export default function MemberDetailModal() {
                   Thêm thành viên mới
                 </h2>
                 <MemberForm
-                  isAdmin={isAdmin}
+                  canEditPrivate={canEdit}
                   onSuccess={handleCreateSuccess}
                   onCancel={closeModal}
                 />

@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 interface AdminUserListProps {
   initialUsers: AdminUserData[];
   currentUserId: string;
+  isAdmin?: boolean;
 }
 
 interface Notification {
@@ -25,6 +26,7 @@ interface Notification {
 export default function AdminUserList({
   initialUsers,
   currentUserId,
+  isAdmin = false,
 }: AdminUserListProps) {
   const [users, setUsers] = useState<AdminUserData[]>(initialUsers);
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -256,7 +258,7 @@ export default function AdminUserList({
       </AnimatePresence>
 
       <div className="flex justify-end">
-        <button
+        {isAdmin && <button
           onClick={() => setIsCreateModalOpen(true)}
           className="btn-primary"
         >
@@ -274,7 +276,7 @@ export default function AdminUserList({
             />
           </svg>
           Thêm người dùng
-        </button>
+        </button>}
       </div>
 
       <div className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-sm border border-stone-200/60 overflow-hidden">

@@ -7,7 +7,7 @@ export default async function AdminUsersPage() {
   const profile = await getProfile();
   const isAdmin = profile?.role === "admin";
 
-  if (!isAdmin) {
+  if (profile?.role !== "admin" && profile?.role !== "editor") {
     redirect("/dashboard");
   }
 
@@ -37,7 +37,7 @@ export default async function AdminUsersPage() {
             </p>
           </div>
         </div>
-        <AdminUserList initialUsers={typedUsers} currentUserId={profile.id} />
+        <AdminUserList initialUsers={typedUsers} currentUserId={profile.id} isAdmin={isAdmin} />
       </div>
     </main>
   );

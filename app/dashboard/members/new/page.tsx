@@ -6,8 +6,8 @@ import Link from "next/link";
 export default async function NewMemberPage() {
   const profile = await getProfile();
 
-  const isAdmin = profile?.role === "admin";
-  const canEdit = profile?.role === "admin" || profile?.role === "editor";
+  const isAdmin = profile?.role === "admin" || profile?.role === "editor";
+  const canEdit = isAdmin;
 
   // If user cannot edit, reject access
   if (!canEdit) {
@@ -51,7 +51,7 @@ export default async function NewMemberPage() {
       </div>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 relative z-10 w-full flex-1">
-        <MemberForm isAdmin={isAdmin} />
+        <MemberForm canEditPrivate={isAdmin} />
       </main>
     </div>
   );
