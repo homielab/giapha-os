@@ -23,6 +23,7 @@ export default async function PhotosPage() {
     name: f.name,
     url: supabase.storage.from("shared-photos").getPublicUrl(f.name).data
       .publicUrl,
+    size: f.metadata?.size ?? 0,
   }));
 
   const photosBytes = validFiles.reduce(

@@ -2,6 +2,7 @@
 
 import { Gender, Person } from "@/types";
 import { createClient } from "@/utils/supabase/client";
+import { compressImageIfNeeded } from "@/utils/imageCompressor";
 import { AnimatePresence, motion, Variants } from "framer-motion";
 import {
   AlertCircle,
@@ -146,13 +147,14 @@ export default function MemberForm({
 
       // 0. Handle Avatar Upload if a new file is selected
       if (avatarFile) {
-        const fileExt = avatarFile.name.split(".").pop();
+        const compressedAvatar = await compressImageIfNeeded(avatarFile);
+        const fileExt = compressedAvatar.name.split(".").pop();
         const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from("avatars")
-          .upload(filePath, avatarFile);
+          .upload(filePath, compressedAvatar);
 
         if (uploadError) throw uploadError;
 

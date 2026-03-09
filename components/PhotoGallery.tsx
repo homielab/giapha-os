@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/utils/supabase/client";
+import { compressImageIfNeeded } from "@/utils/imageCompressor";
 import { ChevronLeft, ChevronRight, Images, Trash2, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -9,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 interface Photo {
   name: string;
   url: string;
+  size?: number;
 }
 
 interface PhotoGalleryProps {
@@ -75,7 +77,7 @@ export default function PhotoGallery({
     setUploadProgress({ done: 0, total: files.length });
 
     for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+      const file = await compressImageIfNeeded(files[i]);
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
 
@@ -184,6 +186,11 @@ export default function PhotoGallery({
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               />
+              {photo.size ? (
+                <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-black/50 text-white text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  {formatBytes(photo.size)}
+                </span>
+              ) : null}
               {canDelete && (
                 <button
                   onClick={(e) => {
