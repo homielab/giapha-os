@@ -59,6 +59,15 @@ export function buildAdjacencyLists(
     });
   });
 
+  // Sắp xếp vợ/chồng theo năm sinh
+  spouses.forEach((spouseArray) => {
+    spouseArray.sort((a, b) => {
+      const aYear = a.person.birth_year ?? Infinity;
+      const bYear = b.person.birth_year ?? Infinity;
+      return aYear - bYear;
+    });
+  });
+
   return { spousesByPersonId: spouses, childrenByPersonId: children };
 }
 

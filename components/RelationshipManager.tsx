@@ -658,13 +658,33 @@ export default function RelationshipManager({
               <label className="block text-xs font-medium text-stone-500 mb-1">
                 Ghi chú mối quan hệ (tuỳ chọn)
               </label>
-              <input
-                type="text"
-                placeholder="VD: Vợ cả, Vợ hai, Chồng trước..."
-                value={newRelNote}
-                onChange={(e) => setNewRelNote(e.target.value)}
-                className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 sm:p-2.5 border mb-3 transition-colors"
-              />
+              <div className="space-y-2 mb-3">
+                <input
+                  type="text"
+                  placeholder="VD: Vợ cả, Vợ hai, Chồng trước..."
+                  value={newRelNote}
+                  onChange={(e) => setNewRelNote(e.target.value)}
+                  className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 sm:p-2.5 border transition-colors"
+                />
+                {newRelDirection === "spouse" && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {["Vợ cả", "Vợ hai", "Vợ ba", "Chính thất", "Kế thất", "Chồng", "Chồng trước"].map(tag => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => setNewRelNote(tag)}
+                        className={`text-[10px] px-2 py-1 border rounded-full transition-colors ${
+                          newRelNote === tag 
+                            ? "bg-amber-100 border-amber-300 text-amber-800" 
+                            : "bg-white border-stone-200 text-stone-600 hover:bg-stone-50 hover:border-stone-300"
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
@@ -992,13 +1012,31 @@ export default function RelationshipManager({
               <label className="block text-xs font-medium text-rose-700 mb-1">
                 Ghi chú mối quan hệ (Ví dụ: Vợ cả, Chồng thứ...)
               </label>
-              <input
-                type="text"
-                placeholder="Tuỳ chọn..."
-                value={newSpouseNote}
-                onChange={(e) => setNewSpouseNote(e.target.value)}
-                className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 sm:p-2.5 border transition-colors"
-              />
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Tuỳ chọn..."
+                  value={newSpouseNote}
+                  onChange={(e) => setNewSpouseNote(e.target.value)}
+                  className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 sm:p-2.5 border transition-colors"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {["Vợ cả", "Vợ hai", "Vợ ba", "Chính thất", "Kế thất", "Chồng", "Chồng trước"].map(tag => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setNewSpouseNote(tag)}
+                      className={`text-[10px] px-2 py-1 border rounded-full transition-colors ${
+                        newSpouseNote === tag 
+                          ? "bg-rose-100 border-rose-300 text-rose-800" 
+                          : "bg-white border-stone-200 text-stone-600 hover:bg-stone-50 hover:border-stone-300"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <p className="text-xs text-stone-500 italic mt-1">
