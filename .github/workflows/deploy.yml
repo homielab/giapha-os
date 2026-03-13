@@ -1,0 +1,12 @@
+name: Deploy
+on:
+  push:
+    branches: [ chủ yếu ]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kích hoạt
+        run: echo "Trang web đang khởi động"
