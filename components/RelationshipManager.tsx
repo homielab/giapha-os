@@ -459,17 +459,29 @@ export default function RelationshipManager({
     }
   };
 
-  const groupByType = (type: string) =>
-    relationships
-      .filter((r) => r.direction === type)
-      .sort((a, b) => {
-        const yearA = a.targetPerson.birth_year;
-        const yearB = b.targetPerson.birth_year;
-        if (yearA == null && yearB == null) return 0;
-        if (yearA == null) return 1;
-        if (yearB == null) return -1;
-        return yearA - yearB;
-      });
+  const groupByType = (type: string) => {
+  const items = relationships.filter((r) => r.direction === type);
+
+	  // Nếu là nhóm con cái → sắp xếp theo birth_order
+	  if (type === "child") {
+		  return items.sort((a, b) => {
+			const orderA = a.targetPerson.birth_order;
+			const orderB = b.targetPerson.birth_order;
+
+			if (orderA != null && orderB != null) {
+			  return orderA - orderB;
+			}
+
+			if (orderA != null) return -1;
+			if (orderB != null) return 1;
+
+			return (a.targetPerson.birth_year ?? 9999) -
+				   (b.targetPerson.birth_year ?? 9999);
+		  });
+		}
+
+	  return items;
+	};
 
   if (loading)
     return (
