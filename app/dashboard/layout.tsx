@@ -3,7 +3,7 @@ import DashboardHeader from "@/components/DashboardHeader";
 import Footer from "@/components/Footer";
 import LogoutButton from "@/components/LogoutButton";
 import { UserProvider } from "@/components/UserProvider";
-import { getProfile, getUser } from "@/utils/supabase/queries";
+import { getProfile, getSettings, getUser } from "@/utils/supabase/queries";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -20,6 +20,7 @@ export default async function DashboardLayout({
   }
 
   const profile = await getProfile(user.id);
+  const settings = await getSettings();
 
   if (!profile?.is_active) {
     return (
@@ -69,7 +70,7 @@ export default async function DashboardLayout({
             </p>
           </div>
         </main>
-        <Footer className="mt-auto bg-white border-t border-stone-200" />
+        <Footer className="mt-auto bg-white border-t border-stone-200" settings={settings} />
       </div>
     );
   }
@@ -77,11 +78,12 @@ export default async function DashboardLayout({
   return (
     <UserProvider user={user} profile={profile}>
       <div className="min-h-screen bg-stone-50 text-stone-900 flex flex-col font-sans">
-        <DashboardHeader />
+        <DashboardHeader settings={settings} />
         {children}
         <Footer
           className="mt-auto bg-white border-t border-stone-200"
           showDisclaimer={true}
+          settings={settings}
         />
       </div>
     </UserProvider>

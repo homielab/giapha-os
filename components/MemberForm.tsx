@@ -89,6 +89,11 @@ export default function MemberForm({
     initialData?.generation || "",
   );
 
+  const [hometown, setHometown] = useState(initialData?.hometown || "");
+  const [graveAddress, setGraveAddress] = useState(initialData?.grave_address || "");
+  const [isEldestSon, setIsEldestSon] = useState(initialData?.is_eldest_son || false);
+  const [isEldestGrandson, setIsEldestGrandson] = useState(initialData?.is_eldest_grandson || false);
+
   const [avatarUrl, setAvatarUrl] = useState(initialData?.avatar_url || "");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
@@ -326,6 +331,10 @@ export default function MemberForm({
         other_names: otherNames || null,
         avatar_url: url,
         note: note || null,
+        hometown: hometown || null,
+        grave_address: isDeceased ? (graveAddress || null) : null,
+        is_eldest_son: isEldestSon,
+        is_eldest_grandson: isEldestGrandson,
       });
 
       let currentPersonId = initialData?.id;
@@ -525,6 +534,78 @@ export default function MemberForm({
               </div>
               <span className="text-sm font-semibold text-stone-700 group-hover:text-amber-700 transition-colors">
                 Là con Dâu hoặc con Rể
+              </span>
+            </label>
+          </div>
+
+          <div className="flex items-center sm:mt-7 mt-2">
+            <label className="flex items-center gap-3 group">
+              <div className="relative flex items-center">
+                <input
+                  type="checkbox"
+                  checked={isEldestSon}
+                  onChange={(e) => setIsEldestSon(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <div className="size-5 border-2 border-stone-300 rounded peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-colors flex items-center justify-center">
+                  <motion.svg
+                    initial={false}
+                    animate={{
+                      opacity: isEldestSon ? 1 : 0,
+                      scale: isEldestSon ? 1 : 0.5,
+                    }}
+                    className="size-3 text-white pointer-events-none"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={4}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </motion.svg>
+                </div>
+              </div>
+              <span className="text-sm font-semibold text-stone-700 group-hover:text-amber-700 transition-colors">
+                Trưởng nam
+              </span>
+            </label>
+          </div>
+
+          <div className="flex items-center sm:mt-7 mt-2">
+            <label className="flex items-center gap-3 group">
+              <div className="relative flex items-center">
+                <input
+                  type="checkbox"
+                  checked={isEldestGrandson}
+                  onChange={(e) => setIsEldestGrandson(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <div className="size-5 border-2 border-stone-300 rounded peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-colors flex items-center justify-center">
+                  <motion.svg
+                    initial={false}
+                    animate={{
+                      opacity: isEldestGrandson ? 1 : 0,
+                      scale: isEldestGrandson ? 1 : 0.5,
+                    }}
+                    className="size-3 text-white pointer-events-none"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={4}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </motion.svg>
+                </div>
+              </div>
+              <span className="text-sm font-semibold text-stone-700 group-hover:text-amber-700 transition-colors">
+                Cháu đích tôn
               </span>
             </label>
           </div>
@@ -928,10 +1009,39 @@ export default function MemberForm({
                 type="text"
                 value={currentResidence}
                 onChange={(e) => setCurrentResidence(e.target.value)}
-                placeholder="Địa chỉ cư trú..."
+                placeholder="Ví dụ: Thôn 7, xã Kon Đào, tỉnh Quảng Ngãi"
                 className={inputClasses}
               />
             </div>
+
+            <div className="md:col-span-2">
+              <label className="flex items-center gap-1.5 text-sm font-semibold text-amber-900/80 mb-1.5">
+                <MapPin className="size-4" /> Quê quán
+              </label>
+              <input
+                type="text"
+                value={hometown}
+                onChange={(e) => setHometown(e.target.value)}
+                placeholder="Ví dụ: Thôn Ngọc Trì, xã Bình Chương, tỉnh Quảng Ngãi"
+                className={inputClasses}
+              />
+            </div>
+
+            {isDeceased && (
+              <div className="md:col-span-2">
+                <label className="flex items-center gap-1.5 text-sm font-semibold text-amber-900/80 mb-1.5">
+                  <MapPin className="size-4" /> Địa chỉ phần mộ
+                </label>
+                <input
+                  type="text"
+                  value={graveAddress}
+                  onChange={(e) => setGraveAddress(e.target.value)}
+                  placeholder="Ví dụ: Nghĩa trang quê nhà..."
+                  className={inputClasses}
+                />
+              </div>
+            )}
+
           </div>
         </motion.div>
       )}

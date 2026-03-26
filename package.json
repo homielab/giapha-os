@@ -21,9 +21,11 @@
     "next": "16.2.1",
     "papaparse": "^5.5.3",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-quill": "^2.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/d3": "^7.4.3",
     "@types/node": "^25.5.0",
@@ -32,6 +34,7 @@
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.39.4",
     "eslint-config-next": "16.2.1",
+    "playwright": "^1.58.2",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3"
   },

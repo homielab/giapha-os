@@ -6,6 +6,7 @@ import { Person } from "@/types";
 import {
   calculateAge,
   formatDisplayDate,
+  getDeathAnniversaryDate,
   getLunarDateString,
   getSolarDateString,
   getZodiacAnimal,
@@ -200,6 +201,16 @@ export default function MemberDetailContent({
                   Đời thứ {person.generation}
                 </span>
               )}
+              {person.is_eldest_son && (
+                <span className="text-[10px] sm:text-xs font-sans font-bold rounded-md px-2 py-0.5 whitespace-nowrap shadow-xs border text-[#d4af37] bg-[#fffdf5] border-[#d4af37]/40 uppercase tracking-wider">
+                  Trưởng nam
+                </span>
+              )}
+              {person.is_eldest_grandson && (
+                <span className="text-[10px] sm:text-xs font-sans font-bold rounded-md px-2 py-0.5 whitespace-nowrap shadow-xs border text-[#8b0000] bg-rose-50/60 border-[#8b0000]/40 uppercase tracking-wider">
+                  Đích tôn
+                </span>
+              )}
             </h1>
             {person.other_names && (
               <p className="mt-1.5 text-sm sm:text-base text-stone-600 font-medium italic">
@@ -371,6 +382,28 @@ export default function MemberDetailContent({
                   </motion.div>
                 );
               })()}
+
+              {/* Death Anniversary Card */}
+              {isDeceased &&
+                (person.death_lunar_day || person.death_lunar_month || person.death_lunar_year) && (
+                  <motion.div
+                    variants={itemVariants}
+                    className="bg-linear-to-br from-rose-50 to-red-50/40 rounded-2xl p-4 border border-rose-200/50 shadow-sm transition-all hover:shadow-md flex flex-col justify-center relative overflow-hidden"
+                  >
+                    <Leaf className="absolute -bottom-4 -right-4 w-20 h-20 text-rose-500/10 rotate-12" />
+                    <div className="flex items-center gap-2 mb-1.5 relative z-10">
+                      <span className="size-2 rounded-full bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.6)]"></span>
+                      <p className="text-[11px] font-bold text-rose-800/60 uppercase tracking-widest">
+                        Ngày giỗ
+                      </p>
+                    </div>
+                    <div className="pl-4 relative z-10">
+                      <p className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-linear-to-br from-rose-700 to-rose-900 tracking-tight">
+                        {getDeathAnniversaryDate(person.death_lunar_year, person.death_lunar_month, person.death_lunar_day) || "Chưa rõ"}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
 
               {/* Children Stats Card */}
               {relStats &&
@@ -630,6 +663,32 @@ export default function MemberDetailContent({
                         )}
                       </dd>
                     </div>
+                    <div>
+                      <dt className="text-[11px] font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                        <MapPin className="w-3.5 h-3.5" /> Quê quán
+                      </dt>
+                      <dd className="text-stone-900 font-medium bg-white px-3 py-2 rounded-lg border border-stone-200/60 shadow-xs">
+                        {(fullPerson.hometown as string) || (
+                          <span className="text-stone-400 font-normal">
+                            Chưa cập nhật
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                    {isDeceased && (
+                      <div>
+                        <dt className="text-[11px] font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                          <MapPin className="w-3.5 h-3.5" /> Địa chỉ phần mộ
+                        </dt>
+                        <dd className="text-stone-900 font-medium bg-white px-3 py-2 rounded-lg border border-stone-200/60 shadow-xs">
+                          {(fullPerson.grave_address as string) || (
+                            <span className="text-stone-400 font-normal">
+                              Chưa cập nhật
+                            </span>
+                          )}
+                        </dd>
+                      </div>
+                    )}
                   </dl>
                 </div>
               ) : (

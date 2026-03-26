@@ -18,6 +18,21 @@ export const getUser = cache(async () => {
   return user;
 });
 
+export const getSettings = cache(async () => {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from("site_settings")
+    .select("*")
+    .eq("id", 1)
+    .single();
+
+  if (error) {
+    console.error("Error fetching settings:", error);
+    return null;
+  }
+  return data;
+});
+
 export const getProfile = cache(async (userId?: string) => {
   let id = userId;
   if (!id) {

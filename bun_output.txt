@@ -1,0 +1,18 @@
+$ next dev
+▲ Next.js 16.2.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 770ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+
+○ Compiling /missing-db-config ...
+ GET /missing-db-config 200 in 7.1s (next.js: 6.6s, proxy.ts: 11ms, application-code: 557ms)
+ GET /missing-db-config 200 in 88ms (next.js: 6ms, proxy.ts: 9ms, application-code: 73ms)
+ GET /missing-db-config 200 in 355ms (next.js: 44ms, proxy.ts: 14ms, application-code: 296ms)
+ GET /missing-db-config 200 in 216ms (next.js: 29ms, proxy.ts: 10ms, application-code: 177ms)
+ GET /missing-db-config 200 in 345ms (next.js: 87ms, proxy.ts: 24ms, application-code: 233ms)
+ GET /missing-db-config 200 in 273ms (next.js: 60ms, proxy.ts: 9ms, application-code: 204ms)

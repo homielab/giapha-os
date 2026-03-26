@@ -264,7 +264,7 @@ export default function CustomEventModal({
                       required
                       type="text"
                       className={inputClasses}
-                      placeholder="VD: Lễ Tảo Mộ Kỷ Tỵ"
+                      placeholder="VD: Chạp mả, Họp họ, Giỗ tổ..."
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                     />

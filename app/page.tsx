@@ -1,8 +1,10 @@
 import Footer from "@/components/Footer";
 import LandingHero from "@/components/LandingHero";
+import { getSettings } from "@/utils/supabase/queries";
 import config from "./config";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const settings = await getSettings();
   return (
     <div className="min-h-screen bg-[#fafaf9] flex flex-col selection:bg-amber-200 selection:text-amber-900 relative overflow-hidden">
       {/* Decorative background grid and blurs */}
@@ -15,10 +17,10 @@ export default function HomePage() {
       </div>
 
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-20 md:py-32 relative z-10 w-full">
-        <LandingHero siteName={config.siteName} />
+        <LandingHero siteName={settings?.site_name || config.siteName} />
       </main>
 
-      <Footer className="bg-transparent relative z-10 border-none" />
+      <Footer className="bg-transparent relative z-10 border-none" settings={settings} />
     </div>
   );
 }
