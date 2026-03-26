@@ -52,6 +52,51 @@ export interface Person {
   birth_order: number | null;
   generation: number | null;
   other_names: string | null;
+
+  // Gia Pha Viet new fields
+  hometown: string | null;
+  grave_address: string | null;
+  is_eldest_son: boolean;
+  is_eldest_grandson: boolean;
+}
+
+export interface SiteSettings {
+  id: number;
+  site_name: string;
+  logo_url: string | null;
+  footer_address: string | null;
+  footer_email: string | null;
+  footer_phone: string | null;
+  footer_custom_text: string | null;
+  updated_at: string;
+}
+
+export type TransactionType = 'income' | 'expense';
+export type TransactionCategory = 'cong_duc' | 'khuyen_hoc' | 'thu_chi_chung';
+
+export interface Transaction {
+  id: string;
+  amount: number;
+  type: TransactionType;
+  category: TransactionCategory;
+  description: string;
+  date: string;
+  contributor_name: string | null;
+  person_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface News {
+  id: string;
+  title: string;
+  content: string;
+  thumbnail_url: string | null;
+  is_published: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Relationship {

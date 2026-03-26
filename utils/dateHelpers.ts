@@ -43,6 +43,33 @@ export function getLunarDateString(
   }
 }
 
+export function getDeathAnniversaryDate(
+  lunarYear: number | null,
+  lunarMonth: number | null,
+  lunarDay: number | null
+): string | null {
+  if (!lunarMonth || !lunarDay) return null;
+
+  // Ngày giỗ là ngày trước ngày mất 1 ngày
+  let annivDay = lunarDay - 1;
+  let annivMonth = lunarMonth;
+
+  if (annivDay === 0) {
+    // Lùi lại 1 tháng
+    annivMonth = lunarMonth - 1;
+    if (annivMonth === 0) {
+       annivMonth = 12;
+    }
+    // Lấy số ngày của tháng trước (mặc định 30 ngày đối với âm lịch đơn giản)
+    // Để chính xác tuyệt đối cần tra cứu lịch, nhưng thường tính là 30 hoặc 29.
+    // Chúng ta tạm dùng 30 vì thư viện lunar-javascript cần có năm để tính chính xác,
+    // nhưng ngày giỗ thì lặp lại hằng năm.
+    annivDay = 30; // Hoặc có thể hiển thị dạng "Ngày cuối của tháng"
+  }
+
+  return `${annivDay.toString().padStart(2, '0')}/${annivMonth.toString().padStart(2, '0')} (Âm lịch)`;
+}
+
 export function getSolarDateString(
   year: number | null,
   month: number | null,

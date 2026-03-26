@@ -97,6 +97,24 @@ export default function HeaderMenu() {
                 Thống kê
               </Link>
 
+              <Link
+                href="/dashboard/finance"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+              >
+                <Database className="size-4" />
+                Sổ công đức
+              </Link>
+
+              <Link
+                href="/dashboard/news"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 hover:text-sky-700 hover:bg-sky-50 transition-colors"
+              >
+                <Info className="size-4" />
+                Tin tức dòng họ
+              </Link>
+
               {isAdmin && (
                 <>
                   <div className="px-4 py-2 mt-1">
