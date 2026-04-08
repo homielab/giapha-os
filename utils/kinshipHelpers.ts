@@ -93,7 +93,7 @@ function getDirectAncestorTerm(
   }
   const title = ANCESTORS[depth] || `Tổ đời ${depth}`;
   if (depth === 3) {
-    const base = gender === "female" ? "Cụ bà" : "Cụ ông";
+    const base = gender === "female" ? "Cụ bà (bà cố)" : "Cụ ông (ông cố)";
     return `${base} ${isPaternal ? "nội" : "ngoại"}`;
   }
   return title;
@@ -361,8 +361,12 @@ function findBloodKinship(
 
   const lcaName = personsMap.get(lcaId)?.full_name ?? "Tổ tiên chung";
   const pathParts: string[] = [];
-  pathParts.push(`${personA.full_name} cách ${lcaName} ${dataA.depth} đời.`);
-  pathParts.push(`${personB.full_name} cách ${lcaName} ${dataB.depth} đời.`);
+  if (personA.id !== lcaId) {
+    pathParts.push(`${personA.full_name} cách ${lcaName} ${dataA.depth} đời.`);
+  }
+  if (personB.id !== lcaId) {
+    pathParts.push(`${personB.full_name} cách ${lcaName} ${dataB.depth} đời.`);
+  }
 
   return {
     aCallsB,

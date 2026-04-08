@@ -159,6 +159,8 @@ export default function DataImportExport() {
       const result = await importData({
         persons: payload.persons,
         relationships: payload.relationships,
+        person_details_private: payload.person_details_private,
+        custom_events: payload.custom_events,
       });
 
       if ("error" in result) {
@@ -172,9 +174,22 @@ export default function DataImportExport() {
         return;
       }
 
+      const parts = [
+        `${result.imported?.persons} thành viên`,
+        `${result.imported?.relationships} quan hệ`,
+      ];
+      if (result.imported?.person_details_private) {
+        parts.push(
+          `${result.imported.person_details_private} thông tin riêng tư`,
+        );
+      }
+      if (result.imported?.custom_events) {
+        parts.push(`${result.imported.custom_events} sự kiện`);
+      }
+
       setImportStatus({
         type: "success",
-        message: `Phục hồi thành công! Đã nhập ${result.imported?.persons} thành viên và ${result.imported?.relationships} quan hệ.`,
+        message: `Phục hồi thành công! Đã nhập ${parts.join(", ")}.`,
       });
       setShowConfirm(false);
       setSelectedFile(null);
@@ -343,7 +358,7 @@ export default function DataImportExport() {
                   </h3>
                   <p className="text-sm text-stone-600 mt-2 leading-relaxed">
                     Hệ thống sẽ xoá{" "}
-                    <b>toàn bộ dữ liệu thành viên và mối quan hệ hiện tại</b> để
+                    <b>toàn bộ dữ liệu thành viên, mối quan hệ, thông tin riêng tư và sự kiện hiện tại</b> để
                     thay thế bằng dữ liệu từ file{" "}
                     <span className="font-mono text-xs bg-stone-100 px-1 rounded">
                       {selectedFile?.name}

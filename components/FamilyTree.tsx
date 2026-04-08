@@ -1,14 +1,23 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { usePanZoom } from "@/hooks/usePanZoom";
 import { Person, Relationship } from "@/types";
+import { Minus, Plus } from "lucide-react";
 import { useDashboard } from "./DashboardContext";
 import FamilyNodeCard from "./FamilyNodeCard";
 import TreeToolbar from "./TreeToolbar";
 
 import { buildAdjacencyLists, getFilteredTreeData } from "@/utils/treeHelpers";
+
+const DEFAULT_AUTO_COLLAPSE_LEVEL = 2;
 
 export default function FamilyTree({
   personsMap,
@@ -29,6 +38,13 @@ export default function FamilyTree({
   const [hideMales, setHideMales] = useState(false);
   const [hideFemales, setHideFemales] = useState(false);
 
+  // Tập hợp các personId đang bị đóng (collapsed)
+  const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set());
+  const [hideExpandButtons, setHideExpandButtons] = useState(false);
+  const [autoCollapseLevel, setAutoCollapseLevel] = useState(
+    DEFAULT_AUTO_COLLAPSE_LEVEL,
+  );
+
   const { showAvatar } = useDashboard();
 
   const {
@@ -46,13 +62,22 @@ export default function FamilyTree({
     },
   } = usePanZoom(containerRef);
 
-  useEffect(() => {
-    // Center the scroll area horizontally on initial render
-    if (containerRef.current) {
-      const el = containerRef.current;
+  // Center the scroll area horizontally
+  const centerTree = useCallback(() => {
+    if (!containerRef.current) return;
+    const el = containerRef.current;
+    const inner = el.querySelector("#export-container");
+    if (inner) {
+      const innerRect = inner.getBoundingClientRect();
+      const containerRect = el.getBoundingClientRect();
+      el.scrollLeft +=
+        innerRect.left +
+        innerRect.width / 2 -
+        (containerRect.left + containerRect.width / 2);
+    } else {
       el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
     }
-  }, [roots]);
+  }, []);
 
   useEffect(() => {
     const equalizeHeights = () => {
@@ -113,6 +138,7 @@ export default function FamilyTree({
     hideSons,
     hideMales,
     hideFemales,
+    collapsedNodes,
   ]);
 
   const adj = useMemo(
@@ -130,6 +156,55 @@ export default function FamilyTree({
       hideFemales,
     });
 
+  // Tự động đóng các nhánh từ đời autoCollapseLevel trở đi + căn giữa sau khi layout ổn định
+  useEffect(() => {
+    const autoCollapsed = new Set<string>();
+
+    const walk = (personId: string, visited: Set<string>, level: number) => {
+      if (visited.has(personId)) return;
+      visited.add(personId);
+
+      const data = getTreeData(personId);
+      if (!data.person) return;
+
+      if (
+        autoCollapseLevel > 0 &&
+        level >= autoCollapseLevel &&
+        data.children.length > 0
+      ) {
+        autoCollapsed.add(personId);
+      }
+
+      data.children.forEach((child) =>
+        walk(child.id, new Set(visited), level + 1),
+      );
+    };
+
+    roots.forEach((root) => walk(root.id, new Set(), 0));
+    setCollapsedNodes(autoCollapsed);
+
+    // Double rAF: wait for React to re-render with collapsed state, then center
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(centerTree);
+    });
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roots, personsMap, relationships, autoCollapseLevel]);
+
+  const toggleCollapse = useCallback((personId: string) => {
+    setCollapsedNodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(personId)) {
+        next.delete(personId);
+      } else {
+        next.add(personId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleCenter = centerTree;
+
   // Recursive function for rendering nodes
   // Tracks visited IDs to prevent infinite loops from circular relationships
   const renderTreeNode = (
@@ -142,6 +217,9 @@ export default function FamilyTree({
 
     const data = getTreeData(personId);
     if (!data.person) return null;
+
+    const hasChildren = data.children.length > 0;
+    const isCollapsed = collapsedNodes.has(personId);
 
     return (
       <li>
@@ -168,11 +246,39 @@ export default function FamilyTree({
                   />
                 </div>
               ))}
+
+            {/* Expand/Collapse Toggle – centered on the row */}
+            {!hideExpandButtons && hasChildren && (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  toggleCollapse(personId);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    toggleCollapse(personId);
+                  }
+                }}
+                className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white border border-stone-200/80 rounded-full size-6 flex items-center justify-center shadow-md z-100 text-stone-500 hover:text-amber-600 hover:border-amber-300 transition-colors cursor-pointer"
+                title={isCollapsed ? "Mở rộng" : "Thu gọn"}
+              >
+                {isCollapsed ? (
+                  <Plus className="w-3.5 h-3.5" />
+                ) : (
+                  <Minus className="w-3.5 h-3.5" />
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Render Children (if any) */}
-        {data.children.length > 0 && (
+        {/* Render Children (if any and not collapsed) */}
+        {hasChildren && !isCollapsed && (
           <ul>
             {data.children.map((child) => (
               <React.Fragment key={child.id}>
@@ -199,6 +305,11 @@ export default function FamilyTree({
         handleZoomIn={handleZoomIn}
         handleZoomOut={handleZoomOut}
         handleResetZoom={handleResetZoom}
+        handleCenter={handleCenter}
+        hideExpandButtons={hideExpandButtons}
+        setHideExpandButtons={setHideExpandButtons}
+        autoCollapseLevel={autoCollapseLevel}
+        setAutoCollapseLevel={setAutoCollapseLevel}
         hideDaughtersInLaw={hideDaughtersInLaw}
         setHideDaughtersInLaw={setHideDaughtersInLaw}
         hideSonsInLaw={hideSonsInLaw}

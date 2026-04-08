@@ -12,8 +12,9 @@ export default async function EditMemberPage({ params }: PageProps) {
   const { id } = await params;
 
   const profile = await getProfile();
-
-  if (profile?.role !== "admin" && profile?.role !== "editor") {
+  const isAdmin = profile?.role === "admin";
+  const isEditor = profile?.role === "editor";
+  if (!isAdmin && !isEditor) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-stone-50">
         <div className="text-center">
@@ -42,13 +43,17 @@ export default async function EditMemberPage({ params }: PageProps) {
   }
 
   // Fetch Private Data
-  const { data: privateData } = await supabase
-    .from("person_details_private")
-    .select("*")
-    .eq("person_id", id)
-    .single();
+  let privateData = null;
+  if (isAdmin) {
+    const { data } = await supabase
+      .from("person_details_private")
+      .select("*")
+      .eq("person_id", id)  
+      .single();
+    privateData = data;
+  }
 
-  const initialData = { ...person, ...privateData };
+  const initialData = isAdmin  ? { ...person, ...privateData }  : { ...person };
 
   return (
     <div className="flex-1 w-full relative flex flex-col pb-8">
@@ -70,7 +75,7 @@ export default async function EditMemberPage({ params }: PageProps) {
       </div>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 relative z-10 w-full flex-1">
-        <MemberForm initialData={initialData} isEditing={true} isAdmin={true} />
+        <MemberForm initialData={initialData} isEditing={true} isAdmin={isAdmin} />
       </main>
     </div>
   );

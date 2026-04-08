@@ -4,11 +4,15 @@ import MemberDetailModal from "@/components/MemberDetailModal";
 import ViewToggle from "@/components/ViewToggle";
 import { getProfile, getSupabase } from "@/utils/supabase/queries";
 
+import { ViewMode } from "@/components/ViewToggle";
+
 interface PageProps {
-  searchParams: Promise<{ view?: string; rootId?: string }>;
+  searchParams: Promise<{ view?: string; rootId?: string; avatar?: string }>;
 }
 export default async function FamilyTreePage({ searchParams }: PageProps) {
-  const { rootId } = await searchParams;
+  const { view, rootId, avatar } = await searchParams;
+  const initialView = view as ViewMode | undefined;
+  const initialShowAvatar = avatar !== "hide";
 
   const profile = await getProfile();
   const canEdit = profile?.role === "admin" || profile?.role === "editor";
@@ -55,7 +59,11 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
   }
 
   return (
-    <DashboardProvider>
+    <DashboardProvider
+      initialView={initialView}
+      initialRootId={finalRootId}
+      initialShowAvatar={initialShowAvatar}
+    >
       <ViewToggle />
       <DashboardViews
         persons={persons}

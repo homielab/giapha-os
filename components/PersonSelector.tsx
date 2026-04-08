@@ -102,7 +102,7 @@ export default function PersonSelector({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <DefaultAvatar gender={currentPerson.gender} />
+                <DefaultAvatar gender={currentPerson.gender} size={32} />
               )
             ) : showAllOption && selectedId === null ? (
               <Database className="size-4" />
@@ -229,7 +229,7 @@ export default function PersonSelector({
                                 className="h-full w-full object-cover"
                               />
                             ) : (
-                              <DefaultAvatar gender={person.gender} />
+                              <DefaultAvatar gender={person.gender} size={32} />
                             )}
                           </div>
                           <div

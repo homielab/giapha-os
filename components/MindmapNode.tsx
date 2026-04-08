@@ -7,6 +7,7 @@ import Image from "next/image";
 import { memo, useState } from "react";
 import DefaultAvatar from "./DefaultAvatar";
 
+import { getAvatarBg } from "@/utils/styleHelprs";
 import { AdjacencyLists, getFilteredTreeData } from "@/utils/treeHelpers";
 
 export interface MindmapContextData {
@@ -20,6 +21,8 @@ export interface MindmapContextData {
   hideMales: boolean;
   hideFemales: boolean;
   showAvatar: boolean;
+  hideExpandButtons: boolean;
+  autoCollapseLevel: number;
   expandSignal: { type: "expand" | "collapse"; ts: number } | null;
   setMemberModalId: (id: string | null) => void;
 }
@@ -48,12 +51,26 @@ export const MindmapNode = memo(
     ctx: MindmapContextData;
   }) => {
     const data = getTreeData(personId, ctx);
-    const [isExpanded, setIsExpanded] = useState(level < 2);
+    const [isExpanded, setIsExpanded] = useState(
+      ctx.autoCollapseLevel > 0 ? level < ctx.autoCollapseLevel : level < 2,
+    );
     const [lastSignalTs, setLastSignalTs] = useState(0);
+    const [lastCollapseLevel, setLastCollapseLevel] = useState(
+      ctx.autoCollapseLevel,
+    );
 
+    // React to global expand/collapse signal
     if (ctx.expandSignal && ctx.expandSignal.ts !== lastSignalTs) {
       setIsExpanded(ctx.expandSignal.type === "expand");
       setLastSignalTs(ctx.expandSignal.ts);
+    }
+
+    // React to autoCollapseLevel changes
+    if (ctx.autoCollapseLevel !== lastCollapseLevel) {
+      setLastCollapseLevel(ctx.autoCollapseLevel);
+      if (ctx.autoCollapseLevel > 0) {
+        setIsExpanded(level < ctx.autoCollapseLevel);
+      }
     }
 
     if (!data.person) return null;
@@ -89,7 +106,7 @@ export const MindmapNode = memo(
         <div className="flex items-center gap-2 group relative z-10">
           {/* Expand/Collapse Toggle or spacer */}
           <div className="size-5 flex items-center justify-center shrink-0 z-10 bg-transparent">
-            {hasChildren ? (
+            {hasChildren && !ctx.hideExpandButtons ? (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="size-5 flex items-center justify-center bg-white hover:bg-amber-50 border border-stone-200 rounded shadow-sm text-stone-500 hover:text-amber-600 focus:outline-none transition-colors"
@@ -121,14 +138,7 @@ export const MindmapNode = memo(
                     {ctx.showAvatar && (
                       <div className="relative shrink-0">
                         <div
-                          className={`size-10 rounded-full overflow-hidden flex items-center justify-center text-white text-xs font-bold shadow-md ring-2 ring-white transition-transform duration-300 group-hover/card:scale-105
-                    ${
-                      data.person.gender === "male"
-                        ? "bg-linear-to-br from-sky-400 to-sky-700"
-                        : data.person.gender === "female"
-                          ? "bg-linear-to-br from-rose-400 to-rose-700"
-                          : "bg-linear-to-br from-stone-400 to-stone-600"
-                    }`}
+                          className={`size-10 rounded-full overflow-hidden flex items-center justify-center text-white text-xs font-bold shadow-md ring-2 ring-white transition-transform duration-300 group-hover/card:scale-105 ${getAvatarBg(data.person.gender)}`}
                         >
                           {data.person.avatar_url ? (
                             <Image
@@ -140,7 +150,10 @@ export const MindmapNode = memo(
                               className="h-full w-full object-cover"
                             />
                           ) : (
-                            <DefaultAvatar gender={data.person.gender} />
+                            <DefaultAvatar
+                              gender={data.person.gender}
+                              size={40}
+                            />
                           )}
                         </div>
                       </div>
@@ -215,14 +228,7 @@ export const MindmapNode = memo(
                           >
                             {ctx.showAvatar && (
                               <div
-                                className={`size-8 rounded-full overflow-hidden flex items-center justify-center text-white text-[10px] font-bold shadow-sm ring-2 ring-white transition-transform duration-300 group-hover/spouse:scale-105
-                        ${
-                          spouseData.person.gender === "male"
-                            ? "bg-linear-to-br from-sky-400 to-sky-700"
-                            : spouseData.person.gender === "female"
-                              ? "bg-linear-to-br from-rose-400 to-rose-700"
-                              : "bg-linear-to-br from-stone-400 to-stone-600"
-                        }`}
+                                className={`size-8 rounded-full overflow-hidden flex items-center justify-center text-white text-[10px] font-bold shadow-sm ring-2 ring-white transition-transform duration-300 group-hover/spouse:scale-105 ${getAvatarBg(spouseData.person.gender)}`}
                               >
                                 {spouseData.person.avatar_url ? (
                                   <Image
@@ -236,6 +242,7 @@ export const MindmapNode = memo(
                                 ) : (
                                   <DefaultAvatar
                                     gender={spouseData.person.gender}
+                                    size={32}
                                   />
                                 )}
                               </div>

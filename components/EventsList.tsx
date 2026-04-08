@@ -85,48 +85,94 @@ function EventCard({
     }
   };
 
+  // Compute age or years since for display
+  const yearsInfo = (() => {
+    if (!event.originYear) return null;
+    const now = new Date().getFullYear();
+    const diff = now - event.originYear;
+    if (diff <= 0) return null;
+    if (isBirthday) return `${diff} tuổi`;
+    if (event.type === "death_anniversary") return `${diff} năm`;
+    return null;
+  })();
+
+  const dateLabel = (() => {
+    const weekdays = [
+      "Chủ nhật",
+      "Thứ hai",
+      "Thứ ba",
+      "Thứ tư",
+      "Thứ năm",
+      "Thứ sáu",
+      "Thứ bảy",
+    ];
+    const d = event.nextOccurrence;
+    const dayOfWeek = weekdays[d.getDay()];
+    const day = d.getDate().toString().padStart(2, "0");
+    const month = (d.getMonth() + 1).toString().padStart(2, "0");
+    const year = d.getFullYear();
+
+    let label = `${dayOfWeek}, ngày ${day}/${month}`;
+    if (event.type === "custom_event") {
+      label += `/${year}`;
+    }
+    if (event.type === "death_anniversary") {
+      label += ` (Âm lịch: ${event.eventDateLabel.replace(" ÂL", "")})`;
+    }
+    return label;
+  })();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.04 }}
       onClick={handleClick}
-      className={`w-full text-left flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer hover:shadow-md group ${
+      className={`w-full text-left flex items-start gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer active:scale-[0.98] hover:shadow-md group ${
         isToday
           ? "bg-amber-50 border-amber-300 shadow-sm"
-          : isBirthday
-            ? "bg-white/80 border-stone-200/60 hover:border-blue-200"
-            : isCustom
-              ? "bg-white/80 border-stone-200/60 hover:border-purple-200"
-              : "bg-white/80 border-stone-200/60 hover:border-rose-200"
+          : isPast
+            ? "bg-stone-50/60 border-stone-200/50"
+            : isBirthday
+              ? "bg-white/80 border-stone-200/60 hover:border-blue-200"
+              : isCustom
+                ? "bg-white/80 border-stone-200/60 hover:border-purple-200"
+                : "bg-white/80 border-stone-200/60 hover:border-rose-200"
       }`}
     >
       {/* Icon */}
       <div
-        className={`shrink-0 size-11 flex items-center justify-center rounded-xl mt-0.5 ${
+        className={`shrink-0 size-10 sm:size-11 flex items-center justify-center rounded-xl ${
           isToday
             ? "bg-amber-100 text-amber-600"
-            : isBirthday
-              ? "bg-blue-50 text-blue-500"
-              : isCustom
-                ? "bg-purple-50 text-purple-500"
-                : "bg-rose-50 text-rose-500"
+            : isPast
+              ? "bg-stone-100 text-stone-400"
+              : isBirthday
+                ? "bg-blue-50 text-blue-500"
+                : isCustom
+                  ? "bg-purple-50 text-purple-500"
+                  : "bg-rose-50 text-rose-500"
         }`}
       >
         {isBirthday ? (
-          <Cake className="size-5" />
+          <Cake className="size-[18px] sm:size-5" />
         ) : isCustom ? (
-          <Star className="size-5" />
+          <Star className="size-[18px] sm:size-5" />
         ) : (
-          <Flower className="size-5" />
+          <Flower className="size-[18px] sm:size-5" />
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        {/* Top row: name + badge */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <p
-            className={`font-semibold text-stone-800 truncate transition-colors group-hover:text-amber-700`}
+            className={`font-semibold text-[15px] sm:text-base truncate transition-colors ${
+              isPast
+                ? "text-stone-500"
+                : "text-stone-800 group-hover:text-amber-700"
+            }`}
           >
             {event.personName}
           </p>
@@ -138,51 +184,50 @@ function EventCard({
                 {getZodiacSign(event.originDay, event.originMonth)}
               </span>
             )}
-        </div>
-        <div className="flex flex-col gap-1 mt-1">
-          <p className="text-sm text-stone-500 flex items-center gap-1.5 leading-tight">
-            <CalendarDays className="size-3.5 shrink-0" />
-            {isBirthday
-              ? "Sinh nhật"
-              : isCustom
-                ? "Sự kiện"
-                : "Ngày giỗ"} —{" "}
-            <span className="font-medium text-stone-600">
-              {event.eventDateLabel}
-            </span>
-            {event.originYear && (
-              <span className="text-stone-400">({event.originYear})</span>
+          {/* Days badge — inline with name */}
+          <span
+            className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold leading-tight whitespace-nowrap ${
+              isToday
+                ? "bg-amber-400 text-white"
+                : isPast
+                  ? "bg-stone-200/80 text-stone-500"
+                  : isSoon
+                    ? "bg-red-100 text-red-600"
+                    : "bg-stone-100 text-stone-500"
+            }`}
+          >
+            {isToday && (
+              <span className="relative flex size-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-200 opacity-75" />
+                <span className="relative inline-flex rounded-full size-1.5 bg-white" />
+              </span>
             )}
+            {!isToday && <Clock className="size-2.5" />}
+            {daysUntilLabel(event.daysUntil)}
+          </span>
+        </div>
+
+        {/* Details */}
+        <div className="flex flex-col gap-0.5 mt-1">
+          <p className="text-[13px] sm:text-sm text-stone-500 flex items-center gap-1.5 leading-snug">
+            <CalendarDays className="size-3.5 shrink-0" />
+            <span className="font-medium text-stone-600">{dateLabel}</span>
+            {yearsInfo && <span className="text-stone-400">· {yearsInfo}</span>}
           </p>
+
           {event.location && (
-            <p className="text-sm text-stone-500 flex items-center gap-1.5 leading-tight">
+            <p className="text-[13px] sm:text-sm text-stone-500 flex items-center gap-1.5 leading-snug">
               <MapPin className="size-3.5 shrink-0" />
               <span className="truncate">{event.location}</span>
             </p>
           )}
           {event.content && (
-            <p className="text-sm text-stone-500 flex items-start gap-1.5 leading-tight mt-0.5">
+            <p className="text-[13px] sm:text-sm text-stone-400 flex items-start gap-1.5 leading-snug mt-0.5">
               <AlignLeft className="size-3.5 shrink-0 mt-0.5" />
               <span className="line-clamp-2">{event.content}</span>
             </p>
           )}
         </div>
-      </div>
-
-      {/* Days badge */}
-      <div
-        className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold ${
-          isToday
-            ? "bg-amber-400 text-white"
-            : isPast
-              ? "bg-stone-200 text-stone-600 opacity-80"
-              : isSoon
-                ? "bg-red-100 text-red-600"
-                : "bg-stone-100 text-stone-500"
-        }`}
-      >
-        <Clock className="size-3" />
-        {daysUntilLabel(event.daysUntil)}
       </div>
     </motion.div>
   );
@@ -194,7 +239,7 @@ export default function EventsList({
 }: EventsListProps) {
   const router = useRouter();
   const [filter, setFilter] = useState<
-    "all" | "birthday" | "death_anniversary" | "custom_event"
+    "all" | "birthday" | "death_anniversary" | "custom_event" | "past"
   >("all");
   const [showCount, setShowCount] = useState(20);
   const [showDeceasedBirthdays, setShowDeceasedBirthdays] = useState(false);
@@ -223,7 +268,17 @@ export default function EventsList({
 
   const [todayDate] = useState(() => {
     const today = new Date();
-    const solarStr = `Ngày ${today.getDate()} tháng ${today.getMonth() + 1} năm ${today.getFullYear()}`;
+    const weekdays = [
+      "Chủ nhật",
+      "Thứ hai",
+      "Thứ ba",
+      "Thứ tư",
+      "Thứ năm",
+      "Thứ sáu",
+      "Thứ bảy",
+    ];
+    const dayOfWeek = weekdays[today.getDay()];
+    const solarStr = `${dayOfWeek}, ngày ${today.getDate()} tháng ${today.getMonth() + 1} năm ${today.getFullYear()}`;
     let lunarStr = "";
     try {
       const solar = Solar.fromYmd(
@@ -250,20 +305,23 @@ export default function EventsList({
 
   const filtered = useMemo(() => {
     let result = allEvents;
+    if (filter === "past") {
+      // Past tab: all event types from the past year
+      return result
+        .filter((e) => e.daysUntil < 0 && e.daysUntil >= -365)
+        .sort((a, b) => b.daysUntil - a.daysUntil); // most recent first
+    }
     if (filter !== "all") {
       result = result.filter((e) => e.type === filter);
     }
     if (!showDeceasedBirthdays) {
       result = result.filter((e) => !(e.type === "birthday" && e.isDeceased));
     }
-    return result;
+    // Only show upcoming events (daysUntil >= 0) for non-past tabs
+    return result.filter((e) => e.daysUntil >= 0 && e.daysUntil <= 365);
   }, [allEvents, filter, showDeceasedBirthdays]);
 
-  // Split into upcoming (within 365 days) and far away
-  const upcoming = filtered.filter(
-    (e) => (filter === "custom_event" ? true : e.daysUntil >= 0) && e.daysUntil <= 365,
-  );
-  const visible = upcoming.slice(0, showCount);
+  const visible = filtered.slice(0, showCount);
 
   const todayCount = allEvents.filter((e) => e.daysUntil === 0).length;
   const soonCount = allEvents.filter(
@@ -342,14 +400,20 @@ export default function EventsList({
               { key: "birthday", label: "Sinh nhật" },
               { key: "death_anniversary", label: "Ngày giỗ" },
               { key: "custom_event", label: "Tuỳ chỉnh" },
+              { key: "past", label: "Đã qua" },
             ] as const
           ).map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setFilter(tab.key)}
+              onClick={() => {
+                setFilter(tab.key);
+                setShowCount(20);
+              }}
               className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                 filter === tab.key
-                  ? "bg-amber-500 text-white shadow-sm"
+                  ? filter === "past"
+                    ? "bg-stone-600 text-white shadow-sm"
+                    : "bg-amber-500 text-white shadow-sm"
                   : "bg-white/80 text-stone-600 border border-stone-200/60 hover:border-amber-200 hover:text-amber-700"
               }`}
             >
@@ -357,22 +421,24 @@ export default function EventsList({
             </button>
           ))}
           <span className="ml-auto text-xs text-stone-400 self-center">
-            {filtered.length} sự kiện trong năm
+            {filtered.length} sự kiện{filter === "past" ? " trong năm qua" : ""}
           </span>
         </div>
 
-        {/* Toggle options */}
-        <div className="flex px-1">
-          <label className="flex items-center gap-2.5 text-sm font-medium text-stone-600 cursor-pointer hover:text-stone-900 transition-colors select-none">
-            <input
-              type="checkbox"
-              checked={showDeceasedBirthdays}
-              onChange={(e) => setShowDeceasedBirthdays(e.target.checked)}
-              className="rounded-md border-stone-300 text-amber-500 focus:ring-amber-500 size-4 transition-all"
-            />
-            Hiển thị sinh nhật của người đã mất
-          </label>
-        </div>
+        {/* Toggle options — hide when viewing past events */}
+        {filter !== "past" && (
+          <div className="flex px-1">
+            <label className="flex items-center gap-2.5 text-sm font-medium text-stone-600 cursor-pointer hover:text-stone-900 transition-colors select-none">
+              <input
+                type="checkbox"
+                checked={showDeceasedBirthdays}
+                onChange={(e) => setShowDeceasedBirthdays(e.target.checked)}
+                className="rounded-md border-stone-300 text-amber-500 focus:ring-amber-500 size-4 transition-all"
+              />
+              Hiển thị sinh nhật của người đã mất
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Event list */}
@@ -398,12 +464,12 @@ export default function EventsList({
       )}
 
       {/* Load more */}
-      {upcoming.length > showCount && (
+      {filtered.length > showCount && (
         <button
           onClick={() => setShowCount((n) => n + 20)}
           className="w-full py-3 text-sm font-semibold text-stone-500 hover:text-amber-600 transition-colors"
         >
-          Xem thêm {upcoming.length - showCount} sự kiện…
+          Xem thêm {filtered.length - showCount} sự kiện…
         </button>
       )}
 

@@ -3,6 +3,7 @@
 import { DashboardContext, useDashboard } from "@/components/DashboardContext";
 import { Person, RelationshipType } from "@/types";
 import { formatDisplayDate } from "@/utils/dateHelpers";
+import { getAvatarBg } from "@/utils/styleHelprs";
 import { createClient } from "@/utils/supabase/client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -10,10 +11,18 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import DefaultAvatar from "./DefaultAvatar";
 
 interface RelationshipManagerProps {
-  personId: string;
+  person: Person;
   isAdmin: boolean;
   canEdit?: boolean;
-  personGender: string; // Passed down to calculate default spouse gender
+  onStatsLoaded?: (stats: {
+    biologicalChildren: number;
+    maleBiologicalChildren: number;
+    femaleBiologicalChildren: number;
+    paternalGrandchildren: number;
+    maternalGrandchildren: number;
+    sonInLaw: number;
+    daughterInLaw: number;
+  }) => void;
 }
 
 interface EnrichedRelationship {
@@ -25,15 +34,18 @@ interface EnrichedRelationship {
 }
 
 export default function RelationshipManager({
-  personId,
+  person,
   isAdmin,
   canEdit = false,
-  personGender,
+  onStatsLoaded,
 }: RelationshipManagerProps) {
   const supabase = createClient();
   const dashboardContext = useContext(DashboardContext);
   const { setMemberModalId } = useDashboard();
   const router = useRouter();
+  
+  const personId = person.id;
+  const personGender = person.gender;
 
   // If inside DashboardProvider → open modal; otherwise → navigate to full page
   const handlePersonClick = (id: string) => {
@@ -72,9 +84,18 @@ export default function RelationshipManager({
       name: string;
       gender: "male" | "female" | "other";
       birthYear: string;
+      birthOrder: string;
       isProcessing: boolean;
     }[]
-  >([{ name: "", gender: "male", birthYear: "", isProcessing: false }]);
+  >([
+    {
+      name: "",
+      gender: "male",
+      birthYear: "",
+      birthOrder: "1",
+      isProcessing: false,
+    },
+  ]);
 
   // Quick Add Spouse State
   const [isAddingSpouse, setIsAddingSpouse] = useState(false);
@@ -178,13 +199,79 @@ export default function RelationshipManager({
         }
       }
 
+      if (onStatsLoaded) {
+        const biologicalChildrenList = formattedRels.filter(
+          (r) => r.direction === "child" && r.type === "biological_child",
+        );
+        const biologicalChildren = biologicalChildrenList.length;
+        const maleBiologicalChildren = biologicalChildrenList.filter(
+          (c) => c.targetPerson.gender === "male",
+        ).length;
+        const femaleBiologicalChildren = biologicalChildrenList.filter(
+          (c) => c.targetPerson.gender === "female",
+        ).length;
+
+        const daughterInLaw = formattedRels.filter(
+          (r) =>
+            r.direction === "child_in_law" &&
+            r.targetPerson.gender === "female",
+        ).length;
+        const sonInLaw = formattedRels.filter(
+          (r) =>
+            r.direction === "child_in_law" && r.targetPerson.gender === "male",
+        ).length;
+
+        // Fetch Grandchildren mapping
+        let paternalGrandchildren = 0;
+        let maternalGrandchildren = 0;
+        if (childrenIds.length > 0) {
+          const { data: grandchildrenData } = await supabase
+            .from("relationships")
+            .select("id, person_a")
+            .in("type", ["biological_child", "adopted_child"])
+            .in("person_a", childrenIds);
+
+          if (grandchildrenData) {
+            const maleChildrenIds = formattedRels
+              .filter(
+                (r) =>
+                  r.direction === "child" && r.targetPerson.gender === "male",
+              )
+              .map((r) => r.targetPerson.id);
+            const femaleChildrenIds = formattedRels
+              .filter(
+                (r) =>
+                  r.direction === "child" && r.targetPerson.gender === "female",
+              )
+              .map((r) => r.targetPerson.id);
+
+            paternalGrandchildren = grandchildrenData.filter((g) =>
+              maleChildrenIds.includes(g.person_a),
+            ).length;
+            maternalGrandchildren = grandchildrenData.filter((g) =>
+              femaleChildrenIds.includes(g.person_a),
+            ).length;
+          }
+        }
+
+        onStatsLoaded({
+          biologicalChildren,
+          maleBiologicalChildren,
+          femaleBiologicalChildren,
+          paternalGrandchildren,
+          maternalGrandchildren,
+          sonInLaw,
+          daughterInLaw,
+        });
+      }
+
       setRelationships(formattedRels);
     } catch (err) {
       console.error("Error fetching relationships:", err);
     } finally {
       setLoading(false);
     }
-  }, [personId, supabase]);
+  }, [personId, supabase, onStatsLoaded]);
 
   useEffect(() => {
     fetchRelationships();
@@ -269,6 +356,47 @@ export default function RelationshipManager({
 
       if (error) throw error;
 
+      // Auto-update target person generation and is_in_law if currently missing
+      try {
+        const { data: targetPerson } = await supabase
+          .from("persons")
+          .select("generation, is_in_law")
+          .eq("id", selectedTargetId)
+          .single();
+
+        if (
+          targetPerson &&
+          (targetPerson.generation == null || targetPerson.is_in_law == null)
+        ) {
+          const updates: { generation?: number; is_in_law?: boolean } = {};
+
+          if (targetPerson.generation == null && person.generation != null) {
+            if (newRelDirection === "child")
+              updates.generation = person.generation + 1;
+            else if (newRelDirection === "parent")
+              updates.generation = person.generation - 1;
+            else if (newRelDirection === "spouse")
+              updates.generation = person.generation;
+          }
+
+          if (targetPerson.is_in_law == null) {
+            if (newRelDirection === "child" || newRelDirection === "parent")
+              updates.is_in_law = false;
+            else if (newRelDirection === "spouse")
+              updates.is_in_law = person.is_in_law === true ? false : true;
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await supabase
+              .from("persons")
+              .update(updates)
+              .eq("id", selectedTargetId);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to auto-update target person properties", err);
+      }
+
       setIsAdding(false);
       setSearchTerm("");
       setSelectedTargetId(null);
@@ -307,13 +435,25 @@ export default function RelationshipManager({
           full_name: string;
           gender: "male" | "female" | "other";
           birth_year?: number;
+          birth_order?: number;
+          is_in_law?: boolean;
+          generation?: number;
         } = {
           full_name: child.name.trim(),
           gender: child.gender,
+          is_in_law: false,
         };
+
+        if (person.generation != null) {
+          personPayload.generation = person.generation + 1;
+        }
         if (child.birthYear.trim() !== "") {
           const year = parseInt(child.birthYear);
           if (!isNaN(year)) personPayload.birth_year = year;
+        }
+        if (child.birthOrder.trim() !== "") {
+          const order = parseInt(child.birthOrder);
+          if (!isNaN(order)) personPayload.birth_order = order;
         }
 
         const { data: newPersonData, error: insertError } = await supabase
@@ -351,7 +491,13 @@ export default function RelationshipManager({
       if (successCount === validChildren.length) {
         setIsAddingBulk(false);
         setBulkChildren([
-          { name: "", gender: "male", birthYear: "", isProcessing: false },
+          {
+            name: "",
+            gender: "male",
+            birthYear: "",
+            birthOrder: "1",
+            isProcessing: false,
+          },
         ]);
         setSelectedSpouseId("");
         fetchRelationships();
@@ -396,10 +542,17 @@ export default function RelationshipManager({
         full_name: string;
         gender: "male" | "female" | "other";
         birth_year?: number;
+        is_in_law?: boolean;
+        generation?: number;
       } = {
         full_name: newSpouseName.trim(),
         gender: newSpouseGender,
+        is_in_law: person.is_in_law === true ? false : true,
       };
+
+      if (person.generation != null) {
+        personPayload.generation = person.generation;
+      }
 
       if (newSpouseBirthYear.trim() !== "") {
         const year = parseInt(newSpouseBirthYear);
@@ -511,8 +664,8 @@ export default function RelationshipManager({
                       className="flex items-center gap-3 hover:bg-stone-100 p-2.5 -mx-2.5 rounded-xl transition-all duration-200 flex-1 text-left"
                     >
                       <div
-                        className={`h-8 w-8 rounded-full flex items-center justify-center text-xs text-white overflow-hidden
-                            ${rel.targetPerson.gender === "male" ? "bg-sky-700" : rel.targetPerson.gender === "female" ? "bg-rose-700" : "bg-stone-500"}`}
+                        className={`size-8 rounded-full flex items-center justify-center text-xs text-white overflow-hidden
+                            ${getAvatarBg(rel.targetPerson.gender)}`}
                       >
                         {rel.targetPerson.avatar_url ? (
                           <Image
@@ -524,7 +677,10 @@ export default function RelationshipManager({
                             height={32}
                           />
                         ) : (
-                          <DefaultAvatar gender={rel.targetPerson.gender} />
+                          <DefaultAvatar
+                            gender={rel.targetPerson.gender}
+                            size={32}
+                          />
                         )}
                       </div>
                       <div className="flex flex-col">
@@ -655,51 +811,64 @@ export default function RelationshipManager({
 
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-stone-500 mb-1">
+              <label
+                htmlFor="rel-note"
+                className="block text-xs font-medium text-stone-600 mb-1"
+              >
                 Ghi chú mối quan hệ (tuỳ chọn)
               </label>
               <input
+                id="rel-note"
+                name="rel-note"
                 type="text"
                 placeholder="VD: Vợ cả, Vợ hai, Chồng trước..."
                 value={newRelNote}
                 onChange={(e) => setNewRelNote(e.target.value)}
-                className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 sm:p-2.5 border mb-3 transition-colors"
+                className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-lg border-stone-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 sm:p-2.5 border mb-3 transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-stone-500 mb-1">
+              <label
+                htmlFor="rel-direction"
+                className="block text-xs font-medium text-stone-600 mb-1"
+              >
                 Loại quan hệ
               </label>
-              <div className="flex gap-2">
-                <select
-                  value={newRelDirection}
-                  onChange={(e) =>
-                    setNewRelDirection(
-                      e.target.value as "parent" | "child" | "spouse",
-                    )
-                  }
-                  className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 sm:p-2.5 border transition-colors"
-                >
-                  <option value="parent">Người này là Con của...</option>
-                  <option value="spouse">Người này là Vợ/Chồng của...</option>
-                  <option value="child">Người này là Bố/Mẹ của...</option>
-                </select>
-              </div>
+              <select
+                id="rel-direction"
+                name="rel-direction"
+                value={newRelDirection}
+                onChange={(e) =>
+                  setNewRelDirection(
+                    e.target.value as "parent" | "child" | "spouse",
+                  )
+                }
+                className="bg-white text-stone-900 block w-full max-w-full text-sm rounded-lg border-stone-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 sm:p-2.5 border transition-colors"
+              >
+                <option value="parent">Người này là Con của...</option>
+                <option value="spouse">Người này là Vợ/Chồng của...</option>
+                <option value="child">Người này là Bố/Mẹ của...</option>
+              </select>
             </div>
 
             {/* Child Type Sub-selection */}
             {(newRelDirection === "child" || newRelDirection === "parent") && (
               <div>
-                <label className="block text-xs font-medium text-stone-500 mb-1">
+                <label
+                  htmlFor="rel-type"
+                  className="block text-xs font-medium text-stone-600 mb-1"
+                >
                   Chi tiết
                 </label>
                 <select
+                  id="rel-type"
+                  name="rel-type"
                   value={newRelType}
                   onChange={(e) =>
                     setNewRelType(e.target.value as RelationshipType)
                   }
-                  className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 sm:p-2.5 border transition-colors"
+                  className="bg-white text-stone-900 block w-full max-w-full text-sm rounded-lg border-stone-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 sm:p-2.5 border transition-colors"
                 >
                   <option value="biological_child">Con ruột</option>
                   <option value="adopted_child">Con nuôi</option>
@@ -708,15 +877,20 @@ export default function RelationshipManager({
             )}
 
             <div>
-              <label className="block text-xs font-medium text-stone-500 mb-1">
+              <label
+                htmlFor="rel-search"
+                className="block text-xs font-medium text-stone-600 mb-1"
+              >
                 Tìm người thân
               </label>
               <input
+                id="rel-search"
+                name="rel-search"
                 type="text"
                 placeholder="Nhập tên để tìm..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 sm:p-2.5 border transition-colors"
+                className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-lg border-stone-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 sm:p-2.5 border transition-colors"
               />
               {/* Search Results Dropdown */}
               {(searchResults.length > 0 ||
@@ -814,13 +988,18 @@ export default function RelationshipManager({
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-stone-500 mb-1">
+              <label
+                htmlFor="bulk-spouse"
+                className="block text-xs font-medium text-stone-600 mb-1"
+              >
                 Chọn người mẹ/cha còn lại
               </label>
               <select
+                id="bulk-spouse"
+                name="bulk-spouse"
                 value={selectedSpouseId}
                 onChange={(e) => setSelectedSpouseId(e.target.value)}
-                className="flex-1 bg-white text-stone-900 placeholder-stone-400 text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 p-2 sm:p-2.5 border transition-colors"
+                className="bg-white text-stone-900 block w-full max-w-full text-sm rounded-lg border-stone-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 p-2 sm:p-2.5 border transition-colors"
               >
                 <option value="unknown">
                   Không rõ (hoặc Vợ/Chồng khác chưa thêm)
@@ -834,89 +1013,121 @@ export default function RelationshipManager({
               </select>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-xs font-medium text-stone-500 mb-1">
+            <div className="space-y-3">
+              <label className="block text-xs font-medium text-stone-600 mb-1">
                 Danh sách các con
               </label>
               {bulkChildren.map((child, index) => (
-                <div key={index} className="flex gap-2 items-center">
-                  <span className="text-stone-400 text-xs w-4">
-                    {index + 1}.
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Họ và tên..."
-                    value={child.name}
-                    onChange={(e) => {
-                      const newBulk = [...bulkChildren];
-                      newBulk[index].name = e.target.value;
-                      setBulkChildren(newBulk);
-                    }}
-                    className="flex-2 bg-white text-stone-900 placeholder-stone-400 text-sm rounded-md border-stone-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 p-2 border"
-                  />
-                  <select
-                    value={child.gender}
-                    onChange={(e) => {
-                      const newBulk = [...bulkChildren];
-                      newBulk[index].gender = e.target.value as
-                        | "male"
-                        | "female"
-                        | "other";
-                      setBulkChildren(newBulk);
-                    }}
-                    className="flex-1 bg-white text-stone-900 text-sm rounded-md border-stone-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 p-2 border"
-                  >
-                    <option value="male">Nam</option>
-                    <option value="female">Nữ</option>
-                    <option value="other">Khác</option>
-                  </select>
-                  <input
-                    type="number"
-                    placeholder="Năm sinh"
-                    value={child.birthYear}
-                    onChange={(e) => {
-                      const newBulk = [...bulkChildren];
-                      newBulk[index].birthYear = e.target.value;
-                      setBulkChildren(newBulk);
-                    }}
-                    className="flex-1 bg-white text-stone-900 placeholder-stone-400 text-sm rounded-md border-stone-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 p-2 border w-24"
-                  />
-                  <button
-                    onClick={() => {
-                      const newBulk = bulkChildren.filter(
-                        (_, i) => i !== index,
-                      );
-                      // Always keep at least one row
-                      if (newBulk.length === 0) {
-                        newBulk.push({
-                          name: "",
-                          gender: "male",
-                          birthYear: "",
-                          isProcessing: false,
-                        });
-                      }
-                      setBulkChildren(newBulk);
-                    }}
-                    className="text-stone-400 hover:text-red-500 p-2"
-                  >
-                    ✕
-                  </button>
+                <div
+                  key={index}
+                  className="bg-white rounded-xl border border-stone-200/80 p-3 sm:p-4 shadow-xs"
+                >
+                  {/* Header: number + remove */}
+                  <div className="flex items-center justify-between mb-2.5">
+                    <span className="text-xs font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md">
+                      Con thứ {index + 1}
+                    </span>
+                    <button
+                      onClick={() => {
+                        const newBulk = bulkChildren.filter(
+                          (_, i) => i !== index,
+                        );
+                        if (newBulk.length === 0) {
+                          newBulk.push({
+                            name: "",
+                            gender: "male",
+                            birthYear: "",
+                            birthOrder: "1",
+                            isProcessing: false,
+                          });
+                        }
+                        setBulkChildren(newBulk);
+                      }}
+                      className="text-stone-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors text-xs"
+                      title="Xoá"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  {/* Fields */}
+                  <div className="flex flex-wrap sm:flex-nowrap gap-2">
+                    <input
+                      id={`child-birth-order-${index}`}
+                      name={`child-birth-order-${index}`}
+                      type="number"
+                      placeholder="STT"
+                      min="1"
+                      value={child.birthOrder}
+                      onChange={(e) => {
+                        const newBulk = [...bulkChildren];
+                        newBulk[index].birthOrder = e.target.value;
+                        setBulkChildren(newBulk);
+                      }}
+                      className="w-14 shrink-0 text-center bg-stone-50 text-stone-900 placeholder-stone-400 text-sm rounded-lg border-stone-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 px-1 py-2 border transition-colors"
+                    />
+                    <input
+                      id={`child-name-${index}`}
+                      name={`child-name-${index}`}
+                      type="text"
+                      placeholder="Họ và tên *"
+                      value={child.name}
+                      onChange={(e) => {
+                        const newBulk = [...bulkChildren];
+                        newBulk[index].name = e.target.value;
+                        setBulkChildren(newBulk);
+                      }}
+                      className="w-[calc(100%-4rem)] sm:w-auto sm:flex-1 min-w-0 bg-stone-50 text-stone-900 placeholder-stone-400 text-sm rounded-lg border-stone-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 px-3 py-2 border transition-colors"
+                    />
+                    <select
+                      id={`child-gender-${index}`}
+                      name={`child-gender-${index}`}
+                      value={child.gender}
+                      onChange={(e) => {
+                        const newBulk = [...bulkChildren];
+                        newBulk[index].gender = e.target.value as
+                          | "male"
+                          | "female"
+                          | "other";
+                        setBulkChildren(newBulk);
+                      }}
+                      className="w-[calc(50%-0.25rem)] sm:w-24 shrink-0 bg-stone-50 text-stone-900 text-sm rounded-lg border-stone-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 px-2 py-2 border transition-colors"
+                    >
+                      <option value="male">Nam</option>
+                      <option value="female">Nữ</option>
+                      <option value="other">Khác</option>
+                    </select>
+                    <input
+                      id={`child-birth-year-${index}`}
+                      name={`child-birth-year-${index}`}
+                      type="number"
+                      placeholder="Năm sinh"
+                      value={child.birthYear}
+                      onChange={(e) => {
+                        const newBulk = [...bulkChildren];
+                        newBulk[index].birthYear = e.target.value;
+                        setBulkChildren(newBulk);
+                      }}
+                      className="w-[calc(50%-0.25rem)] sm:w-24 shrink-0 bg-stone-50 text-stone-900 placeholder-stone-400 text-sm rounded-lg border-stone-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 px-2 py-2 border transition-colors"
+                    />
+                  </div>
                 </div>
               ))}
 
               <button
                 onClick={() => {
+                  const nextOrder = String(bulkChildren.length + 1);
                   setBulkChildren([
                     ...bulkChildren,
                     {
                       name: "",
                       gender: "male",
                       birthYear: "",
+                      birthOrder: nextOrder,
                       isProcessing: false,
                     },
                   ]);
                 }}
-                className="text-sky-600 text-xs font-semibold hover:text-sky-800 mt-2 px-6"
+                className="w-full py-2.5 border-2 border-dashed border-sky-200 bg-sky-50/50 hover:bg-sky-50 rounded-xl text-sky-600 text-xs font-semibold hover:border-sky-300 transition-all"
               >
                 + Thêm dòng
               </button>
@@ -940,6 +1151,7 @@ export default function RelationshipManager({
                       name: "",
                       gender: "male",
                       birthYear: "",
+                      birthOrder: "1",
                       isProcessing: false,
                     },
                   ]);
@@ -963,41 +1175,56 @@ export default function RelationshipManager({
 
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-rose-700 mb-1">
-                Họ và Tên *
+              <label
+                htmlFor="spouse-name"
+                className="block text-xs font-medium text-stone-600 mb-1"
+              >
+                Họ và Tên <span className="text-red-500">*</span>
               </label>
               <input
+                id="spouse-name"
+                name="spouse-name"
                 type="text"
                 placeholder="Nhập họ và tên..."
                 value={newSpouseName}
                 onChange={(e) => setNewSpouseName(e.target.value)}
-                className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 sm:p-2.5 border transition-colors"
+                className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-lg border-stone-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 sm:p-2.5 border transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-rose-700 mb-1">
+              <label
+                htmlFor="spouse-birth-year"
+                className="block text-xs font-medium text-stone-600 mb-1"
+              >
                 Năm sinh (Tuỳ chọn)
               </label>
               <input
+                id="spouse-birth-year"
+                name="spouse-birth-year"
                 type="number"
                 placeholder="VD: 1980"
                 value={newSpouseBirthYear}
                 onChange={(e) => setNewSpouseBirthYear(e.target.value)}
-                className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 sm:p-2.5 border transition-colors"
+                className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-lg border-stone-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 sm:p-2.5 border transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-rose-700 mb-1">
+              <label
+                htmlFor="spouse-note"
+                className="block text-xs font-medium text-stone-600 mb-1"
+              >
                 Ghi chú mối quan hệ (Ví dụ: Vợ cả, Chồng thứ...)
               </label>
               <input
+                id="spouse-note"
+                name="spouse-note"
                 type="text"
                 placeholder="Tuỳ chọn..."
                 value={newSpouseNote}
                 onChange={(e) => setNewSpouseNote(e.target.value)}
-                className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-md sm:rounded-lg border-stone-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 sm:p-2.5 border transition-colors"
+                className="bg-white text-stone-900 placeholder-stone-400 block w-full text-sm rounded-lg border-stone-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 sm:p-2.5 border transition-colors"
               />
             </div>
 

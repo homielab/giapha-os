@@ -100,15 +100,19 @@ export function computeEvents(
     // ── Birthday (solar) ────────────────────────────────────────────
     if (p.birth_month && p.birth_day) {
       const thisYear = today.getFullYear();
-      let next = new Date(thisYear, p.birth_month - 1, p.birth_day);
-      if (next < today)
-        next = new Date(thisYear + 1, p.birth_month - 1, p.birth_day);
+      const thisYearDate = new Date(thisYear, p.birth_month - 1, p.birth_day);
+      const isUpcoming = thisYearDate >= today;
+
+      // Next occurrence (upcoming)
+      const next = isUpcoming
+        ? thisYearDate
+        : new Date(thisYear + 1, p.birth_month - 1, p.birth_day);
 
       const daysUntil = Math.round(
         (next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
       );
 
-      events.push({
+      const baseEvent: FamilyEvent = {
         personId: p.id,
         personName: p.full_name,
         type: "birthday",
@@ -119,7 +123,20 @@ export function computeEvents(
         originMonth: p.birth_month,
         originDay: p.birth_day,
         isDeceased: p.is_deceased,
-      });
+      };
+      events.push(baseEvent);
+
+      // Past occurrence (already happened this year)
+      if (!isUpcoming) {
+        const pastDaysUntil = Math.round(
+          (thisYearDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+        );
+        events.push({
+          ...baseEvent,
+          nextOccurrence: thisYearDate,
+          daysUntil: pastDaysUntil,
+        });
+      }
     }
 
     // ── Death anniversary (lunar) ────────────────────────────────────
@@ -148,7 +165,7 @@ export function computeEvents(
           (next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
         );
 
-        events.push({
+        const deathEvent: FamilyEvent = {
           personId: p.id,
           personName: p.full_name,
           type: "death_anniversary",
@@ -159,7 +176,38 @@ export function computeEvents(
           originMonth: p.death_lunar_month ?? p.death_month,
           originDay: p.death_lunar_day ?? p.death_day,
           isDeceased: p.is_deceased,
-        });
+        };
+        events.push(deathEvent);
+
+        // Past occurrence: find this year's lunar date converted to solar
+        // If daysUntil > 0, the event already passed for the previous lunar year cycle
+        if (daysUntil > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const LunarClass = Lunar as any;
+          const todaySolar = Solar.fromYmd(
+            today.getFullYear(),
+            today.getMonth() + 1,
+            today.getDate(),
+          );
+          const currentLunarYear = todaySolar.getLunar().getYear();
+          try {
+            const pastLunar = LunarClass.fromYmd(currentLunarYear, lMonth, lDay);
+            const pastSolar = pastLunar.getSolar();
+            const pastDate = new Date(pastSolar.getYear(), pastSolar.getMonth() - 1, pastSolar.getDay());
+            if (pastDate < today) {
+              const pastDaysUntil = Math.round(
+                (pastDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+              );
+              events.push({
+                ...deathEvent,
+                nextOccurrence: pastDate,
+                daysUntil: pastDaysUntil,
+              });
+            }
+          } catch {
+            // Skip if past lunar date doesn't exist
+          }
+        }
       } catch {
         // Skip if lunar conversion fails
       }

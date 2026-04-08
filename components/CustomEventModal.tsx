@@ -9,8 +9,11 @@ import {
   Calendar as CalendarIcon,
   Loader2,
   MapPin,
+  Moon,
+  Sun,
   X,
 } from "lucide-react";
+import { Lunar } from "lunar-javascript";
 import { useEffect, useState } from "react";
 
 interface CustomEventModalProps {
@@ -34,6 +37,15 @@ export default function CustomEventModal({
   const [location, setLocation] = useState(eventToEdit?.location || "");
   const [content, setContent] = useState(eventToEdit?.content || "");
 
+  // Lunar date mode
+  const [dateMode, setDateMode] = useState<"solar" | "lunar">("solar");
+  const [lunarDay, setLunarDay] = useState<number | "">("");
+  const [lunarMonth, setLunarMonth] = useState<number | "">("");
+  const [lunarYear, setLunarYear] = useState<number | "">("");
+  const [lunarConvertError, setLunarConvertError] = useState<string | null>(
+    null,
+  );
+
   useEffect(() => {
     if (isOpen) {
       if (eventToEdit) {
@@ -43,13 +55,50 @@ export default function CustomEventModal({
         setContent(eventToEdit.content || "");
       } else {
         setName("");
-        setEventDate("");
+        // Default to today
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, "0");
+        const d = String(now.getDate()).padStart(2, "0");
+        setEventDate(`${y}-${m}-${d}`);
         setLocation("");
         setContent("");
       }
       setError(null);
+      setDateMode("solar");
+      setLunarDay("");
+      setLunarMonth("");
+      setLunarYear("");
+      setLunarConvertError(null);
     }
   }, [isOpen, eventToEdit]);
+
+  // Auto-convert lunar → solar when all 3 fields are filled
+  useEffect(() => {
+    if (
+      dateMode === "lunar" &&
+      lunarDay !== "" &&
+      lunarMonth !== "" &&
+      lunarYear !== "" &&
+      lunarYear > 100
+    ) {
+      try {
+        const lunar = Lunar.fromYmd(
+          lunarYear as number,
+          lunarMonth as number,
+          lunarDay as number,
+        );
+        const solar = lunar.getSolar();
+        const y = solar.getYear();
+        const m = String(solar.getMonth()).padStart(2, "0");
+        const d = String(solar.getDay()).padStart(2, "0");
+        setEventDate(`${y}-${m}-${d}`);
+        setLunarConvertError(null);
+      } catch {
+        setLunarConvertError("Ngày âm lịch không hợp lệ.");
+      }
+    }
+  }, [dateMode, lunarDay, lunarMonth, lunarYear]);
 
   // Prevent background scrolling when modal is open
   useEffect(() => {
@@ -222,20 +271,103 @@ export default function CustomEventModal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-1.5">
-                      Ngày diễn ra (Dương lịch){" "}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-stone-400" />
-                      <input
-                        required
-                        type="date"
-                        className={`${inputClasses} pl-11`}
-                        value={eventDate}
-                        onChange={(e) => setEventDate(e.target.value)}
-                      />
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-semibold text-stone-700">
+                        Ngày diễn ra <span className="text-red-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDateMode((m) =>
+                            m === "solar" ? "lunar" : "solar",
+                          );
+                          setLunarConvertError(null);
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-medium text-stone-500 hover:text-amber-700 transition-colors px-2.5 py-1 rounded-lg bg-stone-50 hover:bg-amber-50 border border-stone-200/60"
+                      >
+                        {dateMode === "solar" ? (
+                          <>
+                            <Moon className="size-3" />
+                            Nhập Âm lịch
+                          </>
+                        ) : (
+                          <>
+                            <Sun className="size-3" />
+                            Nhập Dương lịch
+                          </>
+                        )}
+                      </button>
                     </div>
+
+                    {dateMode === "solar" ? (
+                      <div className="relative">
+                        <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-stone-400" />
+                        <input
+                          required
+                          type="date"
+                          className={`${inputClasses} pl-11`}
+                          value={eventDate}
+                          onChange={(e) => setEventDate(e.target.value)}
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-3 gap-3">
+                          <input
+                            type="number"
+                            placeholder="Ngày"
+                            min="1"
+                            max="30"
+                            value={lunarDay}
+                            onChange={(e) =>
+                              setLunarDay(
+                                e.target.value ? Number(e.target.value) : "",
+                              )
+                            }
+                            className={inputClasses}
+                          />
+                          <input
+                            type="number"
+                            placeholder="Tháng"
+                            min="1"
+                            max="12"
+                            value={lunarMonth}
+                            onChange={(e) =>
+                              setLunarMonth(
+                                e.target.value ? Number(e.target.value) : "",
+                              )
+                            }
+                            className={inputClasses}
+                          />
+                          <input
+                            type="number"
+                            placeholder="Năm"
+                            value={lunarYear}
+                            onChange={(e) =>
+                              setLunarYear(
+                                e.target.value ? Number(e.target.value) : "",
+                              )
+                            }
+                            className={inputClasses}
+                          />
+                        </div>
+                        {lunarConvertError && (
+                          <p className="text-xs text-rose-500 font-medium flex items-center gap-1">
+                            <AlertCircle className="size-3" />
+                            {lunarConvertError}
+                          </p>
+                        )}
+                        {eventDate && !lunarConvertError && (
+                          <p className="text-xs text-stone-500 flex items-center gap-1.5">
+                            <Sun className="size-3 text-amber-500" />
+                            Dương lịch:{" "}
+                            <span className="font-semibold text-stone-700">
+                              {eventDate.split("-").reverse().join("/")}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -247,7 +379,7 @@ export default function CustomEventModal({
                       <input
                         type="text"
                         className={`${inputClasses} pl-11`}
-                        placeholder="VD: Khu lăng mộ dòng họ"
+                        placeholder="VD: Nhà từ đường"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                       />

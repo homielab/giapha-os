@@ -1,6 +1,7 @@
 "use client";
 
 import { computeKinship } from "@/utils/kinshipHelpers";
+import { getAvatarBg } from "@/utils/styleHelprs";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeftRight,
@@ -44,12 +45,6 @@ const getGenderStyle = (gender: string) => {
   if (gender === "male") return "bg-sky-100 text-sky-600";
   if (gender === "female") return "bg-rose-100 text-rose-600";
   return "bg-stone-100 text-stone-600";
-};
-
-const getAvatarBg = (gender: string) => {
-  if (gender === "male") return "bg-linear-to-br from-sky-400 to-sky-700";
-  if (gender === "female") return "bg-linear-to-br from-rose-400 to-rose-700";
-  return "bg-linear-to-br from-stone-400 to-stone-600";
 };
 
 // ── Person selector dropdown ──────────────────────────────────────────────────
@@ -110,7 +105,7 @@ function PersonSelector({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <DefaultAvatar gender={selected.gender} />
+                <DefaultAvatar gender={selected.gender} size={40} />
               )
             ) : (
               "?"
@@ -191,7 +186,7 @@ function PersonSelector({
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <DefaultAvatar gender={p.gender} />
+                          <DefaultAvatar gender={p.gender} size={32} />
                         )}
                       </div>
                       <div

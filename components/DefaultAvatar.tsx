@@ -1,40 +1,36 @@
-"use client";
+import { getAvatarBg } from "@/utils/styleHelprs";
+import Image from "next/image";
 
-export default function DefaultAvatar({ gender }: { gender?: string }) {
+export const AVATAR_VERSION = "v2";
+
+export default function DefaultAvatar({
+  gender,
+  size = 64,
+}: {
+  gender?: string;
+  size?: number;
+}) {
   if (gender === "male") {
     return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className="w-full h-full p-1 opacity-90 text-sky-100"
-      >
-        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-      </svg>
+      <Image
+        unoptimized
+        src={`/avatar/${AVATAR_VERSION}/male.svg`}
+        alt="Male"
+        className={`w-full h-full object-cover ${getAvatarBg(gender)}`}
+        width={size}
+        height={size}
+      />
     );
   }
-  if (gender === "female") {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className="w-full h-full p-1 opacity-90 text-rose-100"
-      >
-        <path d="M12 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" />
-        <path d="M12 13c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z" />
-        <path d="M12 2C9.24 2 7 4.24 7 7c0 .28.06.54.15.79C6.46 8.44 6 9.68 6 11v2h2v-2c0-.5.2-1.39.42-2.31C8.75 9.17 9.87 9 10 9h4c.13 0 1.25.17 1.58-.31.22.92.42 1.81.42 2.31v2h2v-2c0-1.32-.46-2.56-1.15-3.21.09-.25.15-.51.15-.79 0-2.76-2.24-5-5-5z" />
-      </svg>
-    );
-  }
+
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className="w-full h-full p-1 opacity-90 text-stone-200"
-    >
-      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-    </svg>
+    <Image
+      unoptimized
+      src={`/avatar/${AVATAR_VERSION}/female.svg`}
+      alt="Female"
+      className="w-full h-full object-cover"
+      width={size}
+      height={size}
+    />
   );
 }

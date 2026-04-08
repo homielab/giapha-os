@@ -108,7 +108,7 @@ export default function ExportButton() {
         ) : (
           <Download className="size-4 shrink-0" />
         )}
-        <span className="tracking-wide min-w-max">
+        <span className="hidden sm:inline tracking-wide min-w-max">
           {isExporting ? "Đang xuất..." : "Xuất file"}
         </span>
       </button>

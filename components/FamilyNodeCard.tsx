@@ -1,7 +1,7 @@
 "use client";
 
 import { Person } from "@/types";
-import { Minus, Plus } from "lucide-react";
+import { getAvatarBg } from "@/utils/styleHelprs";
 import Image from "next/image";
 import { useDashboard } from "./DashboardContext";
 import DefaultAvatar from "./DefaultAvatar";
@@ -12,8 +12,6 @@ interface FamilyNodeCardProps {
   note?: string | null;
   onClickCard?: () => void;
   onClickName?: (e: React.MouseEvent) => void;
-  isExpandable?: boolean;
-  isExpanded?: boolean;
   isRingVisible?: boolean;
   isPlusVisible?: boolean;
   level: number;
@@ -23,8 +21,6 @@ export default function FamilyNodeCard({
   person,
   onClickCard,
   onClickName,
-  isExpandable = false,
-  isExpanded = false,
   isRingVisible = false,
   isPlusVisible = false,
 }: FamilyNodeCardProps) {
@@ -62,30 +58,13 @@ export default function FamilyNodeCard({
         </div>
       )}
 
-      {/* Expand/Collapse Indicator */}
-      {isExpandable && (
-        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white border border-stone-200/80 rounded-full size-6 flex items-center justify-center shadow-md z-100 text-stone-500 hover:text-amber-600 transition-colors">
-          {isExpanded ? (
-            <Minus className="w-3.5 h-3.5" />
-          ) : (
-            <Plus className="w-3.5 h-3.5" />
-          )}
-        </div>
-      )}
-
       {/* 1. Avatar */}
       {showAvatar && (
         <div className="relative z-10 mb-1.5 sm:mb-2">
           <div
             className={`
               h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-[10px] sm:text-xs md:text-sm text-white overflow-hidden shrink-0 shadow-lg ring-2 ring-white transition-transform duration-300 group-hover:scale-105
-              ${
-                person.gender === "male"
-                  ? "bg-linear-to-br from-sky-400 to-sky-700"
-                  : person.gender === "female"
-                    ? "bg-linear-to-br from-rose-400 to-rose-700"
-                    : "bg-linear-to-br from-stone-400 to-stone-600"
-              }
+              ${getAvatarBg(person.gender)}
             `}
           >
             {person.avatar_url ? (
@@ -98,7 +77,7 @@ export default function FamilyNodeCard({
                 height={64}
               />
             ) : (
-              <DefaultAvatar gender={person.gender} />
+              <DefaultAvatar gender={person.gender} size={64} />
             )}
           </div>
         </div>

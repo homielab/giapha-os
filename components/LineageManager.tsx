@@ -26,6 +26,9 @@ interface ComputedUpdate {
   new_generation: number | null;
   old_birth_order: number | null;
   new_birth_order: number | null;
+  old_is_in_law: boolean;
+  new_is_in_law: boolean;
+  gender: string;
   changed: boolean;
 }
 
@@ -146,6 +149,73 @@ function computeGenerations(
   return genMap;
 }
 
+function computeInLaws(
+  persons: Person[],
+  relationships: Relationship[],
+): Map<string, boolean> {
+  // A person is an in-law if they have a spouse in the tree but no parents in the tree
+  const childParents = new Map<string, string[]>();
+  const spouseMap = new Map<string, string[]>();
+
+  for (const r of relationships) {
+    if (r.type === "biological_child" || r.type === "adopted_child") {
+      if (!childParents.has(r.person_b)) childParents.set(r.person_b, []);
+      childParents.get(r.person_b)!.push(r.person_a);
+    } else if (r.type === "marriage") {
+      if (!spouseMap.has(r.person_a)) spouseMap.set(r.person_a, []);
+      spouseMap.get(r.person_a)!.push(r.person_b);
+      if (!spouseMap.has(r.person_b)) spouseMap.set(r.person_b, []);
+      spouseMap.get(r.person_b)!.push(r.person_a);
+    }
+  }
+
+  const inLawMap = new Map<string, boolean>();
+
+  // Identify "roots" - people with no parents
+  for (const p of persons) {
+    const hasParents = childParents.has(p.id);
+    const hasSpouse = spouseMap.has(p.id);
+
+    // Rule: If they have parents in the tree, they are bloodline (NOT in-law)
+    if (hasParents) {
+      inLawMap.set(p.id, false);
+      continue;
+    }
+
+    // Rule: If they have no parents but DO have a spouse
+    if (hasSpouse) {
+      // Ambiguity check: If NEITHER spouse has parents, one is root, one is in-law.
+      // Usually, we keep the one already marked as NOT in-law as the root,
+      // or we use gender as a fallback (male = bloodline in many traditional Vietnamese genealogies).
+      const spouses = spouseMap.get(p.id) || [];
+      const anySpouseHasParents = spouses.some((sId) => childParents.has(sId));
+
+      if (anySpouseHasParents) {
+        // Spouse is bloodline -> this person is definitely an in-law
+        inLawMap.set(p.id, true);
+      } else {
+        // Neither has parents. Identify the "core" ancestor.
+        // If one is already marked as not in-law in DB, keep it.
+        // Otherwise, prioritize male.
+        const spousesData = spouses.map((sId) =>
+          persons.find((per) => per.id === sId),
+        );
+        const shouldBeBloodline =
+          !p.is_in_law ||
+          (p.gender === "male" &&
+            spousesData.every((s) => s?.gender !== "male"));
+
+        inLawMap.set(p.id, !shouldBeBloodline);
+      }
+    } else {
+      // No parents and no spouse -> Root (Generation 1) -> NOT in-law
+      inLawMap.set(p.id, false);
+    }
+  }
+
+  return inLawMap;
+}
+
 function computeBirthOrders(
   persons: Person[],
   relationships: Relationship[],
@@ -216,10 +286,13 @@ export default function LineageManager({
     try {
       const genMap = computeGenerations(persons, relationships);
       const orderMap = computeBirthOrders(persons, relationships);
+      const inLawMap = computeInLaws(persons, relationships);
 
       const result: ComputedUpdate[] = persons.map((p) => {
         const newGen = genMap.has(p.id) ? genMap.get(p.id)! : null;
         const newOrder = orderMap.has(p.id) ? orderMap.get(p.id)! : null;
+        const newInLaw = inLawMap.get(p.id) ?? false;
+
         return {
           id: p.id,
           full_name: p.full_name,
@@ -227,7 +300,13 @@ export default function LineageManager({
           new_generation: newGen,
           old_birth_order: p.birth_order,
           new_birth_order: newOrder,
-          changed: newGen !== p.generation || newOrder !== p.birth_order,
+          old_is_in_law: p.is_in_law,
+          new_is_in_law: newInLaw,
+          gender: p.gender,
+          changed:
+            newGen !== p.generation ||
+            newOrder !== p.birth_order ||
+            newInLaw !== p.is_in_law,
         };
       });
 
@@ -269,6 +348,7 @@ export default function LineageManager({
               .update({
                 generation: u.new_generation,
                 birth_order: u.new_birth_order,
+                is_in_law: u.new_is_in_law,
               })
               .eq("id", u.id),
           ),
@@ -371,20 +451,23 @@ export default function LineageManager({
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-stone-50 border-b border-stone-200/80">
-                    <th className="text-left px-4 py-3 font-semibold text-stone-600 whitespace-nowrap">
-                      Tên
-                    </th>
-                    <th className="text-center px-4 py-3 font-semibold text-stone-600 whitespace-nowrap">
-                      Thế hệ (cũ → mới)
-                    </th>
-                    <th className="text-center px-4 py-3 font-semibold text-stone-600 whitespace-nowrap">
-                      Thứ tự sinh (cũ → mới)
-                    </th>
-                    <th className="text-center px-4 py-3 font-semibold text-stone-600">
-                      Trạng thái
-                    </th>
-                  </tr>
+                    <tr className="bg-stone-50 border-b border-stone-200/80">
+                      <th className="text-left px-4 py-3 font-semibold text-stone-600 whitespace-nowrap">
+                        Tên
+                      </th>
+                      <th className="text-center px-4 py-3 font-semibold text-stone-600 whitespace-nowrap">
+                        Thế hệ
+                      </th>
+                      <th className="text-center px-4 py-3 font-semibold text-stone-600 whitespace-nowrap">
+                        Thứ tự
+                      </th>
+                      <th className="text-center px-4 py-3 font-semibold text-stone-600 whitespace-nowrap">
+                        Dâu/Rể
+                      </th>
+                      <th className="text-center px-4 py-3 font-semibold text-stone-600">
+                        Trạng thái
+                      </th>
+                    </tr>
                 </thead>
                 <tbody>
                   {displayedRows.map((u, i) => (
@@ -423,17 +506,44 @@ export default function LineageManager({
                           </>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        {u.changed ? (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 border border-amber-200/60">
-                            Cập nhật
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className={
+                              u.old_is_in_law !== u.new_is_in_law
+                                ? "text-stone-400"
+                                : ""
+                            }
+                          >
+                            {u.old_is_in_law
+                              ? u.gender === "male"
+                                ? "Rể"
+                                : "Dâu"
+                              : "—"}
                           </span>
-                        ) : (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-stone-100 text-stone-400 border border-stone-200/60">
-                            Không đổi
-                          </span>
-                        )}
-                      </td>
+                          {u.old_is_in_law !== u.new_is_in_law && (
+                            <>
+                              <span className="mx-2 text-stone-300">→</span>
+                              <span className="font-bold text-amber-700">
+                                {u.new_is_in_law
+                                  ? u.gender === "male"
+                                    ? "Rể"
+                                    : "Dâu"
+                                  : "Máu thịt"}
+                              </span>
+                            </>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {u.changed ? (
+                            <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 border border-amber-200/60">
+                              Cập nhật
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-stone-100 text-stone-400 border border-stone-200/60">
+                              Không đổi
+                            </span>
+                          )}
+                        </td>
                     </tr>
                   ))}
                 </tbody>

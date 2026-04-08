@@ -99,12 +99,26 @@ export default function MemberForm({
 
   // Private fields
   const [phoneNumber, setPhoneNumber] = useState(
-    initialData?.phone_number || "",
+    initialData?.phone_number ?? "",
   );
-  const [occupation, setOccupation] = useState(initialData?.occupation || "");
+  const [occupation, setOccupation] = useState(
+    initialData?.occupation ?? "",
+  );
   const [currentResidence, setCurrentResidence] = useState(
-    initialData?.current_residence || "",
+    initialData?.current_residence ?? "",
   );
+
+  const slugify = (str: string) => {
+    return str
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[đĐ]/g, "d")
+      .replace(/([^0-9a-z-\s])/g, "")
+      .replace(/(\s+)/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  };
 
   const handleSolarDeathChange = (
     field: "day" | "month" | "year",
@@ -278,29 +292,10 @@ export default function MemberForm({
     }
 
     try {
-      let finalAvatarUrl = avatarUrl;
+      let currentAvatarUrl = avatarUrl;
 
-      // 0. Handle Avatar Upload if a new file is selected
-      if (avatarFile) {
-        const fileExt = avatarFile.name.split(".").pop();
-        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(filePath, avatarFile);
-
-        if (uploadError) throw uploadError;
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("avatars").getPublicUrl(filePath);
-
-        finalAvatarUrl = publicUrl;
-      }
-
-      // 1. Upsert public data
-      const personData = {
+      // Update person data helper to avoid duplication
+      const getPersonData = (url: string | null) => ({
         full_name: fullName,
         gender,
         birth_year: birthYear === "" ? null : Number(birthYear),
@@ -329,51 +324,93 @@ export default function MemberForm({
         birth_order: birthOrder === "" ? null : Number(birthOrder),
         generation: generation === "" ? null : Number(generation),
         other_names: otherNames || null,
-        avatar_url: finalAvatarUrl || null,
+        avatar_url: url,
         note: note || null,
-      };
+      });
 
-      let personId = initialData?.id;
+      let currentPersonId = initialData?.id;
 
-      if (isEditing && personId) {
-        const { error: updateError } = await supabase
-          .from("persons")
-          .update(personData)
-          .eq("id", personId);
-        if (updateError) throw updateError;
-      } else {
+      // For a new member, we must insert first to get the ID for the avatar filename
+      if (!isEditing || !currentPersonId) {
         const { data: newPerson, error: createError } = await supabase
           .from("persons")
-          .insert(personData)
+          .insert(getPersonData(currentAvatarUrl || null))
           .select()
           .single();
         if (createError) throw createError;
-        personId = newPerson.id;
+        currentPersonId = newPerson.id;
+      } else {
+        // Update existing member info first
+        const { error: updateError } = await supabase
+          .from("persons")
+          .update(getPersonData(currentAvatarUrl || null))
+          .eq("id", currentPersonId);
+        if (updateError) throw updateError;
       }
 
-      // 2. Upsert private data (only if admin and personId exists)
-      if (isAdmin && personId) {
-        const privateData = {
-          person_id: personId,
-          phone_number: phoneNumber || null,
-          occupation: occupation || null,
-          current_residence: currentResidence || null,
+      // 2. Handle Avatar Upload if a new file is selected (now we have currentPersonId)
+      if (avatarFile && currentPersonId) {
+        const fileExt = avatarFile.name.split(".").pop();
+        const slugName = slugify(fullName);
+        const fileName = `${currentPersonId}_${slugName}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, avatarFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("avatars").getPublicUrl(filePath);
+
+        currentAvatarUrl = publicUrl;
+
+        // Update the person with the final avatar URL
+        const { error: updateAvatarError } = await supabase
+          .from("persons")
+          .update({ avatar_url: currentAvatarUrl })
+          .eq("id", currentPersonId);
+        if (updateAvatarError) throw updateAvatarError;
+      }
+
+      // 3. Upsert private data (only if admin and currentPersonId exists)
+      if (isAdmin && currentPersonId) {
+        const normalizedData = {
+          person_id: currentPersonId,
+          phone_number: phoneNumber?.trim() || null,
+          occupation: occupation?.trim() || null,
+          current_residence: currentResidence?.trim() || null,
         };
 
-        const { error: privateError } = await supabase
-          .from("person_details_private")
-          .upsert(privateData); // Upsert works for both new and existing if we use person_id as unique key
+        const hasData =
+          normalizedData.phone_number ||
+          normalizedData.occupation ||
+          normalizedData.current_residence;
 
-        if (privateError) throw privateError;
+        if (hasData) {
+          const { error } = await supabase
+            .from("person_details_private")
+            .upsert(normalizedData);
+
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("person_details_private")
+            .delete()
+            .eq("person_id", currentPersonId);
+
+          if (error) throw error;
+        }
       }
-
       // After save: use callback if provided, otherwise fall back to page navigation
-      if (!personId)
+      if (!currentPersonId)
         throw new Error("Không lấy được ID thành viên sau khi lưu.");
       if (onSuccess) {
-        onSuccess(personId);
+        onSuccess(currentPersonId);
       } else {
-        router.push("/dashboard/members/" + personId);
+        router.push("/dashboard/members/" + currentPersonId);
         router.refresh();
       }
     } catch (err) {

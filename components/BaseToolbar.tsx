@@ -20,6 +20,10 @@ export interface BaseToolbarProps {
   setHideMales: (val: boolean) => void;
   hideFemales: boolean;
   setHideFemales: (val: boolean) => void;
+  hideExpandButtons?: boolean;
+  setHideExpandButtons?: (val: boolean) => void;
+  autoCollapseLevel?: number;
+  setAutoCollapseLevel?: (val: number) => void;
   canEdit?: boolean;
   children?: React.ReactNode;
 }
@@ -37,6 +41,10 @@ export default function BaseToolbar({
   setHideMales,
   hideFemales,
   setHideFemales,
+  hideExpandButtons,
+  setHideExpandButtons,
+  autoCollapseLevel,
+  setAutoCollapseLevel,
   canEdit,
   children,
 }: BaseToolbarProps) {
@@ -115,6 +123,33 @@ export default function BaseToolbar({
                 />
                 Tối giản
               </label>
+              {setHideExpandButtons && (
+                <label className="flex items-center gap-2 text-sm text-stone-600 cursor-pointer hover:text-stone-900 transition-colors select-none">
+                  <input
+                    type="checkbox"
+                    checked={!!hideExpandButtons}
+                    onChange={(e) => setHideExpandButtons(e.target.checked)}
+                    className="rounded text-amber-600 focus:ring-amber-500 cursor-pointer size-4"
+                  />
+                  Ẩn nút đóng/mở
+                </label>
+              )}
+              {setAutoCollapseLevel && (
+                <label className="flex items-center justify-between gap-2 text-sm text-stone-600 cursor-pointer hover:text-stone-900 transition-colors select-none">
+                  <span>Số thế hệ</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={99}
+                    value={autoCollapseLevel ?? 0}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      setAutoCollapseLevel(isNaN(val) ? 0 : val);
+                    }}
+                    className="w-14 px-2 py-1 text-center text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400"
+                  />
+                </label>
+              )}
 
               <div className="h-px w-full bg-stone-100 my-1 font-bold text-stone-400 uppercase tracking-wider flex items-center gap-2"></div>
               <div className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">

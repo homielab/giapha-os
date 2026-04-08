@@ -9,6 +9,20 @@ import dynamic from "next/dynamic";
 
 const FamilyTree = dynamic(() => import("@/components/FamilyTree"));
 const MindmapTree = dynamic(() => import("@/components/MindmapTree"));
+const BubbleMapTree = dynamic(
+  () =>
+    import("@/components/BubbleMapTree").catch((err) => {
+      console.error("Failed to load BubbleMapTree:", err);
+      return {
+        default: () => (
+          <div className="flex absolute inset-0 items-center justify-center p-4 text-center bg-stone-50 rounded-2xl border border-stone-200/60 shadow-inner text-stone-500">
+            Tính năng này không được hỗ trợ trên trình duyệt của bạn. Vui lòng cập nhật hoặc sử dụng trình duyệt khác.
+          </div>
+        ),
+      };
+    }),
+  { ssr: false },
+);
 
 interface DashboardViewsProps {
   persons: Person[];
@@ -38,11 +52,22 @@ export default function DashboardViews({
 
     let finalRootId = rootId;
 
-    // If no rootId is provided, fallback to the earliest created person
+    // If no rootId is provided, fallback to generation 1 or earliest birth year
     if (!finalRootId || !pMap.has(finalRootId)) {
       const rootsFallback = persons.filter((p) => !childIds.has(p.id));
       if (rootsFallback.length > 0) {
-        finalRootId = rootsFallback[0].id;
+        const gen1 = rootsFallback.filter((p) => p.generation === 1);
+        const sortByBirthYear = (a: Person, b: Person) => {
+          const ya = a.birth_year ?? Infinity;
+          const yb = b.birth_year ?? Infinity;
+          return ya - yb;
+        };
+
+        if (gen1.length > 0) {
+          finalRootId = gen1.sort(sortByBirthYear)[0].id;
+        } else {
+          finalRootId = rootsFallback.sort(sortByBirthYear)[0].id;
+        }
       } else if (persons.length > 0) {
         finalRootId = persons[0].id; // ultimate fallback
       }
@@ -77,7 +102,11 @@ export default function DashboardViews({
 
         {currentView === "list" && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full relative z-10">
-            <DashboardMemberList initialPersons={persons} canEdit={canEdit} />
+            <DashboardMemberList
+              initialPersons={persons}
+              relationships={relationships}
+              canEdit={canEdit}
+            />
           </div>
         )}
 
@@ -92,6 +121,14 @@ export default function DashboardViews({
           )}
           {currentView === "mindmap" && (
             <MindmapTree
+              personsMap={personsMap}
+              relationships={relationships}
+              roots={roots}
+              canEdit={canEdit}
+            />
+          )}
+          {currentView === "bubble" && (
+            <BubbleMapTree
               personsMap={personsMap}
               relationships={relationships}
               roots={roots}

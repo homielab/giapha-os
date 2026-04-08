@@ -1,6 +1,7 @@
 "use client";
 
 import { Person } from "@/types";
+import { getAvatarBg } from "@/utils/styleHelprs";
 import Image from "next/image";
 import { useDashboard } from "./DashboardContext";
 import DefaultAvatar from "./DefaultAvatar";
@@ -25,7 +26,7 @@ export default function PersonCard({ person }: PersonCardProps) {
     <button
       onClick={() => setMemberModalId(person.id)}
       className={`group block relative bg-white/60 p-2 sm:p-4 rounded-2xl shadow-sm border border-stone-200/60 hover:border-amber-300 hover:shadow-md hover:bg-white/90 transition-all duration-300 overflow-hidden
-        ${isDeceased ? "opacity-80 grayscale-[0.3]" : ""}`}
+        ${isDeceased ? "opacity-80 grayscalePer-[0.3]" : ""}`}
     >
       {/* Decorative gradient blob */}
       {/* <div
@@ -35,20 +36,20 @@ export default function PersonCard({ person }: PersonCardProps) {
       <div className="flex items-center space-x-4 relative z-10">
         <div className="relative">
           <div
-            className={`h-14 w-14 sm:h-16 sm:w-16 rounded-full flex items-center justify-center text-xl font-bold text-white overflow-hidden shrink-0 shadow-lg ring-2 ring-white transition-transform duration-300 group-hover:scale-105
-            ${person.gender === "male" ? "bg-linear-to-br from-sky-400 to-sky-700" : person.gender === "female" ? "bg-linear-to-br from-rose-400 to-rose-700" : "bg-linear-to-br from-stone-400 to-stone-600"}`}
+            className={`size-14 sm:size-16 rounded-full flex items-center justify-center text-xl font-bold text-white overflow-hidden shrink-0 shadow-lg ring-2 ring-white transition-transform duration-300 group-hover:scale-105
+            ${getAvatarBg(person.gender)}`}
           >
             {person.avatar_url ? (
               <Image
                 unoptimized
                 src={person.avatar_url}
                 alt={person.full_name}
-                width={64}
-                height={64}
+                width={32}
+                height={32}
                 className="h-full w-full object-cover"
               />
             ) : (
-              <DefaultAvatar gender={person.gender} />
+              <DefaultAvatar gender={person.gender} size={32} />
             )}
           </div>
           {/* Gender Indicator Icon */}
@@ -82,9 +83,9 @@ export default function PersonCard({ person }: PersonCardProps) {
               />
             </svg>
             <span className="truncate">
-              {person.birth_year || "Chưa rõ"}
+              {person.birth_year || "..."}
               {isDeceased &&
-                ` → ${person.death_lunar_year || person.death_year || "Chưa rõ"}`}
+                ` → ${person.death_lunar_year || person.death_year || "..."}`}
             </span>
           </p>
           {(isDeceased ||
@@ -92,11 +93,6 @@ export default function PersonCard({ person }: PersonCardProps) {
             person.birth_order != null ||
             person.generation != null) && (
             <div className="flex flex-wrap items-center gap-1.5 shrink-0 mt-2">
-              {isDeceased && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold bg-stone-100 text-stone-500 uppercase tracking-widest border border-stone-200/60 shadow-xs">
-                  Đã mất
-                </span>
-              )}
               {person.is_in_law && (
                 <span
                   className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold uppercase tracking-widest shadow-xs border ${
@@ -124,6 +120,11 @@ export default function PersonCard({ person }: PersonCardProps) {
               {person.generation != null && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 uppercase tracking-widest shadow-xs">
                   Đời thứ {person.generation}
+                </span>
+              )}
+              {isDeceased && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold bg-stone-100 text-stone-500 uppercase tracking-widest border border-stone-200/60 shadow-xs">
+                  Đã mất
                 </span>
               )}
             </div>

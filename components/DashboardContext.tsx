@@ -21,38 +21,56 @@ export const DashboardContext = createContext<DashboardState | undefined>(
   undefined,
 );
 
-export function DashboardProvider({ children }: { children: React.ReactNode }) {
+export function DashboardProvider({
+  children,
+  initialView,
+  initialRootId,
+  initialShowAvatar,
+}: {
+  children: React.ReactNode;
+  initialView?: ViewMode;
+  initialRootId?: string | null;
+  initialShowAvatar?: boolean;
+}) {
   const searchParams = useSearchParams();
-  const [memberModalId, setMemberModalId] = useState<string | null>(null);
+
+  // Initialize state directly from URL to avoid flash of wrong view
+  const [memberModalId, setMemberModalId] = useState<string | null>(
+    () => searchParams.get("memberModalId") ?? null,
+  );
   const [showCreateMember, setShowCreateMember] = useState(false);
-  const [showAvatar, setShowAvatar] = useState<boolean>(true);
-  const [view, setViewState] = useState<ViewMode>("list");
-  const [rootId, setRootIdState] = useState<string | null>(null);
+  const [showAvatar, setShowAvatar] = useState<boolean>(
+    () => initialShowAvatar ?? searchParams.get("avatar") !== "hide",
+  );
+  const [view, setViewState] = useState<ViewMode>(
+    () => initialView ?? (searchParams.get("view") as ViewMode | null) ?? "list",
+  );
+  const [rootId, setRootIdState] = useState<string | null>(
+    () => initialRootId ?? searchParams.get("rootId") ?? null,
+  );
 
-  // Initialize from URL once on mount (or when searchParams actually change from server init)
-  // We use a ref or just simple effect
+  // Initialize from URL and listen to Next.js route changes
   useEffect(() => {
-    const avatarParam = searchParams.get("avatar");
-    setShowAvatar(avatarParam !== "hide");
+    const syncFromURL = () => {
+      if (typeof window === "undefined") return;
 
-    const viewParam = searchParams.get("view") as ViewMode;
-    if (viewParam) setViewState(viewParam);
-
-    const rootIdParam = searchParams.get("rootId");
-    if (rootIdParam) setRootIdState(rootIdParam);
-
-    // We intentionally ignore memberModalId in the Next.js router loop
-    // to avoid Next.js triggering re-renders on push.
-    // If the URL has it on first load, we grab it from window.location instead
-    if (typeof window !== "undefined") {
       const sp = new URLSearchParams(window.location.search);
+
+      const avatarParam = sp.get("avatar");
+      setShowAvatar(avatarParam !== "hide");
+
+      const viewParam = sp.get("view") as ViewMode;
+      if (viewParam) setViewState(viewParam);
+
+      const rootIdParam = sp.get("rootId");
+      setRootIdState(rootIdParam);
+
       const modalId = sp.get("memberModalId");
-      if (modalId && !memberModalId) {
-        setMemberModalId(modalId);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      setMemberModalId(modalId);
+    };
+
+    syncFromURL();
+  }, [searchParams]);
 
   // Sync to URL silently
   const updateModalId = (id: string | null) => {

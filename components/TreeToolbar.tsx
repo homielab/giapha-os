@@ -1,4 +1,4 @@
-import { ZoomIn, ZoomOut } from "lucide-react";
+import { Crosshair, ZoomIn, ZoomOut } from "lucide-react";
 import BaseToolbar, { BaseToolbarProps } from "./BaseToolbar";
 
 interface TreeToolbarProps extends BaseToolbarProps {
@@ -6,6 +6,7 @@ interface TreeToolbarProps extends BaseToolbarProps {
   handleZoomIn: () => void;
   handleZoomOut: () => void;
   handleResetZoom: () => void;
+  handleCenter: () => void;
 }
 
 export default function TreeToolbar({
@@ -13,6 +14,7 @@ export default function TreeToolbar({
   handleZoomIn,
   handleZoomOut,
   handleResetZoom,
+  handleCenter,
   ...baseProps
 }: TreeToolbarProps) {
   return (
@@ -43,6 +45,15 @@ export default function TreeToolbar({
           <ZoomIn className="size-4" />
         </button>
       </div>
+
+      {/* Center Button */}
+      <button
+        onClick={handleCenter}
+        className="flex items-center justify-center size-10 rounded-full bg-white/80 backdrop-blur-md shadow-sm border border-stone-200/60 text-stone-600 hover:bg-white hover:text-stone-900 hover:shadow-md transition-all"
+        title="Căn giữa"
+      >
+        <Crosshair className="size-4" />
+      </button>
     </BaseToolbar>
   );
 }
