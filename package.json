@@ -12,6 +12,7 @@
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
     "d3": "^7.9.0",
+    "dayjs": "^1.11.20",
     "framer-motion": "^12.40.0",
     "html-to-image": "^1.11.13",
     "jspdf": "^4.2.1",

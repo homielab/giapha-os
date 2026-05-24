@@ -12,6 +12,7 @@ import {
   Network,
   Star,
   Users,
+  Image as ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -96,6 +97,15 @@ export default async function DashboardLaunchpad() {
       bgColor: "bg-purple-50",
       borderColor: "border-purple-200/60",
       hoverColor: "hover:border-purple-400 hover:shadow-purple-100",
+    },
+    {
+      title: "Phòng trưng bày",
+      description: "Lưu giữ và chia sẻ hình ảnh, kỷ niệm dòng họ",
+      icon: <ImageIcon className="size-8 text-pink-600" />,
+      href: "/dashboard/gallery",
+      bgColor: "bg-pink-50",
+      borderColor: "border-pink-200/60",
+      hoverColor: "hover:border-pink-400 hover:shadow-pink-100",
     },
     // {
     //   title: "Giới thiệu & Liên hệ",
