@@ -101,7 +101,11 @@ export default function ExportButton() {
       <button
         onClick={() => setShowMenu(!showMenu)}
         disabled={isExporting}
-        className="btn"
+        className={`flex items-center gap-2 px-4 h-10 rounded-full font-semibold text-sm shadow-sm border transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
+          showMenu
+            ? "bg-amber-100/90 text-amber-800 border-amber-200"
+            : "bg-white/80 text-stone-600 border-stone-200/60 hover:bg-white hover:text-stone-900 hover:shadow-md backdrop-blur-md"
+        }`}
       >
         {isExporting ? (
           <Loader2 className="size-4 shrink-0 animate-spin" />
