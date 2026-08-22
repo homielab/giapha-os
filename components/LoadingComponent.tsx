@@ -11,7 +11,7 @@ export default function LoadingComponent() {
           </div>
         </div>
         <p className="text-stone-500 font-medium animate-pulse">
-          Đang tải dữ liệu gia phả...
+          Đang tải dữ liệu gia phả Họ Cao...
         </p>
       </div>
     </main>
