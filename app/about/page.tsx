@@ -30,7 +30,7 @@ export default function AboutPage() {
 
             <div className="max-w-none">
               <p className="text-stone-600 leading-relaxed text-[15px] mb-8">
-                <strong className="text-stone-800">Gia Phả OS</strong> là một
+                <strong className="text-stone-800">Gia Phả Họ Cao</strong> là một
                 giải pháp mã nguồn mở được thiết kế giúp các dòng họ, gia đình
                 tự xây dựng và quản lý cây phả hệ của riêng mình. Dự án giúp bảo
                 tồn và truyền đạt lại thông tin cội nguồn một cách trực quan,
