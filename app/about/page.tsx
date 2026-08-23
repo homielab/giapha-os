@@ -35,11 +35,13 @@ export default function AboutPage() {
                 tự xây dựng và quản lý cây phả hệ của riêng mình. Dự án giúp bảo
                 tồn và truyền đạt lại thông tin cội nguồn một cách trực quan,
                 hiện đại, và đặc biệt là an toàn.
-                Đây là nơi để mỗi thành viên cùng viết và đóng góp câu chuyện về dòng họ. Bạn có thể chia sẻ những điều mình biết về nguồn gốc và quá trình hình thành của dòng họ: quê quán, thủy tổ, các đời tổ tiên, những nhánh họ, nơi sinh sống, những nhân vật và sự kiện đáng nhớ, truyền thống gia đình, nghề nghiệp, những đóng góp cho quê hương và xã hội, hoặc bất kỳ câu chuyện nào mà bạn cho rằng các thế hệ sau nên biết.
+              <li>
+              Đây là nơi để mỗi thành viên cùng viết và đóng góp câu chuyện về dòng họ. Bạn có thể chia sẻ những điều mình biết về nguồn gốc và quá trình hình thành của dòng họ: quê quán, thủy tổ, các đời tổ tiên, những nhánh họ, nơi sinh sống, những nhân vật và sự kiện đáng nhớ, truyền thống gia đình, nghề nghiệp, những đóng góp cho quê hương và xã hội, hoặc bất kỳ câu chuyện nào mà bạn cho rằng các thế hệ sau nên biết.
 Không cần phải viết thật đầy đủ hay chính xác ngay từ đầu. Mỗi người góp một chút thông tin, một câu chuyện, một bức ảnh hay một ký ức sẽ giúp chúng ta từng bước hoàn thiện bức tranh lịch sử của dòng họ.
 Hãy viết bằng những gì bạn biết và những gì gia đình mình còn lưu giữ. Những thông tin chưa chắc chắn có thể được ghi chú để các thành viên khác cùng bổ sung, đối chiếu và xác minh.
 Lịch sử dòng họ không chỉ được viết bởi một người. Đó là câu chuyện được góp lại từ ký ức của nhiều thế hệ.
 Hãy để mỗi người góp một trang, để mai sau con cháu có cả một cuốn lịch sử để tìm về.
+              </li> 
               </p>
 
               <div className="mt-8 mb-4 border-t border-stone-100 pt-8 flex items-center gap-3">
