@@ -46,7 +46,7 @@ export default function Footer({
             rel="noopener noreferrer"
             className="font-semibold text-green-600 hover:text-amber-700 transition-colors inline-flex items-center gap-1.5"
           >
-            HomieLab
+            PhuongNhi
           </a>
         </p>
       </div>
