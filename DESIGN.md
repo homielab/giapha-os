@@ -1,6 +1,6 @@
 ---
 version: alpha
-name: GiaPha-OS
+name: GiaPha-HoCao
 description: A modern, elegant, and secure open-source family tree platform designed for Vietnamese families to preserve their lineage and heritage.
 colors:
   primary: "#1c1917"
