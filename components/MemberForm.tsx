@@ -361,7 +361,9 @@ export default function MemberForm({
       if (avatarFile && currentPersonId) {
         const fileExt = avatarFile.name.split(".").pop();
         const slugName = slugify(fullName);
-        const fileName = `${currentPersonId}_${slugName}.${fileExt}`;
+        // Add timestamp to filename for cache busting
+        const timestamp = Date.now();
+        const fileName = `${currentPersonId}_${slugName}_${timestamp}.${fileExt}`;
         const filePath = `${fileName}`;
 
         const { error: uploadError } = await supabase.storage
@@ -454,7 +456,7 @@ export default function MemberForm({
   };
 
   const inputClasses =
-    "bg-white text-stone-900 placeholder-stone-500 block w-full rounded-xl border border-stone-300 shadow-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:bg-white text-sm px-4 py-3 transition-all outline-none!";
+    "bg-white text-stone-900 placeholder-stone-500 block w-full rounded-xl border border-stone-300 shadow-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:bg-white text-sm px-4 py-2.5 transition-colors";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
