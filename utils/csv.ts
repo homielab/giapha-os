@@ -5,6 +5,53 @@ import { Person, Relationship } from '@/types'
 
 const UTF8_BOM = '\uFEFF'
 
+// Only these persons.csv columns hold numbers/booleans. Every other column is
+// text and must stay a string (e.g. phone numbers keep their leading zero).
+const PERSON_TYPED_FIELDS = new Set([
+  'birth_year',
+  'birth_month',
+  'birth_day',
+  'death_year',
+  'death_month',
+  'death_day',
+  'death_lunar_year',
+  'death_lunar_month',
+  'death_lunar_day',
+  'is_deceased',
+  'is_in_law',
+  'birth_order',
+  'generation'
+])
+
+function stripBom(text: string): string {
+  return text.startsWith(UTF8_BOM) ? text.slice(1) : text
+}
+
+function parseCsv<T>(
+  csv: string,
+  fileName: string,
+  typedFields: Set<string> = new Set()
+): T[] {
+  const parsed = Papa.parse<Record<string, unknown>>(stripBom(csv), {
+    header: true,
+    skipEmptyLines: true,
+    dynamicTyping: (field) => typedFields.has(String(field))
+  })
+
+  if (parsed.errors.length > 0) {
+    console.error(`Lỗi parse ${fileName}:`, parsed.errors)
+  }
+
+  // Empty cells become null, as in the exported data.
+  return parsed.data.map((row) => {
+    const out: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(row)) {
+      out[key] = value === '' ? null : value
+    }
+    return out as T
+  })
+}
+
 interface PersonDetailsPrivateRow {
   person_id: string
   phone_number: string | null
@@ -72,79 +119,39 @@ export async function parseCsvZip(zipBlob: Blob): Promise<{
     relationshipsFile.async('text')
   ])
 
-  const personsCsvStr = personsCsvRaw.startsWith(UTF8_BOM)
-    ? personsCsvRaw.slice(1)
-    : personsCsvRaw
-  const relationshipsCsvStr = relationshipsCsvRaw.startsWith(UTF8_BOM)
-    ? relationshipsCsvRaw.slice(1)
-    : relationshipsCsvRaw
-
-  const personsParsed = Papa.parse<Partial<Person>>(personsCsvStr, {
-    header: true,
-    skipEmptyLines: true,
-    dynamicTyping: true // Tự động convert số và boolean
-  })
-
-  const relationshipsParsed = Papa.parse<Partial<Relationship>>(
-    relationshipsCsvStr,
-    {
-      header: true,
-      skipEmptyLines: true,
-      dynamicTyping: true
-    }
-  )
-
-  if (personsParsed.errors.length > 0) {
-    console.error('Lỗi parse persons.csv:', personsParsed.errors)
-  }
-
-  if (relationshipsParsed.errors.length > 0) {
-    console.error('Lỗi parse relationships.csv:', relationshipsParsed.errors)
-  }
-
   const result: {
     persons: Partial<Person>[]
     relationships: Partial<Relationship>[]
     person_details_private?: PersonDetailsPrivateRow[]
     custom_events?: CustomEventRow[]
   } = {
-    persons: personsParsed.data,
-    relationships: relationshipsParsed.data
+    persons: parseCsv<Partial<Person>>(
+      personsCsvRaw,
+      'persons.csv',
+      PERSON_TYPED_FIELDS
+    ),
+    relationships: parseCsv<Partial<Relationship>>(
+      relationshipsCsvRaw,
+      'relationships.csv'
+    )
   }
 
   // Parse person_details_private.csv (optional, backward compat)
   const privateFile = loadedZip.file('person_details_private.csv')
   if (privateFile) {
-    const raw = await privateFile.async('text')
-    const privateCsvStr = raw.startsWith(UTF8_BOM) ? raw.slice(1) : raw
-    const privateParsed = Papa.parse<PersonDetailsPrivateRow>(privateCsvStr, {
-      header: true,
-      skipEmptyLines: true,
-      dynamicTyping: true
-    })
-    if (privateParsed.errors.length > 0) {
-      console.error(
-        'Lỗi parse person_details_private.csv:',
-        privateParsed.errors
-      )
-    }
-    result.person_details_private = privateParsed.data
+    result.person_details_private = parseCsv<PersonDetailsPrivateRow>(
+      await privateFile.async('text'),
+      'person_details_private.csv'
+    )
   }
 
   // Parse custom_events.csv (optional, backward compat)
   const eventsFile = loadedZip.file('custom_events.csv')
   if (eventsFile) {
-    const raw = await eventsFile.async('text')
-    const eventsCsvStr = raw.startsWith(UTF8_BOM) ? raw.slice(1) : raw
-    const eventsParsed = Papa.parse<CustomEventRow>(eventsCsvStr, {
-      header: true,
-      skipEmptyLines: true,
-      dynamicTyping: true
-    })
-    if (eventsParsed.errors.length > 0) {
-      console.error('Lỗi parse custom_events.csv:', eventsParsed.errors)
-    }
-    result.custom_events = eventsParsed.data
+    result.custom_events = parseCsv<CustomEventRow>(
+      await eventsFile.async('text'),
+      'custom_events.csv'
+    )
   }
 
   return result

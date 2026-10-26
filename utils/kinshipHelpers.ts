@@ -450,11 +450,11 @@ export function computeKinship(
       } else if (res.aCallsB.includes('Chị gái')) {
         aCallsB = 'Chị' + suffix
       } else if (res.aCallsB === 'Em họ') {
-        aCallsB = 'Em ' + suffix + ' (họ)'
+        aCallsB = 'Em' + suffix + ' (họ)'
       } else if (res.aCallsB === 'Chị họ') {
-        aCallsB = 'Chị ' + suffix + ' (họ)'
+        aCallsB = 'Chị' + suffix + ' (họ)'
       } else if (res.aCallsB === 'Anh họ') {
-        aCallsB = 'Anh ' + suffix + ' (họ)'
+        aCallsB = 'Anh' + suffix + ' (họ)'
       } else if (res.aCallsB.includes('Em')) {
         aCallsB = 'Em' + suffix
       } else if (
@@ -545,7 +545,10 @@ export function computeKinship(
       } else if (res.aCallsB.includes('Anh họ')) {
         aCallsB = 'Chị dâu (họ)'
       } else if (res.aCallsB.includes('Em')) {
-        aCallsB = personB.gender === 'male' ? 'Em rể (họ)' : 'Em dâu (họ)'
+        aCallsB = personB.gender === 'male' ? 'Em rể' : 'Em dâu'
+        if (res.aCallsB.includes('họ')) {
+          aCallsB += ' (họ)'
+        }
       } else if (res.aCallsB === 'Chú') {
         aCallsB = 'Cô'
       } else if (res.aCallsB === 'Chú họ') {

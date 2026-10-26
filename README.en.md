@@ -228,6 +228,16 @@ The system has three roles for controlling who can update the family tree:
 
 This is an open-source project. Contributions, issue reports, and pull requests are welcome.
 
+Before opening a pull request, run:
+
+```bash
+bun run test          # unit tests (bun test) for the utils/ functions
+bun run lint
+bun run format:check
+```
+
+Tests live next to the file they cover (`utils/gedcom.ts` → `utils/gedcom.test.ts`). Notable changes go in [CHANGELOG.md](CHANGELOG.md) under `## [Unreleased]`.
+
 ## Disclaimer and privacy
 
 > **This project provides source code only. The author does not collect or store any personal data.**

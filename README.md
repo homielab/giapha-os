@@ -228,6 +228,16 @@ Hệ thống có 3 cấp độ phân quyền để dễ dàng quản lý ai đư
 
 Dự án này là mã nguồn mở, hoan nghênh mọi đóng góp, báo cáo lỗi (issues) và yêu cầu sửa đổi (pull requests) để phát triển ứng dụng ngày càng tốt hơn.
 
+Trước khi gửi pull request, hãy chạy:
+
+```bash
+bun run test          # unit test (bun test) cho các hàm trong utils/
+bun run lint
+bun run format:check
+```
+
+Test đặt cạnh file được kiểm tra (`utils/gedcom.ts` → `utils/gedcom.test.ts`). Thay đổi đáng chú ý ghi vào [CHANGELOG.md](CHANGELOG.md), mục `## [Unreleased]`.
+
 ## Tuyên bố từ chối trách nhiệm & Quyền riêng tư
 
 > **Dự án này chỉ cung cấp mã nguồn (source code). Không có bất kỳ dữ liệu cá nhân nào được thu thập hay lưu trữ bởi tác giả.**
