@@ -8,12 +8,18 @@ import {
 import {
   isAmbiguousTerm,
   UNKNOWN_TERM,
+  type KinshipDescription,
   type KinshipPathStep,
   type KinshipResult,
   type KinshipTerms,
   type PersonNode,
   type RelEdge
 } from './types'
+
+/** The "who is older" guess of a blood relation survives going through a spouse. */
+function carryUncertain({ uncertain, uncertainPeople }: KinshipDescription) {
+  return uncertain ? { uncertain, uncertainPeople } : {}
+}
 
 function spouseStep(person: PersonNode, spouse: PersonNode): KinshipPathStep {
   return {
@@ -43,7 +49,11 @@ function viaSpouseOfA(
       ...res,
       aCallsB: callSpouseRelative(res.aCallsB, suffix, true),
       bCallsA: termRelativeCallsInLaw(res.bCallsA, personA.gender),
-      description: { kind: 'viaSpouse', name: spouseA.full_name },
+      description: {
+        kind: 'viaSpouse',
+        name: spouseA.full_name,
+        ...carryUncertain(res.description)
+      },
       pathLabels: [spouseStep(personA, spouseA), ...res.pathLabels]
     }
   }
@@ -67,7 +77,11 @@ function viaSpouseOfB(
       ...res,
       aCallsB: termForSpouseOfRelative(res.aCallsB, personB.gender),
       bCallsA: callSpouseRelative(res.bCallsA, suffix, false),
-      description: { kind: 'viaSpouse', name: spouseB.full_name },
+      description: {
+        kind: 'viaSpouse',
+        name: spouseB.full_name,
+        ...carryUncertain(res.description)
+      },
       pathLabels: [...res.pathLabels, spouseStep(personB, spouseB)]
     }
   }
@@ -127,7 +141,8 @@ function viaBothSpouses(
         description: {
           kind: 'viaBothSpouses',
           nameA: spouseA.full_name,
-          nameB: spouseB.full_name
+          nameB: spouseB.full_name,
+          ...carryUncertain(res.description)
         },
         pathLabels: [
           spouseStep(personA, spouseA),

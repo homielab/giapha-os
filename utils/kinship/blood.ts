@@ -19,7 +19,7 @@ import type {
 function compareSeniority(
   a: PersonNode,
   b: PersonNode
-): 'senior' | 'junior' | 'equal' {
+): 'senior' | 'junior' | 'equal' | 'unknown' {
   if (a.id === b.id) return 'equal'
 
   if (a.birth_order != null && b.birth_order != null) {
@@ -32,7 +32,27 @@ function compareSeniority(
     if (a.birth_year > b.birth_year) return 'junior'
   }
 
-  return 'equal'
+  // Neither birth order nor birth year can tell them apart: that is missing
+  // data, not a tie.
+  const orderMissing = a.birth_order == null || b.birth_order == null
+  const yearMissing = a.birth_year == null || b.birth_year == null
+  return orderMissing && yearMissing ? 'unknown' : 'equal'
+}
+
+/** Marks the result as a guess about who is older, naming the two people to fill in. */
+function uncertain(
+  description: KinshipDescription,
+  a: PersonNode,
+  b: PersonNode
+): KinshipDescription {
+  return {
+    ...description,
+    uncertain: true,
+    uncertainPeople: [
+      { id: a.id, name: a.full_name },
+      { id: b.id, name: b.full_name }
+    ]
+  }
 }
 
 // ── Core Algorithm ──────────────────────────────────────────────────────────
@@ -85,6 +105,8 @@ export function resolveBloodTerms(
     return ['Họ hàng', 'Họ hàng', { kind: 'relativesGeneric' }]
 
   const seniority = compareSeniority(branchA, branchB)
+  const withSeniority = (description: KinshipDescription, isGuess: boolean) =>
+    isGuess ? uncertain(description, branchA, branchB) : description
 
   // Xác định vế Nội/Ngoại: Dựa vào giới tính của người ở nhánh A (người đang gọi)
   const isPaternalA = branchA.gender === 'male'
@@ -92,6 +114,13 @@ export function resolveBloodTerms(
   // Anh chị em ruột (Cùng bố mẹ)
   if (depthA === 1 && depthB === 1) {
     const aSenior = compareSeniority(personA, personB)
+    if (aSenior === 'unknown') {
+      return [
+        genderB === 'female' ? 'Chị/Em gái' : 'Anh/Em trai',
+        genderA === 'female' ? 'Chị/Em gái' : 'Anh/Em trai',
+        uncertain({ kind: 'siblings' }, personA, personB)
+      ]
+    }
     if (aSenior === 'senior') {
       return [
         genderB === 'female' ? 'Em gái' : 'Em trai',
@@ -115,7 +144,9 @@ export function resolveBloodTerms(
 
     if (isPaternalSide) {
       // Bên Nội (Anh em của bố)
-      if (genderB === 'female') {
+      if (seniority === 'unknown') {
+        termForB = genderB === 'female' ? 'Bác/Cô' : 'Bác/Chú'
+      } else if (genderB === 'female') {
         termForB = seniority === 'junior' ? 'Bác' : 'Cô'
       } else {
         termForB = seniority === 'junior' ? 'Bác' : 'Chú'
@@ -138,7 +169,10 @@ export function resolveBloodTerms(
     return [
       (prefix + termForB).trim(),
       getDirectDescendantTerm(depthA),
-      { kind: 'upperBranch', side: isPaternalSide ? 'paternal' : 'maternal' }
+      withSeniority(
+        { kind: 'upperBranch', side: isPaternalSide ? 'paternal' : 'maternal' },
+        isPaternalSide && seniority === 'unknown'
+      )
     ]
   }
 
@@ -161,6 +195,13 @@ export function resolveBloodTerms(
 
     if (depthA === depthB) {
       // Cùng thế hệ
+      if (seniority === 'unknown') {
+        return [
+          genderB === 'female' ? 'Chị/Em họ' : 'Anh/Em họ',
+          genderA === 'female' ? 'Chị/Em họ' : 'Anh/Em họ',
+          uncertain({ kind: 'cousins', side }, branchA, branchB)
+        ]
+      }
       if (seniority === 'senior') {
         return [
           'Em họ',
@@ -182,7 +223,9 @@ export function resolveBloodTerms(
         let termForB = 'Họ hàng'
         if (genDiff === 1) {
           const isPaternalSide = branchA.gender === 'male'
-          if (isPaternalSide) {
+          if (isPaternalSide && seniority === 'unknown') {
+            termForB = genderB === 'female' ? 'Bác/Cô họ' : 'Bác/Chú họ'
+          } else if (isPaternalSide) {
             termForB =
               genderB === 'female'
                 ? seniority === 'junior'
@@ -197,7 +240,14 @@ export function resolveBloodTerms(
         } else {
           termForB = genderB === 'female' ? 'Bà họ' : 'Ông họ'
         }
-        return [termForB, 'Cháu họ', { kind: 'relatives', side }]
+        return [
+          termForB,
+          'Cháu họ',
+          withSeniority(
+            { kind: 'relatives', side },
+            genDiff === 1 && isPaternalA && seniority === 'unknown'
+          )
+        ]
       } else {
         const [bCallsA, aCallsB, desc] = resolveBloodTerms(
           depthB,

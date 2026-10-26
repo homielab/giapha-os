@@ -1,0 +1,137 @@
+import { describe, expect, test } from 'bun:test'
+
+import { computeKinship } from './resolve'
+import type { PersonNode, RelEdge } from './types'
+
+function person(
+  id: string,
+  gender: PersonNode['gender'],
+  extra: Partial<PersonNode> = {}
+): PersonNode {
+  return {
+    id,
+    full_name: id,
+    gender,
+    birth_year: null,
+    birth_order: null,
+    generation: null,
+    is_in_law: false,
+    ...extra
+  }
+}
+
+const child = (parent: string, kid: string): RelEdge => ({
+  type: 'biological_child',
+  person_a: parent,
+  person_b: kid
+})
+
+function siblings(a: Partial<PersonNode>, b: Partial<PersonNode>) {
+  const persons = [
+    person('dad', 'male'),
+    person('a', 'male', a),
+    person('b', 'male', b)
+  ]
+  const rels = [child('dad', 'a'), child('dad', 'b')]
+  return computeKinship(persons[1], persons[2], persons, rels)!
+}
+
+describe('siblings when who is older is unknown', () => {
+  test('no birth year and no birth order: both terms, uncertain', () => {
+    const r = siblings({}, {})
+    expect(r.aCallsB).toBe('Anh/Em trai')
+    expect(r.bCallsA).toBe('Anh/Em trai')
+    expect(r.hasAmbiguousTerm).toBe(true)
+    expect(r.description.uncertain).toBe(true)
+    expect(r.description.uncertainPeople?.map((p) => p.id)).toEqual(['a', 'b'])
+  })
+
+  test('only one has a birth year: still uncertain', () => {
+    expect(siblings({ birth_year: 1950 }, {}).description.uncertain).toBe(true)
+  })
+
+  test('one has a birth order and the other a year: uncertain', () => {
+    const r = siblings({ birth_order: 1 }, { birth_year: 1950 })
+    expect(r.description.uncertain).toBe(true)
+  })
+
+  test('both have a birth year: as before', () => {
+    const r = siblings({ birth_year: 1950 }, { birth_year: 1955 })
+    expect(r.aCallsB).toBe('Em trai')
+    expect(r.description.uncertain).toBeUndefined()
+  })
+
+  test('both have a birth order: as before', () => {
+    const r = siblings({ birth_order: 2 }, { birth_order: 1 })
+    expect(r.aCallsB).toBe('Anh trai')
+    expect(r.description.uncertain).toBeUndefined()
+  })
+
+  test('the same birth year is a real tie, not missing data', () => {
+    const r = siblings({ birth_year: 1950 }, { birth_year: 1950 })
+    expect(r.aCallsB).toBe('Anh trai')
+    expect(r.description.uncertain).toBeUndefined()
+  })
+})
+
+describe('uncles and cousins when who is older is unknown', () => {
+  const persons = (u: Partial<PersonNode>, f: Partial<PersonNode>) => [
+    person('g', 'male'),
+    person('f', 'male', f),
+    person('u', 'male', u),
+    person('c', 'male'),
+    person('k', 'male')
+  ]
+  const rels = [
+    child('g', 'f'),
+    child('g', 'u'),
+    child('f', 'c'),
+    child('u', 'k')
+  ]
+
+  test('father’s brother is Bác/Chú, uncertain', () => {
+    const p = persons({}, {})
+    const r = computeKinship(p[3], p[2], p, rels)!
+    expect(r.aCallsB).toBe('Bác/Chú')
+    expect(r.description.uncertain).toBe(true)
+    expect(r.description.uncertainPeople?.map((x) => x.id)).toEqual(['f', 'u'])
+  })
+
+  test('known order gives Chú/Bác as before', () => {
+    const p = persons({ birth_year: 1960 }, { birth_year: 1950 })
+    const r = computeKinship(p[3], p[2], p, rels)!
+    expect(r.aCallsB).toBe('Chú')
+    expect(r.description.uncertain).toBeUndefined()
+  })
+
+  test('cousins: Anh/Em họ, uncertain about the two branches', () => {
+    const p = persons({}, {})
+    const r = computeKinship(p[3], p[4], p, rels)!
+    expect(r.aCallsB).toBe('Anh/Em họ')
+    expect(r.description.uncertain).toBe(true)
+    expect(r.description.uncertainPeople?.map((x) => x.id)).toEqual(['f', 'u'])
+  })
+
+  test('cousins with birth years are unchanged', () => {
+    const p = persons({ birth_year: 1960 }, { birth_year: 1950 })
+    const r = computeKinship(p[3], p[4], p, rels)!
+    expect(r.aCallsB).toBe('Em họ')
+    expect(r.description.uncertain).toBeUndefined()
+  })
+
+  test('mother’s brother is Cậu whatever the order', () => {
+    const p = [
+      person('g', 'male'),
+      person('m', 'female'),
+      person('u', 'male'),
+      person('c', 'male')
+    ]
+    const r = computeKinship(p[3], p[2], p, [
+      child('g', 'm'),
+      child('g', 'u'),
+      child('m', 'c')
+    ])!
+    expect(r.aCallsB).toBe('Cậu')
+    expect(r.description.uncertain).toBeUndefined()
+  })
+})

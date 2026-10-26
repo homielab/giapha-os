@@ -185,6 +185,9 @@ export const messages = {
     relationPathAnalysis: 'Phân tích con đường quan hệ',
     kinshipDisclaimer:
       '* Danh xưng chính xác dựa trên giới tính, thứ tự sinh của các nhánh và vế Nội/Ngoại.',
+    kinshipUncertainHint:
+      'Chưa rõ ai lớn hơn nên hiện cả hai cách gọi. Thêm năm sinh hoặc thứ tự sinh cho',
+    kinshipUncertainOr: 'hoặc',
     kinshipDescDirect: 'Quan hệ Trực hệ',
     kinshipDescSiblings: 'Anh chị em ruột',
     kinshipDescUpperPaternal: 'Bên Nội (Vế trên)',
@@ -1217,6 +1220,9 @@ export const messages = {
     relationPathAnalysis: 'Relationship path analysis',
     kinshipDisclaimer:
       '* The exact term depends on gender, birth order, and the paternal/maternal side.',
+    kinshipUncertainHint:
+      'It is not known who is older, so both terms are shown. Add a birth year or birth order for',
+    kinshipUncertainOr: 'or',
     kinshipDescDirect: 'Direct line',
     kinshipDescSiblings: 'Siblings',
     kinshipDescUpperPaternal: 'Father’s side (older generation)',

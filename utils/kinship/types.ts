@@ -17,7 +17,18 @@ export type KinshipDescription = (
   | { kind: 'viaSpouse'; name: string }
   | { kind: 'viaBothSpouses'; nameA: string; nameB: string }
   | { kind: 'none' }
-) & { commonAncestor?: string | null }
+) & {
+  commonAncestor?: string | null
+  /** Nobody knows who is older (no birth order or year): the term lists both. */
+  uncertain?: boolean
+  /** The two people whose birth order or year would settle it. */
+  uncertainPeople?: [KinshipPersonRef, KinshipPersonRef]
+}
+
+export interface KinshipPersonRef {
+  id: string
+  name: string
+}
 
 /** One step of the relation path, as data. */
 export type KinshipPathStep =

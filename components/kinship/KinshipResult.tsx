@@ -2,6 +2,7 @@
 
 import { AnimatePresence, m } from 'framer-motion'
 import { GitMerge, Sparkles, Users } from 'lucide-react'
+import Link from 'next/link'
 
 import { PersonNode } from '@/components/kinship/kinshipTypes'
 import { useI18n } from '@/lib/i18n/useI18n'
@@ -118,6 +119,25 @@ export default function KinshipResult({
               </div>
             </m.div>
           )}
+
+          {/* Who is older is unknown: say whose data would settle it */}
+          {result.description.uncertain &&
+            result.description.uncertainPeople && (
+              <p className='px-1 text-sm text-amber-700'>
+                {t('kinshipUncertainHint')}{' '}
+                {result.description.uncertainPeople.map((person, i) => (
+                  <span key={person.id}>
+                    {i > 0 && ` ${t('kinshipUncertainOr')} `}
+                    <Link
+                      href={`/dashboard/members/${person.id}/edit`}
+                      className='font-medium underline'>
+                      {person.name}
+                    </Link>
+                  </span>
+                ))}
+                .
+              </p>
+            )}
 
           {/* Disclaimer for ambiguous terms */}
           {result.hasAmbiguousTerm && (

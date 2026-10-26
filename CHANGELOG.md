@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Relationship finder: when nobody knows who is older (neither birth order nor birth year on one side or both), the result no longer silently picks one. Siblings, cousins and a father's brothers show both terms ("Anh/Em trai", "Bác/Chú", "Anh/Em họ") with a note linking to the two people whose birth year or order would settle it. Results with enough data are unchanged.
 - Member form: a birth or death date after today (for example 2062 typed instead of 1962) is refused with a message. A date with only the year or month is compared as far as it is known; CSV and GEDCOM imports are not affected.
 - Member dialog: focus moves into it when it opens, it is announced with the member's name, and closing it returns focus to the button that opened it. Escape still closes the detail view but not a form being edited.
 - Kinship page: an uncle or aunt 11 or more generations up is now titled "Tổ đời 10 Chú" instead of "undefined Chú".
