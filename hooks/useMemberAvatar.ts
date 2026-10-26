@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 
+import { useFilePreview } from '@/hooks/useFilePreview'
 import { Person } from '@/types'
 
 // Avatar form state: keeps the stored path as submit-only scratch data, while
@@ -10,27 +11,20 @@ import { Person } from '@/types'
 // "Remove photo" doesn't leave a broken avatar.
 export function useMemberAvatar(initialData?: Person) {
   const avatarUrlRef = useRef(initialData?.avatar_url || '')
-  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const {
+    file: avatarFile,
+    previewUrl,
+    setFile: setAvatarFile
+  } = useFilePreview()
   const [removeExistingAvatar, setRemoveExistingAvatar] = useState(false)
   const [processingAvatar, setProcessingAvatar] = useState(false)
 
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(
-    initialData?.avatar_url || null
-  )
-
-  // Blob object URLs are browser resources: create them in an effect (not
-  // during render) and revoke the previous one whenever the source changes.
-  useEffect(() => {
-    if (!avatarFile) {
-      setAvatarPreview(
-        removeExistingAvatar ? null : initialData?.avatar_url || null
-      )
-      return
-    }
-    const url = URL.createObjectURL(avatarFile)
-    setAvatarPreview(url)
-    return () => URL.revokeObjectURL(url)
-  }, [avatarFile, removeExistingAvatar, initialData])
+  // A chosen file wins; otherwise the stored photo unless it was removed.
+  const avatarPreview = avatarFile
+    ? previewUrl
+    : removeExistingAvatar
+      ? null
+      : initialData?.avatar_url || null
 
   const handleAvatarSelected = (file: File) => {
     if (initialData?.avatar_url) {

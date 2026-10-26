@@ -2,7 +2,7 @@
 
 import { ArrowLeftRight, Users } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 
 import KinshipGuideSections from '@/components/kinship/KinshipGuideSections'
 import KinshipPersonSelector from '@/components/kinship/KinshipPersonSelector'
@@ -16,6 +16,26 @@ interface Props {
   relationships: RelEdge[]
 }
 
+const subscribeToNothing = () => () => {}
+
+function readSaved(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch (e) {
+    console.warn('Failed to read from localStorage:', e)
+    return null
+  }
+}
+
+function writeSaved(key: string, value: string | null) {
+  try {
+    if (value) localStorage.setItem(key, value)
+    else localStorage.removeItem(key)
+  } catch (e) {
+    console.warn('Failed to write to localStorage:', e)
+  }
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function KinshipFinder({ persons, relationships }: Props) {
   const { t } = useI18n()
@@ -26,33 +46,34 @@ export default function KinshipFinder({ persons, relationships }: Props) {
   // Selection lives in state (seeded from the URL for deep links) and is
   // persisted to localStorage. The URL is updated from event handlers only —
   // never redirected on mount.
-  const [p1Id, setP1Id] = useState(() => searchParams.get('p1'))
-  const [p2Id, setP2Id] = useState(() => searchParams.get('p2'))
+  // `undefined` = not chosen yet (neither in the URL nor by the user): the
+  // saved selection is shown instead.
+  const [chosenP1, setP1Id] = useState<string | null | undefined>(
+    () => searchParams.get('p1') ?? undefined
+  )
+  const [chosenP2, setP2Id] = useState<string | null | undefined>(
+    () => searchParams.get('p2') ?? undefined
+  )
+  const savedP1 = useSyncExternalStore(
+    subscribeToNothing,
+    () => readSaved('kinship_p1'),
+    () => null
+  )
+  const savedP2 = useSyncExternalStore(
+    subscribeToNothing,
+    () => readSaved('kinship_p2'),
+    () => null
+  )
+  const p1Id = chosenP1 === undefined ? savedP1 : chosenP1
+  const p2Id = chosenP2 === undefined ? savedP2 : chosenP2
 
   useEffect(() => {
-    if (p1Id && p2Id) return
-    try {
-      const savedP1 = localStorage.getItem('kinship_p1')
-      const savedP2 = localStorage.getItem('kinship_p2')
-      if (!p1Id && savedP1) setP1Id(savedP1)
-      if (!p2Id && savedP2) setP2Id(savedP2)
-    } catch (e) {
-      console.warn('Failed to read from localStorage:', e)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (chosenP1 !== undefined) writeSaved('kinship_p1', chosenP1)
+  }, [chosenP1])
 
   useEffect(() => {
-    try {
-      if (p1Id) localStorage.setItem('kinship_p1', p1Id)
-      else localStorage.removeItem('kinship_p1')
-
-      if (p2Id) localStorage.setItem('kinship_p2', p2Id)
-      else localStorage.removeItem('kinship_p2')
-    } catch (e) {
-      console.warn('Failed to write to localStorage:', e)
-    }
-  }, [p1Id, p2Id])
+    if (chosenP2 !== undefined) writeSaved('kinship_p2', chosenP2)
+  }, [chosenP2])
 
   const personA = useMemo(
     () => persons.find((p) => p.id === p1Id) || null,

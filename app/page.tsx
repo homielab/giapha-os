@@ -1,8 +1,19 @@
 import Footer from '@/components/Footer'
 import LandingHero from '@/components/LandingHero'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { getServerTranslations } from '@/lib/i18n/server'
+import { publicPageMetadata } from '@/lib/metadata'
 
 import config from './config'
+
+export async function generateMetadata() {
+  const { t, locale } = await getServerTranslations()
+  return publicPageMetadata({
+    description: t('landingDescription'),
+    path: '/',
+    locale
+  })
+}
 
 export default function HomePage() {
   return (

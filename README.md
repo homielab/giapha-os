@@ -97,7 +97,7 @@ Chỉ cần khoảng 10 -> 15 phút là bạn có thể tự dựng hệ thống
    - `NEXT_PUBLIC_SUPABASE_URL` = `Project URL`
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` = `Publishable key` (hoặc key `anon` trong **Legacy API Keys**)
    - `NEXT_PUBLIC_DISABLE_SSO` = `false` để bật SSO; đặt `true` để ẩn SSO khi chưa cấu hình
-   - `APP_URL` = URL public của ứng dụng, ví dụ `https://giapha-os.vercel.app`
+   - `APP_URL` = URL public của ứng dụng, ví dụ `https://your-domain.vercel.app` (dùng cho email duyệt tài khoản, link chia sẻ Open Graph, `sitemap.xml` và `robots.txt`; nếu bỏ trống, trên Vercel sẽ dùng domain production). Ảnh chia sẻ mạng xã hội là `public/og-image.png` (1200×630), có thể thay bằng ảnh của dòng họ bạn.
    - `SUPABASE_SERVICE_ROLE_KEY` = **Secret key** trong **Project Settings → API Keys → Secret keys**. Nếu project dùng giao diện cũ, vào tab **Legacy API Keys** và copy key `service_role`. Đây là key có quyền cao, chỉ lưu ở Vercel server environment; tuyệt đối không dùng publishable/anon key cho biến này và không đặt tên biến với tiền tố `NEXT_PUBLIC_`.
    - `SUPABASE_DB_URL` = PostgreSQL connection string trong **Project Settings → Database → Connection Pooling** (Session mode, chỉ lưu ở Vercel server environment). Biến này cho phép admin kiểm tra/chạy migration ngay trong Dashboard.
    - `RESEND_API_KEY` = API key của [Resend](https://resend.com)
@@ -163,15 +163,15 @@ Sau khi cài đặt xong, nếu bạn gặp lỗi `Failed to fetch` khi đăng k
 1. Vào [Supabase Dashboard](https://supabase.com/dashboard) → chọn Project của bạn.
 2. Vào **Authentication → URL Configuration**.
 3. Ở mục **Site URL**, điền URL chính của ứng dụng, ví dụ:
-   - Vercel: `https://giapha-os.vercel.app`
+   - Vercel: `https://your-domain.vercel.app`
    - Máy cá nhân: `http://localhost:3000`
 4. Ở mục **Redirect URLs**, nhấn **Add URL** và thêm:
-   - `https://giapha-os.vercel.app/**`
+   - `https://your-domain.vercel.app/**`
    - `http://localhost:3000/**` (nếu chạy local)
-   - Hoặc tối thiểu: `https://giapha-os.vercel.app/auth/callback` và `http://localhost:3000/auth/callback`
+   - Hoặc tối thiểu: `https://your-domain.vercel.app/auth/callback` và `http://localhost:3000/auth/callback`
 5. Nhấn **Save** và thử lại.
 
-> **Lưu ý:** Thay `giapha-os.vercel.app` bằng domain thực tế của bạn. Nếu dùng domain tùy chỉnh, hãy thêm cả domain đó vào danh sách.
+> **Lưu ý:** Thay `your-domain.vercel.app` bằng domain thực tế của bạn. Nếu dùng domain tùy chỉnh, hãy thêm cả domain đó vào danh sách.
 
 ### Đăng nhập bằng Google và Facebook
 
@@ -241,7 +241,10 @@ Trước khi gửi pull request, hãy chạy:
 bun run test          # unit test (bun test) cho các hàm trong utils/
 bun run lint
 bun run format:check
+bun run typecheck     # tsc --noEmit
 ```
+
+GitHub Actions (`.github/workflows/test.yml`) chạy đúng các lệnh này cho mỗi push lên `main` và mỗi pull request.
 
 Test đặt cạnh file được kiểm tra (`utils/gedcom.ts` → `utils/gedcom.test.ts`). Thay đổi đáng chú ý ghi vào [CHANGELOG.md](CHANGELOG.md), mục `## [Unreleased]`.
 

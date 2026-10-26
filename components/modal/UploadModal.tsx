@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import UploadDropzone from '@/components/modal/UploadDropzone'
 import UploadFormFields from '@/components/modal/UploadFormFields'
 import UploadModalActions from '@/components/modal/UploadModalActions'
+import { useFilePreview } from '@/hooks/useFilePreview'
 import { useI18n } from '@/lib/i18n/useI18n'
 import type { GalleryItem } from '@/types'
 import { createClient } from '@/utils/supabase/client'
@@ -28,7 +29,7 @@ export default function UploadModal({
   initialData
 }: UploadModalProps) {
   const { t } = useI18n()
-  const [file, setFile] = useState<File | null>(null)
+  const { file, previewUrl: preview, setFile } = useFilePreview()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [eventDate, setEventDate] = useState('')
@@ -36,20 +37,6 @@ export default function UploadModal({
   const [error, setError] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const [preview, setPreview] = useState<string | null>(null)
-
-  // Object URLs are browser resources, so they are created here (outside
-  // render) and revoked when the file changes or the modal closes.
-  useEffect(() => {
-    if (!file) {
-      setPreview(null)
-      return
-    }
-    const url = URL.createObjectURL(file)
-    setPreview(url)
-    return () => URL.revokeObjectURL(url)
-  }, [file])
 
   // Prevent background scrolling when modal is open
   useEffect(() => {

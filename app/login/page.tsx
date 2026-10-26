@@ -4,7 +4,7 @@ import { AnimatePresence, m } from 'framer-motion'
 import { ArrowLeft, Info, KeyRound, Mail, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 
 import config from '@/app/config'
 import {
@@ -31,20 +31,16 @@ export default function LoginPage() {
     () => window.location.hostname === config.demoDomain,
     () => false
   )
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  // Until the user types, the demo site shows the demo account.
+  const [emailInput, setEmail] = useState<string | null>(null)
+  const [passwordInput, setPassword] = useState<string | null>(null)
+  const email = emailInput ?? (isDemo ? 'giaphaos@homielab.com' : '')
+  const password = passwordInput ?? (isDemo ? 'giaphaos' : '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
-
-  useEffect(() => {
-    if (isDemo) {
-      setEmail('giaphaos@homielab.com')
-      setPassword('giaphaos')
-    }
-  }, [isDemo])
 
   const [isLogin, setIsLogin] = useState(true)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)

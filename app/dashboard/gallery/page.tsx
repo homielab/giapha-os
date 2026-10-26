@@ -6,7 +6,7 @@ import { getGalleryStoragePath } from '@/utils/supabase/storage-path'
 export async function generateMetadata() {
   const { t } = await getServerTranslations()
   return {
-    title: `${t('galleryTitle')} | Gia Phả OS`,
+    title: t('galleryTitle'),
     description: t('galleryDescription')
   }
 }

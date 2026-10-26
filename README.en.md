@@ -97,7 +97,7 @@ You can set up a family genealogy system in about 10–15 minutes.
    - `NEXT_PUBLIC_SUPABASE_URL` = `Project URL`
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` = `Publishable key` (or the `anon` key under **Legacy API Keys** in older projects)
    - `NEXT_PUBLIC_DISABLE_SSO` = `false` to enable SSO; set it to `true` to hide SSO until it is configured
-   - `APP_URL` = the public application URL, for example `https://giapha-os.vercel.app`
+   - `APP_URL` = the public application URL, for example `https://your-domain.vercel.app` (used for account-approval emails, Open Graph share links, `sitemap.xml` and `robots.txt`; when empty, Vercel's production domain is used). The social share image is `public/og-image.png` (1200×630); you can replace it with your own family's image.
    - `SUPABASE_SERVICE_ROLE_KEY` = the **Secret key** under **Project Settings → API Keys → Secret keys**. For older projects, copy the `service_role` key from **Legacy API Keys**. This key has high privileges: store it only in Vercel server environment variables, never use a publishable/anon key for this variable, and never use a `NEXT_PUBLIC_` prefix.
    - `SUPABASE_DB_URL` = the PostgreSQL connection string under **Project Settings → Database → Connection Pooling** (Session mode). Store it only in the Vercel server environment. It allows administrators to check and run migrations from the Dashboard.
    - `RESEND_API_KEY` = an API key from [Resend](https://resend.com)
@@ -163,15 +163,15 @@ If you see `Failed to fetch` while registering after setup:
 1. Open [Supabase Dashboard](https://supabase.com/dashboard) and select your project.
 2. Go to **Authentication → URL Configuration**.
 3. Under **Site URL**, enter the application’s primary URL, for example:
-   - Vercel: `https://giapha-os.vercel.app`
+   - Vercel: `https://your-domain.vercel.app`
    - Local: `http://localhost:3000`
 4. Under **Redirect URLs**, click **Add URL** and add:
-   - `https://giapha-os.vercel.app/**`
+   - `https://your-domain.vercel.app/**`
    - `http://localhost:3000/**` (for local development)
-   - Or at minimum: `https://giapha-os.vercel.app/auth/callback` and `http://localhost:3000/auth/callback`
+   - Or at minimum: `https://your-domain.vercel.app/auth/callback` and `http://localhost:3000/auth/callback`
 5. Click **Save** and try again.
 
-> **Note:** Replace `giapha-os.vercel.app` with your actual domain. If you use a custom domain, add that domain as well.
+> **Note:** Replace `your-domain.vercel.app` with your actual domain. If you use a custom domain, add that domain as well.
 
 ### Sign in with Google and Facebook
 
@@ -241,7 +241,10 @@ Before opening a pull request, run:
 bun run test          # unit tests (bun test) for the utils/ functions
 bun run lint
 bun run format:check
+bun run typecheck     # tsc --noEmit
 ```
+
+GitHub Actions (`.github/workflows/test.yml`) runs the same commands on every push to `main` and every pull request.
 
 Tests live next to the file they cover (`utils/gedcom.ts` → `utils/gedcom.test.ts`). Notable changes go in [CHANGELOG.md](CHANGELOG.md) under `## [Unreleased]`.
 

@@ -11,7 +11,8 @@
     "lint:fix": "eslint --fix .",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "test": "bun test"
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

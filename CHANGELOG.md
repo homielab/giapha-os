@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Unit tests (`bun run test`) for GEDCOM and CSV import/export, kinship terms, tree helpers, the lunar calendar and upcoming events.
+- Search and share metadata for the public pages (home, about, login) in Vietnamese and English: page titles, descriptions, Open Graph and Twitter cards with a 1200×630 share image (`public/og-image.png`), plus `robots.txt` (keeps `/dashboard`, `/api`, `/setup` out of search engines) and `sitemap.xml`. Links use `APP_URL`, or the Vercel production domain.
+- GitHub Actions workflow running lint, format check, type-check (`bun run typecheck`) and unit tests on every push and pull request.
 
 ### Changed
 
@@ -17,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Dashboard page titles end with the site name, and the gallery title uses `SITE_NAME` instead of a hard-coded "Gia Phả OS".
+- README examples use a placeholder domain (`your-domain.vercel.app`) instead of a real-looking project URL; the demo is giapha-os.homielab.com.
 - A death anniversary on day 30 of a lunar month no longer disappears in years where that month has 29 days: it falls on day 29.
 - A death in a leap month keeps its leap month: the anniversary falls in the leap month in years that have it, otherwise in the regular month.
 - CSV import keeps text columns as text: phone numbers keep their leading zero, ids and dates are no longer turned into numbers or dates. Only the number and yes/no columns of `persons.csv` are converted.
