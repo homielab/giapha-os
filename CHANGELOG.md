@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Family tree: pinch with two fingers on a phone or tablet to zoom around the fingers; one finger still scrolls. Mouse and Ctrl/⌘ + scroll behave as before.
 - Member form: a new member with the same name (ignoring accents) and birth year as an existing one now asks "Create another one anyway?" and lists the matches. A mother who died before the child's birth is refused, and a father who died more than 10 months before it (a year when the month or day is unknown) asks for confirmation, when adding a parent link and when editing birth or death dates; adopted children are not checked.
 - Adding a relationship: typing a name without accents ("nguyen van duc") now finds "Nguyễn Văn Đức". The member list loads once when the form opens and is filtered in the browser, showing up to 20 matches (names starting with what you typed first); a failed load now shows an error. The English README also covers GEDCOM, the photo gallery and the lunar death date recompute tool.
 - Unit tests (`bun run test`) for GEDCOM and CSV import/export, kinship terms, tree helpers, the lunar calendar and upcoming events; also for generation, in-law and birth-order computation, member sorting and family stats.
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Family tree: zooming in no longer cuts off the leftmost branches (the canvas now scrolls to the full width) and zooming out leaves no empty space.
 - User management (Dashboard → Users): creating users, changing roles, locking and deleting now check on the server that you are an active admin before reaching the database, and database refusals ("Cannot remove the last active administrator.", "Access denied.", a taken email…) are shown as translated messages in Vietnamese and English; an unexpected error shows a generic message and is logged on the server.
 - A member name of only spaces is refused, and extra spaces around names are trimmed when saving.
 - A profile photo is checked by its content, not its name or the type the browser reports: a text file renamed to `.jpg` is refused, and the photo is stored with the extension of its real type.
