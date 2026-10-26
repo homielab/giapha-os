@@ -44,6 +44,7 @@ Phù hợp với người Việt Nam.
 
 - **Ngày 30 ở tháng thiếu**: năm nào tháng đó chỉ có 29 ngày thì giỗ vào ngày 29 (ngày cuối tháng).
 - **Mất trong tháng nhuận**: năm nào có đúng tháng nhuận đó thì giỗ trong tháng nhuận, năm khác thì giỗ trong tháng thường cùng số. Ứng dụng biết tháng nhuận từ ngày mất dương lịch; ngày âm lịch nhập tay được hiểu là tháng thường.
+- **Ngày âm lịch lưu từ bản cũ**: trước khi chuyển sang âm lịch Việt Nam, ngày âm lịch được tính theo lịch Trung Quốc và không tự tính lại. Quản trị viên vào **Dashboard → Sao lưu & Phục hồi → Tính lại ngày giỗ âm lịch**, bấm "Kiểm tra ngày giỗ" để xem các thành viên có ngày âm lịch đang lưu khác ngày tính lại từ ngày mất dương lịch (chỉ xét người có đủ ngày/tháng/năm cả hai ngày). Mặc định không dòng nào được chọn; chọn từng dòng hoặc tất cả rồi xác nhận để áp dụng. Nếu ngày âm lịch là ngày nhập tay (ngày dương suy ra từ đó có thể sai) thì đừng chọn dòng đó. Nên xuất bản sao lưu JSON trước. Mỗi dòng được cập nhật riêng và chỉ khi ngày mất chưa bị sửa từ lúc tính; dòng nào lỗi hay bị bỏ qua sẽ hiện lại ở lần kiểm tra sau. Công cụ không bao giờ tự chạy và không cần migration.
 
 ### GEDCOM
 

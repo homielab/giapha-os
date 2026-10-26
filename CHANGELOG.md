@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Search and share metadata for the public pages (home, about, login) in Vietnamese and English: page titles, descriptions, Open Graph and Twitter cards with a 1200×630 share image (`public/og-image.png`), plus `robots.txt` (keeps `/dashboard`, `/api`, `/setup` out of search engines) and `sitemap.xml`. Links use `APP_URL`, or the Vercel production domain.
 - GitHub Actions workflow running lint, format check, type-check (`bun run typecheck`) and unit tests on every push and pull request.
 - The gallery shows 24 images per page with previous/next links (`?page=`), so galleries with more than 1,000 images are no longer cut off silently; a page past the end shows the last page.
+- Admin tool "Recompute lunar death dates" on Dashboard → Backup & restore: lists the members whose saved lunar death date differs from the one computed from the solar death date with the Vietnamese calendar; the admin selects rows (none by default) and applies them after a confirmation. A row edited in the meantime is skipped.
 
 ### Changed
 
@@ -37,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known issues
 
-- Lunar death dates saved before this change were computed with the Chinese calendar and are not recomputed; in the years where the calendars differ they can be a day or a month off. Clearing and re-entering the lunar date of a member fixes it.
+- Lunar death dates saved before this change were computed with the Chinese calendar and are not recomputed automatically; in the years where the calendars differ they can be a day or a month off. Admins can review and fix them with the "Recompute lunar death dates" tool. A lunar date typed in by hand (with the solar date derived from it) cannot be told apart, so leave those rows unselected.
 - GEDCOM has no date with a day but no month, or without a year: export keeps only the year, or leaves such a date out. Lunar death dates, in-law flags, birth order, generation and other names are not exported to GEDCOM.
 
 ## [2.4.0] - 2026-10-18

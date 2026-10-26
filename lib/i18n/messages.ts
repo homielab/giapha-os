@@ -583,6 +583,36 @@ export const messages = {
     csvRestoreZipOnly:
       'Vui lòng phục hồi bằng file .zip được tạo ra từ chức năng Xuất CSV.',
     invalidRestoreFile: 'Vui lòng chọn file .json, .ged, hoặc .zip hợp lệ.',
+    lunarRecomputeTitle: 'Tính lại ngày giỗ âm lịch',
+    lunarRecomputeDescription:
+      'Ngày âm lịch lưu trước khi ứng dụng chuyển sang âm lịch Việt Nam được tính theo lịch Trung Quốc, có năm lệch một ngày hoặc một tháng. Công cụ này so ngày âm lịch đang lưu với ngày tính lại từ ngày mất dương lịch và chỉ sửa những dòng bạn chọn.',
+    lunarRecomputeWarning:
+      'Nếu ngày âm lịch là ngày bạn nhập tay (ngày mất dương lịch chỉ được suy ra từ đó và có thể sai) thì không nên áp dụng cho dòng đó. Ứng dụng không biết ngày nào được nhập tay, nên hãy xem từng dòng.',
+    lunarRecomputeBackupHint:
+      'Nên tải bản sao lưu JSON ở mục "Sao lưu dữ liệu" phía trên trước khi áp dụng.',
+    lunarRecomputeCheck: 'Kiểm tra ngày giỗ',
+    lunarRecomputeChecking: 'Đang kiểm tra...',
+    lunarRecomputeNone:
+      'Không có ngày âm lịch nào khác với ngày tính lại theo âm lịch Việt Nam.',
+    lunarRecomputeFound:
+      '{count} thành viên có ngày âm lịch khác với ngày tính lại. Đã chọn {selected}.',
+    lunarRecomputeSelectAll: 'Chọn tất cả',
+    lunarRecomputeSelectRow: 'Chọn {name}',
+    lunarRecomputeSolar: 'Ngày mất (dương lịch)',
+    lunarRecomputeStored: 'Âm lịch đang lưu',
+    lunarRecomputeNew: 'Âm lịch tính lại',
+    lunarRecomputeLeap: 'nhuận',
+    lunarRecomputeApply: 'Áp dụng cho {count} dòng đã chọn',
+    lunarRecomputeApplying: 'Đang áp dụng...',
+    lunarRecomputeConfirmTitle: 'Xác nhận tính lại ngày giỗ',
+    lunarRecomputeConfirmText:
+      'Ngày âm lịch của {count} thành viên đã chọn sẽ được thay bằng ngày tính lại theo âm lịch Việt Nam. Ngày giỗ trong danh sách sự kiện sẽ đổi theo.',
+    lunarRecomputeConfirmContinue: 'Áp dụng',
+    lunarRecomputeResult:
+      'Đã cập nhật {updated} thành viên. Bỏ qua {skipped} (đã đúng, đã xoá hoặc vừa được sửa), lỗi {failed}.',
+    lunarRecomputeInvalidSelection:
+      'Danh sách thành viên đã chọn không hợp lệ.',
+    lunarRecomputeFailed: 'Không thể tính lại ngày giỗ. Vui lòng thử lại.',
     galleryTitle: 'Phòng trưng bày',
     galleryDescription: 'Lưu giữ những kỷ niệm và khoảnh khắc đáng nhớ',
     gridView: 'Lưới',
@@ -1391,6 +1421,35 @@ export const messages = {
     csvRestoreZipOnly:
       'Please restore using the .zip file created by the CSV export function.',
     invalidRestoreFile: 'Please choose a valid .json, .ged, or .zip file.',
+    lunarRecomputeTitle: 'Recompute lunar death dates',
+    lunarRecomputeDescription:
+      'Lunar dates saved before the app switched to the Vietnamese lunar calendar were computed with the Chinese calendar, which is a day or a month off in some years. This tool compares each saved lunar date with the one computed from the solar death date and only changes the rows you select.',
+    lunarRecomputeWarning:
+      'If a lunar date was typed in by hand (the solar death date was derived from it and may be wrong), do not apply it to that row. The app cannot tell which dates were typed in, so review each row.',
+    lunarRecomputeBackupHint:
+      'Download a JSON backup under "Back up data" above before applying.',
+    lunarRecomputeCheck: 'Check death anniversaries',
+    lunarRecomputeChecking: 'Checking...',
+    lunarRecomputeNone:
+      'Every saved lunar date matches the Vietnamese lunar calendar.',
+    lunarRecomputeFound:
+      '{count} members have a lunar date that differs from the recomputed one. {selected} selected.',
+    lunarRecomputeSelectAll: 'Select all',
+    lunarRecomputeSelectRow: 'Select {name}',
+    lunarRecomputeSolar: 'Death date (solar)',
+    lunarRecomputeStored: 'Saved lunar date',
+    lunarRecomputeNew: 'Recomputed lunar date',
+    lunarRecomputeLeap: 'leap',
+    lunarRecomputeApply: 'Apply to {count} selected rows',
+    lunarRecomputeApplying: 'Applying...',
+    lunarRecomputeConfirmTitle: 'Confirm recompute',
+    lunarRecomputeConfirmText:
+      'The lunar death date of the {count} selected members will be replaced with the date computed with the Vietnamese lunar calendar. Their death anniversaries in the events list change accordingly.',
+    lunarRecomputeConfirmContinue: 'Apply',
+    lunarRecomputeResult:
+      'Updated {updated} members. Skipped {skipped} (already correct, deleted or edited meanwhile), {failed} failed.',
+    lunarRecomputeInvalidSelection: 'The selected member list is not valid.',
+    lunarRecomputeFailed: 'Could not recompute the dates. Please try again.',
     galleryTitle: 'Gallery',
     galleryDescription: 'Preserve memorable moments and family memories',
     gridView: 'Grid',
