@@ -1003,6 +1003,8 @@ export const messages = {
     continueAction: 'Tiếp tục',
     spouseNameRequired: 'Vui lòng nhập tên Vợ/Chồng.',
     spouseAddError: 'Không thể thêm vợ/chồng: {error}',
+    personNotCreated:
+      'Không tạo được hồ sơ: bạn không còn quyền thêm thành viên hoặc phiên đã hết hạn. Hãy tải lại trang.',
     confirmDeleteRelationship: 'Bạn có chắc chắn muốn xóa mối quan hệ này?',
     deleteRelationshipError: 'Không thể xóa: {error}',
     spouseOf: 'Vợ/chồng của {name}',
@@ -2014,6 +2016,8 @@ export const messages = {
     continueAction: 'Continue',
     spouseNameRequired: 'Please enter the spouse’s name.',
     spouseAddError: 'Could not add spouse: {error}',
+    personNotCreated:
+      'The profile was not created: you can no longer add members, or your session expired. Reload the page.',
     confirmDeleteRelationship:
       'Are you sure you want to delete this relationship?',
     deleteRelationshipError: 'Could not delete: {error}',

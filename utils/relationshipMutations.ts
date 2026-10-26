@@ -12,6 +12,7 @@ import {
   validateRelationship
 } from '@/utils/relationshipValidation'
 import {
+  PersonNotCreatedError,
   PersonNotUpdatedError,
   RelationshipNotDeletedError
 } from '@/utils/writeErrors'
@@ -444,7 +445,8 @@ export async function createSpouseWithMarriage(
     .select('id')
     .single()
 
-  if (insertError || !newPersonData) throw insertError
+  if (insertError) throw insertError
+  if (!newPersonData) throw new PersonNotCreatedError()
 
   const newSpouseId = newPersonData.id
 

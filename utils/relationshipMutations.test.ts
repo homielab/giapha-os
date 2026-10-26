@@ -5,6 +5,7 @@ import { Person } from '@/types'
 import {
   addRelationshipWithTargetSync,
   bulkCreateChildren,
+  createSpouseWithMarriage,
   deleteRelationship
 } from '@/utils/relationshipMutations'
 import {
@@ -13,6 +14,7 @@ import {
   fakeSupabase
 } from '@/utils/testing/fakeSupabase'
 import {
+  PersonNotCreatedError,
   PersonNotUpdatedError,
   RelationshipNotDeletedError
 } from '@/utils/writeErrors'
@@ -236,5 +238,25 @@ describe('deleteRelationship', () => {
     const error = { message: 'offline' }
     const { client } = fakeSupabase(() => ({ error }))
     await expect(deleteRelationship(client, 'rel-1')).rejects.toEqual(error)
+  })
+})
+
+describe('createSpouseWithMarriage', () => {
+  const person = { id: 'p1', gender: 'male' } as Person
+  const input = { person, name: 'Lan', birthYear: '', note: '' }
+
+  test('an insert that returns no row and no error throws PersonNotCreatedError', async () => {
+    const { client, calls } = fakeSupabase(() => ({ data: null, error: null }))
+    await expect(
+      createSpouseWithMarriage(client, input)
+    ).rejects.toBeInstanceOf(PersonNotCreatedError)
+    expect(calls.some((c) => c.table === 'relationships')).toBe(false)
+  })
+
+  test('a database error is rethrown as is', async () => {
+    const { client } = fakeSupabase(() => ({ data: null, error: denied }))
+    await expect(createSpouseWithMarriage(client, input)).rejects.toEqual(
+      denied
+    )
   })
 })

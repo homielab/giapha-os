@@ -35,3 +35,11 @@ export class PersonNotDeletedError extends Error {
     this.name = 'PersonNotDeletedError'
   }
 }
+
+/** Inserting a person returned no row (and no error): the user may not create it. */
+export class PersonNotCreatedError extends Error {
+  constructor() {
+    super('Person not created')
+    this.name = 'PersonNotCreatedError'
+  }
+}

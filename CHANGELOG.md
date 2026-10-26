@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Adding a spouse: if the database creates no person (for example the session expired or the account may no longer add members), the form now says so in Vietnamese or English instead of showing an empty error.
+- The upgrade page's version comparison (prerelease and build suffixes, `1.10.0` vs `1.9.0`, invalid strings) now has tests; behaviour is unchanged.
 - Kinship page and the "add relationship" form: the member pickers now find names without accents ("nguyen" finds "Nguyễn") like the other searches, and work from the keyboard and a screen reader: Up/Down and Enter choose, Esc closes, and the lists are announced as comboboxes with the number of results.
 - Editing the lunar death date of someone who died in a leap month no longer moves the solar date a month earlier: the leap month is kept while the lunar month and year are unchanged.
 - English interface: the relationship (kinship) page no longer shows Vietnamese sentences (relation type, common ancestor, path steps; the kinship terms such as Bác or Chú stay Vietnamese), and a not-updated person or an invalid CSV ZIP now shows its error in the chosen language. A failed log out now shows an error and stays on the page instead of going to the login page.
