@@ -60,7 +60,14 @@ export default function MemberForm({
   // Set when a new member was inserted but a later step failed: the form then
   // edits that person, so saving again cannot create a duplicate.
   const [createdPerson, setCreatedPerson] = useState<Person | null>(null)
-  const initialData = createdPerson ?? initialDataProp
+  // `updated_at` of the row after a save whose later step failed (see
+  // `onUpdated`); without it, saving again would be taken as a conflict.
+  const [savedUpdatedAt, setSavedUpdatedAt] = useState<string | null>(null)
+  const initialData =
+    createdPerson ??
+    (initialDataProp && savedUpdatedAt
+      ? { ...initialDataProp, updated_at: savedUpdatedAt }
+      : initialDataProp)
   const isEditing = isEditingProp || createdPerson !== null
   const [confirmation, setConfirmation] = useState<string | null>(null)
 
@@ -179,7 +186,8 @@ export default function MemberForm({
       setConfirmation,
       setChanged,
       onSuccess,
-      onCreated: setCreatedPerson
+      onCreated: setCreatedPerson,
+      onUpdated: setSavedUpdatedAt
     })
   }
 

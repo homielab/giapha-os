@@ -73,6 +73,8 @@ export interface SaveMemberResult {
   warnings: string[]
   /** The row just inserted (set only when this call created the member). */
   createdPerson?: Person
+  /** `updated_at` of the person row after this save (edit or create). */
+  savedUpdatedAt?: string
 }
 
 /**
@@ -97,8 +99,24 @@ async function explainRefusedUpdate(
   return new PersonChangedError()
 }
 
-const errorMessage = (err: unknown) =>
-  (err as { message?: string } | null)?.message || String(err)
+/**
+ * A step after the person row was updated failed. The update itself went
+ * through and moved `updated_at`, so the form must keep `savedUpdatedAt` as
+ * its new reference or its next save would look like someone else's edit.
+ */
+export class LaterStepError extends Error {
+  constructor(
+    readonly original: unknown,
+    readonly savedUpdatedAt: string | undefined
+  ) {
+    super(errorMessage(original))
+    this.name = 'LaterStepError'
+  }
+}
+
+function errorMessage(err: unknown) {
+  return (err as { message?: string } | null)?.message || String(err)
+}
 
 /** The chosen avatar file is not a JPEG, PNG, GIF or WebP image. */
 export class InvalidAvatarError extends Error {
@@ -155,7 +173,7 @@ export async function saveMember(
   // same person again.
   const isNew = !isEditing || !currentPersonId
   const fail = (err: unknown) => {
-    if (!isNew) throw err
+    if (!isNew) throw new LaterStepError(err, savedUpdatedAt)
     warnings.push(errorMessage(err))
   }
 
@@ -296,6 +314,7 @@ export async function saveMember(
     personId: currentPersonId,
     generationUpdateError,
     warnings,
+    savedUpdatedAt,
     // The avatar update moves updated_at; keep the new row in step so that a
     // second save is not mistaken for someone else's change.
     createdPerson: createdPerson && {
@@ -481,6 +500,11 @@ export interface MemberFormSubmitContext {
   setChanged?: (value: boolean) => void
   /** A new member was inserted but a later step failed: switch to edit mode. */
   onCreated?: (person: Person) => void
+  /**
+   * An existing member was updated but a later step failed or warned: the
+   * form's reference `updated_at` moves to this value so "save again" works.
+   */
+  onUpdated?: (updatedAt: string) => void
 }
 
 // Orchestrates validation + persistence + navigation for the member form.
@@ -606,7 +630,8 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
       personId: currentPersonId,
       generationUpdateError,
       warnings: savedWarnings,
-      createdPerson
+      createdPerson,
+      savedUpdatedAt
     } = await saveMember({
       supabase: ctx.supabase,
       isEditing: ctx.isEditing,
@@ -627,6 +652,8 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
     // The member exists now: edit it from here on, never insert it again.
     if (createdPerson && (savedWarnings.length > 0 || generationUpdateError))
       ctx.onCreated?.(createdPerson)
+    else if (generationUpdateError && savedUpdatedAt)
+      ctx.onUpdated?.(savedUpdatedAt)
     if (savedWarnings.length > 0) {
       setWarning({
         message: t('memberSavedPartially', {
@@ -646,8 +673,11 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
       return
     }
     finishMemberSave(ctx, currentPersonId)
-  } catch (err) {
-    console.error('Error saving member:', err)
+  } catch (caught) {
+    console.error('Error saving member:', caught)
+    if (caught instanceof LaterStepError && caught.savedUpdatedAt)
+      ctx.onUpdated?.(caught.savedUpdatedAt)
+    const err = caught instanceof LaterStepError ? caught.original : caught
     if (err instanceof PersonChangedError) ctx.setChanged?.(true)
     setError(
       err instanceof InvalidAvatarError

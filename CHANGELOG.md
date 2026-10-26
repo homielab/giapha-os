@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Kinship page: an uncle or aunt 11 or more generations up is now titled "Tổ đời 10 Chú" instead of "undefined Chú".
 - CSV export: cells that start with `=`, `+`, `-` or `@` (a name, note or phone number such as `+84…`) are written with a leading apostrophe so Excel and LibreOffice no longer run them as formulas; importing the CSV removes that apostrophe again, so values come back unchanged.
 - Member form: saving an edit no longer silently overwrites a change someone else saved to the same person in the meantime. The save is refused with "someone else just edited this person" and a Reload button; nothing is written.
+- Member form: when an edit saved the person but a later step (photo upload, private details) failed, saving again no longer reports "someone else changed this person"; the form keeps the new modification time, and a real concurrent edit is still reported.
 
 - Member form: if a new member is saved but the photo or private details then fail to save, the form now switches to editing that member with a clear message, so saving again retries instead of creating the same person twice.
 - Adding a spouse: if the database creates no person (for example the session expired or the account may no longer add members), the form now says so in Vietnamese or English instead of showing an empty error.

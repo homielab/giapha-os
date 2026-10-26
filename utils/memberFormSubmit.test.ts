@@ -25,7 +25,7 @@ mock.module('@/app/actions/member', () => ({
   updateDescendantGenerationsAction
 }))
 
-const { InvalidAvatarError, saveMember, submitMemberForm } =
+const { InvalidAvatarError, LaterStepError, saveMember, submitMemberForm } =
   await import('./memberFormSubmit')
 const { PersonChangedError, PersonNotUpdatedError } =
   await import('./writeErrors')
@@ -194,7 +194,7 @@ describe('saveMember when RLS refuses the write', () => {
           type: 'image/png'
         })
       })
-    ).rejects.toBeInstanceOf(PersonNotUpdatedError)
+    ).rejects.toMatchObject({ original: expect.any(PersonNotUpdatedError) })
   })
 })
 
@@ -346,9 +346,9 @@ describe('saveMember for a new member when a later step fails', () => {
     const { options } = saveOptions((call) =>
       call.op === 'upload' ? { error: { message: 'too large' } } : ok(call)
     )
-    await expect(saveMember({ ...options, avatarFile: png() })).rejects.toEqual(
-      { message: 'too large' }
-    )
+    await expect(
+      saveMember({ ...options, avatarFile: png() })
+    ).rejects.toMatchObject({ message: 'too large' })
   })
 
   test('a clean create has no warnings', async () => {
@@ -841,5 +841,82 @@ describe('submitMemberForm names, duplicates and parent deaths', () => {
     await submitMemberForm(ctx)
     expect(state.error).toBeNull()
     expect(state.confirmation).toBeNull()
+  })
+})
+
+describe('saveMember retry after a later step failed on an edit', () => {
+  const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]
+  const png = () =>
+    new File([new Uint8Array(PNG)], 'photo.png', { type: 'image/png' })
+
+  // A person row whose updated_at moves on every write, like the DB trigger;
+  // the conditional update only matches the current value.
+  function stampedPerson(uploadFails: () => boolean, rowUpdatedAt = 'v1') {
+    let current = rowUpdatedAt
+    let version = 1
+    const { options } = saveOptions((call) => {
+      if (call.op === 'upload')
+        return uploadFails() ? { error: { message: 'network' } } : ok(call)
+      if (call.table !== 'persons') return ok(call)
+      if (call.op === 'update') {
+        const expected = call.filters.find(([, c]) => c === 'updated_at')
+        if (expected && expected[2] !== current) return { data: [] }
+        current = `v${++version}`
+        return { data: [{ id: 'person-1', updated_at: current }] }
+      }
+      return { data: { id: 'person-1', updated_at: current } }
+    })
+    return {
+      options: {
+        ...options,
+        hasGenerationChanged: false,
+        avatarFile: png()
+      },
+      bump: () => (current = 'someone-elses')
+    }
+  }
+
+  test('retry with the updated_at of the first save succeeds', async () => {
+    let failing = true
+    const { options } = stampedPerson(() => failing)
+    const first = { ...initialData, updated_at: 'v1' } as Person
+    const err = await saveMember({ ...options, initialData: first }).catch(
+      (e) => e
+    )
+    expect(err).toBeInstanceOf(LaterStepError)
+    expect(err.message).toBe('network')
+    expect(err.savedUpdatedAt).toBe('v2')
+
+    failing = false
+    const retried = await saveMember({
+      ...options,
+      initialData: { ...first, updated_at: err.savedUpdatedAt } as Person
+    })
+    expect(retried.personId).toBe('person-1')
+  })
+
+  test('retry with the stale updated_at is still a conflict', async () => {
+    const { options } = stampedPerson(() => false)
+    const stale = { ...initialData, updated_at: 'v0' } as Person
+    await expect(
+      saveMember({ ...options, initialData: stale })
+    ).rejects.toBeInstanceOf(PersonChangedError)
+  })
+
+  test('someone else saving between the two tries is a conflict', async () => {
+    let failing = true
+    const { options, bump } = stampedPerson(() => failing)
+    const first = { ...initialData, updated_at: 'v1' } as Person
+    const err = await saveMember({ ...options, initialData: first }).catch(
+      (e) => e
+    )
+    bump()
+    failing = false
+    await expect(
+      saveMember({
+        ...options,
+        initialData: { ...first, updated_at: err.savedUpdatedAt } as Person
+      })
+    ).rejects.toBeInstanceOf(PersonChangedError)
   })
 })
