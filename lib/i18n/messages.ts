@@ -998,6 +998,8 @@ export const messages = {
     relationshipSavedTargetNotUpdated:
       'Đã lưu quan hệ nhưng chưa cập nhật đời / dâu rể cho người kia: {error}',
     relationshipsLoadError: 'Không tải được thông tin gia đình: {error}',
+    memberSavedPartially:
+      'Đã lưu thành viên, nhưng ảnh hoặc thông tin riêng chưa lưu được: {error}. Bấm lưu lần nữa để thử lại (sẽ cập nhật người này, không tạo thêm), hoặc Tiếp tục để bỏ qua.',
     memberSavedGenerationNotUpdated:
       'Đã lưu thành viên nhưng chưa cập nhật thế hệ cho con cháu: {error}. Bấm lưu lần nữa để thử lại, hoặc Tiếp tục để bỏ qua.',
     continueAction: 'Tiếp tục',
@@ -2011,6 +2013,8 @@ export const messages = {
     relationshipSavedTargetNotUpdated:
       'The relationship was saved, but the other person’s generation / in-law flag was not updated: {error}',
     relationshipsLoadError: 'Could not load family information: {error}',
+    memberSavedPartially:
+      'The member was saved, but the photo or private details could not be saved: {error}. Save again to retry (this updates the same person, it does not create another), or Continue to skip.',
     memberSavedGenerationNotUpdated:
       'The member was saved, but the descendants’ generations were not updated: {error}. Save again to retry, or Continue to skip.',
     continueAction: 'Continue',

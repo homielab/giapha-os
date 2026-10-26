@@ -43,8 +43,8 @@ interface MemberFormProps {
 }
 
 export default function MemberForm({
-  initialData,
-  isEditing = false,
+  initialData: initialDataProp,
+  isEditing: isEditingProp = false,
   isAdmin = false,
   privateLoaded = true,
   onSuccess,
@@ -56,13 +56,18 @@ export default function MemberForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [warning, setWarning] = useState<MemberSaveWarning | null>(null)
+  // Set when a new member was inserted but a later step failed: the form then
+  // edits that person, so saving again cannot create a duplicate.
+  const [createdPerson, setCreatedPerson] = useState<Person | null>(null)
+  const initialData = createdPerson ?? initialDataProp
+  const isEditing = isEditingProp || createdPerson !== null
   const [confirmation, setConfirmation] = useState<string | null>(null)
 
   // Form states (defaults resolved by a plain helper to keep this component
   // free of per-field fallback branches)
   const init = useMemo(
-    () => getMemberFormInitialValues(initialData),
-    [initialData]
+    () => getMemberFormInitialValues(initialDataProp),
+    [initialDataProp]
   )
   const [fullName, setFullName] = useState(init.fullName)
   const [otherNames, setOtherNames] = useState(init.otherNames)
@@ -103,7 +108,7 @@ export default function MemberForm({
     avatarPreview,
     handleAvatarSelected,
     handleAvatarRemove
-  } = useMemberAvatar(initialData)
+  } = useMemberAvatar(initialDataProp)
 
   const [note, setNote] = useState(initialData?.note || '')
   const errorRef = useRef<HTMLDivElement>(null)
@@ -171,7 +176,8 @@ export default function MemberForm({
       setError,
       setWarning,
       setConfirmation,
-      onSuccess
+      onSuccess,
+      onCreated: setCreatedPerson
     })
   }
 

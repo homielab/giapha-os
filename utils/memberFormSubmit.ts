@@ -65,7 +65,18 @@ export interface SaveMemberResult {
    * failed; the form shows it as a warning instead of a success.
    */
   generationUpdateError: string | null
+  /**
+   * Only for a newly created member: messages of the steps after the insert
+   * (avatar upload, private details) that failed. The person already exists,
+   * so the form must switch to editing it instead of creating it again.
+   */
+  warnings: string[]
+  /** The row just inserted (set only when this call created the member). */
+  createdPerson?: Person
 }
+
+const errorMessage = (err: unknown) =>
+  (err as { message?: string } | null)?.message || String(err)
 
 /** The chosen avatar file is not a JPEG, PNG, GIF or WebP image. */
 export class InvalidAvatarError extends Error {
@@ -114,6 +125,16 @@ export async function saveMember(
   if (avatarFile && !avatarType) throw new InvalidAvatarError()
 
   let currentPersonId = initialData?.id
+  let createdPerson: Person | undefined
+  const warnings: string[] = []
+  // After the insert, a failing step is reported instead of thrown: throwing
+  // would leave the form in "create" mode and a second save would add the
+  // same person again.
+  const isNew = !isEditing || !currentPersonId
+  const fail = (err: unknown) => {
+    if (!isNew) throw err
+    warnings.push(errorMessage(err))
+  }
 
   // For a new member, we must insert first to get the ID for the avatar filename
   if (!isEditing || !currentPersonId) {
@@ -124,6 +145,7 @@ export async function saveMember(
       .single()
     if (createError) throw createError
     currentPersonId = newPerson.id
+    createdPerson = newPerson as Person
   } else {
     // Update existing member info first
     // RLS turns a refused update into "0 rows" without an error.
@@ -138,28 +160,32 @@ export async function saveMember(
 
   // 2. Handle Avatar Upload if a new file is selected (now we have currentPersonId)
   if (avatarFile && avatarType && currentPersonId) {
-    const fileExt = IMAGE_EXTENSIONS[avatarType]
-    const slugName = slugify(fields.fullName)
-    const fileName = `${currentPersonId}_${slugName}.${fileExt}`
-    const filePath = `${fileName}`
+    try {
+      const fileExt = IMAGE_EXTENSIONS[avatarType]
+      const slugName = slugify(fields.fullName)
+      const fileName = `${currentPersonId}_${slugName}.${fileExt}`
+      const filePath = `${fileName}`
 
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, avatarFile, { upsert: true, contentType: avatarType })
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, avatarFile, { upsert: true, contentType: avatarType })
 
-    if (uploadError) throw uploadError
+      if (uploadError) throw uploadError
 
-    currentAvatarUrl = filePath
+      currentAvatarUrl = filePath
 
-    // Update the person with the final avatar URL
-    const { data: avatarRows, error: updateAvatarError } = await supabase
-      .from('persons')
-      .update({ avatar_url: currentAvatarUrl })
-      .eq('id', currentPersonId)
-      .select('id')
-    if (updateAvatarError) throw updateAvatarError
-    if (!avatarRows || avatarRows.length === 0) {
-      throw new PersonNotUpdatedError()
+      // Update the person with the final avatar URL
+      const { data: avatarRows, error: updateAvatarError } = await supabase
+        .from('persons')
+        .update({ avatar_url: currentAvatarUrl })
+        .eq('id', currentPersonId)
+        .select('id')
+      if (updateAvatarError) throw updateAvatarError
+      if (!avatarRows || avatarRows.length === 0) {
+        throw new PersonNotUpdatedError()
+      }
+    } catch (err) {
+      fail(err)
     }
   }
 
@@ -191,19 +217,23 @@ export async function saveMember(
       normalizedData.occupation ||
       normalizedData.current_residence
 
-    if (hasData) {
-      const { error } = await supabase
-        .from('person_details_private')
-        .upsert(normalizedData)
+    try {
+      if (hasData) {
+        const { error } = await supabase
+          .from('person_details_private')
+          .upsert(normalizedData)
 
-      if (error) throw error
-    } else {
-      const { error } = await supabase
-        .from('person_details_private')
-        .delete()
-        .eq('person_id', currentPersonId)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('person_details_private')
+          .delete()
+          .eq('person_id', currentPersonId)
 
-      if (error) throw error
+        if (error) throw error
+      }
+    } catch (err) {
+      fail(err)
     }
   }
 
@@ -224,7 +254,12 @@ export async function saveMember(
     }
   }
 
-  return { personId: currentPersonId, generationUpdateError }
+  return {
+    personId: currentPersonId,
+    generationUpdateError,
+    warnings,
+    createdPerson
+  }
 }
 
 const RELATIVE_COLUMNS =
@@ -396,6 +431,8 @@ export interface MemberFormSubmitContext {
   /** The user accepted the confirmation: skip the checks that ask. */
   confirmed?: boolean
   onSuccess?: (personId: string) => void
+  /** A new member was inserted but a later step failed: switch to edit mode. */
+  onCreated?: (person: Person) => void
 }
 
 // Orchestrates validation + persistence + navigation for the member form.
@@ -516,24 +553,40 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
       return
     }
 
-    const { personId: currentPersonId, generationUpdateError } =
-      await saveMember({
-        supabase: ctx.supabase,
-        isEditing: ctx.isEditing,
-        initialData: ctx.initialData,
-        fields: ctx.fields,
-        deathValues: normalized.values,
-        avatarUrl: ctx.avatarUrl,
-        avatarFile: ctx.avatarFile,
-        removeExistingAvatar: ctx.removeExistingAvatar,
-        isAdmin: ctx.isAdmin,
-        privateLoaded: ctx.privateLoaded,
-        privateFields: ctx.privateFields,
-        hasGenerationChanged: ctx.hasGenerationChanged,
-        updateDescendantGenerations: ctx.updateDescendantGenerations
-      })
+    const {
+      personId: currentPersonId,
+      generationUpdateError,
+      warnings: savedWarnings,
+      createdPerson
+    } = await saveMember({
+      supabase: ctx.supabase,
+      isEditing: ctx.isEditing,
+      initialData: ctx.initialData,
+      fields: ctx.fields,
+      deathValues: normalized.values,
+      avatarUrl: ctx.avatarUrl,
+      avatarFile: ctx.avatarFile,
+      removeExistingAvatar: ctx.removeExistingAvatar,
+      isAdmin: ctx.isAdmin,
+      privateLoaded: ctx.privateLoaded,
+      privateFields: ctx.privateFields,
+      hasGenerationChanged: ctx.hasGenerationChanged,
+      updateDescendantGenerations: ctx.updateDescendantGenerations
+    })
 
     if (!currentPersonId) throw new Error(t('saveIdError'))
+    // The member exists now: edit it from here on, never insert it again.
+    if (createdPerson && (savedWarnings.length > 0 || generationUpdateError))
+      ctx.onCreated?.(createdPerson)
+    if (savedWarnings.length > 0) {
+      setWarning({
+        message: t('memberSavedPartially', {
+          error: savedWarnings.join('; ')
+        }),
+        personId: currentPersonId
+      })
+      return
+    }
     if (generationUpdateError) {
       setWarning({
         message: t('memberSavedGenerationNotUpdated', {

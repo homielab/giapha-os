@@ -126,7 +126,8 @@ describe('saveMember', () => {
 
     expect(result).toEqual({
       personId: 'person-1',
-      generationUpdateError: null
+      generationUpdateError: null,
+      warnings: []
     })
     expect(updateDescendantGenerationsAction).toHaveBeenCalledWith(
       'person-1',
@@ -140,7 +141,8 @@ describe('saveMember', () => {
     const result = await saveMember(options)
     expect(result).toEqual({
       personId: 'person-1',
-      generationUpdateError: 'no access'
+      generationUpdateError: 'no access',
+      warnings: []
     })
   })
 
@@ -192,6 +194,137 @@ describe('saveMember when RLS refuses the write', () => {
         })
       })
     ).rejects.toBeInstanceOf(PersonNotUpdatedError)
+  })
+})
+
+describe('saveMember for a new member when a later step fails', () => {
+  const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]
+  const png = () =>
+    new File([new Uint8Array(PNG)], 'photo.png', { type: 'image/png' })
+  const created = { id: 'new-1', full_name: 'Nguyễn Văn An' }
+
+  function newMember(respond: (call: FakeCall) => FakeResult) {
+    const { options, calls } = saveOptions((call) =>
+      call.op === 'insert' ? { data: created } : respond(call)
+    )
+    return {
+      calls,
+      options: {
+        ...options,
+        isEditing: false,
+        initialData: undefined,
+        hasGenerationChanged: false
+      }
+    }
+  }
+
+  test('a failed avatar upload returns the person and a warning', async () => {
+    const { options } = newMember((call) =>
+      call.op === 'upload' ? { error: { message: 'too large' } } : ok(call)
+    )
+    const result = await saveMember({ ...options, avatarFile: png() })
+    expect(result.personId).toBe('new-1')
+    expect(result.createdPerson).toEqual(created as unknown as Person)
+    expect(result.warnings).toEqual(['too large'])
+  })
+
+  test('a failed private upsert returns the person and a warning', async () => {
+    const { options } = newMember((call) =>
+      call.op === 'upsert' ? { error: { message: 'rls' } } : ok(call)
+    )
+    const result = await saveMember({
+      ...options,
+      isAdmin: true,
+      privateFields: {
+        phoneNumber: '0123',
+        occupation: '',
+        currentResidence: ''
+      }
+    })
+    expect(result.personId).toBe('new-1')
+    expect(result.warnings).toEqual(['rls'])
+  })
+
+  test('a failed insert still throws', async () => {
+    const { options } = newMember(ok)
+    const failing = saveOptions((call) =>
+      call.op === 'insert' ? { error: { message: 'insert failed' } } : ok(call)
+    )
+    await expect(
+      saveMember({
+        ...options,
+        supabase: failing.options.supabase,
+        avatarFile: png()
+      })
+    ).rejects.toEqual({ message: 'insert failed' })
+  })
+
+  test('editing an existing member still throws on a failed upload', async () => {
+    const { options } = saveOptions((call) =>
+      call.op === 'upload' ? { error: { message: 'too large' } } : ok(call)
+    )
+    await expect(saveMember({ ...options, avatarFile: png() })).rejects.toEqual(
+      { message: 'too large' }
+    )
+  })
+
+  test('a clean create has no warnings', async () => {
+    const { options } = newMember(ok)
+    const result = await saveMember(options)
+    expect(result.warnings).toEqual([])
+    expect(result.createdPerson).toBeDefined()
+  })
+
+  test('submitMemberForm switches to edit mode and warns instead of failing', async () => {
+    const { options } = newMember((call) =>
+      call.op === 'upload' ? { error: { message: 'too large' } } : ok(call)
+    )
+    const out = {
+      warning: null as { message: string; personId: string } | null,
+      error: null as string | null
+    }
+    const createdCalls: Person[] = []
+    await submitMemberForm({
+      ...options,
+      avatarFile: png(),
+      t: (key: TranslationKey, values?: TranslationValues) =>
+        values ? `${key} ${JSON.stringify(values)}` : key,
+      router: { push: () => {}, refresh: () => {} },
+      death: {
+        currentValues: emptyDeath,
+        deathYear: '',
+        deathMonth: '',
+        deathDay: '',
+        deathLunarYear: '',
+        deathLunarMonth: '',
+        deathLunarDay: ''
+      },
+      birthYear: fields.birthYear,
+      birthMonth: '',
+      birthDay: '',
+      isDeceased: false,
+      isInLaw: false,
+      birthOrder: '',
+      generation: 4,
+      otherNames: '',
+      note: '',
+      confirmed: true,
+      setLoading: () => {},
+      setError: (v) => {
+        out.error = v
+      },
+      setWarning: (v) => {
+        out.warning = v
+      },
+      setConfirmation: () => {},
+      onCreated: (p) => createdCalls.push(p)
+    })
+    expect(out.error).toBeNull()
+    expect(out.warning).toEqual({
+      message: 'memberSavedPartially {"error":"too large"}',
+      personId: 'new-1'
+    })
+    expect(createdCalls).toHaveLength(1)
   })
 })
 

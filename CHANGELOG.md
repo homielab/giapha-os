@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Member form: if a new member is saved but the photo or private details then fail to save, the form now switches to editing that member with a clear message, so saving again retries instead of creating the same person twice.
 - Adding a spouse: if the database creates no person (for example the session expired or the account may no longer add members), the form now says so in Vietnamese or English instead of showing an empty error.
 - The upgrade page's version comparison (prerelease and build suffixes, `1.10.0` vs `1.9.0`, invalid strings) now has tests; behaviour is unchanged.
 - Kinship page and the "add relationship" form: the member pickers now find names without accents ("nguyen" finds "Nguyễn") like the other searches, and work from the keyboard and a screen reader: Up/Down and Enter choose, Esc closes, and the lists are announced as comboboxes with the number of results.
