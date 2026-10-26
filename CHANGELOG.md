@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Restore: the file is read as soon as you choose it. A broken or invalid file shows its error right away, and the confirmation now says how many members, relationships and events the file holds (and its export date), with a "Download the current backup first" button before anything is deleted.
+- A translated (Vietnamese/English) "page not found" page, for example for a wrong member link, and a fallback error page; every dashboard page now has its own browser tab title (the member's name on a member page).
 - GEDCOM export writes other names (`NAME` with `TYPE aka`) and the lunar death date as a custom `_LUNAR` tag under `DEAT`; import reads them back, so an export followed by an import keeps both.
 - Export: besides the single-page PDF, the menu now offers multi-page A4 and A3 landscape PDFs. The tree is cut into sheets with a 10 mm overlap for gluing and a "row,column / rows x columns" label on every page; the last choice is remembered.
 - Family tree: pinch with two fingers on a phone or tablet to zoom around the fingers; one finger still scrolls. Mouse and Ctrl/⌘ + scroll behave as before.

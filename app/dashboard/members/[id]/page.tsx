@@ -1,4 +1,5 @@
 import { ArrowLeft } from 'lucide-react'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -9,6 +10,23 @@ import { getProfile, getSupabase } from '@/utils/supabase/queries'
 
 interface PageProps {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({
+  params
+}: PageProps): Promise<Metadata> {
+  const [{ t }, { id }, supabase] = await Promise.all([
+    getServerTranslations(),
+    params,
+    getSupabase()
+  ])
+  const { data } = await supabase
+    .from('persons')
+    .select('full_name')
+    .eq('id', id)
+    .maybeSingle()
+
+  return { title: data?.full_name || t('familyTree') }
 }
 
 export default async function MemberDetailPage({ params }: PageProps) {

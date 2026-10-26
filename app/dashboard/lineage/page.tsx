@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
 import LineageManager from '@/components/LineageManager'
@@ -6,6 +7,12 @@ import { Person } from '@/types'
 import { PERSON_LIST_COLUMNS } from '@/utils/personColumns'
 import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslations()
+
+  return { title: t('lineagePageTitle') }
+}
 
 export default async function LineagePage() {
   const [{ t }, profile] = await Promise.all([

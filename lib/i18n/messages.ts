@@ -608,6 +608,18 @@ export const messages = {
     restoreConfirmText:
       'Hệ thống sẽ xoá toàn bộ dữ liệu thành viên, mối quan hệ, thông tin riêng tư và sự kiện hiện tại để thay thế bằng dữ liệu từ file {file}.',
     restoreIrreversible: 'Hành động này không thể hoàn tác. Bạn đã chắc chắn?',
+    restoreFileContains:
+      'File này chứa {persons} thành viên, {relationships} quan hệ, {events} sự kiện.',
+    restoreFileExportedAt: 'Xuất ngày {date}.',
+    restoreDownloadCurrent: 'Tải bản sao lưu hiện tại trước',
+    restoreFileUnreadable:
+      'Không đọc được file: nội dung không phải JSON hợp lệ.',
+    notFoundTitle: 'Không tìm thấy trang',
+    notFoundDescription:
+      'Trang bạn tìm không tồn tại hoặc thành viên này đã bị xoá.',
+    globalErrorTitle: 'Đã xảy ra lỗi',
+    globalErrorDescription:
+      'Ứng dụng gặp sự cố không mong muốn. Hãy thử lại hoặc quay về trang chủ.',
     restoreCancel: 'Huỷ bỏ',
     restoreContinue: 'Vẫn tiếp tục',
     restoring: 'Đang phục hồi...',
@@ -1545,6 +1557,17 @@ export const messages = {
     restoreConfirmText:
       'The system will delete all current members, relationships, private information, and events and replace them with data from {file}.',
     restoreIrreversible: 'This action cannot be undone. Are you sure?',
+    restoreFileContains:
+      'This file contains {persons} members, {relationships} relationships, {events} events.',
+    restoreFileExportedAt: 'Exported on {date}.',
+    restoreDownloadCurrent: 'Download the current backup first',
+    restoreFileUnreadable: 'Could not read the file: it is not valid JSON.',
+    notFoundTitle: 'Page not found',
+    notFoundDescription:
+      'The page you are looking for does not exist or this member was deleted.',
+    globalErrorTitle: 'Something went wrong',
+    globalErrorDescription:
+      'The app hit an unexpected problem. Try again or go back to the home page.',
     restoreCancel: 'Cancel',
     restoreContinue: 'Continue',
     restoring: 'Restoring...',

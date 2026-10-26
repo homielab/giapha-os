@@ -1,4 +1,5 @@
 import { ArrowLeft } from 'lucide-react'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -8,6 +9,12 @@ import { getProfile, getSupabase } from '@/utils/supabase/queries'
 
 interface PageProps {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslations()
+
+  return { title: t('editMember') }
 }
 
 export default async function EditMemberPage({ params }: PageProps) {

@@ -1,22 +1,34 @@
 'use client'
 
 import { AnimatePresence, m } from 'framer-motion'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Download } from 'lucide-react'
 import { useId } from 'react'
 
 import { useModalA11y } from '@/hooks/useModalA11y'
+import type { Locale } from '@/lib/i18n/messages'
 import { useI18n } from '@/lib/i18n/useI18n'
+import type { BackupSummary } from '@/utils/backupSummary'
 
 interface ImportConfirmModalProps {
   fileName: string
+  summary: BackupSummary
+  locale: Locale
   isImporting: boolean
+  isDownloading: boolean
+  downloadError: string | null
+  onDownloadBackup: () => void
   onCancel: () => void
   onConfirm: () => void
 }
 
 export default function ImportConfirmModal({
   fileName,
+  summary,
+  locale,
   isImporting,
+  isDownloading,
+  downloadError,
+  onDownloadBackup,
   onCancel,
   onConfirm
 }: ImportConfirmModalProps) {
@@ -57,7 +69,38 @@ export default function ImportConfirmModal({
               <p className='mt-2 text-sm leading-relaxed text-stone-600'>
                 {t('restoreConfirmText', { file: fileName })}
               </p>
-              <p className='mt-2 text-sm font-medium text-rose-600'>
+              <p className='mt-3 text-sm font-medium text-stone-800'>
+                {t('restoreFileContains', {
+                  persons: summary.persons,
+                  relationships: summary.relationships,
+                  events: summary.events
+                })}
+              </p>
+              {summary.exportedAt && (
+                <p className='mt-1 text-xs text-stone-500'>
+                  {t('restoreFileExportedAt', {
+                    date: new Date(summary.exportedAt).toLocaleDateString(
+                      locale
+                    )
+                  })}
+                </p>
+              )}
+              <button
+                type='button'
+                onClick={onDownloadBackup}
+                disabled={isDownloading || isImporting}
+                className='mt-3 inline-flex items-center gap-2 rounded-xl bg-stone-100 px-3 py-2 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-200 disabled:opacity-50'>
+                <Download className='size-4' />
+                {isDownloading
+                  ? t('processingData')
+                  : t('restoreDownloadCurrent')}
+              </button>
+              {downloadError && (
+                <p role='alert' className='mt-2 text-sm text-red-600'>
+                  {downloadError}
+                </p>
+              )}
+              <p className='mt-3 text-sm font-medium text-rose-600'>
                 {t('restoreIrreversible')}
               </p>
             </div>

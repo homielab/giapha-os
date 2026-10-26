@@ -13,6 +13,7 @@ import {
   Star,
   Users
 } from 'lucide-react'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { getServerTranslations } from '@/lib/i18n/server'
@@ -38,6 +39,12 @@ const eventTypeConfig = {
     color: 'text-emerald-600',
     bg: 'bg-emerald-50'
   }
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslations()
+
+  return { title: t('dashboard') }
 }
 
 export default async function DashboardLaunchpad() {

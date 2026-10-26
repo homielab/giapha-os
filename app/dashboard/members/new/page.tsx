@@ -1,9 +1,16 @@
 import { ArrowLeft } from 'lucide-react'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import MemberForm from '@/components/MemberForm'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { getProfile } from '@/utils/supabase/queries'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslations()
+
+  return { title: t('newMember') }
+}
 
 export default async function NewMemberPage() {
   const [{ t }, profile] = await Promise.all([

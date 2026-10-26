@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 
 import MembersViews from '@/components/MembersViews'
@@ -5,6 +6,7 @@ import MemberDetailModal from '@/components/modal/MemberDetailModal'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
 import { AvatarUrlProvider } from '@/context/AvatarUrlContext'
 import { MemberListProvider } from '@/context/MemberListContext'
+import { getServerTranslations } from '@/lib/i18n/server'
 import { Person } from '@/types'
 import { NO_SIGNED_AVATAR_URLS } from '@/utils/avatar'
 import { signAvatarUrls } from '@/utils/avatarSigning'
@@ -15,6 +17,12 @@ import { getProfile, getSupabase } from '@/utils/supabase/queries'
 interface PageProps {
   searchParams: Promise<{ view?: string; rootId?: string; avatar?: string }>
 }
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslations()
+
+  return { title: t('familyTree') }
+}
+
 export default async function FamilyTreePage({ searchParams }: PageProps) {
   const { view, rootId, avatar } = await searchParams
   const initialView = view as ViewMode | undefined

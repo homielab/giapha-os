@@ -1,9 +1,16 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
 import DataImportExport from '@/components/DataImportExport'
 import LunarRecompute from '@/components/LunarRecompute'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { getProfile } from '@/utils/supabase/queries'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslations()
+
+  return { title: t('backupTitle') }
+}
 
 export default async function DataManagementPage() {
   const [{ t }, profile] = await Promise.all([

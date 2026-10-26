@@ -11,12 +11,21 @@ import ImportConfirmModal from '@/components/ImportConfirmModal'
 import ImportStatusMessage from '@/components/ImportStatusMessage'
 import { useAllPersons } from '@/hooks/useAllPersons'
 import { useI18n } from '@/lib/i18n/useI18n'
-import { Person } from '@/types'
+import {
+  validateImportPayload,
+  type ImportPayload
+} from '@/utils/backupPayload'
+import {
+  BackupParseError,
+  parseRestoreFile,
+  summarizeBackup,
+  type BackupSummary
+} from '@/utils/backupSummary'
 
 import PersonSelector from './PersonSelector'
 
 export default function DataImportExport() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [isExporting, setIsExporting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -26,15 +35,23 @@ export default function DataImportExport() {
   } | null>(null)
   const [showConfirm, setShowConfirm] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [parsedBackup, setParsedBackup] = useState<{
+    payload: ImportPayload
+    summary: BackupSummary
+  } | null>(null)
+  const [isReadingFile, setIsReadingFile] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
 
   const persons = useAllPersons()
   const [exportRootId, setExportRootId] = useState<string | null>(null)
 
-  const handleExport = async (format: 'json' | 'gedcom' | 'csv') => {
+  const handleExport = async (
+    format: 'json' | 'gedcom' | 'csv',
+    rootId: string | null = exportRootId
+  ) => {
     try {
       setIsExporting(true)
-      const rootParam = exportRootId || undefined
+      const rootParam = rootId || undefined
       const data = await exportData(rootParam)
 
       if ('error' in data) {
@@ -92,65 +109,66 @@ export default function DataImportExport() {
     }
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      if (file.size > 25 * 1024 * 1024) {
-        setImportStatus({
-          type: 'error',
-          message: t('fileTooLarge')
-        })
-        return
-      }
-      const fileName = file.name.toLowerCase()
-      if (fileName.endsWith('.csv')) {
-        setImportStatus({
-          type: 'error',
-          message: t('csvRestoreZipOnly')
-        })
-        return
-      }
+  const resetFile = () => {
+    setShowConfirm(false)
+    setSelectedFile(null)
+    setParsedBackup(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
-      if (
-        !fileName.endsWith('.json') &&
-        !fileName.endsWith('.ged') &&
-        !fileName.endsWith('.zip')
-      ) {
-        setImportStatus({
-          type: 'error',
-          message: t('invalidRestoreFile')
-        })
-        return
-      }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const fail = (message: string) => {
+      setImportStatus({ type: 'error', message })
+      resetFile()
+    }
+
+    if (file.size > 25 * 1024 * 1024) return fail(t('fileTooLarge'))
+    const fileName = file.name.toLowerCase()
+    if (fileName.endsWith('.csv')) return fail(t('csvRestoreZipOnly'))
+    if (
+      !fileName.endsWith('.json') &&
+      !fileName.endsWith('.ged') &&
+      !fileName.endsWith('.zip')
+    ) {
+      return fail(t('invalidRestoreFile'))
+    }
+
+    // Read the file now, so a broken one is reported before the destructive
+    // confirmation and the confirmation can say what the file holds.
+    setImportStatus(null)
+    setIsReadingFile(true)
+    try {
+      const payload = await parseRestoreFile(file)
+      const summary = summarizeBackup(payload)
+      if (!summary) return fail(t('invalidBackupFile'))
+      const invalid = validateImportPayload(payload, t)
+      if (invalid) return fail(invalid)
       setSelectedFile(file)
+      setParsedBackup({ payload, summary })
       setShowConfirm(true)
-      setImportStatus(null)
+    } catch (error: unknown) {
+      fail(
+        error instanceof BackupParseError
+          ? t('restoreFileUnreadable')
+          : error instanceof Error && error.message
+            ? error.message
+            : t('restoreFailed')
+      )
+    } finally {
+      setIsReadingFile(false)
     }
   }
 
   const handleConfirmImport = async () => {
-    if (!selectedFile) return
+    if (!selectedFile || !parsedBackup) return
 
     try {
       setIsImporting(true)
       setImportStatus(null)
 
-      const fileText = await selectedFile.text()
-      let payload
-
-      if (selectedFile.name.toLowerCase().endsWith('.ged')) {
-        const { parseGedcom } = await import('@/utils/gedcom')
-        payload = parseGedcom(fileText)
-      } else if (selectedFile.name.toLowerCase().endsWith('.zip')) {
-        const { parseCsvZip } = await import('@/utils/csv')
-        payload = await parseCsvZip(selectedFile)
-      } else {
-        payload = JSON.parse(fileText)
-      }
-
-      if (!payload.persons || !payload.relationships) {
-        throw new Error(t('invalidBackupFile'))
-      }
+      const payload = parsedBackup.payload
 
       const result = await importData({
         version: payload.version,
@@ -165,9 +183,7 @@ export default function DataImportExport() {
           type: 'error',
           message: result.error
         })
-        setShowConfirm(false)
-        setSelectedFile(null)
-        if (fileInputRef.current) fileInputRef.current.value = ''
+        resetFile()
         return
       }
 
@@ -183,17 +199,13 @@ export default function DataImportExport() {
           .filter(Boolean)
           .join(' ')
       })
-      setShowConfirm(false)
-      setSelectedFile(null)
-      if (fileInputRef.current) fileInputRef.current.value = ''
+      resetFile()
     } catch (error: unknown) {
       setImportStatus({
         type: 'error',
         message: error instanceof Error ? error.message : t('restoreFailed')
       })
-      setShowConfirm(false)
-      setSelectedFile(null)
-      if (fileInputRef.current) fileInputRef.current.value = ''
+      resetFile()
     } finally {
       setIsImporting(false)
     }
@@ -220,7 +232,10 @@ export default function DataImportExport() {
             />
           </div>
 
-          <ExportActions isExporting={isExporting} onExport={handleExport} />
+          <ExportActions
+            isExporting={isExporting}
+            onExport={(format) => handleExport(format)}
+          />
 
           <AnimatePresence>
             {exportError && (
@@ -260,18 +275,25 @@ export default function DataImportExport() {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            disabled={isImporting}
+            disabled={isImporting || isReadingFile}
             className='btn w-full'>
-            {isImporting ? t('processingData') : t('chooseRestoreFile')}
+            {isImporting || isReadingFile
+              ? t('processingData')
+              : t('chooseRestoreFile')}
           </button>
         </DataCard>
       </div>
 
-      {showConfirm && (
+      {showConfirm && parsedBackup && (
         <ImportConfirmModal
           fileName={selectedFile?.name || ''}
+          summary={parsedBackup.summary}
+          locale={locale}
           isImporting={isImporting}
-          onCancel={() => setShowConfirm(false)}
+          isDownloading={isExporting}
+          downloadError={exportError}
+          onDownloadBackup={() => handleExport('json', null)}
+          onCancel={resetFile}
           onConfirm={handleConfirmImport}
         />
       )}

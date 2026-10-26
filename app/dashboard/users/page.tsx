@@ -1,9 +1,16 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
 import AdminUserList from '@/components/AdminUserList'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { AdminUserData } from '@/types'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerTranslations()
+
+  return { title: t('manageUsers') }
+}
 
 export default async function AdminUsersPage() {
   const [{ t }, profile] = await Promise.all([
