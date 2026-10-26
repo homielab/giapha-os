@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+import { getLocale } from '@/lib/i18n/messages'
 import { notifyAdminOfPendingUser } from '@/utils/approval-notification'
 import { createClient } from '@/utils/supabase/server'
 
@@ -16,7 +17,8 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    const supabase = createClient(await cookies())
+    const cookieStore = await cookies()
+    const supabase = createClient(cookieStore)
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (error) {
@@ -39,7 +41,8 @@ export async function GET(request: Request) {
       if (profile?.role === 'member' && !profile.is_active) {
         await notifyAdminOfPendingUser({
           id: user.id,
-          email: user.email
+          email: user.email,
+          locale: getLocale(cookieStore.get('locale')?.value)
         })
       }
     }

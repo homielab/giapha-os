@@ -220,7 +220,7 @@ export default function FamilyTree({
       <div
         ref={containerRef}
         role='group'
-        aria-label='Family tree canvas'
+        aria-label={t('treeCanvasLabel')}
         className={`h-full w-full overflow-auto bg-stone-50 ${isPressed ? 'cursor-grabbing' : 'cursor-grab'}`}
         tabIndex={0}
         onKeyDown={(e) => {

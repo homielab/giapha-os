@@ -159,7 +159,8 @@ export default function AddRelationshipForm({
                       {formatDisplayDate(
                         p.birth_year,
                         p.birth_month,
-                        p.birth_day
+                        p.birth_day,
+                        t
                       )}
                     </span>
                   </button>

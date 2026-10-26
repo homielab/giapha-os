@@ -1,3 +1,4 @@
+import type { TranslationKey } from '@/lib/i18n/messages'
 import { Person, Relationship } from '@/types'
 import { getZodiacAnimal, getZodiacSign } from '@/utils/dateHelpers'
 
@@ -12,8 +13,8 @@ export interface FamilyStatsResult {
   married: number
   unmarried: number
   generationBreakdown: { gen: number; count: number }[]
-  zodiacBreakdown: { name: string; count: number }[]
-  chineseZodiacBreakdown: { name: string; count: number }[]
+  zodiacBreakdown: { name: TranslationKey; count: number }[]
+  chineseZodiacBreakdown: { name: TranslationKey; count: number }[]
 }
 
 export function computeFamilyStats(
@@ -53,8 +54,8 @@ export function computeFamilyStats(
 
   // Generation breakdown
   const genMap = new Map<number, number>()
-  const zodiacMap = new Map<string, number>()
-  const chineseZodiacMap = new Map<string, number>()
+  const zodiacMap = new Map<TranslationKey, number>()
+  const chineseZodiacMap = new Map<TranslationKey, number>()
 
   persons.forEach((p) => {
     // Generations

@@ -72,7 +72,7 @@ export default async function DashboardLaunchpad() {
     (e) => e.daysUntil >= 0 && e.daysUntil <= 30
   )
 
-  const lunar = getTodayLunar()
+  const lunar = getTodayLunar(t)
 
   /* ── Feature lists ────────────────────────────────────────────── */
   const publicFeatures = [

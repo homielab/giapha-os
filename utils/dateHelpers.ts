@@ -1,15 +1,22 @@
+import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
 import {
   lunarToSolar,
   lunarYearName,
   solarToLunar
 } from '@/utils/lunarCalendar'
 
+export type Translate = (
+  key: TranslationKey,
+  values?: TranslationValues
+) => string
+
 export function formatDisplayDate(
   year: number | null,
   month: number | null,
-  day: number | null
+  day: number | null,
+  t: Translate
 ): string {
-  if (!year && !month && !day) return 'Chưa rõ'
+  if (!year && !month && !day) return t('unknownDate')
 
   const parts = []
   if (day) parts.push(day.toString().padStart(2, '0'))
@@ -22,7 +29,8 @@ export function formatDisplayDate(
 export function getLunarDateString(
   year: number | null,
   month: number | null,
-  day: number | null
+  day: number | null,
+  t: Translate
 ): string | null {
   if (!year || !month || !day) return null
 
@@ -35,15 +43,16 @@ export function getLunarDateString(
 
   const lDay = lunar.day.toString().padStart(2, '0')
   const lMonth = lunar.month.toString().padStart(2, '0')
-  return `${lDay}/${lMonth}${lunar.leap ? ' nhuận' : ''}/${lunar.year}`
+  return `${lDay}/${lMonth}${lunar.leap ? t('leapMonth') : ''}/${lunar.year}`
 }
 
 export function getSolarDateString(
   year: number | null,
   month: number | null,
-  day: number | null
+  day: number | null,
+  t: Translate
 ): string | null {
-  if (!year || !month || !day) return 'Chưa rõ'
+  if (!year || !month || !day) return t('unknownDate')
 
   const solar = lunarToSolar(
     year,
@@ -107,50 +116,52 @@ export function calculateAge(
   return { age, isDeceased: false }
 }
 
+// Returns a translation key (zodiacAries …); the caller translates it.
 export function getZodiacSign(
   day: number | null,
   month: number | null
-): string | null {
+): TranslationKey | null {
   if (!day || !month) return null
   const d = day
   const m = month
 
-  if ((m === 3 && d >= 21) || (m === 4 && d <= 19)) return 'Bạch Dương'
-  if ((m === 4 && d >= 20) || (m === 5 && d <= 20)) return 'Kim Ngưu'
-  if ((m === 5 && d >= 21) || (m === 6 && d <= 21)) return 'Song Tử'
-  if ((m === 6 && d >= 22) || (m === 7 && d <= 22)) return 'Cự Giải'
-  if ((m === 7 && d >= 23) || (m === 8 && d <= 22)) return 'Sư Tử'
-  if ((m === 8 && d >= 23) || (m === 9 && d <= 22)) return 'Xử Nữ'
-  if ((m === 9 && d >= 23) || (m === 10 && d <= 23)) return 'Thiên Bình'
-  if ((m === 10 && d >= 24) || (m === 11 && d <= 21)) return 'Thiên Yết'
-  if ((m === 11 && d >= 22) || (m === 12 && d <= 21)) return 'Nhân Mã'
-  if ((m === 12 && d >= 22) || (m === 1 && d <= 19)) return 'Ma Kết'
-  if ((m === 1 && d >= 20) || (m === 2 && d <= 18)) return 'Bảo Bình'
-  if ((m === 2 && d >= 19) || (m === 3 && d <= 20)) return 'Song Ngư'
+  if ((m === 3 && d >= 21) || (m === 4 && d <= 19)) return 'zodiacAries'
+  if ((m === 4 && d >= 20) || (m === 5 && d <= 20)) return 'zodiacTaurus'
+  if ((m === 5 && d >= 21) || (m === 6 && d <= 21)) return 'zodiacGemini'
+  if ((m === 6 && d >= 22) || (m === 7 && d <= 22)) return 'zodiacCancer'
+  if ((m === 7 && d >= 23) || (m === 8 && d <= 22)) return 'zodiacLeo'
+  if ((m === 8 && d >= 23) || (m === 9 && d <= 22)) return 'zodiacVirgo'
+  if ((m === 9 && d >= 23) || (m === 10 && d <= 23)) return 'zodiacLibra'
+  if ((m === 10 && d >= 24) || (m === 11 && d <= 21)) return 'zodiacScorpio'
+  if ((m === 11 && d >= 22) || (m === 12 && d <= 21)) return 'zodiacSagittarius'
+  if ((m === 12 && d >= 22) || (m === 1 && d <= 19)) return 'zodiacCapricorn'
+  if ((m === 1 && d >= 20) || (m === 2 && d <= 18)) return 'zodiacAquarius'
+  if ((m === 2 && d >= 19) || (m === 3 && d <= 20)) return 'zodiacPisces'
 
   return null
 }
 
+// Returns a translation key (animalRat …); the caller translates it.
 export function getZodiacAnimal(
   year: number | null,
   month: number | null = null,
   day: number | null = null
-): string | null {
+): TranslationKey | null {
   if (!year) return null
   const animals = [
-    'Thân',
-    'Dậu',
-    'Tuất',
-    'Hợi',
-    'Tý',
-    'Sửu',
-    'Dần',
-    'Mão',
-    'Thìn',
-    'Tỵ',
-    'Ngọ',
-    'Mùi'
-  ]
+    'animalMonkey',
+    'animalRooster',
+    'animalDog',
+    'animalPig',
+    'animalRat',
+    'animalOx',
+    'animalTiger',
+    'animalCat',
+    'animalDragon',
+    'animalSnake',
+    'animalHorse',
+    'animalGoat'
+  ] as const
 
   let targetYear = year
 
@@ -166,10 +177,20 @@ export function getZodiacAnimal(
   return animals[targetYear % 12]
 }
 
+const WEEKDAY_KEYS = [
+  'weekdaySunday',
+  'weekdayMonday',
+  'weekdayTuesday',
+  'weekdayWednesday',
+  'weekdayThursday',
+  'weekdayFriday',
+  'weekdaySaturday'
+] as const
+
 /**
  * Get today's solar and lunar date info for display.
  */
-export function getTodayLunar() {
+export function getTodayLunar(t: Translate) {
   const now = new Date()
   const vnTimeStr = now.toLocaleString('en-US', {
     timeZone: 'Asia/Ho_Chi_Minh'
@@ -183,15 +204,15 @@ export function getTodayLunar() {
   )!
 
   return {
-    solarStr: vnDate.toLocaleDateString('vi-VN', {
-      weekday: 'long',
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
+    solarStr: t('todaySolarDate', {
+      weekday: t(WEEKDAY_KEYS[vnDate.getDay()]),
+      day: vnDate.getDate(),
+      month: vnDate.getMonth() + 1,
+      year: vnDate.getFullYear()
     }),
     lunarDay: lunar.day,
     lunarMonth: lunar.month,
     lunarYear: lunarYearName(lunar.year),
-    lunarDayStr: `${lunar.day} tháng ${lunar.month}`
+    lunarDayStr: t('lunarDayMonth', { day: lunar.day, month: lunar.month })
   }
 }

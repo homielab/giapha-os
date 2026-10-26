@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The English interface no longer shows Vietnamese text in dates and stats: "Unknown", leap-month marker, zodiac signs and animals, today's lunar date on the dashboard and the family tree label. The email to admins about a new account waiting for approval follows the language of the browser that signed up.
 - Adding a relationship now refuses a couple that is already married (in either order), a parent–child link that would create a loop, and a child born before the parent (comparing month and day when both are known); the "add several children" form checks birth years before creating anyone.
 - A death date earlier in the same year as the birth date is refused (it was only compared by year).
 - Restoring a JSON backup made by a newer version of the app is refused with a hint to upgrade, instead of silently dropping the columns this version does not know; files without a version are read as old backups.

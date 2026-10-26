@@ -145,7 +145,7 @@ export default function EventCard({
             event.originMonth &&
             getZodiacSign(event.originDay, event.originMonth) && (
               <span className='shrink-0 rounded-md border border-indigo-200/60 bg-indigo-50 px-1.5 py-0.5 font-sans text-sm font-medium whitespace-nowrap text-indigo-700'>
-                {getZodiacSign(event.originDay, event.originMonth)}
+                {t(getZodiacSign(event.originDay, event.originMonth)!)}
               </span>
             )}
           {/* Days badge — inline with name */}

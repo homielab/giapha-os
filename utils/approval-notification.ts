@@ -1,4 +1,6 @@
+import { getLocale, Locale, translate } from '@/lib/i18n/messages'
 import {
+  APPROVAL_TOKEN_TTL_DAYS,
   createApprovalToken,
   getApprovalTokenExpiry,
   hashApprovalToken
@@ -8,6 +10,8 @@ import { getAdminSupabase } from '@/utils/supabase/admin'
 interface PendingUser {
   id: string
   email: string
+  // Language of the email; defaults to Vietnamese.
+  locale?: Locale
 }
 
 interface NotificationResult {
@@ -63,8 +67,10 @@ async function getAdminEmails(supabase: ReturnType<typeof getAdminSupabase>) {
 
 export async function notifyAdminOfPendingUser({
   id,
-  email
+  email,
+  locale: requestedLocale
 }: PendingUser): Promise<NotificationResult> {
+  const locale = getLocale(requestedLocale)
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.RESEND_FROM_EMAIL
   // Never derive an approval URL from the request Host header. APP_URL must be
@@ -157,21 +163,25 @@ export async function notifyAdminOfPendingUser({
 
   const approveUrl = `${appUrl}/api/admin/approve/${token}`
   const safeEmail = escapeHtml(email)
-  const subject = `Có tài khoản mới đang chờ duyệt: ${email}`
+  const t = (
+    key: Parameters<typeof translate>[1],
+    values?: Record<string, string | number>
+  ) => translate(locale, key, values)
+  const subject = t('approvalEmailSubject', { email })
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#292524;max-width:640px">
-      <h2 style="color:#b45309">Tài khoản mới chờ duyệt</h2>
-      <p>Có người dùng vừa xác nhận email và đang chờ được duyệt để truy cập dữ liệu gia phả:</p>
+      <h2 style="color:#b45309">${escapeHtml(t('approvalEmailTitle'))}</h2>
+      <p>${escapeHtml(t('approvalEmailIntro'))}</p>
       <p><strong>${safeEmail}</strong></p>
       <p>
         <a href="${escapeHtml(approveUrl)}" style="display:inline-block;background:#d97706;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">
-          Xem và duyệt tài khoản
+          ${escapeHtml(t('approvalEmailButton'))}
         </a>
       </p>
-      <p style="color:#78716c;font-size:13px">Liên kết có hiệu lực trong ${7} ngày. Bạn cũng có thể đăng nhập ứng dụng và duyệt trong mục Quản lý người dùng.</p>
+      <p style="color:#78716c;font-size:13px">${escapeHtml(t('approvalEmailExpiry', { days: APPROVAL_TOKEN_TTL_DAYS }))}</p>
     </div>
   `
-  const text = `Tài khoản ${email} đang chờ duyệt. Duyệt tại: ${approveUrl}\n\nBạn cũng có thể đăng nhập ứng dụng và duyệt trong mục Quản lý người dùng.`
+  const text = t('approvalEmailText', { email, url: approveUrl })
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',

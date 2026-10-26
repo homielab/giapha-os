@@ -47,10 +47,12 @@ function BirthCard({ person }: { person: Person }) {
             ) && (
               <span className='rounded-md border border-rose-200/60 bg-rose-50 px-1.5 py-0.5 font-sans text-sm font-medium whitespace-nowrap text-rose-700'>
                 {t('zodiacAge')}{' '}
-                {getZodiacAnimal(
-                  person.birth_year,
-                  person.birth_month,
-                  person.birth_day
+                {t(
+                  getZodiacAnimal(
+                    person.birth_year,
+                    person.birth_month,
+                    person.birth_day
+                  )!
                 )}
               </span>
             )}
@@ -58,7 +60,7 @@ function BirthCard({ person }: { person: Person }) {
             person.birth_month &&
             getZodiacSign(person.birth_day, person.birth_month) && (
               <span className='rounded-md border border-indigo-200/60 bg-indigo-50 px-1.5 py-0.5 font-sans text-sm font-medium whitespace-nowrap text-indigo-700'>
-                {getZodiacSign(person.birth_day, person.birth_month)}
+                {t(getZodiacSign(person.birth_day, person.birth_month)!)}
               </span>
             )}
         </div>
@@ -68,7 +70,8 @@ function BirthCard({ person }: { person: Person }) {
           {formatDisplayDate(
             person.birth_year,
             person.birth_month,
-            person.birth_day
+            person.birth_day,
+            t
           )}
         </p>
         {(person.birth_year || person.birth_month || person.birth_day) && (
@@ -79,7 +82,8 @@ function BirthCard({ person }: { person: Person }) {
             {getLunarDateString(
               person.birth_year,
               person.birth_month,
-              person.birth_day
+              person.birth_day,
+              t
             ) || t('unknownDate')}
           </p>
         )}
@@ -104,12 +108,14 @@ function DeathCard({ person }: { person: Person }) {
             ? formatDisplayDate(
                 person.death_year,
                 person.death_month,
-                person.death_day
+                person.death_day,
+                t
               )
             : getSolarDateString(
                 person.death_lunar_year,
                 person.death_lunar_month,
-                person.death_lunar_day
+                person.death_lunar_day,
+                t
               ) || t('unknownDate')}
         </p>
         {(person.death_year ||
@@ -128,12 +134,14 @@ function DeathCard({ person }: { person: Person }) {
               ? formatDisplayDate(
                   person.death_lunar_year,
                   person.death_lunar_month,
-                  person.death_lunar_day
+                  person.death_lunar_day,
+                  t
                 )
               : getLunarDateString(
                   person.death_year,
                   person.death_month,
-                  person.death_day
+                  person.death_day,
+                  t
                 ) || t('unknownDate')}
           </p>
         )}

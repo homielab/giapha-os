@@ -1,8 +1,13 @@
 import { describe, expect, test } from 'bun:test'
 
 import {
+  buildPersonData,
   comparePartialDates,
   isValidDate,
+  lunarToSolarSafe,
+  normalizeDeathDates,
+  slugify,
+  solarToLunarSafe,
   validateMemberForm,
   type DeathDateValues
 } from './memberFormHelpers'
@@ -75,4 +80,158 @@ test('comparePartialDates returns null without both years', () => {
       { day: 1, month: 1, year: 2000 }
     )
   ).toBeNull()
+})
+
+const emptyDeath = death('', '', '')
+
+describe('normalizeDeathDates', () => {
+  test('clears every death field when the person is alive', () => {
+    const result = normalizeDeathDates(false, {
+      day: 1,
+      month: 2,
+      year: 2000,
+      lunarDay: 3,
+      lunarMonth: 4,
+      lunarYear: 2000
+    })
+    expect(result).toEqual({ ok: true, values: emptyDeath })
+  })
+
+  test('fills the lunar date from a complete solar date', () => {
+    const result = normalizeDeathDates(true, death(10, 2, 2024))
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.values).toMatchObject({
+        day: 10,
+        month: 2,
+        year: 2024,
+        lunarDay: 1,
+        lunarMonth: 1,
+        lunarYear: 2024
+      })
+    }
+  })
+
+  test('fills the solar date from a complete lunar date', () => {
+    const result = normalizeDeathDates(true, {
+      ...emptyDeath,
+      lunarDay: 1,
+      lunarMonth: 1,
+      lunarYear: 2024
+    })
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.values).toMatchObject({ day: 10, month: 2, year: 2024 })
+    }
+  })
+
+  test('reports a lunar date that does not exist', () => {
+    const result = normalizeDeathDates(true, {
+      ...emptyDeath,
+      lunarDay: 31,
+      lunarMonth: 1,
+      lunarYear: 2024
+    })
+    expect(result).toEqual({ ok: false, errorKey: 'invalidLunarDate' })
+  })
+
+  test('keeps a partial date as it is', () => {
+    const input = { ...death('', 5, 2020) }
+    expect(normalizeDeathDates(true, input)).toEqual({
+      ok: true,
+      values: input
+    })
+  })
+})
+
+describe('validateMemberForm more cases', () => {
+  test('rejects an impossible birth date first', () => {
+    expect(validateMemberForm(30, 2, 2001, false, emptyDeath)).toBe(
+      'invalidBirthDate'
+    )
+  })
+
+  test('rejects an impossible death date only for a deceased person', () => {
+    expect(validateMemberForm('', '', 1950, true, death(31, 4, 2000))).toBe(
+      'invalidDeathDate'
+    )
+    expect(
+      validateMemberForm('', '', 1950, false, death(31, 4, 2000))
+    ).toBeNull()
+  })
+
+  test('accepts an empty form', () => {
+    expect(validateMemberForm('', '', '', false, emptyDeath)).toBeNull()
+  })
+})
+
+describe('safe converters', () => {
+  test('return null for partial input or years up to 100', () => {
+    expect(solarToLunarSafe('', 2, 2024)).toBeNull()
+    expect(solarToLunarSafe(10, 2, 100)).toBeNull()
+    expect(lunarToSolarSafe(1, '', 2024)).toBeNull()
+    expect(lunarToSolarSafe(1, 1, 50)).toBeNull()
+  })
+
+  test('convert a full date', () => {
+    expect(solarToLunarSafe(10, 2, 2024)).toEqual({
+      day: 1,
+      month: 1,
+      year: 2024
+    })
+    expect(lunarToSolarSafe(1, 1, 2024)).toEqual({
+      day: 10,
+      month: 2,
+      year: 2024
+    })
+  })
+})
+
+describe('buildPersonData', () => {
+  const fields = {
+    fullName: 'Nguyễn Văn An',
+    gender: 'male' as const,
+    birthYear: 1990,
+    birthMonth: '' as const,
+    birthDay: '' as const,
+    deathYear: 2020,
+    deathMonth: 5,
+    deathDay: 6,
+    deathLunarYear: 2020,
+    deathLunarMonth: 4,
+    deathLunarDay: 14,
+    isDeceased: false,
+    isInLaw: false,
+    birthOrder: '' as const,
+    generation: 3,
+    otherNames: '',
+    note: ''
+  }
+
+  test('turns empty fields into null', () => {
+    const data = buildPersonData(fields, null)
+    expect(data.birth_month).toBeNull()
+    expect(data.other_names).toBeNull()
+    expect(data.note).toBeNull()
+    expect(data.generation).toBe(3)
+  })
+
+  test('drops death fields for a living person', () => {
+    const data = buildPersonData(fields, null)
+    expect(data.death_year).toBeNull()
+    expect(data.death_lunar_day).toBeNull()
+  })
+
+  test('keeps death fields for a deceased person', () => {
+    const data = buildPersonData({ ...fields, isDeceased: true }, 'a.png')
+    expect(data.death_year).toBe(2020)
+    expect(data.death_lunar_month).toBe(4)
+    expect(data.avatar_url).toBe('a.png')
+  })
+})
+
+describe('slugify', () => {
+  test('strips Vietnamese accents and punctuation', () => {
+    expect(slugify('Nguyễn Văn Đức!')).toBe('nguyen-van-duc')
+  })
 })
