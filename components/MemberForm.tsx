@@ -16,15 +16,15 @@ import { useMemberAvatar } from '@/hooks/useMemberAvatar'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Gender, Person } from '@/types'
 import {
+  finishMemberSave,
+  MemberSaveWarning,
+  submitMemberForm
+} from '@/utils/memberForm'
+import {
   getMemberFormInitialValues,
   hasGenerationChanged,
   toNumberOrEmpty
 } from '@/utils/memberFormInit'
-import {
-  finishMemberSave,
-  MemberSaveWarning,
-  submitMemberForm
-} from '@/utils/memberFormSubmit'
 import { createClient } from '@/utils/supabase/client'
 
 interface MemberFormProps {

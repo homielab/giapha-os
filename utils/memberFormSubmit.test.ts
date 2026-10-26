@@ -26,7 +26,7 @@ mock.module('@/app/actions/member', () => ({
 }))
 
 const { InvalidAvatarError, LaterStepError, saveMember, submitMemberForm } =
-  await import('./memberFormSubmit')
+  await import('./memberForm')
 const { PersonChangedError, PersonNotUpdatedError } =
   await import('./writeErrors')
 
