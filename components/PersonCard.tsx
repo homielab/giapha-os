@@ -7,7 +7,7 @@ import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
-import { getAvatarBg } from '@/utils/styleHelprs'
+import { getAvatarBg } from '@/utils/styleHelpers'
 
 import DefaultAvatar from './DefaultAvatar'
 import { FemaleIcon, MaleIcon } from './GenderIcons'

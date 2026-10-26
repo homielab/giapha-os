@@ -6,7 +6,7 @@ import { memo } from 'react'
 import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useMemberListView } from '@/context/useMemberListView'
 import { Person } from '@/types'
-import { getAvatarBg } from '@/utils/styleHelprs'
+import { getAvatarBg } from '@/utils/styleHelpers'
 
 import DefaultAvatar from './DefaultAvatar'
 

@@ -8,7 +8,7 @@ import { memo, useState } from 'react'
 import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
-import { getAvatarBg } from '@/utils/styleHelprs'
+import { getAvatarBg } from '@/utils/styleHelpers'
 import { AdjacencyLists, getFilteredTreeData } from '@/utils/treeHelpers'
 
 import DefaultAvatar from './DefaultAvatar'

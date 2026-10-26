@@ -10,7 +10,7 @@ import { FemaleIcon, MaleIcon } from '@/components/GenderIcons'
 import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
-import { getAvatarBg } from '@/utils/styleHelprs'
+import { getAvatarBg } from '@/utils/styleHelpers'
 
 const getGenderStyle = (gender: string) => {
   if (gender === 'male') return 'bg-sky-100 text-sky-600'

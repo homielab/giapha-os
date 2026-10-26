@@ -3,7 +3,9 @@
 import dayjs from 'dayjs'
 import { CalendarDays, X } from 'lucide-react'
 import Image from 'next/image'
+import { useId } from 'react'
 
+import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { GalleryItem } from '@/types'
 
@@ -25,8 +27,16 @@ export default function GalleryLightbox({
   onDelete
 }: GalleryLightboxProps) {
   const { t } = useI18n()
+  const titleId = useId()
+  const dialogRef = useModalA11y(onClose)
   return (
-    <div className='animate-in fade-in fixed inset-0 z-60 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm duration-200'>
+    <div
+      ref={dialogRef}
+      role='dialog'
+      aria-modal='true'
+      aria-labelledby={titleId}
+      tabIndex={-1}
+      className='animate-in fade-in fixed inset-0 z-60 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm duration-200 outline-none'>
       <button
         onClick={onClose}
         aria-label={t('close')}
@@ -50,7 +60,9 @@ export default function GalleryLightbox({
         {/* Content Section */}
         <div className='flex max-h-[40vh] w-full flex-col overflow-y-auto bg-white lg:max-h-none lg:w-96'>
           <div className='flex-1 p-6 sm:p-8'>
-            <h2 className='mb-4 text-2xl leading-tight font-semibold text-stone-800'>
+            <h2
+              id={titleId}
+              className='mb-4 text-2xl leading-tight font-semibold text-stone-800'>
               {item.title}
             </h2>
 

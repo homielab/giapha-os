@@ -2,7 +2,9 @@
 
 import { AnimatePresence, m } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
+import { useId } from 'react'
 
+import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 
 interface ImportConfirmModalProps {
@@ -19,9 +21,19 @@ export default function ImportConfirmModal({
   onConfirm
 }: ImportConfirmModalProps) {
   const { t } = useI18n()
+  const titleId = useId()
+  const dialogRef = useModalA11y(() => {
+    if (!isImporting) onCancel()
+  })
   return (
     <AnimatePresence>
-      <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+      <div
+        ref={dialogRef}
+        role='dialog'
+        aria-modal='true'
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className='fixed inset-0 z-50 flex items-center justify-center p-4 outline-none'>
         <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -39,7 +51,7 @@ export default function ImportConfirmModal({
               <AlertTriangle className='size-6' />
             </div>
             <div>
-              <h3 className='text-lg font-semibold text-stone-800'>
+              <h3 id={titleId} className='text-lg font-semibold text-stone-800'>
                 {t('restoreConfirmTitle')}
               </h3>
               <p className='mt-2 text-sm leading-relaxed text-stone-600'>

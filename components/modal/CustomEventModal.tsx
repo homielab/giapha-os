@@ -2,7 +2,7 @@
 
 import { AnimatePresence, m, Variants } from 'framer-motion'
 import { Calendar as CalendarIcon, Loader2, Moon, Sun } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 
 import EventDateFields from '@/components/modal/EventDateFields'
 import EventErrorBanner from '@/components/modal/EventErrorBanner'
@@ -10,6 +10,7 @@ import EventHeaderActions from '@/components/modal/EventHeaderActions'
 import EventModalFooter from '@/components/modal/EventModalFooter'
 import EventNameField from '@/components/modal/EventNameField'
 import EventTextFields from '@/components/modal/EventTextFields'
+import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { CustomEventRecord } from '@/utils/eventHelpers'
 import { lunarToSolar } from '@/utils/lunarCalendar'
@@ -29,6 +30,8 @@ export default function CustomEventModal({
   eventToEdit
 }: CustomEventModalProps) {
   const { t } = useI18n()
+  const titleId = useId()
+  const dialogRef = useModalA11y(onClose, isOpen)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -103,18 +106,6 @@ export default function CustomEventModal({
       return () => cancelAnimationFrame(frame)
     }
   }, [dateMode, lunarDay, lunarMonth, lunarYear, t])
-
-  // Prevent background scrolling when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -206,7 +197,12 @@ export default function CustomEventModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className='fixed inset-0 z-100 flex items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm sm:p-6'>
+          ref={dialogRef}
+          role='dialog'
+          aria-modal='true'
+          aria-labelledby={titleId}
+          tabIndex={-1}
+          className='fixed inset-0 z-100 flex items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm outline-none sm:p-6'>
           {/* Click-away backdrop */}
           <button
             type='button'
@@ -225,7 +221,9 @@ export default function CustomEventModal({
             <EventHeaderActions onClose={onClose} />
 
             <div className='custom-scrollbar flex-1 overflow-y-auto px-4 pt-16 pb-8 sm:px-8'>
-              <h2 className='mb-6 font-serif text-xl font-semibold text-stone-800'>
+              <h2
+                id={titleId}
+                className='mb-6 font-serif text-xl font-semibold text-stone-800'>
                 {eventToEdit ? t('editEvent') : t('addCustomEvent')}
               </h2>
 

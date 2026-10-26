@@ -3,12 +3,13 @@
 import { AnimatePresence, m } from 'framer-motion'
 import { Loader2, X } from 'lucide-react'
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
 import UploadDropzone from '@/components/modal/UploadDropzone'
 import UploadFormFields from '@/components/modal/UploadFormFields'
 import UploadModalActions from '@/components/modal/UploadModalActions'
 import { useFilePreview } from '@/hooks/useFilePreview'
+import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import type { GalleryItem } from '@/types'
 import { validateImageFile } from '@/utils/imageUpload'
@@ -38,18 +39,6 @@ export default function UploadModal({
   const [error, setError] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // Prevent background scrolling when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
 
   // Both the file picker and drag-and-drop go through the same checks:
   // size, reported MIME type and the file's own signature.
@@ -174,6 +163,11 @@ export default function UploadModal({
     onClose()
   }
 
+  const titleId = useId()
+  const dialogRef = useModalA11y(() => {
+    if (!isUploading) handleClose()
+  }, isOpen)
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -182,7 +176,12 @@ export default function UploadModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className='fixed inset-0 z-100 flex items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm sm:p-6'>
+          ref={dialogRef}
+          role='dialog'
+          aria-modal='true'
+          aria-labelledby={titleId}
+          tabIndex={-1}
+          className='fixed inset-0 z-100 flex items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm outline-none sm:p-6'>
           {/* Click-away backdrop */}
           <button
             type='button'
@@ -211,7 +210,9 @@ export default function UploadModal({
             </div>
 
             <div className='custom-scrollbar flex-1 overflow-y-auto px-4 pt-16 pb-8 sm:px-8'>
-              <h2 className='mb-6 font-serif text-xl font-semibold text-stone-800'>
+              <h2
+                id={titleId}
+                className='mb-6 font-serif text-xl font-semibold text-stone-800'>
                 {initialData ? t('editImage') : t('addToGallery')}
               </h2>
 

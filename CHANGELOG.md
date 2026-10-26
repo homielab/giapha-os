@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Accessibility: the custom event, gallery upload, restore confirmation and create-user dialogs and the gallery lightbox now announce themselves as dialogs to screen readers, close with Escape, move keyboard focus into the dialog and give it back to the button that opened it. The page behind no longer scrolls while they are open.
 - Family tree: zooming in no longer cuts off the leftmost branches (the canvas now scrolls to the full width) and zooming out leaves no empty space.
 - User management (Dashboard → Users): creating users, changing roles, locking and deleting now check on the server that you are an active admin before reaching the database, and database refusals ("Cannot remove the last active administrator.", "Access denied.", a taken email…) are shown as translated messages in Vietnamese and English; an unexpected error shows a generic message and is logged on the server.
 - A member name of only spaces is refused, and extra spaces around names are trimmed when saving.

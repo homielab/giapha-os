@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react'
 import { PersonNode } from '@/components/kinship/kinshipTypes'
 import PersonAvatar from '@/components/kinship/PersonAvatar'
 import { useI18n } from '@/lib/i18n/useI18n'
-import { getAvatarBg } from '@/utils/styleHelprs'
+import { getAvatarBg } from '@/utils/styleHelpers'
 
 interface KinshipPersonSelectorProps {
   label: string

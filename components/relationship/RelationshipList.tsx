@@ -6,7 +6,7 @@ import DefaultAvatar from '@/components/DefaultAvatar'
 import { EnrichedRelationship } from '@/components/relationship/relationshipTypes'
 import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
-import { getAvatarBg } from '@/utils/styleHelprs'
+import { getAvatarBg } from '@/utils/styleHelpers'
 
 interface RelationshipListProps {
   relationships: EnrichedRelationship[]
