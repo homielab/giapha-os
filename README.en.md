@@ -46,6 +46,12 @@ The app uses the Vietnamese lunar calendar (computed for UTC+7 with Hồ Ngọc 
 - **Day 30 in a 29-day month**: in a year where that month has only 29 days, the anniversary falls on day 29 (the last day of the month).
 - **Death in a leap month**: in a year with the same leap month, the anniversary falls in the leap month; otherwise in the regular month with the same number. The leap month is known from the solar date of death; a lunar date typed in by hand is read as a regular month.
 
+### Data checks
+
+- **Relationships**: before saving, the app refuses a link from a person to themselves, a couple that is already married (A–B and B–A count as the same), a parent–child link that would create a loop (making a grandchild the parent of their grandfather) and a child born before the parent. Birth dates are compared as far as both people have them: year, then month, then day; without a birth year this check is skipped. The "add several children" form checks every child's birth year against the parents before creating anyone.
+- **Death date**: cannot be before the birth date, comparing month and day within the same year.
+- **JSON backup version**: files carry a `version` (currently 3). On restore, a file without `version` is read as version 1 (old file); a file with a higher version than the app reads is refused with a hint to upgrade the app, so new columns are not lost.
+
 ## Demo
 
 - Demo: [giapha-os.homielab.com](https://giapha-os.homielab.com)

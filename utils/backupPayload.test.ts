@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import {
+  BACKUP_VERSION,
   buildRestorePayload,
   isMissingRestoreFunction,
   MAX_PERSONS,
@@ -261,5 +262,43 @@ describe('isMissingRestoreFunction', () => {
     expect(isMissingRestoreFunction(null)).toBe(false)
     expect(isMissingRestoreFunction({ code: '23505' })).toBe(false)
     expect(isMissingRestoreFunction({ code: '42501' })).toBe(false)
+  })
+})
+
+describe('validateImportPayload version', () => {
+  test('accepts files without a version (oldest backups)', () => {
+    const payload = validPayload()
+    delete payload.version
+    expect(validateImportPayload(payload, t)).toBeNull()
+  })
+
+  test('accepts versions 1 to the current one', () => {
+    for (let version = 1; version <= BACKUP_VERSION; version++) {
+      expect(
+        validateImportPayload({ ...validPayload(), version }, t)
+      ).toBeNull()
+    }
+  })
+
+  test('refuses a file from a newer version', () => {
+    expect(
+      validateImportPayload(
+        { ...validPayload(), version: BACKUP_VERSION + 1 },
+        t
+      )
+    ).toBe(
+      `backupFromNewerVersion:${JSON.stringify({
+        version: BACKUP_VERSION + 1,
+        supported: BACKUP_VERSION
+      })}`
+    )
+  })
+
+  test('refuses a version that is not a positive integer', () => {
+    for (const version of [0, -1, 2.5, '3']) {
+      expect(validateImportPayload({ ...validPayload(), version }, t)).toBe(
+        'invalidBackupVersion'
+      )
+    }
   })
 })

@@ -8,6 +8,10 @@ import RelationshipErrorBanner from '@/components/relationship/RelationshipError
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, RelationshipType } from '@/types'
 import { addRelationshipWithTargetSync } from '@/utils/relationshipMutations'
+import {
+  relationshipErrorKey,
+  RelationshipValidationError
+} from '@/utils/relationshipValidation'
 import { createClient } from '@/utils/supabase/client'
 
 interface AddRelationshipSectionProps {
@@ -112,6 +116,10 @@ export default function AddRelationshipSection({
       onClose()
       onSaved()
     } catch (err: unknown) {
+      if (err instanceof RelationshipValidationError) {
+        showError(t(relationshipErrorKey(err.code)))
+        return
+      }
       const e = err as Error
       showError(t('relationshipAddError', { error: e.message }))
     } finally {

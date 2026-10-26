@@ -57,6 +57,12 @@ Xuất/nhập GEDCOM (7.0) để mở gia phả trong Gramps, MyHeritage… ho�
 - **Ngày tháng**: GEDCOM không có ngày thiếu tháng hay thiếu năm, nên ngày có ngày + năm mà không có tháng chỉ xuất năm, ngày không có năm thì bỏ.
 - Không xuất: âm lịch ngày mất, dâu/rể (`is_in_law`), thứ tự sinh, đời, tên khác, ảnh đại diện.
 
+### Kiểm tra dữ liệu
+
+- **Quan hệ**: trước khi lưu, ứng dụng từ chối quan hệ của một người với chính mình, cặp vợ chồng đã có (A–B hay B–A đều tính là một), quan hệ cha/mẹ–con tạo vòng (thêm cháu làm cha của ông) và người con sinh trước cha/mẹ. Ngày sinh được so theo phần cả hai người cùng có: năm, rồi tháng, rồi ngày; thiếu năm sinh thì bỏ qua bước này. Form thêm nhiều con kiểm tra năm sinh từng con với cha/mẹ trước khi tạo ai.
+- **Ngày mất**: không được trước ngày sinh, so cả tháng và ngày khi cùng năm.
+- **Phiên bản file sao lưu JSON**: file ghi `version` (hiện là 3). Khi phục hồi, file không có `version` được coi là bản 1 (file cũ); file có `version` lớn hơn bản ứng dụng đọc được bị từ chối với lời nhắc nâng cấp ứng dụng, để không mất dữ liệu của cột mới.
+
 ### Phòng trưng bày ảnh
 
 - Nhận ảnh JPG, PNG, GIF, WEBP tối đa 10 MB, qua nút chọn file hay kéo thả đều như nhau. Ứng dụng đọc phần đầu file để biết đúng loại ảnh (file chữ đổi đuôi thành `.jpg` bị từ chối) và đặt phần mở rộng trong bucket `gallery` theo loại đó, không theo tên file.

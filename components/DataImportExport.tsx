@@ -153,6 +153,7 @@ export default function DataImportExport() {
       }
 
       const result = await importData({
+        version: payload.version,
         persons: payload.persons,
         relationships: payload.relationships,
         person_details_private: payload.person_details_private,

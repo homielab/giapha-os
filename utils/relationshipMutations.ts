@@ -2,6 +2,13 @@ import { SupabaseClient } from '@supabase/supabase-js'
 
 import { BulkChildRow } from '@/components/relationship/relationshipTypes'
 import { Person, RelationshipType } from '@/types'
+import {
+  DatedPerson,
+  RelationshipLink,
+  RelationshipValidationError,
+  validateNewChildren,
+  validateRelationship
+} from '@/utils/relationshipValidation'
 
 export interface NewRelationshipInput {
   personId: string
@@ -46,10 +53,17 @@ export async function addRelationshipWithTargetSync(
   if (direction === 'spouse') type = 'marriage'
   else if (relType === 'adopted_child') type = 'adopted_child'
 
+  const candidate = { person_a: personA, person_b: personB, type }
+  const context = await loadRelationshipContext(supabase, candidate)
+  const invalid = validateRelationship(
+    context.persons,
+    context.relationships,
+    candidate
+  )
+  if (invalid) throw new RelationshipValidationError(invalid)
+
   const { error } = await supabase.from('relationships').insert({
-    person_a: personA,
-    person_b: personB,
-    type: type,
+    ...candidate,
     note: note ? note : null
   })
 
@@ -61,6 +75,60 @@ export async function addRelationshipWithTargetSync(
     direction,
     input.person
   )
+}
+
+const LOOKUP_CHUNK = 200
+
+// Loads what validateRelationship needs for one candidate: both people's
+// birth dates, the rows already linking them, and (for a parent link) every
+// parent link below the child, walked one generation per query.
+async function loadRelationshipContext(
+  supabase: SupabaseClient,
+  candidate: RelationshipLink
+): Promise<{ persons: DatedPerson[]; relationships: RelationshipLink[] }> {
+  const pair = [candidate.person_a, candidate.person_b]
+
+  const [personsResult, betweenResult] = await Promise.all([
+    supabase
+      .from('persons')
+      .select('id, birth_year, birth_month, birth_day')
+      .in('id', pair),
+    supabase
+      .from('relationships')
+      .select('person_a, person_b, type')
+      .in('person_a', pair)
+      .in('person_b', pair)
+  ])
+  if (personsResult.error) throw personsResult.error
+  if (betweenResult.error) throw betweenResult.error
+
+  const relationships: RelationshipLink[] = [...(betweenResult.data ?? [])]
+
+  if (candidate.type !== 'marriage') {
+    const seen = new Set<string>([candidate.person_b])
+    let frontier = [candidate.person_b]
+    while (frontier.length > 0 && !seen.has(candidate.person_a)) {
+      const next: string[] = []
+      for (let i = 0; i < frontier.length; i += LOOKUP_CHUNK) {
+        const { data, error } = await supabase
+          .from('relationships')
+          .select('person_a, person_b, type')
+          .in('person_a', frontier.slice(i, i + LOOKUP_CHUNK))
+          .in('type', ['biological_child', 'adopted_child'])
+        if (error) throw error
+        for (const row of data ?? []) {
+          relationships.push(row)
+          if (!seen.has(row.person_b)) {
+            seen.add(row.person_b)
+            next.push(row.person_b)
+          }
+        }
+      }
+      frontier = next
+    }
+  }
+
+  return { persons: personsResult.data ?? [], relationships }
 }
 
 // Auto-update target person generation and is_in_law if currently missing
@@ -116,6 +184,12 @@ export interface BulkChildInput {
   parentGeneration: number | null
 }
 
+function parseBirthYear(value: string): number | null {
+  if (value.trim() === '') return null
+  const year = parseInt(value)
+  return isNaN(year) ? null : year
+}
+
 // Creates one child person plus the parent relationship(s). Returns true on
 // success; failures are logged and reported per row.
 async function createChildWithParents(
@@ -138,10 +212,8 @@ async function createChildWithParents(
   if (parentGeneration != null) {
     personPayload.generation = parentGeneration + 1
   }
-  if (child.birthYear.trim() !== '') {
-    const year = parseInt(child.birthYear)
-    if (!isNaN(year)) personPayload.birth_year = year
-  }
+  const birthYear = parseBirthYear(child.birthYear)
+  if (birthYear != null) personPayload.birth_year = birthYear
   if (child.birthOrder.trim() !== '') {
     const order = parseInt(child.birthOrder)
     if (!isNaN(order)) personPayload.birth_order = order
@@ -189,9 +261,23 @@ export async function bulkCreateChildren(
     parentId: string
     otherParentId: string
     parentGeneration: number | null
+    // Birth dates of the parent(s), checked against each child's birth year.
+    parents: DatedPerson[]
   }
 ): Promise<number> {
   const { children, parentId, otherParentId, parentGeneration } = input
+
+  const invalid = validateNewChildren(
+    input.parents,
+    children.map((child) => ({ birthYear: parseBirthYear(child.birthYear) }))
+  )
+  if (invalid) {
+    throw new RelationshipValidationError(
+      invalid.code,
+      children[invalid.index].name.trim()
+    )
+  }
+
   let successCount = 0
 
   const BATCH_SIZE = 5

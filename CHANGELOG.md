@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Adding a relationship now refuses a couple that is already married (in either order), a parent–child link that would create a loop, and a child born before the parent (comparing month and day when both are known); the "add several children" form checks birth years before creating anyone.
+- A death date earlier in the same year as the birth date is refused (it was only compared by year).
+- Restoring a JSON backup made by a newer version of the app is refused with a hint to upgrade, instead of silently dropping the columns this version does not know; files without a version are read as old backups.
 - Docker image: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` and `NEXT_PUBLIC_DISABLE_SSO` are now build args (`docker compose --env-file .env.local up -d --build`), so sign-in, editing members and uploads work in the browser; the build stops when they are missing. The image now contains `docs/schema.sql` and `docs/migrations/`, so `/setup` and `/dashboard/upgrade` work. README has a "Run with Docker" section.
 - Dashboard page titles end with the site name, and the gallery title uses `SITE_NAME` instead of a hard-coded "Gia Phả OS".
 - README examples use a placeholder domain (`your-domain.vercel.app`) instead of a real-looking project URL; the demo is giapha-os.homielab.com.

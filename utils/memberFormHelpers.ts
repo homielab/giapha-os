@@ -26,11 +26,35 @@ export function isValidDate(
   if (year !== '' && year < 1) return false
 
   if (day !== '' && month !== '') {
-    const currentYear = year !== '' ? year : 2000
-    const daysInMonth = new Date(currentYear, month, 0).getDate()
-    if (day > daysInMonth) return false
+    // Unknown year: a leap year, so 29/02 is accepted.
+    if (day > daysInMonth(year !== '' ? year : 2000, month)) return false
   }
   return true
+}
+
+// Days in a month of the proleptic Gregorian calendar. Uses setUTCFullYear
+// because Date maps years 0–99 to 1900–1999.
+function daysInMonth(year: number, month: number) {
+  const date = new Date(Date.UTC(2000, 0, 1))
+  date.setUTCFullYear(year, month, 0)
+  return date.getUTCDate()
+}
+
+/**
+ * Compares two partial dates as far as both are known: year, then month when
+ * both have one, then day when both have one. Negative when `a` is earlier,
+ * 0 when they cannot be told apart, null when a year is missing.
+ */
+export function comparePartialDates(
+  a: { day: number | ''; month: number | ''; year: number | '' },
+  b: { day: number | ''; month: number | ''; year: number | '' }
+): number | null {
+  if (a.year === '' || b.year === '') return null
+  if (a.year !== b.year) return a.year - b.year
+  if (a.month === '' || b.month === '') return 0
+  if (a.month !== b.month) return a.month - b.month
+  if (a.day === '' || b.day === '') return 0
+  return a.day - b.day
 }
 
 export type MemberValidationError =
@@ -57,13 +81,14 @@ export function validateMemberForm(
   )
     return 'invalidDeathDate'
 
-  if (
-    isDeceased &&
-    birthYear !== '' &&
-    deathValues.year !== '' &&
-    deathValues.year < birthYear
-  )
-    return 'deathBeforeBirth'
+  if (isDeceased) {
+    const order = comparePartialDates(deathValues, {
+      day: birthDay,
+      month: birthMonth,
+      year: birthYear
+    })
+    if (order != null && order < 0) return 'deathBeforeBirth'
+  }
 
   return null
 }

@@ -12,6 +12,10 @@ import {
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
 import { bulkCreateChildren } from '@/utils/relationshipMutations'
+import {
+  relationshipErrorKey,
+  RelationshipValidationError
+} from '@/utils/relationshipValidation'
 import { createClient } from '@/utils/supabase/client'
 
 interface BulkAddChildrenSectionProps {
@@ -62,7 +66,13 @@ export default function BulkAddChildrenSection({
         children: validChildren,
         parentId: personId,
         otherParentId: selectedSpouseId,
-        parentGeneration: person.generation
+        parentGeneration: person.generation,
+        parents: [
+          person,
+          ...spouseOptions
+            .filter((s) => s.targetPerson.id === selectedSpouseId)
+            .map((s) => s.targetPerson)
+        ]
       })
 
       if (successCount === validChildren.length) {
@@ -78,6 +88,11 @@ export default function BulkAddChildrenSection({
         onSaved()
       }
     } catch (err: unknown) {
+      if (err instanceof RelationshipValidationError) {
+        const message = t(relationshipErrorKey(err.code))
+        showError(err.subject ? `${err.subject}: ${message}` : message)
+        return
+      }
       const e = err as Error
       showError(t('bulkAddError', { error: e.message }))
     } finally {

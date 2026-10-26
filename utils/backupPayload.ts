@@ -66,6 +66,8 @@ export interface BackupPayload {
 }
 
 export interface ImportPayload {
+  /** Backup format version of the file; missing in the oldest files (= 1). */
+  version?: number
   persons: PersonExport[]
   relationships: RelationshipExport[]
   person_details_private?: PersonDetailsPrivateExport[]
@@ -102,6 +104,13 @@ export interface RestorePayload {
 
 export const RESTORE_PAYLOAD_VERSION = 1
 
+/**
+ * Version written into JSON backups. v2 added birth order and generation, v3
+ * lunar death dates, private details, relationship notes and custom events. Raise it when
+ * the backup format changes; files with a higher version are refused.
+ */
+export const BACKUP_VERSION = 3
+
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 // Keep in sync with private.restore_backup in docs/migrations.
@@ -136,6 +145,14 @@ export function validateImportPayload(
   if (!Array.isArray(persons) || !Array.isArray(relationships)) {
     return t('invalidDataStructure')
   }
+  const version = payload.version ?? 1
+  if (typeof version !== 'number' || !Number.isInteger(version) || version < 1)
+    return t('invalidBackupVersion')
+  if (version > BACKUP_VERSION)
+    return t('backupFromNewerVersion', {
+      version,
+      supported: BACKUP_VERSION
+    })
   if (persons.length === 0) return t('emptyBackup')
   if (persons.length > MAX_PERSONS)
     return t('tooManyPersons', { count: MAX_PERSONS })

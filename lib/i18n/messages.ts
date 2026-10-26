@@ -66,6 +66,9 @@ export const messages = {
     invalidData: 'Dữ liệu không hợp lệ.',
     invalidDataStructure:
       'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại file JSON.',
+    invalidBackupVersion: 'File backup có số phiên bản không hợp lệ.',
+    backupFromNewerVersion:
+      'File backup được tạo từ phiên bản ứng dụng mới hơn (định dạng v{version}, bản này đọc tối đa v{supported}). Hãy nâng cấp ứng dụng rồi phục hồi lại.',
     emptyBackup: 'File backup trống — không có thành viên nào để phục hồi.',
     tooManyPersons: 'File vượt quá giới hạn {count} thành viên.',
     tooManyRelationships: 'File vượt quá giới hạn {count} quan hệ.',
@@ -431,7 +434,7 @@ export const messages = {
     invalidBirthDate: 'Ngày sinh không hợp lệ. Vui lòng kiểm tra lại.',
     invalidLunarDate: 'Ngày âm lịch không hợp lệ. Vui lòng kiểm tra lại.',
     invalidDeathDate: 'Ngày mất không hợp lệ. Vui lòng kiểm tra lại.',
-    deathBeforeBirth: 'Năm mất phải lớn hơn hoặc bằng năm sinh.',
+    deathBeforeBirth: 'Ngày mất không được trước ngày sinh.',
     saveIdError: 'Không lấy được ID thành viên sau khi lưu.',
     saveMemberError: 'Không thể lưu thành viên.',
     generalInfo: 'Thông tin chung',
@@ -825,6 +828,12 @@ export const messages = {
     autoGenderNote:
       '* Giới tính sẽ tự động gán là {gender} (dựa theo giới tính người hiện tại).',
     relationshipAddError: 'Không thể thêm mối quan hệ: {error}',
+    relationshipSelfLink: 'Không thể tạo quan hệ của một người với chính mình.',
+    relationshipDuplicateSpouse: 'Hai người này đã là vợ chồng.',
+    relationshipCycle:
+      'Không thể thêm: người cha/mẹ này đang là con cháu của người con, quan hệ sẽ tạo vòng.',
+    relationshipChildOlderThanParent:
+      'Không thể thêm: người con sinh trước cha/mẹ.',
     childNameRequired: 'Vui lòng nhập ít nhất tên của 1 người con.',
     bulkAddPartial:
       'Đã xảy ra lỗi. Chỉ lưu thành công {success}/{total} người.',
@@ -900,6 +909,9 @@ export const messages = {
     dataAccessDenied: 'Access denied. Only admins can perform this action.',
     invalidData: 'Invalid data.',
     invalidDataStructure: 'Invalid data. Please check the JSON file again.',
+    invalidBackupVersion: 'The backup file has an invalid version number.',
+    backupFromNewerVersion:
+      'This backup was made by a newer version of the app (format v{version}, this version reads up to v{supported}). Upgrade the app, then restore again.',
     emptyBackup: 'The backup file is empty — there are no members to restore.',
     tooManyPersons: 'The file exceeds the limit of {count} members.',
     tooManyRelationships:
@@ -1271,8 +1283,7 @@ export const messages = {
     invalidBirthDate: 'The birth date is invalid. Please check it again.',
     invalidLunarDate: 'The lunar date is invalid. Please check it again.',
     invalidDeathDate: 'The death date is invalid. Please check it again.',
-    deathBeforeBirth:
-      'The death year must be greater than or equal to the birth year.',
+    deathBeforeBirth: 'The death date cannot be before the birth date.',
     saveIdError: 'Could not get the member ID after saving.',
     saveMemberError: 'Could not save the member.',
     generalInfo: 'General information',
@@ -1665,6 +1676,12 @@ export const messages = {
     autoGenderNote:
       '* Gender will be automatically set to {gender} (based on the current person’s gender).',
     relationshipAddError: 'Could not add relationship: {error}',
+    relationshipSelfLink: 'A person cannot be related to themselves.',
+    relationshipDuplicateSpouse: 'These two people are already married.',
+    relationshipCycle:
+      'Cannot add: this parent is already a descendant of the child, which would create a loop.',
+    relationshipChildOlderThanParent:
+      'Cannot add: the child was born before the parent.',
     childNameRequired: 'Please enter at least one child’s name.',
     bulkAddPartial:
       'An error occurred. Only {success}/{total} people were saved.',

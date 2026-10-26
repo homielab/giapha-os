@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import type { TranslationKey } from '@/lib/i18n/messages'
 import { getServerTranslations } from '@/lib/i18n/server'
 import {
+  BACKUP_VERSION,
   buildRestorePayload,
   isMissingRestoreFunction,
   validateImportPayload,
@@ -155,7 +156,7 @@ export async function exportData(
   }
 
   return {
-    version: 3, // v3: adds death_lunar_*, person_details_private, relationship note, custom_events
+    version: BACKUP_VERSION,
     timestamp: new Date().toISOString(),
     persons: exportPersons,
     relationships: exportRels,
