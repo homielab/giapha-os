@@ -340,7 +340,7 @@ bun run typecheck     # tsc --noEmit
 
 GitHub Actions (`.github/workflows/test.yml`) runs the same commands on every push to `main` and every pull request.
 
-Tests live next to the file they cover (`utils/gedcom.ts` → `utils/gedcom.test.ts`). Notable changes go in [CHANGELOG.md](CHANGELOG.md) under `## [Unreleased]`.
+Tests live next to the file they cover (`utils/csv.ts` → `utils/csv.test.ts`). Notable changes go in [CHANGELOG.md](CHANGELOG.md) under `## [Unreleased]`.
 
 Pages that only show numbers (such as `/dashboard/stats`) compute them on the server and `select` only the columns they need (see `STATS_PERSON_COLUMNS` in `utils/familyStats.ts`) instead of sending the whole `persons` table to the browser.
 

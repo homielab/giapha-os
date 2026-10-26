@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Internal: GEDCOM import/export in `utils/gedcom.ts` is split into `utils/gedcom/` (`types`, `dates`, `names`, `export`, `import`; each file under 250 lines). Imports from `@/utils/gedcom` and the exported files are unchanged.
 - Internal: the relationship (kinship) logic in `utils/kinshipHelpers.ts` is split into `utils/kinship/` (`types`, `terms`, `graph`, `blood`, `resolve`), with the in-law terms in lookup tables instead of text checks. The terms shown are unchanged; the common-ancestor, deep-generation and in-law cases have more tests.
 - Kinship page: the note about ambiguous terms is now decided by the calculation itself instead of searching the text of the answer, so it also appears for the generic "Họ hàng" result.
 - Members and lineage pages load only the relationship columns they use (no note or timestamps): for 2,000 people with about 4,800 relationship links the data sent with the page drops from about 1,310 KB to about 810 KB. The language dictionaries were already not part of the page data (only the chosen language code is sent).
