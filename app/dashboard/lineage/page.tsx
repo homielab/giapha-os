@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 import LineageManager from '@/components/LineageManager'
@@ -61,6 +62,13 @@ export default async function LineagePage() {
           <h1 className='title'>{t('lineagePageTitle')}</h1>
           <p className='mt-2 max-w-2xl text-sm text-stone-500 sm:text-sm'>
             {t('lineagePageDescription')}
+          </p>
+          <p className='mt-3 text-sm print:hidden'>
+            <Link
+              href='/dashboard/lineage/book'
+              className='font-medium text-amber-700 hover:underline'>
+              {t('lineageBookOpen')} →
+            </Link>
           </p>
         </div>
 

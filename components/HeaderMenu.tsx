@@ -4,6 +4,7 @@ import { AnimatePresence, m } from 'framer-motion'
 import {
   ArrowUpCircle,
   BarChart2,
+  BookOpen,
   ChevronDown,
   Database,
   GitMerge,
@@ -56,6 +57,12 @@ export default function HeaderMenu() {
       icon: GitMerge,
       label: t('kinship'),
       hover: 'hover:bg-blue-50 hover:text-blue-700'
+    },
+    {
+      href: '/dashboard/lineage/book',
+      icon: BookOpen,
+      label: t('lineageBookTitle'),
+      hover: 'hover:bg-indigo-50 hover:text-indigo-700'
     },
     {
       href: '/dashboard/stats',
