@@ -55,6 +55,11 @@ Xuất/nhập GEDCOM (7.0) để mở gia phả trong Gramps, MyHeritage… ho�
 - **Ngày tháng**: GEDCOM không có ngày thiếu tháng hay thiếu năm, nên ngày có ngày + năm mà không có tháng chỉ xuất năm, ngày không có năm thì bỏ.
 - Không xuất: âm lịch ngày mất, dâu/rể (`is_in_law`), thứ tự sinh, đời, tên khác, ảnh đại diện.
 
+### Phòng trưng bày ảnh
+
+- Nhận ảnh JPG, PNG, GIF, WEBP tối đa 10 MB, qua nút chọn file hay kéo thả đều như nhau. Ứng dụng đọc phần đầu file để biết đúng loại ảnh (file chữ đổi đuôi thành `.jpg` bị từ chối) và đặt phần mở rộng trong bucket `gallery` theo loại đó, không theo tên file.
+- Mỗi trang hiện 24 ảnh (`/dashboard/gallery?page=2`…); đường dẫn ký cho cả trang được tạo trong một lần gọi Supabase Storage, hiệu lực 1 giờ. Trang vượt quá trang cuối hiện trang cuối.
+
 ## Demo
 
 - Demo: [giapha-os.homielab.com](https://giapha-os.homielab.com)

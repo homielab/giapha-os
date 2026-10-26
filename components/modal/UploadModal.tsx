@@ -11,8 +11,9 @@ import UploadModalActions from '@/components/modal/UploadModalActions'
 import { useFilePreview } from '@/hooks/useFilePreview'
 import { useI18n } from '@/lib/i18n/useI18n'
 import type { GalleryItem } from '@/types'
+import { validateImageFile } from '@/utils/imageUpload'
 import { createClient } from '@/utils/supabase/client'
-import { uploadGalleryImage } from '@/utils/supabase/storage'
+import { InvalidImageError, uploadGalleryImage } from '@/utils/supabase/storage'
 import { getGalleryStoragePath } from '@/utils/supabase/storage-path'
 
 interface UploadModalProps {
@@ -50,16 +51,26 @@ export default function UploadModal({
     }
   }, [isOpen])
 
+  // Both the file picker and drag-and-drop go through the same checks:
+  // size, reported MIME type and the file's own signature.
+  const acceptFile = async (selected: File) => {
+    const validation = await validateImageFile(selected)
+    if (!validation.ok) {
+      setError(
+        validation.reason === 'too-large'
+          ? t('fileTooLarge10')
+          : t('unsupportedImageType')
+      )
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+    setFile(selected)
+    setError(null)
+  }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0]
-    if (selected) {
-      if (selected.size > 10 * 1024 * 1024) {
-        setError(t('fileTooLarge10'))
-        return
-      }
-      setFile(selected)
-      setError(null)
-    }
+    if (selected) void acceptFile(selected)
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -69,10 +80,7 @@ export default function UploadModal({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     const dropped = e.dataTransfer.files?.[0]
-    if (dropped && dropped.type.startsWith('image/')) {
-      setFile(dropped)
-      setError(null)
-    }
+    if (dropped) void acceptFile(dropped)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,6 +106,13 @@ export default function UploadModal({
       // 1. Upload to storage (only if new file selected)
       if (file) {
         const { path, error: uploadError } = await uploadGalleryImage(file)
+        if (uploadError instanceof InvalidImageError) {
+          throw new Error(
+            uploadError.reason === 'too-large'
+              ? t('fileTooLarge10')
+              : t('unsupportedImageType')
+          )
+        }
         if (uploadError || !path) {
           throw new Error(t('uploadError'))
         }

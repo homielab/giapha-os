@@ -1,4 +1,13 @@
-import * as d3 from 'd3'
+import { drag } from 'd3-drag'
+import {
+  forceCollide,
+  forceLink,
+  forceManyBody,
+  forceSimulation,
+  type Simulation
+} from 'd3-force'
+import { select, type BaseType, type Selection } from 'd3-selection'
+import { zoom, type ZoomBehavior } from 'd3-zoom'
 import { RefObject } from 'react'
 
 import { AVATAR_VERSION } from '@/components/DefaultAvatar'
@@ -10,7 +19,7 @@ const showAvatar = true
 interface CreateBubbleTreeRendererOptions {
   svgRef: RefObject<SVGSVGElement | null>
   containerRef: RefObject<HTMLDivElement | null>
-  zoomRef: RefObject<d3.ZoomBehavior<SVGSVGElement, unknown> | null>
+  zoomRef: RefObject<ZoomBehavior<SVGSVGElement, unknown> | null>
   nodes: GraphNode[]
   links: GraphLink[]
   onZoomLevelChange: (level: number) => void
@@ -35,20 +44,19 @@ export function createBubbleTreeRenderer({
   const width = container.clientWidth
   const height = container.clientHeight
 
-  const svg = d3
-    .select(svgRef.current!)
+  const svg = select(svgRef.current!)
     .attr('viewBox', [0, 0, width, height])
     .style('cursor', 'grab')
   svg.selectAll('*').remove() // Clear previous render
 
-  let simulation: d3.Simulation<GraphNode, undefined> | null = null
-  let nodeSelection: d3.Selection<
-    d3.BaseType,
+  let simulation: Simulation<GraphNode, undefined> | null = null
+  let nodeSelection: Selection<
+    BaseType,
     GraphNode,
     SVGGElement,
     unknown
   > | null = null
-  let zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null
+  let zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> | null = null
 
   // Pin root nodes to the center
   const rootNodes = nodes.filter((n) => n.isRoot)
@@ -85,8 +93,7 @@ export function createBubbleTreeRenderer({
     .attr('cy', 0)
 
   // Zoom setup
-  zoomBehavior = d3
-    .zoom<SVGSVGElement, unknown>()
+  zoomBehavior = zoom<SVGSVGElement, unknown>()
     .scaleExtent([0.1, 4])
     .on('zoom', (event) => {
       g.attr('transform', event.transform)
@@ -97,7 +104,7 @@ export function createBubbleTreeRenderer({
   zoomRef.current = zoomBehavior
   svg.call(
     zoomBehavior as unknown as (
-      selection: d3.Selection<SVGSVGElement, unknown, null, undefined>
+      selection: Selection<SVGSVGElement, unknown, null, undefined>
     ) => void
   )
 
@@ -110,7 +117,7 @@ export function createBubbleTreeRenderer({
   // Initial center transform
   svg.call(
     zoomBehavior!.translateTo as unknown as (
-      selection: d3.Selection<SVGSVGElement, unknown, null, undefined>,
+      selection: Selection<SVGSVGElement, unknown, null, undefined>,
       x: number,
       y: number
     ) => void,
@@ -119,21 +126,18 @@ export function createBubbleTreeRenderer({
   )
 
   // Force simulation
-  simulation = d3
-    .forceSimulation<GraphNode>(nodes)
+  simulation = forceSimulation<GraphNode>(nodes)
     .force(
       'link',
-      d3
-        .forceLink<GraphNode, GraphLink>(links)
+      forceLink<GraphNode, GraphLink>(links)
         .id((d) => d.id)
         .distance(150)
     )
-    .force('charge', d3.forceManyBody().strength(-1200))
+    .force('charge', forceManyBody().strength(-1200))
     // Use width / 2 as the collision radius to prevent overlapping of the wider family units
     .force(
       'collide',
-      d3
-        .forceCollide<GraphNode>()
+      forceCollide<GraphNode>()
         .radius((d) => d.width / 2 + 15)
         .iterations(2)
     )
@@ -172,8 +176,7 @@ export function createBubbleTreeRenderer({
       onNodeClick(d.id)
     })
     .call(
-      d3
-        .drag<SVGGElement, GraphNode>()
+      drag<SVGGElement, GraphNode>()
         .on('start', (event, d) => {
           if (!event.active) simulation!.alphaTarget(0.3).restart()
           d.fx = d.x
@@ -213,7 +216,7 @@ export function createBubbleTreeRenderer({
   // Avatars for everyone in the Family Unit
   if (showAvatar) {
     nodeSelection.each(function (d) {
-      const unitContent = d3.select(this)
+      const unitContent = select(this)
 
       d.people.forEach((person, index) => {
         // Calculate X offset for each avatar inside the pill

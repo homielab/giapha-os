@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { RefObject } from 'react'
 
 import { useI18n } from '@/lib/i18n/useI18n'
+import { IMAGE_ACCEPT } from '@/utils/imageUpload'
 
 interface UploadDropzoneProps {
   preview: string | null
@@ -76,7 +77,7 @@ export default function UploadDropzone({
       <input
         ref={fileInputRef}
         type='file'
-        accept='image/*'
+        accept={IMAGE_ACCEPT}
         className='hidden'
         onChange={onFileChange}
       />

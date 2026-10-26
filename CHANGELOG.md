@@ -12,9 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unit tests (`bun run test`) for GEDCOM and CSV import/export, kinship terms, tree helpers, the lunar calendar and upcoming events.
 - Search and share metadata for the public pages (home, about, login) in Vietnamese and English: page titles, descriptions, Open Graph and Twitter cards with a 1200×630 share image (`public/og-image.png`), plus `robots.txt` (keeps `/dashboard`, `/api`, `/setup` out of search engines) and `sitemap.xml`. Links use `APP_URL`, or the Vercel production domain.
 - GitHub Actions workflow running lint, format check, type-check (`bun run typecheck`) and unit tests on every push and pull request.
+- The gallery shows 24 images per page with previous/next links (`?page=`), so galleries with more than 1,000 images are no longer cut off silently; a page past the end shows the last page.
 
 ### Changed
 
+- The gallery signs all image links of a page in one storage request instead of one request per image.
+- The PDF/image export libraries (jspdf, html-to-image) load only when you export: opening the tree or mindmap view downloads 25 KB instead of 446 KB of JavaScript (7 KB instead of 143 KB gzipped). d3 is replaced by the d3 modules the bubble view uses (`d3-selection`, `d3-zoom`, `d3-force`, `d3-drag`, `d3-transition`).
 - Lunar dates and death anniversaries use the Vietnamese lunar calendar (UTC+7) instead of the Chinese one, so dates no longer shift by a day or a month in the years where the two calendars differ. The `lunar-javascript` dependency is removed.
 
 ### Fixed
@@ -27,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Kinship terms through marriage: no more double spaces ("Em vợ (họ)"), and a younger sibling's husband or wife is "Em rể" / "Em dâu" instead of "Em rể (họ)" / "Em dâu (họ)".
 - Restoring a backup no longer leaves the family tree half deleted when something fails: the delete and all inserts run in one database transaction (`restore_backup` function, migration `20261026000000_add_restore_backup.sql`), so on any error the current data stays as it was. Databases that have not run the migration yet keep the old restore and show a reminder to upgrade on `/dashboard/upgrade`.
 - Restoring a backup larger than 1 MB (a few thousand members) is no longer rejected by the server: server actions accept up to 25 MB, the limit of the restore file picker.
+- Gallery uploads check the size (10 MB), the type (JPG, PNG, GIF, WEBP) and the file's content for both the file picker and drag-and-drop; a renamed non-image file is rejected before anything is uploaded, and the stored file extension follows the real image type instead of the file name.
 - GEDCOM export puts each child in the family of its own two parents: a child of a man's second wife is no longer also linked to his first wife, and a child linked only to the father no longer becomes a child of his wife after re-import. A parent with gender "other" and no spouse keeps the link to the children.
 - GEDCOM keeps adopted children adopted (`PEDI ADOPTED`) on export and import.
 - GEDCOM export writes the first word of a Vietnamese name as the surname (`/Nguyễn/ Văn An`, with `SURN` and `GIVN`); import reads `SURN`/`GIVN` when present, and files from earlier versions still import as before.

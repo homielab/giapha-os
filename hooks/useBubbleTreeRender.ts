@@ -1,6 +1,6 @@
 'use client'
 
-import * as d3 from 'd3'
+import type { ZoomBehavior } from 'd3-zoom'
 import { RefObject, useEffect } from 'react'
 
 import { GraphLink, GraphNode } from '@/utils/bubbleGraph'
@@ -9,7 +9,7 @@ import { createBubbleTreeRenderer } from '@/utils/bubbleTreeRenderer'
 interface UseBubbleTreeRenderOptions {
   svgRef: RefObject<SVGSVGElement | null>
   containerRef: RefObject<HTMLDivElement | null>
-  zoomRef: RefObject<d3.ZoomBehavior<SVGSVGElement, unknown> | null>
+  zoomRef: RefObject<ZoomBehavior<SVGSVGElement, unknown> | null>
   nodes: GraphNode[]
   links: GraphLink[]
   isFullscreen: boolean

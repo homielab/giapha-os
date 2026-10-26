@@ -1,6 +1,9 @@
 'use client'
 
-import * as d3 from 'd3'
+import 'd3-transition'
+
+import { select } from 'd3-selection'
+import { zoomIdentity, type ZoomBehavior } from 'd3-zoom'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import BubbleTreeToolbar from '@/components/tree/BubbleTreeToolbar'
@@ -30,7 +33,7 @@ export default function BubbleMapTree({
   const containerRef = useRef<HTMLDivElement>(null)
   const fullscreenRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
-  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
+  const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null)
   const [error, setError] = useState<Error | null>(null)
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [zoomLevel, setZoomLevel] = useState(1)
@@ -131,7 +134,7 @@ export default function BubbleMapTree({
     const getNodeId = (endpoint: string | GraphNode) =>
       typeof endpoint === 'string' ? endpoint : endpoint.id
 
-    const svg = d3.select(svgRef.current)
+    const svg = select(svgRef.current)
     const nodeSelection = svg.selectAll<SVGGElement, GraphNode>('.bubble-node')
     const linkSelection = svg.selectAll<SVGLineElement, GraphLink>(
       '.bubble-link'
@@ -198,7 +201,7 @@ export default function BubbleMapTree({
   const changeZoom = (nextLevel: number) => {
     if (!svgRef.current || !zoomRef.current) return
 
-    d3.select(svgRef.current)
+    select(svgRef.current)
       .transition()
       .duration(180)
       .call(zoomRef.current.scaleTo, nextLevel)
@@ -207,10 +210,10 @@ export default function BubbleMapTree({
   const resetZoom = () => {
     if (!svgRef.current || !zoomRef.current) return
 
-    d3.select(svgRef.current)
+    select(svgRef.current)
       .transition()
       .duration(220)
-      .call(zoomRef.current.transform, d3.zoomIdentity)
+      .call(zoomRef.current.transform, zoomIdentity)
   }
 
   const toggleFullscreen = async () => {

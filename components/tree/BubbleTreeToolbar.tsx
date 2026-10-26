@@ -1,6 +1,6 @@
 'use client'
 
-import * as d3 from 'd3'
+import type { ZoomBehavior } from 'd3-zoom'
 import { Maximize2, Minimize2, Minus, Plus, RotateCcw } from 'lucide-react'
 import { RefObject } from 'react'
 
@@ -8,7 +8,7 @@ import { useI18n } from '@/lib/i18n/useI18n'
 
 interface BubbleTreeToolbarProps {
   containerRef: RefObject<HTMLDivElement | null>
-  zoomRef: RefObject<d3.ZoomBehavior<SVGSVGElement, unknown> | null>
+  zoomRef: RefObject<ZoomBehavior<SVGSVGElement, unknown> | null>
   zoomLevel: number
   isFullscreen: boolean
   onZoomChange: (nextLevel: number) => void

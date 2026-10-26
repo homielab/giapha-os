@@ -1,6 +1,13 @@
 'use client'
 
-import { Clock, LayoutGrid, Plus } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  LayoutGrid,
+  Plus
+} from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -11,13 +18,21 @@ import GalleryGrid from './GalleryGrid'
 import UploadModal from './modal/UploadModal'
 
 export default function GalleryClient({
-  initialItems,
+  items: pageItems,
+  page,
+  pageCount,
+  total,
   isAdmin
 }: {
-  initialItems: GalleryItem[]
+  items: GalleryItem[]
+  page: number
+  pageCount: number
+  total: number
   isAdmin: boolean
 }) {
-  const [items, setItems] = useState<GalleryItem[]>(initialItems)
+  // Hide deleted items right away; router.refresh() then brings the new page.
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(() => new Set())
+  const items = pageItems.filter((item) => !deletedIds.has(item.id))
   const [viewMode, setViewMode] = useState<'grid' | 'timeline'>('timeline')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null)
@@ -32,7 +47,7 @@ export default function GalleryClient({
   }
 
   const handleDeleteSuccess = (deletedId: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== deletedId))
+    setDeletedIds((prev) => new Set(prev).add(deletedId))
     router.refresh()
   }
 
@@ -103,6 +118,44 @@ export default function GalleryClient({
         onEdit={handleEdit}
         onDeleteSuccess={handleDeleteSuccess}
       />
+
+      {pageCount > 1 && (
+        <nav
+          aria-label={t('galleryPagination')}
+          className='mt-10 flex items-center justify-center gap-3'>
+          {page > 1 ? (
+            <Link
+              href={`?page=${page - 1}`}
+              className='btn-outline px-3 py-2.5'
+              aria-label={t('previousPage')}>
+              <ChevronLeft className='size-4' />
+            </Link>
+          ) : (
+            <span
+              aria-hidden='true'
+              className='btn-outline pointer-events-none px-3 py-2.5 opacity-40'>
+              <ChevronLeft className='size-4' />
+            </span>
+          )}
+          <span className='text-sm text-stone-600'>
+            {t('galleryPageStatus', { page, pageCount, total })}
+          </span>
+          {page < pageCount ? (
+            <Link
+              href={`?page=${page + 1}`}
+              className='btn-outline px-3 py-2.5'
+              aria-label={t('nextPage')}>
+              <ChevronRight className='size-4' />
+            </Link>
+          ) : (
+            <span
+              aria-hidden='true'
+              className='btn-outline pointer-events-none px-3 py-2.5 opacity-40'>
+              <ChevronRight className='size-4' />
+            </span>
+          )}
+        </nav>
+      )}
 
       <UploadModal
         key={editingItem?.id || 'new'}

@@ -1,8 +1,6 @@
 'use client'
 
 import { AnimatePresence, m } from 'framer-motion'
-import { toPng } from 'html-to-image'
-import jsPDF from 'jspdf'
 import {
   AlertCircle,
   Download,
@@ -77,6 +75,8 @@ export default function ExportButton() {
 
   const handleExportPng = async (element: HTMLElement) => {
     const { height, width } = getExportSize(element)
+    // Loaded on click so the tree views don't ship the export libraries.
+    const { toPng } = await import('html-to-image')
     const url = await toPng(element, {
       backgroundColor: '#f5f5f4',
       cacheBust: true,
@@ -99,6 +99,10 @@ export default function ExportButton() {
   const handleExportPdf = async (element: HTMLElement) => {
     const { height: cssHeight, width: cssWidth } = getExportSize(element)
     const pixelRatio = getSafePixelRatio(cssWidth, cssHeight)
+    const [{ toPng }, { jsPDF }] = await Promise.all([
+      import('html-to-image'),
+      import('jspdf')
+    ])
 
     const imgData = await toPng(element, {
       backgroundColor: '#f5f5f4',

@@ -1,10 +1,10 @@
-import * as d3 from 'd3'
+import type { SimulationLinkDatum, SimulationNodeDatum } from 'd3-force'
 
 import { Person, Relationship } from '@/types'
 import { buildAdjacencyLists, getFilteredTreeData } from '@/utils/treeHelpers'
 
 // Define D3 Node and Link types
-export interface GraphNode extends d3.SimulationNodeDatum {
+export interface GraphNode extends SimulationNodeDatum {
   id: string
   people: Person[] // [main, ...spouses]
   radius: number
@@ -12,7 +12,7 @@ export interface GraphNode extends d3.SimulationNodeDatum {
   isRoot: boolean
 }
 
-export interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
+export interface GraphLink extends SimulationLinkDatum<GraphNode> {
   type: string
 }
 
