@@ -1,5 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from 'react'
 
+import { FOCUSABLE_SELECTOR, focusTrapTarget } from '@/utils/focusTrap'
+
 // Open modals, topmost last: only the topmost one reacts to Escape.
 const openModals: symbol[] = []
 let previousBodyOverflow = ''
@@ -20,7 +22,8 @@ function unlockScroll() {
 /**
  * Keyboard and focus behaviour shared by modal dialogs: Escape closes the
  * topmost modal, focus moves into the dialog when it opens and returns to the
- * element that had it when it closes, and the page behind does not scroll.
+ * element that had it when it closes, Tab and Shift+Tab cycle inside the
+ * dialog, and the page behind does not scroll.
  *
  * Attach the returned ref to the element carrying `role="dialog"` (give it
  * `tabIndex={-1}`). Pass `isOpen` when the component stays mounted while closed.
@@ -44,8 +47,27 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>(
     ref.current?.focus({ preventScroll: true })
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || e.defaultPrevented) return
+      if (e.defaultPrevented) return
       if (openModals[openModals.length - 1] !== id) return
+      if (e.key === 'Tab') {
+        const dialog = ref.current
+        if (!dialog) return
+        const focusables = Array.from(
+          dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+        ).filter((el) => el.getClientRects().length > 0)
+        const active = document.activeElement as HTMLElement | null
+        const target = focusTrapTarget(
+          focusables.length > 0 ? focusables : [dialog],
+          active,
+          e.shiftKey
+        )
+        if (target) {
+          e.preventDefault()
+          target.focus()
+        }
+        return
+      }
+      if (e.key !== 'Escape') return
       e.preventDefault()
       handleClose()
     }
