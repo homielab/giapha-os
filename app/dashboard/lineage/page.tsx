@@ -4,7 +4,7 @@ import LineageManager from '@/components/LineageManager'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { Person } from '@/types'
 import { PERSON_LIST_COLUMNS } from '@/utils/personColumns'
-import { fetchAllRows } from '@/utils/supabase/fetchAll'
+import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
 
 export default async function LineagePage() {
@@ -20,7 +20,7 @@ export default async function LineagePage() {
   const supabase = await getSupabase()
 
   const [{ data: personsData }, { data: relsData }] = await Promise.all([
-    fetchAllRows((from, to) =>
+    fetchAllRowsOrThrow((from, to) =>
       supabase
         .from('persons')
         .select(PERSON_LIST_COLUMNS)
@@ -28,7 +28,7 @@ export default async function LineagePage() {
         .order('id')
         .range(from, to)
     ),
-    fetchAllRows((from, to) =>
+    fetchAllRowsOrThrow((from, to) =>
       supabase.from('relationships').select('*').order('id').range(from, to)
     )
   ])

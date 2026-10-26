@@ -8,8 +8,8 @@ import { useMemo, useState } from 'react'
 import GalleryLightbox from '@/components/GalleryLightbox'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { GalleryItem } from '@/types'
+import { deleteGalleryItem, GalleryItemNotDeletedError } from '@/utils/gallery'
 import { createClient } from '@/utils/supabase/client'
-import { getGalleryStoragePath } from '@/utils/supabase/storage-path'
 
 interface GalleryGridProps {
   items: GalleryItem[]
@@ -87,27 +87,17 @@ export default function GalleryGrid({
     if (!confirm(t('deleteImageConfirm'))) return
     setIsDeleting(true)
     try {
-      const supabase = createClient()
-
-      // Delete from storage if possible
-      const storagePath =
-        item.storage_path || getGalleryStoragePath(item.image_url)
-      if (storagePath) {
-        await supabase.storage.from('gallery').remove([storagePath])
-      }
-
-      // Delete from db
-      const { error } = await supabase
-        .from('gallery_items')
-        .delete()
-        .eq('id', item.id)
-      if (error) throw error
+      await deleteGalleryItem(createClient(), item)
 
       setSelectedItem(null)
       if (onDeleteSuccess) onDeleteSuccess(item.id)
     } catch (err) {
       console.error('Error deleting gallery item', err)
-      alert(t('deleteImageError'))
+      alert(
+        err instanceof GalleryItemNotDeletedError
+          ? t('deleteImageNotAllowed')
+          : t('deleteImageError')
+      )
     } finally {
       setIsDeleting(false)
     }

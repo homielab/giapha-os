@@ -9,7 +9,7 @@ import { Person } from '@/types'
 import { NO_SIGNED_AVATAR_URLS } from '@/utils/avatar'
 import { signAvatarUrls } from '@/utils/avatarSigning'
 import { PERSON_LIST_COLUMNS } from '@/utils/personColumns'
-import { fetchAllRows } from '@/utils/supabase/fetchAll'
+import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
 
 interface PageProps {
@@ -32,7 +32,7 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
   const supabase = await getSupabase()
 
   const [personsRes, relsRes] = await Promise.all([
-    fetchAllRows((from, to) =>
+    fetchAllRowsOrThrow((from, to) =>
       supabase
         .from('persons')
         .select(PERSON_LIST_COLUMNS)
@@ -40,7 +40,7 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
         .order('id')
         .range(from, to)
     ),
-    fetchAllRows((from, to) =>
+    fetchAllRowsOrThrow((from, to) =>
       supabase.from('relationships').select('*').order('id').range(from, to)
     )
   ])

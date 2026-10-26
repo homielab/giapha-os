@@ -4,7 +4,7 @@ import EventsList from '@/components/EventsList'
 import MemberDetailModal from '@/components/modal/MemberDetailModal'
 import { MemberListProvider } from '@/context/MemberListContext'
 import { getServerTranslations } from '@/lib/i18n/server'
-import { fetchAllRows } from '@/utils/supabase/fetchAll'
+import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getIsAdmin, getSupabase, getUser } from '@/utils/supabase/queries'
 
 export async function generateMetadata() {
@@ -21,7 +21,7 @@ export default async function EventsPage() {
   ])
 
   const [personsRes, customEventsRes] = await Promise.all([
-    fetchAllRows((from, to) =>
+    fetchAllRowsOrThrow((from, to) =>
       supabase
         .from('persons')
         .select(
@@ -30,7 +30,7 @@ export default async function EventsPage() {
         .order('id')
         .range(from, to)
     ),
-    fetchAllRows((from, to) =>
+    fetchAllRowsOrThrow((from, to) =>
       supabase
         .from('custom_events')
         .select('id, name, content, event_date, location, created_by')

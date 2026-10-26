@@ -89,3 +89,45 @@ export async function loadGalleryPage(
     total
   }
 }
+
+/** Thrown when the database accepted the delete but removed no row (RLS). */
+export class GalleryItemNotDeletedError extends Error {
+  constructor() {
+    super('Gallery item not deleted')
+    this.name = 'GalleryItemNotDeletedError'
+  }
+}
+
+/**
+ * Deletes a gallery item: the row first, the stored file second. Row-level
+ * security hides rows from a delete without an error, so `.select('id')` is
+ * used and zero rows throw `GalleryItemNotDeletedError` with the file left
+ * untouched. A failed file removal after the row is gone only leaves an
+ * orphan file, so it is logged and reported as `fileRemoved: false`.
+ */
+export async function deleteGalleryItem(
+  supabase: SupabaseClient,
+  item: Pick<GalleryItem, 'id' | 'image_url' | 'storage_path'>
+): Promise<{ fileRemoved: boolean }> {
+  const { data, error } = await supabase
+    .from('gallery_items')
+    .delete()
+    .eq('id', item.id)
+    .select('id')
+  if (error) throw error
+  if (!data || data.length === 0) throw new GalleryItemNotDeletedError()
+
+  const storagePath = item.storage_path || getGalleryStoragePath(item.image_url)
+  if (!storagePath) return { fileRemoved: true }
+
+  try {
+    const { error: fileError } = await supabase.storage
+      .from('gallery')
+      .remove([storagePath])
+    if (fileError) throw fileError
+    return { fileRemoved: true }
+  } catch (err) {
+    console.error('Gallery file was not removed', storagePath, err)
+    return { fileRemoved: false }
+  }
+}

@@ -3,9 +3,12 @@ import { describe, expect, test } from 'bun:test'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { GalleryItem } from '@/types'
+import { fakeSupabase as fakeClient } from '@/utils/testing/fakeSupabase'
 
 import {
+  deleteGalleryItem,
   GALLERY_PAGE_SIZE,
+  GalleryItemNotDeletedError,
   getGalleryPageCount,
   loadGalleryPage,
   parseGalleryPage
@@ -157,5 +160,53 @@ describe('loadGalleryPage', () => {
     const result = await loadGalleryPage(client, 1)
     expect(log.signBatches[0]).toEqual(['a b.png'])
     expect(result.items[0].storage_path).toBe('a b.png')
+  })
+})
+
+describe('deleteGalleryItem', () => {
+  const item = { id: 'g1', image_url: '', storage_path: 'a/b.jpg' }
+
+  test('deletes the row first, then the file', async () => {
+    const { client, calls } = fakeClient((call) =>
+      call.op === 'delete' ? { data: [{ id: 'g1' }] } : {}
+    )
+    await expect(deleteGalleryItem(client, item)).resolves.toEqual({
+      fileRemoved: true
+    })
+    expect(calls.map((c) => c.op)).toEqual(['delete', 'remove'])
+    expect(calls[1].payload).toEqual([['a/b.jpg']])
+  })
+
+  test('zero rows (RLS) throws and keeps the file', async () => {
+    const { client, calls } = fakeClient(() => ({ data: [] }))
+    await expect(deleteGalleryItem(client, item)).rejects.toBeInstanceOf(
+      GalleryItemNotDeletedError
+    )
+    expect(calls.map((c) => c.op)).toEqual(['delete'])
+  })
+
+  test('a database error throws and keeps the file', async () => {
+    const { client, calls } = fakeClient(() => ({ error: { message: 'boom' } }))
+    await expect(deleteGalleryItem(client, item)).rejects.toMatchObject({
+      message: 'boom'
+    })
+    expect(calls.map((c) => c.op)).toEqual(['delete'])
+  })
+
+  test('a file error after the row is gone is only reported', async () => {
+    const { client } = fakeClient((call) =>
+      call.op === 'delete'
+        ? { data: [{ id: 'g1' }] }
+        : { error: { message: 'storage down' } }
+    )
+    const log = console.error
+    console.error = () => {}
+    try {
+      await expect(deleteGalleryItem(client, item)).resolves.toEqual({
+        fileRemoved: false
+      })
+    } finally {
+      console.error = log
+    }
   })
 })

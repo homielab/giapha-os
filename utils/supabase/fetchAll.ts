@@ -69,3 +69,17 @@ export async function fetchInChunks<I, T>(
   }
   return { data: rows, error: null }
 }
+
+/**
+ * Like `fetchAllRows`, but throws when any page fails. Use it where a partial
+ * list would be shown or acted on as if it were the whole family (dashboard
+ * pages): the route's error boundary then asks the user to try again.
+ */
+export async function fetchAllRowsOrThrow<T>(
+  buildPage: (from: number, to: number) => PromiseLike<PageResult<T>>,
+  pageSize: number = SUPABASE_PAGE_SIZE
+): Promise<{ data: T[] }> {
+  const { data, error } = await fetchAllRows(buildPage, pageSize)
+  if (error) throw new Error(`Could not load all rows: ${error.message}`)
+  return { data }
+}

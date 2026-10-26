@@ -5,7 +5,7 @@ import { AvatarUrlProvider } from '@/context/AvatarUrlContext'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { NO_SIGNED_AVATAR_URLS } from '@/utils/avatar'
 import { signAvatarUrls } from '@/utils/avatarSigning'
-import { fetchAllRows } from '@/utils/supabase/fetchAll'
+import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
 
 export async function generateMetadata() {
@@ -21,7 +21,7 @@ export default async function KinshipPage() {
   ])
 
   const [{ data: persons }, { data: relationships }] = await Promise.all([
-    fetchAllRows((from, to) =>
+    fetchAllRowsOrThrow((from, to) =>
       supabase
         .from('persons')
         .select(
@@ -31,7 +31,7 @@ export default async function KinshipPage() {
         .order('id')
         .range(from, to)
     ),
-    fetchAllRows((from, to) =>
+    fetchAllRowsOrThrow((from, to) =>
       supabase
         .from('relationships')
         .select('type, person_a, person_b')

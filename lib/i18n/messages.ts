@@ -668,6 +668,8 @@ export const messages = {
     deleting: 'Đang xóa...',
     deleteImageConfirm: 'Bạn có chắc chắn muốn xóa hình ảnh này?',
     deleteImageError: 'Đã xảy ra lỗi khi xóa hình ảnh.',
+    deleteImageNotAllowed:
+      'Bạn không có quyền xoá ảnh này nên ảnh vẫn còn nguyên.',
     close: 'Đóng',
     filterLabel: 'Lọc',
     sortLabel: 'Sắp xếp',
@@ -1602,6 +1604,8 @@ export const messages = {
     deleting: 'Deleting...',
     deleteImageConfirm: 'Are you sure you want to delete this image?',
     deleteImageError: 'An error occurred while deleting the image.',
+    deleteImageNotAllowed:
+      'You are not allowed to delete this image, so it was kept.',
     close: 'Close',
     filterLabel: 'Filter',
     sortLabel: 'Sort',

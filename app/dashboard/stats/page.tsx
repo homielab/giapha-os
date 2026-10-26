@@ -7,7 +7,7 @@ import {
   type StatsPerson,
   type StatsRelationship
 } from '@/utils/familyStats'
-import { fetchAllRows } from '@/utils/supabase/fetchAll'
+import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getSupabase } from '@/utils/supabase/queries'
 
 export async function generateMetadata() {
@@ -25,14 +25,14 @@ export default async function StatsPage() {
   // Only the columns the counts need, and only marriages; the totals are
   // computed here so the browser receives the numbers, not the whole family.
   const [{ data: persons }, { data: relationships }] = await Promise.all([
-    fetchAllRows<StatsPerson>((from, to) =>
+    fetchAllRowsOrThrow<StatsPerson>((from, to) =>
       supabase
         .from('persons')
         .select(STATS_PERSON_COLUMNS)
         .order('id')
         .range(from, to)
     ),
-    fetchAllRows<StatsRelationship>((from, to) =>
+    fetchAllRowsOrThrow<StatsRelationship>((from, to) =>
       supabase
         .from('relationships')
         .select(STATS_RELATIONSHIP_COLUMNS)

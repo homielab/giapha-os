@@ -18,7 +18,7 @@ import Link from 'next/link'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { getTodayLunar, vnToday } from '@/utils/dateHelpers'
 import { computeEvents } from '@/utils/eventHelpers'
-import { fetchAllRows } from '@/utils/supabase/fetchAll'
+import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getIsAdmin, getSupabase } from '@/utils/supabase/queries'
 
 /* ── Event type helpers ───────────────────────────────────────────── */
@@ -49,7 +49,7 @@ export default async function DashboardLaunchpad() {
 
   /* ── Fetch events data ────────────────────────────────────────── */
   const [{ data: persons }, { data: customEvents }] = await Promise.all([
-    fetchAllRows((from, to) =>
+    fetchAllRowsOrThrow((from, to) =>
       supabase
         .from('persons')
         .select(
@@ -58,7 +58,7 @@ export default async function DashboardLaunchpad() {
         .order('id')
         .range(from, to)
     ),
-    fetchAllRows((from, to) =>
+    fetchAllRowsOrThrow((from, to) =>
       supabase
         .from('custom_events')
         .select('id, name, content, event_date, location, created_by')
