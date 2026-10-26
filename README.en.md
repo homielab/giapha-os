@@ -20,6 +20,7 @@ Designed primarily for Vietnamese families.
 - [Installation and running the project](#installation-and-running-the-project)
   - [Option 1: Quick deploy to Vercel](#option-1-quick-deploy-to-vercel)
   - [Option 2: Run locally](#option-2-run-locally)
+  - [Option 3: Run with Docker](#option-3-run-with-docker)
 - [First account](#first-account)
 - [Troubleshooting registration](#troubleshooting-registration)
 - [User roles](#user-roles)
@@ -137,6 +138,39 @@ bun run dev
 ```
 
 Open a browser and visit `http://localhost:3000`.
+
+---
+
+## Option 3: Run with Docker
+
+For self-hosting on a VPS or your own server. Requirements: [Docker](https://docs.docker.com/get-docker/) with Docker Compose.
+
+1. Clone the project, rename `.env.example` to `.env.local` and fill in the values from **step 1** (the same as Option 1: `NEXT_PUBLIC_*`, `APP_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `RESEND_*`...).
+2. Build and start:
+
+```bash
+docker compose --env-file .env.local up -d --build
+```
+
+Open `http://localhost:3000` (or your domain behind a reverse proxy; add the domain to Supabase as described in [Troubleshooting registration](#troubleshooting-registration)).
+
+**Important about environment variables:**
+
+- Next.js writes `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` and `NEXT_PUBLIC_DISABLE_SSO` into the JavaScript **at build time**, so they must be passed as build args. `--env-file .env.local` lets `docker-compose.yml` read them from `.env.local`; the build stops with an error when the two Supabase variables are missing. After changing them, rebuild (`--build`): restarting the container is not enough.
+- Server secrets (`SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `RESEND_API_KEY`...) are **not** stored in the image: the container reads them from `.env.local` when it starts (`env_file`). `.env*` files are not copied into the image.
+
+Without Compose:
+
+```bash
+docker build -t giapha-os \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co" \
+  --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY="your-anon-key" \
+  --build-arg NEXT_PUBLIC_DISABLE_SSO=true \
+  .
+docker run -d -p 3000:3000 --env-file .env.local --restart always giapha-os
+```
+
+The image includes `docs/schema.sql` and `docs/migrations/`, so `/setup` and `/dashboard/upgrade` work as on Vercel. **Updating:** `git pull`, run `docker compose --env-file .env.local up -d --build` again, then open `/dashboard/upgrade` to run new migrations (if any).
 
 ---
 

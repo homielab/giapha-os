@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Docker image: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` and `NEXT_PUBLIC_DISABLE_SSO` are now build args (`docker compose --env-file .env.local up -d --build`), so sign-in, editing members and uploads work in the browser; the build stops when they are missing. The image now contains `docs/schema.sql` and `docs/migrations/`, so `/setup` and `/dashboard/upgrade` work. README has a "Run with Docker" section.
 - Dashboard page titles end with the site name, and the gallery title uses `SITE_NAME` instead of a hard-coded "Gia Phả OS".
 - README examples use a placeholder domain (`your-domain.vercel.app`) instead of a real-looking project URL; the demo is giapha-os.homielab.com.
 - A death anniversary on day 30 of a lunar month no longer disappears in years where that month has 29 days: it falls on day 29.

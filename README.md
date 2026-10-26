@@ -20,6 +20,7 @@ Phù hợp với người Việt Nam.
 - [Cài đặt và Chạy dự án](#cài-đặt-và-chạy-dự-án)
   - [Cách 1: Deploy nhanh lên Vercel](#cách-1-deploy-nhanh-lên-vercel)
   - [Cách 2: Chạy trên máy cá nhân](#cách-2-chạy-trên-máy-cá-nhân)
+  - [Cách 3: Chạy bằng Docker](#cách-3-chạy-bằng-docker)
 - [Tài khoản đầu tiên](#tài-khoản-đầu-tiên)
 - [Xử lý lỗi khi đăng ký](#xử-lý-lỗi-khi-đăng-ký)
 - [Phân quyền người dùng (User Roles)](#phân-quyền-người-dùng-user-roles)
@@ -153,6 +154,39 @@ bun run dev
 ```
 
 Mở trình duyệt và truy cập: `http://localhost:3000`
+
+---
+
+## Cách 3: Chạy bằng Docker
+
+Phù hợp khi tự host trên VPS hoặc máy chủ riêng. Yêu cầu: [Docker](https://docs.docker.com/get-docker/) có Docker Compose.
+
+1. Clone project, đổi tên `.env.example` thành `.env.local` và điền các giá trị ở **bước 1** (giống Cách 1: `NEXT_PUBLIC_*`, `APP_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `RESEND_*`...).
+2. Build và chạy:
+
+```bash
+docker compose --env-file .env.local up -d --build
+```
+
+Mở `http://localhost:3000` (hoặc domain của bạn qua reverse proxy, nhớ thêm domain vào Supabase như mục [Xử lý lỗi khi đăng ký](#xử-lý-lỗi-khi-đăng-ký)).
+
+**Lưu ý quan trọng về biến môi trường:**
+
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` và `NEXT_PUBLIC_DISABLE_SSO` được Next.js ghi thẳng vào JavaScript **lúc build**, nên phải truyền dưới dạng build arg. `--env-file .env.local` giúp `docker-compose.yml` đọc chúng từ `.env.local`; thiếu hai biến Supabase thì build dừng với thông báo lỗi. Đổi các biến này thì phải build lại (`--build`), chỉ khởi động lại container là không đủ.
+- Các biến bí mật của server (`SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `RESEND_API_KEY`...) **không** nằm trong image: container đọc chúng từ `.env.local` lúc chạy (`env_file`). File `.env*` không được copy vào image.
+
+Không dùng Compose:
+
+```bash
+docker build -t giapha-os \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co" \
+  --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY="your-anon-key" \
+  --build-arg NEXT_PUBLIC_DISABLE_SSO=true \
+  .
+docker run -d -p 3000:3000 --env-file .env.local --restart always giapha-os
+```
+
+Image đã có sẵn `docs/schema.sql` và `docs/migrations/`, nên trang `/setup` và `/dashboard/upgrade` hoạt động như bản Vercel. **Cập nhật:** `git pull`, chạy lại lệnh `docker compose --env-file .env.local up -d --build`, rồi vào `/dashboard/upgrade` để chạy migration mới (nếu có).
 
 ---
 

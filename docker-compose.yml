@@ -1,8 +1,16 @@
+# Build and start with the values of .env.local:
+#   docker compose --env-file .env.local up -d --build
+# NEXT_PUBLIC_* are build args (Next.js bakes them into the JavaScript);
+# the other variables of .env.local are read when the container starts.
 services:
   web:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY:-}
+        NEXT_PUBLIC_DISABLE_SSO: ${NEXT_PUBLIC_DISABLE_SSO:-}
     ports:
       - '3000:3000'
     restart: always
