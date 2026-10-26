@@ -8,8 +8,10 @@ import {
   scanPossibleDuplicates,
   type DuplicateScanResult
 } from '@/app/actions/duplicateScan'
+import type { MergeSummary } from '@/app/actions/mergePersons'
 import DataCard from '@/components/DataCard'
 import ImportStatusMessage from '@/components/ImportStatusMessage'
+import MergePersonsModal from '@/components/MergePersonsModal'
 import { useI18n } from '@/lib/i18n/useI18n'
 
 export default function DuplicateScan() {
@@ -17,10 +19,13 @@ export default function DuplicateScan() {
   const [result, setResult] = useState<DuplicateScanResult | null>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mergingIds, setMergingIds] = useState<string[] | null>(null)
+  const [mergedNotice, setMergedNotice] = useState<string | null>(null)
 
   const handleScan = async () => {
     setIsScanning(true)
     setError(null)
+    setMergedNotice(null)
     try {
       const res = await scanPossibleDuplicates()
       if ('error' in res) {
@@ -35,6 +40,28 @@ export default function DuplicateScan() {
     } finally {
       setIsScanning(false)
     }
+  }
+
+  /** Drops the merged pair from the list; the keeper gets a fresh count on the next scan. */
+  const handleMerged = (ids: string[], summary: MergeSummary) => {
+    setMergingIds(null)
+    setResult((current) =>
+      current
+        ? {
+            ...current,
+            groups: current.groups.filter(
+              (group) => !group.members.some((m) => ids.includes(m.id))
+            )
+          }
+        : current
+    )
+    setMergedNotice(
+      t('mergeDone', {
+        moved: summary.relationships_moved,
+        dropped: summary.relationships_dropped,
+        filled: summary.person_fields_filled + summary.details_fields_filled
+      })
+    )
   }
 
   const years = (birth: number | null, death: number | null) =>
@@ -59,6 +86,14 @@ export default function DuplicateScan() {
         </div>
       )}
 
+      {mergedNotice && (
+        <div className='mt-4'>
+          <ImportStatusMessage
+            status={{ type: 'success', message: mergedNotice }}
+          />
+        </div>
+      )}
+
       {result && (
         <div className='mt-4 space-y-3'>
           {result.groups.length === 0 ? (
@@ -80,6 +115,18 @@ export default function DuplicateScan() {
                   <div
                     key={group.members.map((m) => m.id).join('-')}
                     className='overflow-hidden rounded-2xl border border-stone-200/80'>
+                    <div className='flex items-center justify-between border-b border-stone-200/80 bg-stone-50 px-4 py-2'>
+                      <span className='text-xs font-medium text-stone-500'>
+                        {t('duplicateScanGroup')}
+                      </span>
+                      <button
+                        onClick={() =>
+                          setMergingIds(group.members.map((m) => m.id))
+                        }
+                        className='text-sm font-medium text-amber-700 hover:underline'>
+                        {t('mergeButton')}
+                      </button>
+                    </div>
                     <table className='w-full text-sm'>
                       <thead className='bg-stone-50'>
                         <tr className='border-b border-stone-200/80'>
@@ -109,7 +156,7 @@ export default function DuplicateScan() {
                             <td className='px-4 py-2 text-stone-600'>
                               {member.relationshipCount}
                             </td>
-                            <td className='px-4 py-2 text-right'>
+                            <td className='px-4 py-2 text-right whitespace-nowrap'>
                               <Link
                                 href={`/dashboard/members/${member.id}`}
                                 target='_blank'
@@ -128,6 +175,18 @@ export default function DuplicateScan() {
             </>
           )}
         </div>
+      )}
+
+      {mergingIds && (
+        <MergePersonsModal
+          members={
+            result?.groups
+              .flatMap((group) => group.members)
+              .filter((m) => mergingIds.includes(m.id)) ?? []
+          }
+          onMerged={handleMerged}
+          onCancel={() => setMergingIds(null)}
+        />
       )}
     </DataCard>
   )

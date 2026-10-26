@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Dashboard → Backup & Restore: the "Possible duplicates" tool can merge two duplicate profiles into one. A dialog picks the keeper, previews everything that moves over (relationships re-pointed or removed as duplicates, private details and empty fields filled from the merged-away profile, other names remembered, notes appended), recommends downloading a backup first, and merges in one database transaction after typing the deleted profile's name — nothing is left half-merged when an error occurs. Needs the new `merge_persons` migration on existing installs (Dashboard → Upgrade); admins only.
 - Dashboard → Backup & Restore: a "Possible duplicates" tool scans the whole tree, including data imported from GEDCOM or CSV, and lists members who may be the same person (same name ignoring accents plus the same birth year, or the same name and a shared parent) with a link to each profile. View only; nothing is changed.
 - Docker: the image has a `HEALTHCHECK` on the `/login` page, so `docker ps` shows `healthy`/`unhealthy`. The English README now also documents the `update_generations` migration.
 - Member page: a "Print profile" button prints the profile on A4 without the header, footer and edit buttons, in black on white, with the photo, the full note and the family list; the page title is the name with birth and death years.
