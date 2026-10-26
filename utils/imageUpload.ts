@@ -43,6 +43,13 @@ export function detectImageType(bytes: Uint8Array): ImageMimeType | null {
   return null
 }
 
+// Reads the first bytes of a file and returns its real image type, or null
+// when the content is not a JPEG, PNG, GIF or WebP image.
+export async function readImageType(file: Blob): Promise<ImageMimeType | null> {
+  const header = new Uint8Array(await file.slice(0, 12).arrayBuffer())
+  return detectImageType(header)
+}
+
 export function isAllowedImageType(type: string): type is ImageMimeType {
   return Object.hasOwn(IMAGE_EXTENSIONS, type)
 }
@@ -55,8 +62,7 @@ export async function validateImageFile(file: Blob): Promise<ImageValidation> {
     return { ok: false, reason: 'unsupported-type' }
   }
 
-  const header = new Uint8Array(await file.slice(0, 12).arrayBuffer())
-  const type = detectImageType(header)
+  const type = await readImageType(file)
   if (!type) return { ok: false, reason: 'unsupported-type' }
 
   return { ok: true, type, extension: IMAGE_EXTENSIONS[type] }

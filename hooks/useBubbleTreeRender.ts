@@ -13,6 +13,7 @@ interface UseBubbleTreeRenderOptions {
   nodes: GraphNode[]
   links: GraphLink[]
   isFullscreen: boolean
+  avatarUrl: (value: string | null | undefined) => string | null
   onZoomLevelChange: (level: number) => void
   onSelectionChange: () => void
   onNodeClick: (nodeId: string) => void
@@ -26,6 +27,7 @@ export function useBubbleTreeRender({
   nodes,
   links,
   isFullscreen,
+  avatarUrl,
   onZoomLevelChange,
   onSelectionChange,
   onNodeClick,
@@ -42,6 +44,7 @@ export function useBubbleTreeRender({
         zoomRef,
         nodes,
         links,
+        avatarUrl,
         onZoomLevelChange,
         onSelectionChange,
         onNodeClick
@@ -60,6 +63,7 @@ export function useBubbleTreeRender({
     isFullscreen,
     nodes,
     links,
+    avatarUrl,
     svgRef,
     containerRef,
     zoomRef,

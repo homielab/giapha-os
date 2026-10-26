@@ -3,7 +3,10 @@ import { Suspense } from 'react'
 import MembersViews from '@/components/MembersViews'
 import MemberDetailModal from '@/components/modal/MemberDetailModal'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
+import { AvatarUrlProvider } from '@/context/AvatarUrlContext'
 import { MemberListProvider } from '@/context/MemberListContext'
+import { NO_SIGNED_AVATAR_URLS } from '@/utils/avatar'
+import { signAvatarUrls } from '@/utils/avatarSigning'
 import { fetchAllRows } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
 
@@ -43,6 +46,16 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
   const persons = personsRes.data || []
   const relationships = relsRes.data || []
 
+  // One storage request signs every avatar of the tree/list/mindmap instead
+  // of one /api/avatar round trip per member. Storage RLS only lets active
+  // users sign, the same rule the /api/avatar route applies.
+  const signedAvatarUrls = profile?.is_active
+    ? await signAvatarUrls(
+        supabase,
+        persons.map((p) => p.avatar_url)
+      )
+    : NO_SIGNED_AVATAR_URLS
+
   // Prepare map and roots for tree views
   const personsMap = new Map()
   persons.forEach((p) => personsMap.set(p.id, p))
@@ -69,19 +82,21 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
 
   return (
     <Suspense fallback={null}>
-      <MemberListProvider
-        initialView={initialView}
-        initialRootId={finalRootId}
-        initialShowAvatar={initialShowAvatar}>
-        <ViewToggle />
-        <MembersViews
-          persons={persons}
-          relationships={relationships}
-          canEdit={canEdit}
-        />
+      <AvatarUrlProvider signedUrls={signedAvatarUrls}>
+        <MemberListProvider
+          initialView={initialView}
+          initialRootId={finalRootId}
+          initialShowAvatar={initialShowAvatar}>
+          <ViewToggle />
+          <MembersViews
+            persons={persons}
+            relationships={relationships}
+            canEdit={canEdit}
+          />
 
-        <MemberDetailModal />
-      </MemberListProvider>
+          <MemberDetailModal />
+        </MemberListProvider>
+      </AvatarUrlProvider>
     </Suspense>
   )
 }

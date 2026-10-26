@@ -5,7 +5,7 @@ import Image from 'next/image'
 import DefaultAvatar from '@/components/DefaultAvatar'
 import { FemaleIcon, MaleIcon } from '@/components/GenderIcons'
 import { getGenderStyle, PersonNode } from '@/components/kinship/kinshipTypes'
-import { getAvatarUrl } from '@/utils/avatar'
+import { useAvatarUrl } from '@/context/AvatarUrlContext'
 
 const AVATAR_SIZE = {
   small: {
@@ -51,8 +51,9 @@ export default function PersonAvatar({
   large?: boolean
   bgClassName: string
 }) {
+  const avatarUrl = useAvatarUrl()
   const size = large ? AVATAR_SIZE.large : AVATAR_SIZE.small
-  const url = person ? getAvatarUrl(person.avatar_url) : null
+  const url = person ? avatarUrl(person.avatar_url) : null
   return (
     <div className='relative shrink-0'>
       <div

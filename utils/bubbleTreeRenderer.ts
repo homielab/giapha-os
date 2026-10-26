@@ -11,7 +11,6 @@ import { zoom, type ZoomBehavior } from 'd3-zoom'
 import { RefObject } from 'react'
 
 import { AVATAR_VERSION } from '@/components/DefaultAvatar'
-import { getAvatarUrl } from '@/utils/avatar'
 import { GraphLink, GraphNode } from '@/utils/bubbleGraph'
 
 const showAvatar = true
@@ -22,6 +21,8 @@ interface CreateBubbleTreeRendererOptions {
   zoomRef: RefObject<ZoomBehavior<SVGSVGElement, unknown> | null>
   nodes: GraphNode[]
   links: GraphLink[]
+  /** Maps a stored `avatar_url` to a displayable URL (see useAvatarUrl). */
+  avatarUrl: (value: string | null | undefined) => string | null
   onZoomLevelChange: (level: number) => void
   onSelectionChange: () => void
   onNodeClick: (nodeId: string) => void
@@ -36,6 +37,7 @@ export function createBubbleTreeRenderer({
   zoomRef,
   nodes,
   links,
+  avatarUrl,
   onZoomLevelChange,
   onSelectionChange,
   onNodeClick
@@ -245,7 +247,7 @@ export function createBubbleTreeRenderer({
           .attr('preserveAspectRatio', 'xMidYMid slice')
           .attr(
             'href',
-            getAvatarUrl(person.avatar_url) ||
+            avatarUrl(person.avatar_url) ||
               (person.gender === 'male'
                 ? `/avatar/${AVATAR_VERSION}/male.svg`
                 : `/avatar/${AVATAR_VERSION}/female.svg`)

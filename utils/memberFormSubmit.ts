@@ -4,6 +4,7 @@ import { updateDescendantGenerationsAction } from '@/app/actions/member'
 import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
 import { Person } from '@/types'
 import { getAvatarStoragePath } from '@/utils/avatar'
+import { IMAGE_EXTENSIONS, readImageType } from '@/utils/imageUpload'
 import {
   buildPersonData,
   DeathDateValues,
@@ -51,6 +52,14 @@ export interface SaveMemberResult {
   generationUpdateError: string | null
 }
 
+/** The chosen avatar file is not a JPEG, PNG, GIF or WebP image. */
+export class InvalidAvatarError extends Error {
+  constructor() {
+    super('Avatar file is not a supported image')
+    this.name = 'InvalidAvatarError'
+  }
+}
+
 // Persists the person row, avatar file, private details and descendant
 // generation deltas. Throws on blocking errors; a failed generation update is
 // returned instead because the member itself is already saved.
@@ -83,6 +92,11 @@ export async function saveMember(
     deathLunarDay: deathValues.lunarDay
   }
 
+  // Check the avatar's content before saving anything, and store it under the
+  // extension of its real type rather than the one in the file name.
+  const avatarType = avatarFile ? await readImageType(avatarFile) : null
+  if (avatarFile && !avatarType) throw new InvalidAvatarError()
+
   let currentPersonId = initialData?.id
 
   // For a new member, we must insert first to get the ID for the avatar filename
@@ -104,15 +118,15 @@ export async function saveMember(
   }
 
   // 2. Handle Avatar Upload if a new file is selected (now we have currentPersonId)
-  if (avatarFile && currentPersonId) {
-    const fileExt = avatarFile.name.split('.').pop()
+  if (avatarFile && avatarType && currentPersonId) {
+    const fileExt = IMAGE_EXTENSIONS[avatarType]
     const slugName = slugify(fields.fullName)
     const fileName = `${currentPersonId}_${slugName}.${fileExt}`
     const filePath = `${fileName}`
 
     const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(filePath, avatarFile, { upsert: true })
+      .upload(filePath, avatarFile, { upsert: true, contentType: avatarType })
 
     if (uploadError) throw uploadError
 
@@ -316,7 +330,11 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
     finishMemberSave(ctx, currentPersonId)
   } catch (err) {
     console.error('Error saving member:', err)
-    setError((err as Error).message || t('saveMemberError'))
+    setError(
+      err instanceof InvalidAvatarError
+        ? t('invalidImageType')
+        : (err as Error).message || t('saveMemberError')
+    )
   } finally {
     setLoading(false)
   }

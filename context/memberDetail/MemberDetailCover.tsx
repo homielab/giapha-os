@@ -5,11 +5,12 @@ import Image from 'next/image'
 
 import DefaultAvatar from '@/components/DefaultAvatar'
 import { FemaleIcon, MaleIcon } from '@/components/GenderIcons'
+import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { itemVariants } from '@/context/memberDetail/memberDetailShared'
 import { Person } from '@/types'
-import { getAvatarUrl } from '@/utils/avatar'
 
 export default function MemberDetailCover({ person }: { person: Person }) {
+  const avatarUrl = useAvatarUrl()
   return (
     <div className='relative h-28 shrink-0 bg-linear-to-r from-stone-200 via-stone-100 to-stone-200 sm:h-36'>
       {/* Decorative blur in cover */}
@@ -29,10 +30,10 @@ export default function MemberDetailCover({ person }: { person: Person }) {
                 ? 'bg-linear-to-br from-rose-400 to-rose-700'
                 : 'bg-linear-to-br from-stone-400 to-stone-600'
           }`}>
-          {getAvatarUrl(person.avatar_url) ? (
+          {avatarUrl(person.avatar_url) ? (
             <Image
               unoptimized
-              src={getAvatarUrl(person.avatar_url)!}
+              src={avatarUrl(person.avatar_url)!}
               alt={person.full_name}
               width={128}
               height={128}

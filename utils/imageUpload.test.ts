@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, mock, test } from 'bun:test'
 import {
   detectImageType,
   MAX_IMAGE_BYTES,
+  readImageType,
   validateImageFile
 } from './imageUpload'
 
@@ -29,6 +30,19 @@ describe('detectImageType', () => {
     expect(detectImageType(new TextEncoder().encode('hello world'))).toBeNull()
     expect(detectImageType(new TextEncoder().encode('<svg xmlns='))).toBeNull()
     expect(detectImageType(new Uint8Array())).toBeNull()
+  })
+})
+
+describe('readImageType', () => {
+  test('reads the type from the content, not the name or MIME type', async () => {
+    expect(await readImageType(fileOf(WEBP, 'a.png', 'image/png'))).toBe(
+      'image/webp'
+    )
+    expect(
+      await readImageType(
+        new File(['just some notes'], 'notes.jpg', { type: 'image/jpeg' })
+      )
+    ).toBeNull()
   })
 })
 

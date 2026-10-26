@@ -3,17 +3,11 @@
 import { AlertCircle, Image as ImageIcon, Loader2, Trash2 } from 'lucide-react'
 
 import { inputClasses } from '@/components/member/memberFormStyles'
+import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Gender } from '@/types'
-import { getAvatarUrl } from '@/utils/avatar'
 import { resizeAvatar } from '@/utils/image'
-
-const ALLOWED_IMAGE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp'
-]
+import { IMAGE_ACCEPT, readImageType } from '@/utils/imageUpload'
 
 interface MemberAvatarFieldProps {
   avatarPreview: string | null
@@ -36,6 +30,7 @@ export default function MemberAvatarField({
   onRemove,
   onError
 }: MemberAvatarFieldProps) {
+  const avatarUrl = useAvatarUrl()
   const { t } = useI18n()
 
   const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,12 +38,14 @@ export default function MemberAvatarField({
     event.target.value = ''
     if (!file) return
 
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      onError(t('invalidImageType'))
-      return
-    }
     if (file.size > 20 * 1024 * 1024) {
       onError(t('imageTooLarge'))
+      return
+    }
+    // Check the file's content, not its name or the type the browser guessed
+    // from it: a renamed text file must not pass as a photo.
+    if (!(await readImageType(file))) {
+      onError(t('invalidImageType'))
       return
     }
     onError('')
@@ -78,7 +75,7 @@ export default function MemberAvatarField({
               src={
                 avatarPreview.startsWith('blob:')
                   ? avatarPreview
-                  : getAvatarUrl(avatarPreview) || undefined
+                  : avatarUrl(avatarPreview) || undefined
               }
               alt='Avatar preview'
               className='h-full w-full object-cover'
@@ -95,7 +92,7 @@ export default function MemberAvatarField({
               <input
                 id='member-avatar'
                 type='file'
-                accept='image/*'
+                accept={IMAGE_ACCEPT}
                 disabled={processingAvatar}
                 onChange={handleFile}
                 className='absolute inset-0 h-full w-full opacity-0'

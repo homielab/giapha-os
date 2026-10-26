@@ -4,8 +4,8 @@ import Image from 'next/image'
 
 import DefaultAvatar from '@/components/DefaultAvatar'
 import { EnrichedRelationship } from '@/components/relationship/relationshipTypes'
+import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
-import { getAvatarUrl } from '@/utils/avatar'
 import { getAvatarBg } from '@/utils/styleHelprs'
 
 interface RelationshipListProps {
@@ -25,6 +25,7 @@ export default function RelationshipList({
   onPersonClick,
   onDelete
 }: RelationshipListProps) {
+  const avatarUrl = useAvatarUrl()
   const { t } = useI18n()
 
   const groupByType = (type: string) => {
@@ -84,10 +85,10 @@ export default function RelationshipList({
                       className='-mx-2.5 flex flex-1 items-center gap-3 rounded-xl p-2.5 text-left transition-colors duration-200 hover:bg-stone-100'>
                       <div
                         className={`flex size-8 items-center justify-center overflow-hidden rounded-full text-sm text-white ${getAvatarBg(rel.targetPerson.gender)}`}>
-                        {getAvatarUrl(rel.targetPerson.avatar_url) ? (
+                        {avatarUrl(rel.targetPerson.avatar_url) ? (
                           <Image
                             unoptimized
-                            src={getAvatarUrl(rel.targetPerson.avatar_url)!}
+                            src={avatarUrl(rel.targetPerson.avatar_url)!}
                             alt={rel.targetPerson.full_name}
                             className='h-full w-full object-cover'
                             width={32}

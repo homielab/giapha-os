@@ -52,6 +52,11 @@ The app uses the Vietnamese lunar calendar (computed for UTC+7 with Hồ Ngọc 
 - **Death date**: cannot be before the birth date, comparing month and day within the same year.
 - **JSON backup version**: files carry a `version` (currently 3). On restore, a file without `version` is read as version 1 (old file); a file with a higher version than the app reads is refused with a hint to upgrade the app, so new columns are not lost.
 
+### Profile photos
+
+- Profile photos live in the private `avatars` bucket and only activated accounts can see them. The members page (tree, list, mindmap, bubble view) and the kinship page sign the links of every photo on the page in one Supabase Storage call on the server, valid for 1 hour; a photo changed since, other pages and tabs left open past that time load through `/api/avatar`.
+- When you pick a photo, the app reads the start of the file to find its real type (JPG, PNG, GIF, WEBP; a text file renamed to `.jpg` is refused) and stores it with that extension, not the one in the file name.
+
 ## Demo
 
 - Demo: [giapha-os.homielab.com](https://giapha-os.homielab.com)

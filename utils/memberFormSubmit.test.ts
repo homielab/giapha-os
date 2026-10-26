@@ -25,7 +25,8 @@ mock.module('@/app/actions/member', () => ({
   updateDescendantGenerationsAction
 }))
 
-const { saveMember, submitMemberForm } = await import('./memberFormSubmit')
+const { InvalidAvatarError, saveMember, submitMemberForm } =
+  await import('./memberFormSubmit')
 
 const initialData = {
   id: 'person-1',
@@ -134,6 +135,43 @@ describe('saveMember', () => {
   })
 })
 
+describe('saveMember avatar', () => {
+  const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]
+
+  test('stores the avatar under the extension of its real type', async () => {
+    const { options, calls } = saveOptions()
+    await saveMember({
+      ...options,
+      avatarFile: new File([new Uint8Array(PNG)], 'photo.jpg', {
+        type: 'image/jpeg'
+      })
+    })
+
+    const upload = calls.find((c) => c.op === 'upload')
+    expect(upload?.table).toBe('storage:avatars')
+    const [path, , uploadOptions] = upload?.payload as [
+      string,
+      File,
+      { contentType: string }
+    ]
+    expect(path).toBe('person-1_nguyen-van-an.png')
+    expect(uploadOptions.contentType).toBe('image/png')
+  })
+
+  test('a text file renamed to .jpg is rejected before anything is saved', async () => {
+    const { options, calls } = saveOptions()
+    await expect(
+      saveMember({
+        ...options,
+        avatarFile: new File(['not a photo'], 'photo.jpg', {
+          type: 'image/jpeg'
+        })
+      })
+    ).rejects.toBeInstanceOf(InvalidAvatarError)
+    expect(calls).toEqual([])
+  })
+})
+
 describe('submitMemberForm', () => {
   function submitContext() {
     const { options } = saveOptions()
@@ -190,6 +228,16 @@ describe('submitMemberForm', () => {
     expect(state.error).toBeNull()
     expect(state.warning).toBeNull()
     expect(state.pushed).toEqual(['/dashboard/members/person-1'])
+  })
+
+  test('a file that is not an image shows the image type error', async () => {
+    const { ctx, state } = submitContext()
+    await submitMemberForm({
+      ...ctx,
+      avatarFile: new File(['text'], 'a.jpg', { type: 'image/jpeg' })
+    })
+    expect(state.error).toBe('invalidImageType')
+    expect(state.pushed).toEqual([])
   })
 
   test('shows a warning and stays on the form when generations failed', async () => {

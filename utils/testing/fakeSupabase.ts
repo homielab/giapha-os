@@ -3,8 +3,18 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 // A minimal stand-in for the Supabase query builder in unit tests. Every
 // awaited query is recorded as a FakeCall and answered by `respond`, which
 // returns `{ data, error }` like PostgREST does (Supabase never throws).
+// Storage calls are recorded too, with `table` = `storage:<bucket>` and `op`
+// = the storage method; `payload` holds its arguments.
 
-export type FakeOp = 'select' | 'insert' | 'update' | 'upsert' | 'delete'
+export type FakeOp =
+  | 'select'
+  | 'insert'
+  | 'update'
+  | 'upsert'
+  | 'delete'
+  | 'upload'
+  | 'remove'
+  | 'createSignedUrls'
 
 export interface FakeCall {
   table: string
@@ -75,5 +85,34 @@ export function fakeSupabase(respond: (call: FakeCall) => FakeResult) {
     return builder
   }
 
-  return { client: { from } as unknown as SupabaseClient, calls }
+  const storageCall = (bucket: string, op: FakeOp, payload: unknown[]) => {
+    const call: FakeCall = {
+      table: `storage:${bucket}`,
+      op,
+      payload,
+      filters: [],
+      single: false
+    }
+    calls.push(call)
+    try {
+      const result = respond(call)
+      return Promise.resolve({
+        data: result.data ?? null,
+        error: result.error ?? null
+      })
+    } catch (err) {
+      return Promise.reject(err)
+    }
+  }
+
+  const storage = {
+    from: (bucket: string) => ({
+      upload: (...args: unknown[]) => storageCall(bucket, 'upload', args),
+      remove: (...args: unknown[]) => storageCall(bucket, 'remove', args),
+      createSignedUrls: (...args: unknown[]) =>
+        storageCall(bucket, 'createSignedUrls', args)
+    })
+  }
+
+  return { client: { from, storage } as unknown as SupabaseClient, calls }
 }

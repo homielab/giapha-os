@@ -36,3 +36,49 @@ export function getAvatarUrl(value: string | null | undefined) {
   const path = getAvatarStoragePath(value)
   return path ? `/api/avatar?path=${encodeURIComponent(path)}` : null
 }
+
+export const AVATAR_SIGNED_URL_TTL_SECONDS = 60 * 60
+// Signed URLs are dropped this long before they expire, so an image that
+// mounts late (view switch, modal) never gets an already-dead link.
+const SIGNED_URL_EXPIRY_MARGIN_MS = 5 * 60 * 1000
+
+/** Signed avatar URLs keyed by storage path, made once per page on the server. */
+export interface SignedAvatarUrls {
+  urls: Record<string, string>
+  /** Epoch milliseconds after which the URLs must not be used. */
+  expiresAt: number
+}
+
+export const NO_SIGNED_AVATAR_URLS: SignedAvatarUrls = {
+  urls: {},
+  expiresAt: 0
+}
+
+/** Unique storage paths of the given avatar values (invalid ones dropped). */
+export function collectAvatarPaths(
+  values: Iterable<string | null | undefined>
+) {
+  const paths = new Set<string>()
+  for (const value of values) {
+    const path = getAvatarStoragePath(value)
+    if (path) paths.add(path)
+  }
+  return [...paths]
+}
+
+/**
+ * Picks the pre-signed URL for an avatar while it is still valid, otherwise
+ * the authenticated `/api/avatar` route (photos changed after the page loaded,
+ * pages without signed URLs, or a tab left open past the expiry).
+ */
+export function resolveAvatarUrl(
+  value: string | null | undefined,
+  signed: SignedAvatarUrls,
+  now = Date.now()
+) {
+  const path = getAvatarStoragePath(value)
+  if (!path) return null
+  const url = signed.urls[path]
+  if (url && now < signed.expiresAt - SIGNED_URL_EXPIRY_MARGIN_MS) return url
+  return getAvatarUrl(path)
+}

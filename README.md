@@ -69,6 +69,11 @@ Xuất/nhập GEDCOM (7.0) để mở gia phả trong Gramps, MyHeritage… ho�
 - Nhận ảnh JPG, PNG, GIF, WEBP tối đa 10 MB, qua nút chọn file hay kéo thả đều như nhau. Ứng dụng đọc phần đầu file để biết đúng loại ảnh (file chữ đổi đuôi thành `.jpg` bị từ chối) và đặt phần mở rộng trong bucket `gallery` theo loại đó, không theo tên file.
 - Mỗi trang hiện 24 ảnh (`/dashboard/gallery?page=2`…); đường dẫn ký cho cả trang được tạo trong một lần gọi Supabase Storage, hiệu lực 1 giờ. Trang vượt quá trang cuối hiện trang cuối.
 
+### Ảnh đại diện
+
+- Ảnh đại diện nằm trong bucket riêng tư `avatars`, chỉ tài khoản đã kích hoạt mới xem được. Trang thành viên (cây, danh sách, sơ đồ tư duy, bong bóng) và trang Xưng hô ký đường dẫn cho mọi ảnh của trang trong một lần gọi Supabase Storage trên server, hiệu lực 1 giờ; ảnh vừa đổi, trang khác hoặc tab mở quá hạn thì tải qua `/api/avatar`.
+- Khi chọn ảnh, ứng dụng đọc phần đầu file để biết đúng loại (JPG, PNG, GIF, WEBP; file chữ đổi đuôi thành `.jpg` bị từ chối) và lưu phần mở rộng theo loại đó, không theo tên file.
+
 ## Demo
 
 - Demo: [giapha-os.homielab.com](https://giapha-os.homielab.com)

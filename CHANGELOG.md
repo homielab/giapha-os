@@ -18,12 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The gallery signs all image links of a page in one storage request instead of one request per image.
+- Profile photos on the members page (tree, list, mindmap, bubble view) and the kinship page load from links signed in one storage request for the whole page, instead of one request through the app server per member. Other pages still load them through `/api/avatar`.
 - The statistics page (`/dashboard/stats`) computes the totals on the server from the few columns it needs and sends only the numbers to the browser: for a family of 2,000 members the page data drops from about 2 MB to about 1 KB.
 - The PDF/image export libraries (jspdf, html-to-image) load only when you export: opening the tree or mindmap view downloads 25 KB instead of 446 KB of JavaScript (7 KB instead of 143 KB gzipped). d3 is replaced by the d3 modules the bubble view uses (`d3-selection`, `d3-zoom`, `d3-force`, `d3-drag`, `d3-transition`).
 - Lunar dates and death anniversaries use the Vietnamese lunar calendar (UTC+7) instead of the Chinese one, so dates no longer shift by a day or a month in the years where the two calendars differ. The `lunar-javascript` dependency is removed.
 
 ### Fixed
 
+- A profile photo is checked by its content, not its name or the type the browser reports: a text file renamed to `.jpg` is refused, and the photo is stored with the extension of its real type.
 - Adding several children at once no longer reports success for a child whose parent link was refused: that child is removed again, its row shows the reason and stays in the form for another try.
 - Adding a relationship or saving a member now warns when the generation update that follows it fails, instead of only logging it; the member family list shows a load error with a retry button instead of an empty list.
 - Recomputing generations (Lineage) no longer freezes when the data contains a parent–child loop; the members of the loop stop at a bounded generation.

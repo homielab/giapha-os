@@ -7,9 +7,9 @@ import { useState } from 'react'
 
 import DefaultAvatar from '@/components/DefaultAvatar'
 import { FemaleIcon, MaleIcon } from '@/components/GenderIcons'
+import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
-import { getAvatarUrl } from '@/utils/avatar'
 import { getAvatarBg } from '@/utils/styleHelprs'
 
 const getGenderStyle = (gender: string) => {
@@ -27,7 +27,8 @@ export function PersonAvatarBadge({
   bgClassName: string
   fallback: React.ReactNode
 }) {
-  const url = getAvatarUrl(person.avatar_url)
+  const avatarUrl = useAvatarUrl()
+  const url = avatarUrl(person.avatar_url)
   return (
     <div className='relative shrink-0'>
       <div

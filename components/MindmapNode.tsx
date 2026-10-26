@@ -5,9 +5,9 @@ import { ChevronDown, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import { memo, useState } from 'react'
 
+import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
-import { getAvatarUrl } from '@/utils/avatar'
 import { getAvatarBg } from '@/utils/styleHelprs'
 import { AdjacencyLists, getFilteredTreeData } from '@/utils/treeHelpers'
 
@@ -42,14 +42,15 @@ const getTreeData = (personId: string, ctx: MindmapContextData) => {
 }
 
 function NodeAvatar({ person }: { person: Person }) {
+  const avatarUrl = useAvatarUrl()
   return (
     <div className='relative shrink-0'>
       <div
         className={`flex size-10 items-center justify-center overflow-hidden rounded-full text-sm font-medium text-white shadow-md ring-2 ring-white transition-transform duration-300 group-hover/card:scale-105 ${getAvatarBg(person.gender)}`}>
-        {getAvatarUrl(person.avatar_url) ? (
+        {avatarUrl(person.avatar_url) ? (
           <Image
             unoptimized
-            src={getAvatarUrl(person.avatar_url)!}
+            src={avatarUrl(person.avatar_url)!}
             alt={person.full_name}
             width={40}
             height={40}
@@ -151,6 +152,7 @@ function SpouseChips({
   spouses: { person: Person; note?: string | null }[]
   ctx: MindmapContextData
 }) {
+  const avatarUrl = useAvatarUrl()
   const { t } = useI18n()
   return (
     <div className='relative z-30 ml-1 flex flex-wrap gap-1.5 pl-2 before:absolute before:top-1/2 before:left-0 before:h-[70%] before:w-px before:-translate-y-1/2 before:bg-stone-200/80'>
@@ -173,10 +175,10 @@ function SpouseChips({
             {ctx.showAvatar && (
               <div
                 className={`flex size-8 items-center justify-center overflow-hidden rounded-full text-sm font-medium text-white shadow-sm ring-2 ring-white transition-transform duration-300 group-hover/spouse:scale-105 ${getAvatarBg(spouseData.person.gender)}`}>
-                {getAvatarUrl(spouseData.person.avatar_url) ? (
+                {avatarUrl(spouseData.person.avatar_url) ? (
                   <Image
                     unoptimized
-                    src={getAvatarUrl(spouseData.person.avatar_url)!}
+                    src={avatarUrl(spouseData.person.avatar_url)!}
                     alt={spouseData.person.full_name}
                     width={32}
                     height={32}
