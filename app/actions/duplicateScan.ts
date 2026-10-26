@@ -13,7 +13,7 @@ import { fetchAllRows } from '@/utils/supabase/fetchAll'
 import { getIsAdmin, getSupabase } from '@/utils/supabase/queries'
 
 /** Groups returned to the page; the rest are only counted. */
-export const MAX_DUPLICATE_GROUPS = 200
+const MAX_DUPLICATE_GROUPS = 200
 
 export interface DuplicateScanResult {
   groups: DuplicateGroup[]

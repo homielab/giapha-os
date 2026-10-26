@@ -15,7 +15,7 @@ import { fetchAllRows } from '@/utils/supabase/fetchAll'
 import { getIsAdmin, getSupabase } from '@/utils/supabase/queries'
 
 /** Findings of one kind returned to the page; the rest are only counted. */
-export const MAX_FINDINGS_PER_KIND = 200
+const MAX_FINDINGS_PER_KIND = 200
 
 export interface DataCheckResult {
   /** At most `MAX_FINDINGS_PER_KIND` of each kind. */
