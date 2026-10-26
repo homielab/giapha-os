@@ -1,0 +1,173 @@
+import { SupabaseClient } from '@supabase/supabase-js'
+
+import { BulkChildRow } from '@/components/relationship/relationshipTypes'
+import {
+  DatedPerson,
+  RelationshipValidationError,
+  validateNewChildren
+} from '@/utils/relationshipValidation'
+
+import { errorMessage } from './shared'
+
+export interface BulkChildInput {
+  child: BulkChildRow
+  parentId: string
+  otherParentId: string
+  parentGeneration: number | null
+}
+
+export function parseBirthYear(value: string): number | null {
+  if (value.trim() === '') return null
+  const year = parseInt(value)
+  return isNaN(year) ? null : year
+}
+
+export interface BulkChildFailure {
+  child: BulkChildRow
+  error: string
+  // The person row exists but has no parent link (the link failed and so did
+  // removing the person again); adding the row again would duplicate it.
+  orphaned: boolean
+}
+
+export interface BulkCreateResult {
+  created: number
+  failures: BulkChildFailure[]
+}
+
+type ChildOutcome =
+  { ok: true } | { ok: false; error: string; orphaned: boolean }
+
+// Creates one child person plus the parent relationship(s). A child only
+// counts as created when every parent link is saved; when a link fails the
+// new person is removed again (its links go with it, ON DELETE CASCADE).
+async function createChildWithParents(
+  supabase: SupabaseClient,
+  { child, parentId, otherParentId, parentGeneration }: BulkChildInput
+): Promise<ChildOutcome> {
+  const personPayload: {
+    full_name: string
+    gender: 'male' | 'female' | 'other'
+    birth_year?: number
+    birth_order?: number
+    is_in_law?: boolean
+    generation?: number
+  } = {
+    full_name: child.name.trim(),
+    gender: child.gender,
+    is_in_law: false
+  }
+
+  if (parentGeneration != null) {
+    personPayload.generation = parentGeneration + 1
+  }
+  const birthYear = parseBirthYear(child.birthYear)
+  if (birthYear != null) personPayload.birth_year = birthYear
+  if (child.birthOrder.trim() !== '') {
+    const order = parseInt(child.birthOrder)
+    if (!isNaN(order)) personPayload.birth_order = order
+  }
+
+  try {
+    const { data: newPersonData, error: insertError } = await supabase
+      .from('persons')
+      .insert(personPayload)
+      .select('id')
+      .single()
+
+    if (insertError || !newPersonData) {
+      return {
+        ok: false,
+        error: insertError ? errorMessage(insertError) : 'no id returned',
+        orphaned: false
+      }
+    }
+
+    const newChildId: string = newPersonData.id
+    const parentIds = [parentId]
+    if (otherParentId && otherParentId !== 'unknown') {
+      parentIds.push(otherParentId)
+    }
+
+    const { error: linkError } = await supabase.from('relationships').insert(
+      parentIds.map((id) => ({
+        person_a: id,
+        person_b: newChildId,
+        type: 'biological_child'
+      }))
+    )
+    if (!linkError) return { ok: true }
+
+    // RLS turns a refused delete into "0 rows", so check what was removed.
+    const { data: removed, error: removeError } = await supabase
+      .from('persons')
+      .delete()
+      .eq('id', newChildId)
+      .select('id')
+    return {
+      ok: false,
+      error: errorMessage(linkError),
+      orphaned: removeError != null || !removed || removed.length === 0
+    }
+  } catch (err) {
+    return { ok: false, error: errorMessage(err), orphaned: false }
+  }
+}
+
+// Bulk-inserts children in bounded batches of 5 (rows are independent but we
+// avoid firing every insert at once from the browser). Returns how many
+// children were created with their parent links, and the rows that failed.
+export async function bulkCreateChildren(
+  supabase: SupabaseClient,
+  input: {
+    children: BulkChildRow[]
+    parentId: string
+    otherParentId: string
+    parentGeneration: number | null
+    // Birth dates of the parent(s), checked against each child's birth year.
+    parents: DatedPerson[]
+  }
+): Promise<BulkCreateResult> {
+  const { children, parentId, otherParentId, parentGeneration } = input
+
+  const invalid = validateNewChildren(
+    input.parents,
+    children.map((child) => ({ birthYear: parseBirthYear(child.birthYear) }))
+  )
+  if (invalid) {
+    throw new RelationshipValidationError(
+      invalid.code,
+      children[invalid.index].name.trim()
+    )
+  }
+
+  let created = 0
+  const failures: BulkChildFailure[] = []
+
+  const BATCH_SIZE = 5
+  for (let i = 0; i < children.length; i += BATCH_SIZE) {
+    const batch = children.slice(i, i + BATCH_SIZE)
+
+    const results = await Promise.all(
+      batch.map((child) =>
+        createChildWithParents(supabase, {
+          child,
+          parentId,
+          otherParentId,
+          parentGeneration
+        })
+      )
+    )
+    results.forEach((result, index) => {
+      if (result.ok) created++
+      else
+        failures.push({
+          child: batch[index],
+          error: result.error,
+          orphaned: result.orphaned
+        })
+    })
+  }
+
+  return { created, failures }
+}

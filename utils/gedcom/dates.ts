@@ -14,41 +14,28 @@ export function formatDate(
   return `2 DATE ${[dd, mon, String(year)].filter(Boolean).join(' ')}\n`
 }
 
+const GEDCOM_MONTHS = [
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC'
+] as const
+
 export function getMonthName(month: number | null): string {
   if (!month) return ''
-  const months = [
-    'JAN',
-    'FEB',
-    'MAR',
-    'APR',
-    'MAY',
-    'JUN',
-    'JUL',
-    'AUG',
-    'SEP',
-    'OCT',
-    'NOV',
-    'DEC'
-  ]
-  return months[month - 1] || ''
+  return GEDCOM_MONTHS[month - 1] || ''
 }
 
 export function parseMonthName(name: string): number | null {
-  const months = [
-    'JAN',
-    'FEB',
-    'MAR',
-    'APR',
-    'MAY',
-    'JUN',
-    'JUL',
-    'AUG',
-    'SEP',
-    'OCT',
-    'NOV',
-    'DEC'
-  ]
-  const index = months.findIndex((m) => m === name.toUpperCase())
+  const index = GEDCOM_MONTHS.findIndex((m) => m === name.toUpperCase())
   return index !== -1 ? index + 1 : null
 }
 

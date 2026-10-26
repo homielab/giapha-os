@@ -1,5 +1,6 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { describe, expect, test } from 'bun:test'
+
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { GalleryItem } from '@/types'
 import { fakeSupabase as fakeClient } from '@/utils/testing/fakeSupabase'
