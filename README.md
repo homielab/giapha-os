@@ -33,7 +33,7 @@ Phù hợp với người Việt Nam.
 - **Sơ đồ trực quan**: Xem gia phả dạng Cây (Tree), Sơ đồ tư duy (Mindmap) và Bong bóng (Bubble). Trên cây: kéo, Ctrl/⌘ + cuộn chuột hoặc chụm hai ngón (pinch) để phóng to/thu nhỏ. Dùng được bằng bàn phím: Tab vào khung cây rồi bấm `+`/`-` để phóng to/thu nhỏ, `0` để về mặc định, phím mũi tên để cuộn; ở Bong bóng, Tab qua từng gia đình và bấm Enter hoặc Space để chọn.
 - **Xuất ảnh và PDF**: Xuất cây ra ảnh, PDF một trang hoặc PDF nhiều trang A4/A3 ngang (có lề chồng để dán ghép và nhãn "hàng,cột" trên từng tờ).
 - **Tìm danh xưng**: Tự động xác định cách gọi tên (Bác, Chú, Cô, Dì...) chính xác.
-- **Quản lý thành viên**: Lưu trữ thông tin, avatar và sắp xếp thứ tự nhánh dòng họ; tìm không dấu; ⌘/Ctrl + K ở mọi trang Dashboard để tìm nhanh một thành viên.
+- **Quản lý thành viên**: Lưu trữ thông tin, avatar và sắp xếp thứ tự nhánh dòng họ; tìm không dấu (cả ô chọn người ở trang Quan hệ), chọn bằng bàn phím (mũi tên, Enter, Esc); ⌘/Ctrl + K ở mọi trang Dashboard để tìm nhanh một thành viên.
 - **Quản lý quan hệ**: Quản lý các mối quan hệ trong gia phả (hỗ trợ các trường hợp đặc biệt như đa thê, đa phu,...).
 - **Kiểm tra dữ liệu**: Cảnh báo quan hệ vô lý (vòng cha–con, con sinh trước cha mẹ, cha mẹ mất trước khi con sinh) và người trùng tên + năm sinh.
 - **Thống kê & Sự kiện**: Theo dõi sinh nhật, ngày giỗ (âm lịch Việt Nam), sự kiện tuỳ chỉnh và các chỉ số nhân khẩu học của dòng họ; công cụ "Tính lại ngày giỗ âm lịch" cho quản trị viên.

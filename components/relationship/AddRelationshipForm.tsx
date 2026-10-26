@@ -1,8 +1,11 @@
 'use client'
 
+import { useId, useState } from 'react'
+
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, RelationshipType } from '@/types'
 import { formatDisplayDate } from '@/utils/dateHelpers'
+import { pickerKeyNavigation } from '@/utils/pickerNavigation'
 
 interface AddRelationshipFormProps {
   newRelNote: string
@@ -52,6 +55,35 @@ export default function AddRelationshipForm({
   onCancel
 }: AddRelationshipFormProps) {
   const { t } = useI18n()
+  const listId = useId()
+  const [active, setActive] = useState(0)
+  // Escape or a choice hides the list until the text changes again.
+  const [dismissed, setDismissed] = useState(false)
+
+  const showingRecent =
+    searchResults.length === 0 &&
+    searchTerm.length === 0 &&
+    !selectedTargetId &&
+    recentMembers.length > 0
+  const options = searchResults.length > 0 ? searchResults : recentMembers
+  const listOpen = !dismissed && (searchResults.length > 0 || showingRecent)
+  const optionId = (i: number) => `${listId}-opt-${i}`
+
+  const choose = (p: PickerPerson) => {
+    onTargetSelect(p)
+    setDismissed(true)
+  }
+
+  const onSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (!listOpen) return
+    const result = pickerKeyNavigation(e.key, active, options.length)
+    if (!result.handled) return
+    e.preventDefault()
+    setActive(Math.max(result.active, 0))
+    if (result.action === 'close') setDismissed(true)
+    else if (result.action === 'select') choose(options[result.active])
+  }
+
   return (
     <div className='mt-4 rounded-xl border border-stone-200 bg-stone-50/50 p-4 sm:p-5'>
       <h4 className='mb-3 text-base font-semibold text-stone-800'>
@@ -128,28 +160,48 @@ export default function AddRelationshipForm({
             type='text'
             placeholder={t('searchRelativePlaceholder')}
             value={searchTerm}
-            onChange={(e) => onSearchTermChange(e.target.value)}
+            role='combobox'
+            aria-expanded={listOpen}
+            aria-controls={listId}
+            aria-autocomplete='list'
+            aria-activedescendant={listOpen ? optionId(active) : undefined}
+            autoComplete='off'
+            onKeyDown={onSearchKeyDown}
+            onChange={(e) => {
+              onSearchTermChange(e.target.value)
+              setActive(0)
+              setDismissed(false)
+            }}
             className='block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-amber-500 focus:ring-amber-500 sm:p-2.5'
           />
           {/* Search Results Dropdown */}
-          {(searchResults.length > 0 ||
-            (searchTerm.length === 0 &&
-              !selectedTargetId &&
-              recentMembers.length > 0)) && (
+          {listOpen && (
             <div className='mt-2 max-h-62.5 overflow-y-auto rounded-md border border-stone-200 bg-white'>
-              <div className='sticky top-0 z-10 border-b border-stone-200 bg-stone-100 px-3 py-1.5 text-sm font-medium text-stone-500'>
+              <div
+                id={`${listId}-label`}
+                className='sticky top-0 z-10 border-b border-stone-200 bg-stone-100 px-3 py-1.5 text-sm font-medium text-stone-500'>
                 {searchResults.length > 0
                   ? t('searchResults')
                   : t('recentMembers')}
               </div>
-              {(searchResults.length > 0 ? searchResults : recentMembers).map(
-                (p) => (
-                  <button
+              <ul
+                id={listId}
+                role='listbox'
+                aria-labelledby={`${listId}-label`}>
+                {options.map((p, i) => (
+                  <li
                     key={p.id}
-                    onClick={() => onTargetSelect(p)}
-                    className='flex items-center justify-between border-b border-stone-100 px-3 py-2 text-sm last:border-0 hover:bg-amber-50'>
+                    id={optionId(i)}
+                    role='option'
+                    aria-selected={i === active}
+                    onMouseEnter={() => setActive(i)}
+                    onClick={() => choose(p)}
+                    className={`flex cursor-pointer items-center justify-between border-b border-stone-100 px-3 py-2 text-sm last:border-0 hover:bg-amber-50 ${
+                      i === active ? 'bg-amber-50' : ''
+                    }`}>
                     <div className='flex items-center gap-2'>
                       <span
+                        aria-hidden='true'
                         className={`flex size-3 shrink-0 items-center justify-center rounded-full text-sm font-medium text-white ${
                           p.gender === 'male'
                             ? 'bg-sky-500'
@@ -175,11 +227,14 @@ export default function AddRelationshipForm({
                         t
                       )}
                     </span>
-                  </button>
-                )
-              )}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
+          <p role='status' aria-live='polite' className='sr-only'>
+            {listOpen ? t('pickerResultsCount', { count: options.length }) : ''}
+          </p>
           {selectedTargetId && (
             <p className='mt-1 text-sm text-green-600'>
               {t('selectedPerson', { name: searchTerm })}

@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Kinship page and the "add relationship" form: the member pickers now find names without accents ("nguyen" finds "Nguyễn") like the other searches, and work from the keyboard and a screen reader: Up/Down and Enter choose, Esc closes, and the lists are announced as comboboxes with the number of results.
 - Editing the lunar death date of someone who died in a leap month no longer moves the solar date a month earlier: the leap month is kept while the lunar month and year are unchanged.
 - English interface: the relationship (kinship) page no longer shows Vietnamese sentences (relation type, common ancestor, path steps; the kinship terms such as Bác or Chú stay Vietnamese), and a not-updated person or an invalid CSV ZIP now shows its error in the chosen language. A failed log out now shows an error and stays on the page instead of going to the login page.
 - Editing a member no longer wipes their private details (phone, occupation, residence) when those could not be read, for example after a network error: the fields are locked with a message and saving leaves them untouched. A database error on a member or edit page now shows the error page instead of "not found"; only a missing member is a 404.

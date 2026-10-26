@@ -888,6 +888,8 @@ export const messages = {
     globalSearchLoading: 'Đang tải danh sách thành viên...',
     globalSearchNoResults: 'Không có thành viên nào khớp.',
     globalSearchLoadError: 'Không tải được danh sách thành viên: {error}.',
+    pickerResultsCount:
+      '{count} kết quả. Dùng mũi tên lên/xuống và Enter để chọn, Esc để đóng.',
     treeCanvasLabel: 'Khung cây gia phả',
     treeKeyboardHint:
       'Phím + và - phóng to, thu nhỏ; phím 0 về mặc định; phím mũi tên cuộn cây.',
@@ -1894,6 +1896,8 @@ export const messages = {
     globalSearchLoading: 'Loading the member list...',
     globalSearchNoResults: 'No matching member.',
     globalSearchLoadError: 'Could not load the member list: {error}.',
+    pickerResultsCount:
+      '{count} results. Use the up/down arrows and Enter to choose, Esc to close.',
     treeCanvasLabel: 'Family tree canvas',
     treeKeyboardHint:
       'Press + and - to zoom in and out, 0 to reset the zoom, and the arrow keys to scroll the tree.',
