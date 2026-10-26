@@ -21,8 +21,10 @@ import {
 } from '@/components/modal/MemberDetailModalPanels'
 import { useUser } from '@/components/UserProvider'
 import { useMemberListView } from '@/context/useMemberListView'
+import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
+import { shouldCloseMemberModalOnEscape } from '@/utils/memberModalEscape'
 import { fetchPrivateDetails } from '@/utils/privateDetails'
 
 function ModalHeaderActions({
@@ -178,18 +180,16 @@ export default function MemberDetailModal() {
     setIsEditing(false)
   }, [setMemberModalId, setShowCreateMember])
 
-  // Escape closes the detail view (not the form, to avoid losing edits)
-  const handleEscapeClose = useEffectEvent((e: KeyboardEvent) => {
-    if (e.key === 'Escape') closeModal()
-  })
-  useEffect(() => {
-    if (!isOpen || isEditing || showCreateMember) return
-    const onKeyDown = (e: KeyboardEvent) => {
-      handleEscapeClose(e)
+  // Escape closes the detail view, not a form being edited (see the helper)
+  const dialogRef = useModalA11y<HTMLDivElement>(() => {
+    if (shouldCloseMemberModalOnEscape({ isEditing, showCreateMember })) {
+      closeModal()
     }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isOpen, isEditing, showCreateMember])
+  }, isOpen)
+  let dialogLabel = t('memberDetails')
+  if (showCreateMember) dialogLabel = t('addMember')
+  else if (isEditing) dialogLabel = t('editMember')
+  else if (person) dialogLabel = person.full_name
 
   const fetchData = useCallback(
     async (id: string) => {
@@ -309,8 +309,11 @@ export default function MemberDetailModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
+          ref={dialogRef}
           role='dialog'
           aria-modal='true'
+          aria-label={dialogLabel}
+          tabIndex={-1}
           className='fixed inset-0 z-100 flex items-center justify-center bg-stone-900/40 backdrop-blur-sm sm:p-6'>
           {/* Click-away backdrop (disabled while editing/creating to avoid accidental close) */}
           {!isEditing && !showCreateMember && (
