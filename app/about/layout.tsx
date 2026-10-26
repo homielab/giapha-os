@@ -1,4 +1,6 @@
+import JsonLd from '@/components/JsonLd'
 import { getServerTranslations } from '@/lib/i18n/server'
+import { softwareApplicationJsonLd } from '@/lib/jsonLd'
 import { publicPageMetadata } from '@/lib/metadata'
 
 export async function generateMetadata() {
@@ -11,8 +13,19 @@ export async function generateMetadata() {
   })
 }
 
-export default function AboutLayout({
+export default async function AboutLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
-  return children
+  const { t, locale } = await getServerTranslations()
+  return (
+    <>
+      <JsonLd
+        data={softwareApplicationJsonLd({
+          description: t('aboutDescriptionShort'),
+          locale
+        })}
+      />
+      {children}
+    </>
+  )
 }
