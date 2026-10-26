@@ -33,7 +33,7 @@ Designed primarily for Vietnamese families.
 - **Interactive family trees**: Explore your genealogy as a Tree, Mindmap or Bubble view. On the tree, drag, Ctrl/⌘ + scroll or pinch with two fingers to zoom. It also works from the keyboard: Tab into the tree, then `+`/`-` to zoom, `0` to reset and the arrow keys to scroll; in the Bubble view, Tab through the families and press Enter or Space to select one.
 - **Image and PDF export**: Export the tree as an image, a single-page PDF, or a multi-page A4/A3 landscape PDF (with an overlap for gluing sheets together and a "row,column" label on each page).
 - **Kinship finder**: Automatically determine accurate Vietnamese forms of address, such as uncle, aunt, or cousin.
-- **Member management**: Store member information and avatars, and organize family branches; accent-insensitive search.
+- **Member management**: Store member information and avatars, and organize family branches; accent-insensitive search; press ⌘/Ctrl + K on any Dashboard page to jump to a member.
 - **Relationship management**: Manage family relationships, including special cases such as polygamous relationships.
 - **Data checks**: Warnings for impossible relationships (parent-child loops, a child born before a parent, a parent who died before the child's birth) and for people with the same name and birth year.
 - **Statistics and events**: Track birthdays, death anniversaries (Vietnamese lunar calendar), custom events and family demographic statistics; admins get a "recompute lunar death dates" tool.

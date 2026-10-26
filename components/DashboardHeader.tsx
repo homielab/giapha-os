@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 import config from '@/app/config'
+import GlobalMemberSearch from '@/components/GlobalMemberSearch'
 import HeaderMenu from '@/components/HeaderMenu'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 
@@ -28,6 +29,7 @@ export default function DashboardHeader() {
           </Link>
         </div>
         <div className='flex items-center gap-4'>
+          <GlobalMemberSearch />
           <LanguageSwitcher />
           <HeaderMenu />
         </div>

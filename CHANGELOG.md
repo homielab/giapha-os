@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Dashboard: a search button in the header (also Ctrl/⌘ + K on any dashboard page) finds a member by name without accents ("nguyen van" finds "Nguyễn Văn …"), shows birth/death years to tell namesakes apart, and Enter opens the profile. The list loads only when the search is first opened.
 - Member form: a "Leap month" checkbox next to the lunar death date, shown when that lunar year has the typed leap month (e.g. 2023 month 2, 2025 month 6), so a death date in a leap month can be entered from the lunar date alone.
 - Keyboard access to the tree views: in the Bubble view every family can be reached with Tab (read out with the names and birth years) and selected with Enter or Space; on the Tree, `+`/`-` zoom around the centre, `0` resets and the arrow keys scroll by 40 px. Both canvases announce how to use them.
 - Events page: an "Add to calendar (.ics)" button downloads birthdays (repeating yearly), death anniversaries for this and next year (lunar dates, same solar dates as the page) and custom events, ready to import into Google or Apple Calendar for reminders. The README feature lists (Vietnamese and English) now cover the bubble view, A4/A3 PDF, pinch zoom, duplicate checks, custom events, the lunar recompute tool and the English interface.
