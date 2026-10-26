@@ -1,4 +1,4 @@
-import { Lunar, Solar } from 'lunar-javascript'
+import { lunarAnniversaryInYear, solarToLunar } from '@/utils/lunarCalendar'
 
 export type EventType = 'birthday' | 'death_anniversary' | 'custom_event'
 
@@ -33,41 +33,15 @@ export interface CustomEventRecord {
   created_by: string | null
 }
 
-/**
- * Finds the next solar Date on which a given lunar (month, day) falls,
- * starting from `fromDate`.
- */
-function nextSolarForLunar(
+/** Local Date (midnight) on which a lunar anniversary falls in a lunar year. */
+function anniversaryDate(
+  lunarYear: number,
   lunarMonth: number,
   lunarDay: number,
-  fromDate: Date
+  leap: boolean
 ): Date | null {
-  // Derive the current lunar year by converting today's solar date to lunar
-  const todaySolar = Solar.fromYmd(
-    fromDate.getFullYear(),
-    fromDate.getMonth() + 1,
-    fromDate.getDate()
-  )
-  const currentLunarYear = todaySolar.getLunar().getYear()
-
-  // Try this lunar year and the next two (to handle leap months & edge cases)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const LunarClass = Lunar as any
-  for (let offset = 0; offset <= 2; offset++) {
-    try {
-      const l = LunarClass.fromYmd(
-        currentLunarYear + offset,
-        lunarMonth,
-        lunarDay
-      )
-      const s = l.getSolar()
-      const candidate = new Date(s.getYear(), s.getMonth() - 1, s.getDay())
-      if (candidate >= fromDate) return candidate
-    } catch {
-      // lunar date may not exist in this year (e.g., leap month); try next
-    }
-  }
-  return null
+  const s = lunarAnniversaryInYear(lunarYear, lunarMonth, lunarDay, leap)
+  return s ? new Date(s.year, s.month - 1, s.day) : null
 }
 
 /**
@@ -90,9 +64,10 @@ export function computeEvents(
     death_lunar_day: number | null
     is_deceased: boolean
   }[],
-  customEvents: CustomEventRecord[] = []
+  customEvents: CustomEventRecord[] = [],
+  now: Date = new Date()
 ): FamilyEvent[] {
-  const today = new Date()
+  const today = new Date(now)
   today.setHours(0, 0, 0, 0)
   const events: FamilyEvent[] = []
 
@@ -145,83 +120,79 @@ export function computeEvents(
       ((p.death_lunar_month && p.death_lunar_day) ||
         (p.death_month && p.death_day))
     ) {
-      try {
-        let lMonth: number
-        let lDay: number
+      let lMonth: number
+      let lDay: number
+      let leap = false
 
+      // The solar death date gives the leap-month flag, which is not stored.
+      const lunarOfSolarDeath =
+        p.death_year && p.death_month && p.death_day
+          ? solarToLunar(p.death_year, p.death_month, p.death_day)
+          : null
+
+      if (p.death_lunar_month && p.death_lunar_day) {
         // Prefer exact lunar date from DB
-        if (p.death_lunar_month && p.death_lunar_day) {
-          lMonth = p.death_lunar_month
-          lDay = p.death_lunar_day
-        } else {
-          // Fallback: Convert the solar death date to a lunar date
-          const deathYear = p.death_year ?? new Date().getFullYear()
-          const solar = Solar.fromYmd(
-            deathYear,
+        lMonth = p.death_lunar_month
+        lDay = p.death_lunar_day
+        leap =
+          !!lunarOfSolarDeath?.leap &&
+          lunarOfSolarDeath.month === lMonth &&
+          lunarOfSolarDeath.day === lDay
+      } else {
+        // Fallback: Convert the solar death date to a lunar date
+        const lunar =
+          lunarOfSolarDeath ??
+          solarToLunar(
+            today.getFullYear(),
             p.death_month as number,
             p.death_day as number
           )
-          const lunar = solar.getLunar()
-          lMonth = Math.abs(lunar.getMonth()) // abs to handle leap month
-          lDay = lunar.getDay()
-        }
+        if (!lunar) continue
+        lMonth = lunar.month
+        lDay = lunar.day
+        leap = lunarOfSolarDeath?.leap ?? false
+      }
 
-        const next = nextSolarForLunar(lMonth, lDay, today)
-        if (!next) continue
+      const currentLunarYear = solarToLunar(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        today.getDate()
+      )?.year
+      if (!currentLunarYear) continue
 
-        const daysUntil = Math.round(
-          (next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-        )
+      // This lunar year's anniversary; once it has passed, the next one is
+      // in the following lunar year and this one is listed as past.
+      const thisYear = anniversaryDate(currentLunarYear, lMonth, lDay, leap)
+      const nextYear = anniversaryDate(currentLunarYear + 1, lMonth, lDay, leap)
+      const next = thisYear && thisYear >= today ? thisYear : nextYear
+      if (!next) continue
 
-        const deathEvent: FamilyEvent = {
-          personId: p.id,
-          personName: p.full_name,
-          type: 'death_anniversary',
-          nextOccurrence: next,
-          daysUntil,
-          eventDateLabel: `${lDay.toString().padStart(2, '0')}/${lMonth.toString().padStart(2, '0')} ÂL`,
-          originYear: (p.death_lunar_year ?? p.death_year) || null,
-          originMonth: p.death_lunar_month ?? p.death_month,
-          originDay: p.death_lunar_day ?? p.death_day,
-          isDeceased: p.is_deceased
-        }
-        events.push(deathEvent)
+      const daysUntil = Math.round(
+        (next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      )
 
-        // Past occurrence: find this year's lunar date converted to solar
-        // If daysUntil > 0, the event already passed for the previous lunar year cycle
-        if (daysUntil > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const LunarClass = Lunar as any
-          const todaySolar = Solar.fromYmd(
-            today.getFullYear(),
-            today.getMonth() + 1,
-            today.getDate()
+      const deathEvent: FamilyEvent = {
+        personId: p.id,
+        personName: p.full_name,
+        type: 'death_anniversary',
+        nextOccurrence: next,
+        daysUntil,
+        eventDateLabel: `${lDay.toString().padStart(2, '0')}/${lMonth.toString().padStart(2, '0')} ÂL`,
+        originYear: (p.death_lunar_year ?? p.death_year) || null,
+        originMonth: p.death_lunar_month ?? p.death_month,
+        originDay: p.death_lunar_day ?? p.death_day,
+        isDeceased: p.is_deceased
+      }
+      events.push(deathEvent)
+
+      if (thisYear && thisYear < today) {
+        events.push({
+          ...deathEvent,
+          nextOccurrence: thisYear,
+          daysUntil: Math.round(
+            (thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
           )
-          const currentLunarYear = todaySolar.getLunar().getYear()
-          try {
-            const pastLunar = LunarClass.fromYmd(currentLunarYear, lMonth, lDay)
-            const pastSolar = pastLunar.getSolar()
-            const pastDate = new Date(
-              pastSolar.getYear(),
-              pastSolar.getMonth() - 1,
-              pastSolar.getDay()
-            )
-            if (pastDate < today) {
-              const pastDaysUntil = Math.round(
-                (pastDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-              )
-              events.push({
-                ...deathEvent,
-                nextOccurrence: pastDate,
-                daysUntil: pastDaysUntil
-              })
-            }
-          } catch {
-            // Skip if past lunar date doesn't exist
-          }
-        }
-      } catch {
-        // Skip if lunar conversion fails
+        })
       }
     }
   }

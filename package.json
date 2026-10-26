@@ -23,7 +23,6 @@
     "jspdf": "^4.2.1",
     "jszip": "^3.10.2",
     "lucide-react": "^1.59.0",
-    "lunar-javascript": "^1.7.7",
     "next": "16.4.2",
     "papaparse": "^5.7.0",
     "postgres": "^3.4.9",

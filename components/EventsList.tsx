@@ -2,7 +2,6 @@
 
 import { m } from 'framer-motion'
 import { CalendarDays, Plus } from 'lucide-react'
-import { Solar } from 'lunar-javascript'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 
@@ -14,6 +13,7 @@ import {
   CustomEventRecord,
   FamilyEvent
 } from '@/utils/eventHelpers'
+import { solarToLunar } from '@/utils/lunarCalendar'
 
 interface EventsListProps {
   persons: {
@@ -88,20 +88,15 @@ export default function EventsList({
       year: today.getFullYear()
     })
     let lunarStr = ''
-    try {
-      const solar = Solar.fromYmd(
-        today.getFullYear(),
-        today.getMonth() + 1,
-        today.getDate()
-      )
-      const lunar = solar.getLunar()
-      const lMonthRaw = lunar.getMonth()
-      const isLeap = lMonthRaw < 0
-      const lMonth = Math.abs(lMonthRaw).toString().padStart(2, '0')
-      const lDay = lunar.getDay().toString().padStart(2, '0')
-      lunarStr = `${lDay}/${lMonth}${isLeap ? t('leapMonth') : ''}${t('lunarSuffix')}`
-    } catch (e) {
-      console.error(e)
+    const lunar = solarToLunar(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      today.getDate()
+    )
+    if (lunar) {
+      const lMonth = lunar.month.toString().padStart(2, '0')
+      const lDay = lunar.day.toString().padStart(2, '0')
+      lunarStr = `${lDay}/${lMonth}${lunar.leap ? t('leapMonth') : ''}${t('lunarSuffix')}`
     }
     return { solar: solarStr, lunar: lunarStr }
   })

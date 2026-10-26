@@ -1,6 +1,8 @@
-import { Lunar, Solar } from 'lunar-javascript'
-
 import { Gender } from '@/types'
+import {
+  lunarToSolar as convertLunarToSolar,
+  solarToLunar as convertSolarToLunar
+} from '@/utils/lunarCalendar'
 
 export function slugify(str: string) {
   return str
@@ -135,16 +137,9 @@ export function solarToLunar(
   y: number | ''
 ): { day: number; month: number; year: number } | null {
   if (d === '' || m === '' || y === '') return null
-  try {
-    const lunar = Solar.fromYmd(y, m, d).getLunar()
-    return {
-      day: lunar.getDay(),
-      month: Math.abs(lunar.getMonth()),
-      year: lunar.getYear()
-    }
-  } catch {
-    return null
-  }
+  // The leap-month flag is not stored: a leap month is saved as its number.
+  const lunar = convertSolarToLunar(y, m, d)
+  return lunar ? { day: lunar.day, month: lunar.month, year: lunar.year } : null
 }
 
 export function lunarToSolar(
@@ -153,16 +148,8 @@ export function lunarToSolar(
   y: number | ''
 ): { day: number; month: number; year: number } | null {
   if (d === '' || m === '' || y === '') return null
-  try {
-    const solar = Lunar.fromYmd(y, m, d).getSolar()
-    return {
-      day: solar.getDay(),
-      month: solar.getMonth(),
-      year: solar.getYear()
-    }
-  } catch {
-    return null
-  }
+  // Entered lunar dates are read as regular (non-leap) months.
+  return convertLunarToSolar(y, m, d)
 }
 
 export interface MemberFormFields {
@@ -219,17 +206,7 @@ export function solarToLunarSafe(
   y: number | ''
 ): { day: number; month: number; year: number } | null {
   if (d === '' || m === '' || y === '' || y <= 100) return null
-  try {
-    const lunar = Solar.fromYmd(y, m, d).getLunar()
-    return {
-      day: lunar.getDay(),
-      month: Math.abs(lunar.getMonth()),
-      year: lunar.getYear()
-    }
-  } catch {
-    // Ignore invalid dates
-    return null
-  }
+  return solarToLunar(d, m, y)
 }
 
 export function lunarToSolarSafe(
@@ -238,15 +215,5 @@ export function lunarToSolarSafe(
   y: number | ''
 ): { day: number; month: number; year: number } | null {
   if (d === '' || m === '' || y === '' || y <= 100) return null
-  try {
-    const solar = Lunar.fromYmd(y, m, d).getSolar()
-    return {
-      day: solar.getDay(),
-      month: solar.getMonth(),
-      year: solar.getYear()
-    }
-  } catch {
-    // Ignore invalid dates
-    return null
-  }
+  return lunarToSolar(d, m, y)
 }

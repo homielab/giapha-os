@@ -1,4 +1,8 @@
-import { Lunar, Solar } from 'lunar-javascript'
+import {
+  lunarToSolar,
+  lunarYearName,
+  solarToLunar
+} from '@/utils/lunarCalendar'
 
 export function formatDisplayDate(
   year: number | null,
@@ -22,25 +26,16 @@ export function getLunarDateString(
 ): string | null {
   if (!year || !month || !day) return null
 
-  try {
-    const solar = Solar.fromYmd(
-      year,
-      parseInt(month.toString()),
-      parseInt(day.toString())
-    )
-    const lunar = solar.getLunar()
+  const lunar = solarToLunar(
+    year,
+    parseInt(month.toString()),
+    parseInt(day.toString())
+  )
+  if (!lunar) return null
 
-    const lDay = lunar.getDay().toString().padStart(2, '0')
-    const lMonthRaw = lunar.getMonth()
-    const isLeap = lMonthRaw < 0
-    const lMonth = Math.abs(lMonthRaw).toString().padStart(2, '0')
-    const lYear = lunar.getYear()
-
-    return `${lDay}/${lMonth}${isLeap ? ' nhuận' : ''}/${lYear}`
-  } catch (error) {
-    console.error('Lunar conversion error:', error)
-    return null
-  }
+  const lDay = lunar.day.toString().padStart(2, '0')
+  const lMonth = lunar.month.toString().padStart(2, '0')
+  return `${lDay}/${lMonth}${lunar.leap ? ' nhuận' : ''}/${lunar.year}`
 }
 
 export function getSolarDateString(
@@ -50,24 +45,16 @@ export function getSolarDateString(
 ): string | null {
   if (!year || !month || !day) return 'Chưa rõ'
 
-  try {
-    const lunar = Lunar.fromYmd(
-      year,
-      parseInt(month.toString()),
-      parseInt(day.toString())
-    )
-    const solar = lunar.getSolar()
+  const solar = lunarToSolar(
+    year,
+    parseInt(month.toString()),
+    parseInt(day.toString())
+  )
+  if (!solar) return null
 
-    const sDay = solar.getDay().toString().padStart(2, '0')
-    const sMonthRaw = solar.getMonth()
-    const sMonth = Math.abs(sMonthRaw).toString().padStart(2, '0')
-    const sYear = solar.getYear()
-
-    return `${sDay}/${sMonth}/${sYear}`
-  } catch (error) {
-    console.error('Solar conversion error:', error)
-    return null
-  }
+  const sDay = solar.day.toString().padStart(2, '0')
+  const sMonth = solar.month.toString().padStart(2, '0')
+  return `${sDay}/${sMonth}/${solar.year}`
 }
 
 export function calculateAge(
@@ -168,58 +155,15 @@ export function getZodiacAnimal(
   let targetYear = year
 
   if (month && day) {
-    try {
-      const solar = Solar.fromYmd(
-        year,
-        parseInt(month.toString()),
-        parseInt(day.toString())
-      )
-      targetYear = solar.getLunar().getYear()
-    } catch (error) {
-      console.error('Lunar conversion error in zodiac:', error)
-    }
+    const lunar = solarToLunar(
+      year,
+      parseInt(month.toString()),
+      parseInt(day.toString())
+    )
+    if (lunar) targetYear = lunar.year
   }
 
   return animals[targetYear % 12]
-}
-
-/* ── Thiên Can & Địa Chi (Vietnamese Can Chi) ─────────────────────── */
-const THIEN_CAN: Record<string, string> = {
-  甲: 'Giáp',
-  乙: 'Ất',
-  丙: 'Bính',
-  丁: 'Đinh',
-  戊: 'Mậu',
-  己: 'Kỷ',
-  庚: 'Canh',
-  辛: 'Tân',
-  壬: 'Nhâm',
-  癸: 'Quý'
-}
-
-const DIA_CHI: Record<string, string> = {
-  子: 'Tý',
-  丑: 'Sửu',
-  寅: 'Dần',
-  卯: 'Mão',
-  辰: 'Thìn',
-  巳: 'Tỵ',
-  午: 'Ngọ',
-  未: 'Mùi',
-  申: 'Thân',
-  酉: 'Dậu',
-  戌: 'Tuất',
-  亥: 'Hợi'
-}
-
-/**
- * Convert a Chinese Gan-Zhi string (e.g. "丙午") to Vietnamese (e.g. "Bính Ngọ").
- */
-function ganZhiToVietnamese(ganZhi: string): string {
-  if (!ganZhi || ganZhi.length < 2) return ganZhi
-  const can = THIEN_CAN[ganZhi[0]] ?? ganZhi[0]
-  const chi = DIA_CHI[ganZhi[1]] ?? ganZhi[1]
-  return `${can} ${chi}`
 }
 
 /**
@@ -232,12 +176,11 @@ export function getTodayLunar() {
   })
   const vnDate = new Date(vnTimeStr)
 
-  const solar = Solar.fromYmd(
+  const lunar = solarToLunar(
     vnDate.getFullYear(),
     vnDate.getMonth() + 1,
     vnDate.getDate()
-  )
-  const lunar = solar.getLunar()
+  )!
 
   return {
     solarStr: vnDate.toLocaleDateString('vi-VN', {
@@ -246,9 +189,9 @@ export function getTodayLunar() {
       month: 'long',
       year: 'numeric'
     }),
-    lunarDay: lunar.getDay(),
-    lunarMonth: Math.abs(lunar.getMonth()),
-    lunarYear: ganZhiToVietnamese(lunar.getYearInGanZhi()),
-    lunarDayStr: `${lunar.getDay()} tháng ${Math.abs(lunar.getMonth())}`
+    lunarDay: lunar.day,
+    lunarMonth: lunar.month,
+    lunarYear: lunarYearName(lunar.year),
+    lunarDayStr: `${lunar.day} tháng ${lunar.month}`
   }
 }

@@ -38,6 +38,13 @@ Phù hợp với người Việt Nam.
 - **Bảo mật**: Phân quyền (Admin, Editor, Member) và bảo vệ dữ liệu bằng Supabase.
 - **Đa thiết bị**: Giao diện hiện đại, tối ưu cho cả máy tính và điện thoại.
 
+### Âm lịch và ngày giỗ
+
+Ứng dụng dùng âm lịch Việt Nam (tính theo múi giờ UTC+7, thuật toán của Hồ Ngọc Đức), không dùng lịch Trung Quốc (UTC+8) — hai lịch có năm lệch nhau một ngày hoặc cả tháng (ví dụ Tết 2007 là 17/02 ở Việt Nam, 18/02 ở Trung Quốc). Ngày giỗ được tính lại mỗi năm theo âm lịch:
+
+- **Ngày 30 ở tháng thiếu**: năm nào tháng đó chỉ có 29 ngày thì giỗ vào ngày 29 (ngày cuối tháng).
+- **Mất trong tháng nhuận**: năm nào có đúng tháng nhuận đó thì giỗ trong tháng nhuận, năm khác thì giỗ trong tháng thường cùng số. Ứng dụng biết tháng nhuận từ ngày mất dương lịch; ngày âm lịch nhập tay được hiểu là tháng thường.
+
 ## Demo
 
 - Demo: [giapha-os.homielab.com](https://giapha-os.homielab.com)

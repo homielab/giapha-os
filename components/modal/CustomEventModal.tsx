@@ -2,7 +2,6 @@
 
 import { AnimatePresence, m, Variants } from 'framer-motion'
 import { Calendar as CalendarIcon, Loader2, Moon, Sun } from 'lucide-react'
-import { Lunar } from 'lunar-javascript'
 import { useEffect, useState } from 'react'
 
 import EventDateFields from '@/components/modal/EventDateFields'
@@ -13,6 +12,7 @@ import EventNameField from '@/components/modal/EventNameField'
 import EventTextFields from '@/components/modal/EventTextFields'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { CustomEventRecord } from '@/utils/eventHelpers'
+import { lunarToSolar } from '@/utils/lunarCalendar'
 import { createClient } from '@/utils/supabase/client'
 
 interface CustomEventModalProps {
@@ -86,19 +86,17 @@ export default function CustomEventModal({
       lunarYear > 100
     ) {
       const frame = requestAnimationFrame(() => {
-        try {
-          const lunar = Lunar.fromYmd(
-            lunarYear as number,
-            lunarMonth as number,
-            lunarDay as number
-          )
-          const solar = lunar.getSolar()
-          const y = solar.getYear()
-          const m = String(solar.getMonth()).padStart(2, '0')
-          const d = String(solar.getDay()).padStart(2, '0')
-          setEventDate(`${y}-${m}-${d}`)
+        const solar = lunarToSolar(
+          lunarYear as number,
+          lunarMonth as number,
+          lunarDay as number
+        )
+        if (solar) {
+          const m = String(solar.month).padStart(2, '0')
+          const d = String(solar.day).padStart(2, '0')
+          setEventDate(`${solar.year}-${m}-${d}`)
           setLunarConvertError(null)
-        } catch {
+        } else {
           setLunarConvertError(t('lunarDateInvalid'))
         }
       })
