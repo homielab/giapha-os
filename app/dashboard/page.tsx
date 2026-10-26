@@ -16,7 +16,7 @@ import {
 import Link from 'next/link'
 
 import { getServerTranslations } from '@/lib/i18n/server'
-import { getTodayLunar } from '@/utils/dateHelpers'
+import { getTodayLunar, vnToday } from '@/utils/dateHelpers'
 import { computeEvents } from '@/utils/eventHelpers'
 import { fetchAllRows } from '@/utils/supabase/fetchAll'
 import { getIsAdmin, getSupabase } from '@/utils/supabase/queries'
@@ -67,7 +67,7 @@ export default async function DashboardLaunchpad() {
     )
   ])
 
-  const allEvents = computeEvents(persons ?? [], customEvents ?? [])
+  const allEvents = computeEvents(persons ?? [], customEvents ?? [], vnToday())
   const upcomingEvents = allEvents.filter(
     (e) => e.daysUntil >= 0 && e.daysUntil <= 30
   )

@@ -1,3 +1,4 @@
+import { vnToday } from '@/utils/dateHelpers'
 import { lunarAnniversaryInYear, solarToLunar } from '@/utils/lunarCalendar'
 
 export type EventType = 'birthday' | 'death_anniversary' | 'custom_event'
@@ -16,6 +17,11 @@ export interface FamilyEvent {
   originYear?: number | null
   originMonth?: number | null
   originDay?: number | null
+  /**
+   * The lunar date was derived from a solar date without a year, so it depends
+   * on the current year and may differ from the real anniversary.
+   */
+  approximate?: boolean
   /** Whether the person is deceased */
   isDeceased: boolean
   /** Optional location for the event */
@@ -31,6 +37,15 @@ export interface CustomEventRecord {
   event_date: string
   location: string | null
   created_by: string | null
+}
+
+/**
+ * Solar date in a year; a day the month does not have in that year (29/2 in a
+ * common year) falls on the last day of the month (28/2).
+ */
+function solarDate(year: number, month: number, day: number): Date {
+  const lastDay = new Date(year, month, 0).getDate()
+  return new Date(year, month - 1, Math.min(day, lastDay))
 }
 
 /** Local Date (midnight) on which a lunar anniversary falls in a lunar year. */
@@ -65,8 +80,10 @@ export function computeEvents(
     is_deceased: boolean
   }[],
   customEvents: CustomEventRecord[] = [],
-  now: Date = new Date()
+  now: Date = vnToday()
 ): FamilyEvent[] {
+  // `now` is a calendar day (year/month/day in local fields); the default is
+  // today in Vietnam, the same day the lunar date on the page uses.
   const today = new Date(now)
   today.setHours(0, 0, 0, 0)
   const events: FamilyEvent[] = []
@@ -75,13 +92,13 @@ export function computeEvents(
     // ── Birthday (solar) ────────────────────────────────────────────
     if (p.birth_month && p.birth_day) {
       const thisYear = today.getFullYear()
-      const thisYearDate = new Date(thisYear, p.birth_month - 1, p.birth_day)
+      const thisYearDate = solarDate(thisYear, p.birth_month, p.birth_day)
       const isUpcoming = thisYearDate >= today
 
       // Next occurrence (upcoming)
       const next = isUpcoming
         ? thisYearDate
-        : new Date(thisYear + 1, p.birth_month - 1, p.birth_day)
+        : solarDate(thisYear + 1, p.birth_month, p.birth_day)
 
       const daysUntil = Math.round(
         (next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
@@ -123,6 +140,7 @@ export function computeEvents(
       let lMonth: number
       let lDay: number
       let leap = false
+      let approximate = false
 
       // The solar death date gives the leap-month flag, which is not stored.
       const lunarOfSolarDeath =
@@ -139,7 +157,9 @@ export function computeEvents(
           lunarOfSolarDeath.month === lMonth &&
           lunarOfSolarDeath.day === lDay
       } else {
-        // Fallback: Convert the solar death date to a lunar date
+        // Fallback: convert the solar death date to a lunar date. Without a
+        // death year this uses the current year, so it is only an estimate.
+        approximate = !p.death_year
         const lunar =
           lunarOfSolarDeath ??
           solarToLunar(
@@ -181,6 +201,7 @@ export function computeEvents(
         originYear: (p.death_lunar_year ?? p.death_year) || null,
         originMonth: p.death_lunar_month ?? p.death_month,
         originDay: p.death_lunar_day ?? p.death_day,
+        ...(approximate ? { approximate } : {}),
         isDeceased: p.is_deceased
       }
       events.push(deathEvent)

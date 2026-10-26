@@ -1,4 +1,5 @@
 import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
+import { vnToday } from '@/utils/dateHelpers'
 import { FamilyEvent } from '@/utils/eventHelpers'
 
 const SPECIAL_DAY_OFFSETS = new Set([-1, 0, 1])
@@ -48,6 +49,7 @@ export function formatEventDateLabel(event: FamilyEvent, t: Translate): string {
       date: event.eventDateLabel.replace(' ÂL', '').replace(' L', '')
     })
   }
+  if (event.approximate) label += t('approximateDateSuffix')
   return label
 }
 
@@ -57,7 +59,7 @@ export function getEventYearsInfo(
   t: Translate
 ): string | null {
   if (!event.originYear) return null
-  const now = new Date().getFullYear()
+  const now = vnToday().getFullYear()
   const diff = now - event.originYear
   if (diff <= 0) return null
   if (isBirthday) return t('yearsOld', { count: diff })

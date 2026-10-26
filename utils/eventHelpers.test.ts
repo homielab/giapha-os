@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
+import { vnToday } from './dateHelpers'
 import { computeEvents } from './eventHelpers'
 
 type PersonInput = Parameters<typeof computeEvents>[0][number]
@@ -135,5 +136,79 @@ describe('computeEvents: birthdays and custom events', () => {
     )
     expect(event.daysUntil).toBe(9)
     expect(event.eventDateLabel).toBe('10/04/2025')
+  })
+})
+
+describe('computeEvents: Vietnam day, estimates and 29/2', () => {
+  // 00:30 on 8 March in Vietnam (UTC+7) is 17:30 UTC on 7 March.
+  const earlyMorning = new Date('2025-03-07T17:30:00Z')
+
+  test('vnToday is the Vietnamese calendar day', () => {
+    expect(vnToday(earlyMorning)).toEqual(day(2025, 3, 8))
+    expect(vnToday(new Date('2025-03-08T16:59:00Z'))).toEqual(day(2025, 3, 8))
+    expect(vnToday(new Date('2025-03-08T17:00:00Z'))).toEqual(day(2025, 3, 9))
+  })
+
+  test('at 00:30 in Vietnam a birthday today is today, not tomorrow', () => {
+    const person = deceased({
+      is_deceased: false,
+      birth_month: 3,
+      birth_day: 8
+    })
+    const [event] = computeEvents([person], [], vnToday(earlyMorning))
+    expect(event.daysUntil).toBe(0)
+  })
+
+  test('at 00:30 in Vietnam a giỗ today is today', () => {
+    // 8/3/2025 solar = 9/2 lunar
+    const person = deceased({
+      death_lunar_month: 2,
+      death_lunar_day: 9,
+      death_year: 2000,
+      death_month: 1,
+      death_day: 1
+    })
+    const [event] = deathEvents(person, vnToday(earlyMorning))
+    expect(event.daysUntil).toBe(0)
+  })
+
+  test('a death without a year is an estimate', () => {
+    const [event] = deathEvents(
+      deceased({ death_month: 3, death_day: 8 }),
+      day(2025, 1, 1)
+    )
+    expect(event.approximate).toBe(true)
+  })
+
+  test('a death with a year, or a stored lunar date, is exact', () => {
+    const withYear = deathEvents(
+      deceased({ death_year: 2000, death_month: 3, death_day: 8 }),
+      day(2025, 1, 1)
+    )
+    const withLunar = deathEvents(
+      deceased({ death_lunar_month: 2, death_lunar_day: 9 }),
+      day(2025, 1, 1)
+    )
+    for (const e of [...withYear, ...withLunar]) {
+      expect(e.approximate).toBeUndefined()
+    }
+  })
+
+  test('a 29/2 birthday is on 28/2 in a common year, 29/2 in a leap year', () => {
+    const person = deceased({
+      is_deceased: false,
+      birth_month: 2,
+      birth_day: 29
+    })
+    const common = computeEvents([person], [], day(2025, 2, 1))[0]
+    expect(common.nextOccurrence).toEqual(day(2025, 2, 28))
+    expect(common.daysUntil).toBe(27)
+    const leap = computeEvents([person], [], day(2028, 2, 1))[0]
+    expect(leap.nextOccurrence).toEqual(day(2028, 2, 29))
+    // After 28/2 of a common year, the next one is in the following year.
+    const after = computeEvents([person], [], day(2027, 3, 1)).find(
+      (e) => e.daysUntil >= 0
+    )!
+    expect(after.nextOccurrence).toEqual(day(2028, 2, 29))
   })
 })

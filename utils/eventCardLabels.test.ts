@@ -113,3 +113,20 @@ describe('getEventYearsInfo', () => {
     ).toBeNull()
   })
 })
+
+describe('formatEventDateLabel: estimates', () => {
+  test('marks an estimated date', () => {
+    const label = formatEventDateLabel(
+      event({
+        type: 'death_anniversary',
+        eventDateLabel: '09/02 ÂL',
+        approximate: true
+      }),
+      t
+    )
+    expect(label.endsWith('approximateDateSuffix')).toBe(true)
+    expect(
+      formatEventDateLabel(event({ approximate: false }), t)
+    ).not.toContain('approximateDateSuffix')
+  })
+})

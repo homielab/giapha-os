@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react'
 import EventCard from '@/components/events/EventCard'
 import CustomEventModal from '@/components/modal/CustomEventModal'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { vnToday } from '@/utils/dateHelpers'
 import {
   computeEvents,
   CustomEventRecord,
@@ -70,7 +71,7 @@ export default function EventsList({
   }
 
   const [todayDate] = useState(() => {
-    const today = new Date()
+    const today = vnToday()
     const weekdays = [
       t('weekdaySunday'),
       t('weekdayMonday'),
@@ -102,7 +103,7 @@ export default function EventsList({
   })
 
   const allEvents = useMemo(
-    () => computeEvents(persons, customEvents),
+    () => computeEvents(persons, customEvents, vnToday()),
     [persons, customEvents]
   )
 

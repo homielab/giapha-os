@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Upcoming events: "today" now follows the date in Vietnam on the dashboard and the events page, so an anniversary or birthday is no longer shown as "tomorrow" between midnight and 7 a.m. Vietnam time. A 29 February birthday is on 28 February in a common year (it used to jump to 1 March), and an anniversary with only a solar day and month of death (no year, no lunar date) is labelled "(estimated)" because its lunar date depends on the current year.
 - Accessibility: the custom event, gallery upload, restore confirmation and create-user dialogs and the gallery lightbox now announce themselves as dialogs to screen readers, close with Escape, move keyboard focus into the dialog and give it back to the button that opened it. The page behind no longer scrolls while they are open.
 - Family tree: zooming in no longer cuts off the leftmost branches (the canvas now scrolls to the full width) and zooming out leaves no empty space.
 - User management (Dashboard → Users): creating users, changing roles, locking and deleting now check on the server that you are an active admin before reaching the database, and database refusals ("Cannot remove the last active administrator.", "Access denied.", a taken email…) are shown as translated messages in Vietnamese and English; an unexpected error shows a generic message and is logged on the server.

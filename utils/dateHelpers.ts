@@ -188,6 +188,23 @@ const WEEKDAY_KEYS = [
 ] as const
 
 /**
+ * Today's calendar date in Vietnam (Asia/Ho_Chi_Minh) as a Date at local
+ * midnight, so it can be compared with other dates built from year/month/day.
+ * The server (UTC on Vercel) and the browser (any zone) then agree on "today".
+ */
+export function vnToday(now: Date = new Date()): Date {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric'
+  }).formatToParts(now)
+  const get = (type: string) =>
+    Number(parts.find((p) => p.type === type)?.value)
+  return new Date(get('year'), get('month') - 1, get('day'))
+}
+
+/**
  * Get today's solar and lunar date info for display.
  */
 export function getTodayLunar(t: Translate) {
