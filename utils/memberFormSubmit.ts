@@ -13,6 +13,12 @@ import {
   slugify,
   validateMemberForm
 } from '@/utils/memberFormHelpers'
+import {
+  findBirthDateConflict,
+  type BirthDateConflict,
+  type DatedPerson,
+  type NamedDatedPerson
+} from '@/utils/relationshipValidation'
 
 export interface SaveMemberOptions {
   supabase: SupabaseClient
@@ -204,6 +210,67 @@ export async function saveMember(
   return { personId: currentPersonId, generationUpdateError }
 }
 
+const RELATIVE_COLUMNS = 'id, full_name, birth_year, birth_month, birth_day'
+const PARENT_CHILD_TYPES = ['biological_child', 'adopted_child']
+
+/**
+ * Loads the parents and children of a saved member and checks the member's
+ * new birth date against theirs. Throws when a query fails.
+ */
+export async function findSavedBirthDateConflict(
+  supabase: SupabaseClient,
+  person: DatedPerson
+): Promise<BirthDateConflict | null> {
+  if (person.birth_year == null) return null
+
+  const [asParent, asChild] = await Promise.all([
+    supabase
+      .from('relationships')
+      .select('person_b')
+      .eq('person_a', person.id)
+      .in('type', PARENT_CHILD_TYPES),
+    supabase
+      .from('relationships')
+      .select('person_a')
+      .eq('person_b', person.id)
+      .in('type', PARENT_CHILD_TYPES)
+  ])
+  if (asParent.error) throw asParent.error
+  if (asChild.error) throw asChild.error
+
+  const childIds = new Set(
+    ((asParent.data ?? []) as { person_b: string }[]).map((r) => r.person_b)
+  )
+  const parentIds = new Set(
+    ((asChild.data ?? []) as { person_a: string }[]).map((r) => r.person_a)
+  )
+  if (childIds.size === 0 && parentIds.size === 0) return null
+
+  const { data, error } = await supabase
+    .from('persons')
+    .select(RELATIVE_COLUMNS)
+    .in('id', [...parentIds, ...childIds])
+  if (error) throw error
+
+  const relatives = (data ?? []) as NamedDatedPerson[]
+  return findBirthDateConflict(
+    person,
+    relatives.filter((p) => parentIds.has(p.id)),
+    relatives.filter((p) => childIds.has(p.id))
+  )
+}
+
+const toNullable = (value: number | '') => (value === '' ? null : value)
+
+function birthDateChanged(ctx: MemberFormSubmitContext) {
+  const before = ctx.initialData
+  return (
+    toNullable(ctx.birthYear) !== (before?.birth_year ?? null) ||
+    toNullable(ctx.birthMonth) !== (before?.birth_month ?? null) ||
+    toNullable(ctx.birthDay) !== (before?.birth_day ?? null)
+  )
+}
+
 export interface MemberSaveWarning {
   message: string
   personId: string
@@ -301,6 +368,29 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
   }
 
   try {
+    // A changed birth date must still fall after the parents' and before the
+    // children's (new members have no relatives yet).
+    const personId = ctx.initialData?.id
+    if (ctx.isEditing && personId && birthDateChanged(ctx)) {
+      const conflict = await findSavedBirthDateConflict(ctx.supabase, {
+        id: personId,
+        birth_year: toNullable(ctx.birthYear),
+        birth_month: toNullable(ctx.birthMonth),
+        birth_day: toNullable(ctx.birthDay)
+      })
+      if (conflict) {
+        setError(
+          t(
+            conflict.relation === 'parent'
+              ? 'memberBornBeforeParent'
+              : 'memberBornAfterChild',
+            { name: conflict.name }
+          )
+        )
+        return
+      }
+    }
+
     const { personId: currentPersonId, generationUpdateError } =
       await saveMember({
         supabase: ctx.supabase,

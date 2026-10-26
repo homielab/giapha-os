@@ -134,6 +134,120 @@ export function validateNewChildren(
   return null
 }
 
+/** A relative of the edited member, with the name shown in messages. */
+export interface NamedDatedPerson extends DatedPerson {
+  full_name: string
+}
+
+export interface BirthDateConflict {
+  /** Whether the conflicting relative is a parent or a child of `person`. */
+  relation: 'parent' | 'child'
+  name: string
+}
+
+/**
+ * Checks a member's (new) birth date against their parents and children with
+ * the same rule as a new parent link. Unknown dates never conflict. Returns
+ * the first conflict, parents first, or null.
+ */
+export function findBirthDateConflict(
+  person: DatedPerson,
+  parents: NamedDatedPerson[],
+  children: NamedDatedPerson[]
+): BirthDateConflict | null {
+  const check = (parent: DatedPerson, child: DatedPerson) =>
+    validateRelationship([parent, child], [], {
+      person_a: parent.id,
+      person_b: child.id,
+      type: 'biological_child'
+    }) === 'childOlderThanParent'
+
+  for (const parent of parents) {
+    if (check(parent, person))
+      return { relation: 'parent', name: parent.full_name }
+  }
+  for (const child of children) {
+    if (check(person, child))
+      return { relation: 'child', name: child.full_name }
+  }
+  return null
+}
+
+export type RelationshipIssue =
+  | { code: 'cycle'; path: string[] }
+  | { code: 'duplicateSpouse'; pair: [string, string] }
+
+/**
+ * Finds parent–child loops (each reported once, as the ids along the loop,
+ * first id repeated at the end) and marriages stored more than once in either
+ * order. Stops after `limit` issues.
+ */
+export function findRelationshipIssues(
+  relationships: RelationshipLink[],
+  limit = 10
+): RelationshipIssue[] {
+  const issues: RelationshipIssue[] = []
+
+  const marriages = new Set<string>()
+  for (const r of relationships) {
+    if (r.type !== 'marriage') continue
+    const pair: [string, string] =
+      r.person_a < r.person_b
+        ? [r.person_a, r.person_b]
+        : [r.person_b, r.person_a]
+    const key = pair.join('|')
+    if (marriages.has(key)) {
+      issues.push({ code: 'duplicateSpouse', pair })
+      if (issues.length >= limit) return issues
+    } else {
+      marriages.add(key)
+    }
+  }
+
+  const children = new Map<string, string[]>()
+  for (const r of relationships) {
+    if (!isParentChildType(r.type)) continue
+    const list = children.get(r.person_a)
+    if (list) list.push(r.person_b)
+    else children.set(r.person_a, [r.person_b])
+  }
+
+  // Iterative DFS: 1 = on the current path, 2 = finished.
+  const state = new Map<string, 1 | 2>()
+  for (const root of children.keys()) {
+    if (state.has(root)) continue
+    const path: string[] = [root]
+    const next: number[] = [0]
+    state.set(root, 1)
+    while (path.length > 0) {
+      const node = path[path.length - 1]
+      const kids = children.get(node) ?? []
+      const index = next[next.length - 1]
+      if (index >= kids.length) {
+        state.set(node, 2)
+        path.pop()
+        next.pop()
+        continue
+      }
+      next[next.length - 1] = index + 1
+      const kid = kids[index]
+      const seen = state.get(kid)
+      if (seen === 1) {
+        issues.push({
+          code: 'cycle',
+          path: [...path.slice(path.indexOf(kid)), kid]
+        })
+        if (issues.length >= limit) return issues
+      } else if (seen === undefined) {
+        state.set(kid, 1)
+        path.push(kid)
+        next.push(0)
+      }
+    }
+  }
+  return issues
+}
+
 const ERROR_KEYS: Record<RelationshipValidationCode, TranslationKey> = {
   selfLink: 'relationshipSelfLink',
   duplicateSpouse: 'relationshipDuplicateSpouse',

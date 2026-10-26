@@ -6,6 +6,7 @@ import {
   isMissingRestoreFunction,
   MAX_PERSONS,
   MAX_RELATIONSHIPS,
+  MAX_REPORTED_ISSUES,
   RESTORE_PAYLOAD_VERSION,
   validateImportPayload,
   type ImportPayload,
@@ -300,5 +301,81 @@ describe('validateImportPayload version', () => {
         'invalidBackupVersion'
       )
     }
+  })
+})
+
+describe('validateImportPayload relationship checks', () => {
+  const C = '44444444-4444-4444-8444-444444444444'
+  const named = (id: string, full_name: string) => person(id, { full_name })
+  const link = (type: string, a: string, b: string) => ({
+    type,
+    person_a: a,
+    person_b: b
+  })
+
+  test('refuses a parent–child loop and names the people in it', () => {
+    const payload = {
+      persons: [named(A, 'Ông'), named(B, 'Cha'), named(C, 'Con')],
+      relationships: [
+        link('biological_child', A, B),
+        link('biological_child', B, C),
+        link('adopted_child', C, A)
+      ]
+    }
+    expect(validateImportPayload(payload, t)).toBe(
+      `backupRelationshipIssues:{"max":${MAX_REPORTED_ISSUES}}\n` +
+        '• backupRelationshipCycle:{"path":"Ông → Cha → Con → Ông"}'
+    )
+  })
+
+  test('refuses a couple stored twice, also in the other order', () => {
+    const payload = {
+      persons: [named(A, 'Chồng'), named(B, 'Vợ')],
+      relationships: [link('marriage', A, B), link('marriage', B, A)]
+    }
+    const error = validateImportPayload(payload, t)
+    expect(error).toContain('backupDuplicateSpouse')
+    expect(error).toContain('Chồng')
+    expect(error).toContain('Vợ')
+  })
+
+  test('shortens a long loop to its two ends', () => {
+    const ids = Array.from(
+      { length: 12 },
+      (_, i) => `${(i + 16).toString(16)}111111-1111-4111-8111-111111111111`
+    )
+    const persons = ids.map((id, i) => named(id, `P${i}`))
+    const relationships = ids.map((id, i) =>
+      link('biological_child', id, ids[(i + 1) % ids.length])
+    )
+    expect(validateImportPayload({ persons, relationships }, t)).toContain(
+      '"path":"P0 → P1 → P2 → P3 → … → P9 → P10 → P11 → P0"'
+    )
+  })
+
+  test(`lists at most ${MAX_REPORTED_ISSUES} problems`, () => {
+    const persons = []
+    const relationships = []
+    for (let i = 0; i < 15; i++) {
+      const hex = (i + 16).toString(16).padStart(2, '0')
+      const a = `${hex}111111-1111-4111-8111-111111111111`
+      const b = `${hex}222222-2222-4222-8222-222222222222`
+      persons.push(person(a), person(b))
+      relationships.push(link('marriage', a, b), link('marriage', a, b))
+    }
+    const error = validateImportPayload({ persons, relationships }, t)
+    expect(error?.split('\n')).toHaveLength(MAX_REPORTED_ISSUES + 1)
+  })
+
+  test('accepts a valid tree with a couple and their child', () => {
+    const payload = {
+      persons: [named(A, 'Cha'), named(B, 'Mẹ'), named(C, 'Con')],
+      relationships: [
+        link('marriage', A, B),
+        link('biological_child', A, C),
+        link('biological_child', B, C)
+      ]
+    }
+    expect(validateImportPayload(payload, t)).toBeNull()
   })
 })

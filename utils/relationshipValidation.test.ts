@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test'
 
 import {
   compareBirthDates,
+  findBirthDateConflict,
+  findRelationshipIssues,
   isDescendant,
   relationshipErrorKey,
   validateNewChildren,
@@ -191,4 +193,92 @@ test('every code has a message key', () => {
   expect(relationshipErrorKey('duplicateSpouse')).toBe(
     'relationshipDuplicateSpouse'
   )
+})
+
+describe('findBirthDateConflict', () => {
+  const named = (
+    id: string,
+    full_name: string,
+    birth_year: number | null,
+    birth_month: number | null = null,
+    birth_day: number | null = null
+  ) => ({ id, full_name, birth_year, birth_month, birth_day })
+  const parents = [named('dad', 'Nguyễn Văn Ba', 1950, 5, 10)]
+  const children = [named('kid', 'Nguyễn Văn Út', 2000)]
+
+  test('rejects a birth date moved before a parent', () => {
+    expect(
+      findBirthDateConflict(person('me', 1950, 5, 9), parents, children)
+    ).toEqual({ relation: 'parent', name: 'Nguyễn Văn Ba' })
+  })
+
+  test('rejects a birth date moved after a child', () => {
+    expect(
+      findBirthDateConflict(person('me', 2001), parents, children)
+    ).toEqual({ relation: 'child', name: 'Nguyễn Văn Út' })
+  })
+
+  test('accepts dates in order and dates that cannot be told apart', () => {
+    expect(
+      findBirthDateConflict(person('me', 1975), parents, children)
+    ).toBeNull()
+    expect(
+      findBirthDateConflict(person('me', 1950, 5), parents, children)
+    ).toBeNull()
+  })
+
+  test('does not block when a date is missing', () => {
+    expect(
+      findBirthDateConflict(person('me', null), parents, children)
+    ).toBeNull()
+    expect(
+      findBirthDateConflict(
+        person('me', 2020),
+        [named('dad', 'Ba', null)],
+        [named('kid', 'Út', null)]
+      )
+    ).toBeNull()
+  })
+})
+
+describe('findRelationshipIssues', () => {
+  test('accepts a normal tree', () => {
+    expect(findRelationshipIssues(relationships)).toEqual([])
+  })
+
+  test('reports a parent–child loop once, along its path', () => {
+    const issues = findRelationshipIssues([
+      ...relationships,
+      { person_a: 'son', person_b: 'grandpa', type: 'adopted_child' }
+    ])
+    expect(issues).toEqual([
+      { code: 'cycle', path: ['grandpa', 'father', 'son', 'grandpa'] }
+    ])
+  })
+
+  test('reports a marriage stored twice in either order', () => {
+    const issues = findRelationshipIssues([
+      ...relationships,
+      { person_a: 'mother', person_b: 'father', type: 'marriage' }
+    ])
+    expect(issues).toEqual([
+      { code: 'duplicateSpouse', pair: ['father', 'mother'] }
+    ])
+  })
+
+  test('stops at the limit', () => {
+    const loops: RelationshipLink[] = []
+    for (let i = 0; i < 20; i++) {
+      loops.push(child(`a${i}`, `b${i}`), child(`b${i}`, `a${i}`))
+    }
+    expect(findRelationshipIssues(loops, 10)).toHaveLength(10)
+  })
+
+  test('handles a long chain without recursion limits', () => {
+    const chain: RelationshipLink[] = []
+    for (let i = 0; i < 20000; i++) chain.push(child(`p${i}`, `p${i + 1}`))
+    expect(findRelationshipIssues(chain)).toEqual([])
+    chain.push(child('p20000', 'p0'))
+    expect(findRelationshipIssues(chain)).toHaveLength(1)
+  })
 })

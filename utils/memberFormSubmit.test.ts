@@ -253,4 +253,85 @@ describe('submitMemberForm', () => {
     expect(state.pushed).toEqual([])
     expect(state.loading).toBe(false)
   })
+
+  // Parent 'dad' (1950-05-10) and child 'kid' (2000) of person-1.
+  const family = (call: FakeCall): FakeResult => {
+    if (call.table === 'relationships' && call.op === 'select') {
+      const asParent = call.filters.some(([, c]) => c === 'person_a')
+      return {
+        data: asParent ? [{ person_b: 'kid' }] : [{ person_a: 'dad' }]
+      }
+    }
+    if (call.table === 'persons' && call.op === 'select') {
+      return {
+        data: [
+          {
+            id: 'dad',
+            full_name: 'Nguyễn Văn Ba',
+            birth_year: 1950,
+            birth_month: 5,
+            birth_day: 10
+          },
+          { id: 'kid', full_name: 'Nguyễn Văn Út', birth_year: 2000 }
+        ]
+      }
+    }
+    return ok()
+  }
+
+  function familyContext(birthYear: number, birthMonth: number | '' = '') {
+    const { client, calls } = fakeSupabase(family)
+    const { ctx, state } = submitContext()
+    return {
+      calls,
+      state,
+      ctx: {
+        ...ctx,
+        supabase: client,
+        initialData: { ...initialData, birth_year: 1975 } as Person,
+        birthYear,
+        birthMonth
+      }
+    }
+  }
+
+  test('refuses a birth date before a parent without saving', async () => {
+    const { ctx, state, calls } = familyContext(1950, 4)
+    await submitMemberForm(ctx)
+    expect(state.error).toBe('memberBornBeforeParent {"name":"Nguyễn Văn Ba"}')
+    expect(calls.some((c) => c.op === 'update')).toBe(false)
+    expect(state.pushed).toEqual([])
+    expect(state.loading).toBe(false)
+  })
+
+  test('refuses a birth date after a child without saving', async () => {
+    const { ctx, state, calls } = familyContext(2001)
+    await submitMemberForm(ctx)
+    expect(state.error).toBe('memberBornAfterChild {"name":"Nguyễn Văn Út"}')
+    expect(calls.some((c) => c.op === 'update')).toBe(false)
+  })
+
+  test('saves a birth date between parents and children', async () => {
+    const { ctx, state } = familyContext(1976)
+    await submitMemberForm(ctx)
+    expect(state.error).toBeNull()
+    expect(state.pushed).toEqual(['/dashboard/members/person-1'])
+  })
+
+  test('skips the family check when the birth date is unchanged', async () => {
+    const { ctx, state, calls } = familyContext(1975)
+    await submitMemberForm(ctx)
+    expect(state.error).toBeNull()
+    expect(calls.some((c) => c.table === 'relationships')).toBe(false)
+  })
+
+  test('a failed family lookup is shown and nothing is saved', async () => {
+    const { client, calls } = fakeSupabase((call) =>
+      call.table === 'relationships' ? { error: { message: 'offline' } } : ok()
+    )
+    const { ctx, state } = submitContext()
+    await submitMemberForm({ ...ctx, supabase: client })
+    expect(state.error).toBe('offline')
+    expect(calls.some((c) => c.op === 'update')).toBe(false)
+  })
 })

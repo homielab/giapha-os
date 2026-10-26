@@ -81,6 +81,10 @@ export const messages = {
     invalidRelationship: 'Có quan hệ không hợp lệ.',
     invalidRelationshipData: 'Quan hệ chứa dữ liệu không hợp lệ.',
     relationshipNoteTooLong: 'Ghi chú quan hệ quá dài.',
+    backupRelationshipIssues:
+      'File sao lưu có quan hệ không hợp lệ (liệt kê tối đa {max} lỗi đầu), chưa phục hồi gì:',
+    backupRelationshipCycle: 'Vòng cha mẹ – con: {path}',
+    backupDuplicateSpouse: 'Cặp vợ chồng bị lưu hai lần: {a} – {b}',
     privateDetailsLimit: 'Thông tin riêng tư vượt quá giới hạn cho phép.',
     invalidPrivateDetails: 'Thông tin riêng tư không hợp lệ.',
     invalidPrivateDetailsPerson:
@@ -869,6 +873,10 @@ export const messages = {
       'Không thể thêm: người cha/mẹ này đang là con cháu của người con, quan hệ sẽ tạo vòng.',
     relationshipChildOlderThanParent:
       'Không thể thêm: người con sinh trước cha/mẹ.',
+    memberBornBeforeParent:
+      'Ngày sinh không hợp lệ: sớm hơn ngày sinh của cha/mẹ {name}.',
+    memberBornAfterChild:
+      'Ngày sinh không hợp lệ: muộn hơn ngày sinh của con {name}.',
     childNameRequired: 'Vui lòng nhập ít nhất tên của 1 người con.',
     bulkAddPartial:
       'Đã xảy ra lỗi. Chỉ lưu thành công {success}/{total} người.',
@@ -969,6 +977,10 @@ export const messages = {
     invalidRelationship: 'An invalid relationship was found.',
     invalidRelationshipData: 'The relationship contains invalid data.',
     relationshipNoteTooLong: 'The relationship note is too long.',
+    backupRelationshipIssues:
+      'The backup has invalid relationships (showing at most the first {max}); nothing was restored:',
+    backupRelationshipCycle: 'Parent–child loop: {path}',
+    backupDuplicateSpouse: 'Couple stored twice: {a} – {b}',
     privateDetailsLimit: 'Private information exceeds the allowed limit.',
     invalidPrivateDetails: 'Invalid private information.',
     invalidPrivateDetailsPerson:
@@ -1761,6 +1773,10 @@ export const messages = {
       'Cannot add: this parent is already a descendant of the child, which would create a loop.',
     relationshipChildOlderThanParent:
       'Cannot add: the child was born before the parent.',
+    memberBornBeforeParent:
+      'Invalid birth date: earlier than the birth date of parent {name}.',
+    memberBornAfterChild:
+      'Invalid birth date: later than the birth date of child {name}.',
     childNameRequired: 'Please enter at least one child’s name.',
     bulkAddPartial:
       'An error occurred. Only {success}/{total} people were saved.',

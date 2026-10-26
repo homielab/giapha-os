@@ -30,7 +30,9 @@ export default function ImportStatusMessage({
           ) : (
             <AlertTriangle className='size-5 shrink-0' />
           )}
-          <p className='text-sm font-medium'>{status.message}</p>
+          <p className='text-sm font-medium whitespace-pre-line'>
+            {status.message}
+          </p>
         </m.div>
       )}
     </AnimatePresence>

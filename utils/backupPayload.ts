@@ -1,4 +1,8 @@
 import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
+import {
+  findRelationshipIssues,
+  type RelationshipLink
+} from '@/utils/relationshipValidation'
 
 /**
  * Payload shape cho file backup JSON.
@@ -118,6 +122,8 @@ export const MAX_PERSONS = 10000
 export const MAX_RELATIONSHIPS = 30000
 export const MAX_PRIVATE_DETAILS = 10000
 export const MAX_CUSTOM_EVENTS = 10000
+/** Relationship problems listed when a backup is refused. */
+export const MAX_REPORTED_ISSUES = 10
 
 function isShortText(value: unknown, maxLength: number) {
   return (
@@ -243,7 +249,44 @@ export function validateImportPayload(
       }
     }
   }
-  return null
+
+  return checkRelationshipIssues(
+    persons as PersonExport[],
+    relationships as RelationshipLink[],
+    t
+  )
+}
+
+// Loops between parents and children and marriages stored twice would make
+// the tree views loop or show a couple twice, so refuse them before restoring.
+function checkRelationshipIssues(
+  persons: PersonExport[],
+  relationships: RelationshipLink[],
+  t: Translator
+): string | null {
+  const issues = findRelationshipIssues(relationships, MAX_REPORTED_ISSUES)
+  if (issues.length === 0) return null
+
+  const names = new Map(persons.map((p) => [p.id, p.full_name]))
+  const name = (id: string) => names.get(id) ?? id
+  // A loop through many generations is shortened to its two ends.
+  const loop = (path: string[]) =>
+    (path.length > 9
+      ? [...path.slice(0, 4).map(name), '…', ...path.slice(-4).map(name)]
+      : path.map(name)
+    ).join(' → ')
+  const lines = issues.map((issue) =>
+    issue.code === 'cycle'
+      ? t('backupRelationshipCycle', { path: loop(issue.path) })
+      : t('backupDuplicateSpouse', {
+          a: name(issue.pair[0]),
+          b: name(issue.pair[1])
+        })
+  )
+  return [
+    t('backupRelationshipIssues', { max: MAX_REPORTED_ISSUES }),
+    ...lines.map((line) => `• ${line}`)
+  ].join('\n')
 }
 
 // Các field được phép insert vào bảng persons (loại bỏ created_at/updated_at)
