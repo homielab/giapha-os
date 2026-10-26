@@ -189,3 +189,83 @@ describe('parseCsvZip', () => {
     await expect(parseCsvZip(blob)).rejects.toThrow('persons.csv')
   })
 })
+
+describe('formula escaping', () => {
+  const risky = [
+    '=SUM(1)',
+    '+84 912 345 678',
+    '-1+1',
+    '@cmd',
+    '\tTabbed',
+    '\rReturn',
+    "'=already quoted",
+    "'+84 912",
+    "'Văn An",
+    "O'Neil",
+    "'",
+    '=1+1,"x"'
+  ]
+
+  test('prefixes cells that start with =, +, -, @, tab or CR with an apostrophe', async () => {
+    const blob = await exportToCsvZip({
+      persons: [{ id: 'p1', full_name: '=SUM(1)', note: '+84 912' }],
+      relationships
+    })
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer())
+    const csv = await zip.file('persons.csv')!.async('text')
+    expect(csv).toContain("'=SUM(1)")
+    expect(csv).toContain("'+84 912")
+  })
+
+  test('import restores every risky value exactly', async () => {
+    const rows = risky.map((value, i) => ({
+      id: `p${i}`,
+      full_name: value,
+      note: value
+    }))
+    const blob = await exportToCsvZip({
+      persons: rows,
+      relationships,
+      person_details_private: risky.map((value, i) => ({
+        person_id: `p${i}`,
+        phone_number: value,
+        occupation: null,
+        current_residence: value
+      })),
+      custom_events: risky.map((value, i) => ({
+        id: `e${i}`,
+        name: value,
+        content: value,
+        event_date: '2024-01-01',
+        location: value,
+        created_by: null
+      }))
+    })
+    const parsed = await parseCsvZip(blob)
+    expect(parsed.persons.map((p) => p.full_name)).toEqual(risky)
+    expect(parsed.persons.map((p) => p.note)).toEqual(risky)
+    expect(parsed.person_details_private?.map((p) => p.phone_number)).toEqual(
+      risky
+    )
+    expect(parsed.custom_events?.map((e) => e.name)).toEqual(risky)
+  })
+
+  test('import leaves a lone leading apostrophe before a normal character', async () => {
+    const parsed = await parseCsvZip(
+      await zipWith({
+        'persons.csv': "id,full_name\np1,'Văn An\n",
+        'relationships.csv': 'id,type,person_a,person_b\n'
+      })
+    )
+    expect(parsed.persons[0].full_name).toBe("'Văn An")
+  })
+
+  test('typed numeric columns still round-trip', async () => {
+    const parsed = await parseCsvZip(
+      await exportToCsvZip({ persons, relationships })
+    )
+    expect(parsed.persons[0].birth_year).toBe(1950)
+    expect(parsed.persons[0].is_deceased).toBe(true)
+    expect(parsed.persons[1].note).toBeNull()
+  })
+})

@@ -24,6 +24,17 @@ const PERSON_TYPED_FIELDS = new Set([
   'generation'
 ])
 
+// Spreadsheet apps run a cell starting with one of these as a formula. On
+// export such cells get a leading apostrophe; cells that already start with
+// apostrophes before a trigger character get one more, so import can strip
+// exactly one and restore the original text.
+const FORMULA_TRIGGER = /^'*[=+\-@\t\r]/
+const ESCAPED_FORMULA = /^'(?='*[=+\-@\t\r])/
+
+function unparseCsv(rows: object[]): string {
+  return UTF8_BOM + Papa.unparse(rows, { escapeFormulae: FORMULA_TRIGGER })
+}
+
 function stripBom(text: string): string {
   return text.startsWith(UTF8_BOM) ? text.slice(1) : text
 }
@@ -47,7 +58,12 @@ function parseCsv<T>(
   return parsed.data.map((row) => {
     const out: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(row)) {
-      out[key] = value === '' ? null : value
+      out[key] =
+        value === ''
+          ? null
+          : typeof value === 'string'
+            ? value.replace(ESCAPED_FORMULA, '')
+            : value
     }
     return out as T
   })
@@ -75,8 +91,8 @@ export async function exportToCsvZip(data: {
   person_details_private?: PersonDetailsPrivateRow[]
   custom_events?: CustomEventRow[]
 }): Promise<Blob> {
-  const personsCsv = UTF8_BOM + Papa.unparse(data.persons)
-  const relationshipsCsv = UTF8_BOM + Papa.unparse(data.relationships)
+  const personsCsv = unparseCsv(data.persons)
+  const relationshipsCsv = unparseCsv(data.relationships)
 
   const zip = new JSZip()
   zip.file('persons.csv', personsCsv)
@@ -85,12 +101,12 @@ export async function exportToCsvZip(data: {
   if (data.person_details_private && data.person_details_private.length > 0) {
     zip.file(
       'person_details_private.csv',
-      UTF8_BOM + Papa.unparse(data.person_details_private)
+      unparseCsv(data.person_details_private)
     )
   }
 
   if (data.custom_events && data.custom_events.length > 0) {
-    zip.file('custom_events.csv', UTF8_BOM + Papa.unparse(data.custom_events))
+    zip.file('custom_events.csv', unparseCsv(data.custom_events))
   }
 
   const zipBlob = await zip.generateAsync({ type: 'blob' })

@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- CSV export: cells that start with `=`, `+`, `-` or `@` (a name, note or phone number such as `+84…`) are written with a leading apostrophe so Excel and LibreOffice no longer run them as formulas; importing the CSV removes that apostrophe again, so values come back unchanged.
 - Member form: saving an edit no longer silently overwrites a change someone else saved to the same person in the meantime. The save is refused with "someone else just edited this person" and a Reload button; nothing is written.
 
 - Member form: if a new member is saved but the photo or private details then fail to save, the form now switches to editing that member with a clear message, so saving again retries instead of creating the same person twice.

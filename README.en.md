@@ -39,7 +39,7 @@ Designed primarily for Vietnamese families.
 - **Statistics and events**: Track birthdays, death anniversaries (Vietnamese lunar calendar), custom events and family demographic statistics; admins get a "recompute lunar death dates" tool.
 - **Add to calendar**: The Events page has an "Add to calendar (.ics)" button to import birthdays, anniversaries and events into Google/Apple Calendar and get reminders on your phone.
 - **Print a profile**: the member page has a "Print profile" button; the A4 printout has no header, footer or edit buttons and includes the photo, the full note and the family list, ready to hand out, keep at the ancestral hall or archive.
-- **Data backup**: Export and import JSON, CSV, and GEDCOM files for easy storage or migration; the restore file is previewed before anything is replaced.
+- **Data backup**: Export and import JSON, CSV, and GEDCOM files for easy storage or migration; the restore file is previewed before anything is replaced. CSV cells starting with `=`, `+`, `-` or `@` get a leading `'` on export so spreadsheets don't run them as formulas (a phone number `+84…` shows as `'+84…` in Excel); that `'` is removed again on import.
 - **Security**: Use Admin, Editor, and Member roles with data protection through Supabase.
 - **Responsive, bilingual**: A modern interface optimized for desktop and mobile devices, switchable between Vietnamese and English.
 
