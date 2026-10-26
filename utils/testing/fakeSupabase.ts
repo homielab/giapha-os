@@ -72,6 +72,15 @@ export function fakeSupabase(respond: (call: FakeCall) => FakeResult) {
         call.filters.push(['or', '', expression])
         return builder
       },
+      neq: (column: string, value: unknown) => {
+        call.filters.push(['neq', column, value])
+        return builder
+      },
+      not: (column: string, operator: string, value: unknown) => {
+        call.filters.push(['not', column, [operator, value]])
+        return builder
+      },
+      limit: () => builder,
       order: () => builder,
       range: () => builder,
       single: () => {

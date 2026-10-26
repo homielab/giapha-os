@@ -343,7 +343,7 @@ bun run typecheck     # tsc --noEmit
 
 GitHub Actions (`.github/workflows/test.yml`) chạy đúng các lệnh này cho mỗi push lên `main` và mỗi pull request.
 
-Test đặt cạnh file được kiểm tra (`utils/csv.ts` → `utils/csv.test.ts`). Hàm gọi Supabase được test với client giả `utils/testing/fakeSupabase.ts` (trả `{ data, error }` theo từng lệnh). Thay đổi đáng chú ý ghi vào [CHANGELOG.md](CHANGELOG.md), mục `## [Unreleased]`.
+Test đặt cạnh file được kiểm tra (`utils/csv.ts` → `utils/csv.test.ts`). Hàm gọi Supabase được test với client giả `utils/testing/fakeSupabase.ts` (trả `{ data, error }` theo từng lệnh). Server action (`app/actions/`) được test bằng cách `mock.module` `@/utils/supabase/queries`, `@/lib/i18n/server` và `next/cache` (xem `utils/adminActions.test.ts`, `utils/memberActions.test.ts`); `mock.module` có hiệu lực qua cả các file test nên mock `queries` phải đủ mọi export. Thay đổi đáng chú ý ghi vào [CHANGELOG.md](CHANGELOG.md), mục `## [Unreleased]`.
 
 Trang chỉ hiển thị số liệu (như `/dashboard/stats`) tính kết quả trên server và chỉ `select` các cột cần (xem `STATS_PERSON_COLUMNS` trong `utils/familyStats.ts`), không gửi cả bảng `persons` xuống trình duyệt.
 
