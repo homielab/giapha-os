@@ -9,6 +9,11 @@ import PersonCard from '@/components/PersonCard'
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
+import {
+  MEMBER_BATCH_SIZE,
+  nextVisibleCount,
+  takeBatch
+} from '@/utils/batchedList'
 import { sortPersonsByGeneration, sortPersonsFlat } from '@/utils/memberSorting'
 import { normalizeSearchText } from '@/utils/search'
 
@@ -132,6 +137,17 @@ export default function MemberList({
     )
   }, [filteredPersons, deferredSortOption, personMap, parentsOf, spousesOf])
 
+  // The list shows one batch at a time; a new search, filter or sort starts
+  // again from the first batch.
+  const batchKey = `${deferredSearchTerm}\u0000${deferredFilterOption}\u0000${deferredSortOption}`
+  const [batch, setBatch] = useState({
+    key: batchKey,
+    visible: MEMBER_BATCH_SIZE
+  })
+  const visibleCount =
+    batch.key === batchKey ? batch.visible : MEMBER_BATCH_SIZE
+  const { shown, remaining, nextCount } = takeBatch(sortedPersons, visibleCount)
+
   return (
     <>
       <MemberListToolbar
@@ -160,7 +176,7 @@ export default function MemberList({
         {sortedPersons.length > 0 ? (
           deferredSortOption.includes('generation') ? (
             <MemberGenerationView
-              sortedPersons={sortedPersons}
+              sortedPersons={shown}
               generationSort={
                 deferredSortOption as 'generation_asc' | 'generation_desc'
               }
@@ -170,7 +186,7 @@ export default function MemberList({
             />
           ) : (
             <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
-              {sortedPersons.map((person) => (
+              {shown.map((person) => (
                 <div
                   key={person.id}
                   className='[contain-intrinsic-size:auto_120px] [content-visibility:auto]'>
@@ -207,6 +223,28 @@ export default function MemberList({
                 {t('addMember')}
               </button>
             )}
+          </div>
+        )}
+
+        {remaining > 0 && (
+          <div className='mt-8 flex flex-col items-center gap-3'>
+            <p className='text-sm text-stone-500' aria-live='polite'>
+              {t('membersShownOfTotal', {
+                shown: shown.length,
+                total: sortedPersons.length
+              })}
+            </p>
+            <button
+              type='button'
+              onClick={() =>
+                setBatch({
+                  key: batchKey,
+                  visible: nextVisibleCount(visibleCount, sortedPersons.length)
+                })
+              }
+              className='btn'>
+              {t('showMoreMembers', { count: nextCount })}
+            </button>
           </div>
         )}
       </div>

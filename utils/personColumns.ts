@@ -9,3 +9,10 @@ export const PERSON_LIST_COLUMNS =
 /** Columns of the relationship picker's name list. */
 export const PERSON_PICKER_COLUMNS =
   'id, full_name, gender, birth_year, birth_month, birth_day, other_names'
+
+/**
+ * Relationship columns the members and lineage views read: only the links.
+ * `note`, `created_at` and `updated_at` are left out (the detail modal, the
+ * member page and the edit form still load the whole row).
+ */
+export const RELATIONSHIP_COLUMNS = 'id, type, person_a, person_b'

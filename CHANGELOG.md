@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Members list view: shows the first 60 members and a "Show 60 more" button instead of rendering everyone at once; a new search, filter or sort starts again from the first 60. Tree, mind map and bubble views are unchanged.
 - Restore: the file is read as soon as you choose it. A broken or invalid file shows its error right away, and the confirmation now says how many members, relationships and events the file holds (and its export date), with a "Download the current backup first" button before anything is deleted.
 - A translated (Vietnamese/English) "page not found" page, for example for a wrong member link, and a fallback error page; every dashboard page now has its own browser tab title (the member's name on a member page).
 - GEDCOM export writes other names (`NAME` with `TYPE aka`) and the lunar death date as a custom `_LUNAR` tag under `DEAT`; import reads them back, so an export followed by an import keeps both.
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Members and lineage pages load only the relationship columns they use (no note or timestamps): for 2,000 people with about 4,800 relationship links the data sent with the page drops from about 1,310 KB to about 810 KB. The language dictionaries were already not part of the page data (only the chosen language code is sent).
 - The members and lineage pages no longer load `note`, `created_at` and `updated_at` of every person, which no view reads: about 24% less data for 2,000 members (≈ 983 KB → 743 KB in a synthetic test).
 - The gallery signs all image links of a page in one storage request instead of one request per image.
 - Profile photos on the members page (tree, list, mindmap, bubble view) and the kinship page load from links signed in one storage request for the whole page, instead of one request through the app server per member. Other pages still load them through `/api/avatar`.

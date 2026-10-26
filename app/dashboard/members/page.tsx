@@ -7,10 +7,13 @@ import ViewToggle, { ViewMode } from '@/components/ViewToggle'
 import { AvatarUrlProvider } from '@/context/AvatarUrlContext'
 import { MemberListProvider } from '@/context/MemberListContext'
 import { getServerTranslations } from '@/lib/i18n/server'
-import { Person } from '@/types'
+import { Person, Relationship } from '@/types'
 import { NO_SIGNED_AVATAR_URLS } from '@/utils/avatar'
 import { signAvatarUrls } from '@/utils/avatarSigning'
-import { PERSON_LIST_COLUMNS } from '@/utils/personColumns'
+import {
+  PERSON_LIST_COLUMNS,
+  RELATIONSHIP_COLUMNS
+} from '@/utils/personColumns'
 import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
 
@@ -49,13 +52,18 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
         .range(from, to)
     ),
     fetchAllRowsOrThrow((from, to) =>
-      supabase.from('relationships').select('*').order('id').range(from, to)
+      supabase
+        .from('relationships')
+        .select(RELATIONSHIP_COLUMNS)
+        .order('id')
+        .range(from, to)
     )
   ])
 
   // PERSON_LIST_COLUMNS leaves out note/created_at/updated_at; no view reads them.
   const persons = (personsRes.data || []) as Person[]
-  const relationships = relsRes.data || []
+  // RELATIONSHIP_COLUMNS leaves out note/created_at/updated_at; no view reads them.
+  const relationships = (relsRes.data || []) as Relationship[]
 
   // One storage request signs every avatar of the tree/list/mindmap instead
   // of one /api/avatar round trip per member. Storage RLS only lets active
