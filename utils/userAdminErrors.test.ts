@@ -134,6 +134,21 @@ describe('user management actions', () => {
     }
   )
 
+  test('adminCreateUser refuses a password under 8 characters before the database', async () => {
+    isAdmin = true
+    const short = createForm()
+    short.set('password', '1234567')
+    expect(await adminCreateUser(short)).toEqual({
+      error: vi.userAdminPasswordTooShort
+    })
+    expect(rpc).not.toHaveBeenCalled()
+
+    const exact = createForm()
+    exact.set('password', '12345678')
+    expect(await adminCreateUser(exact)).toEqual({ success: true })
+    expect(rpc).toHaveBeenCalledTimes(1)
+  })
+
   test('passes the arguments to the database functions', async () => {
     isAdmin = true
     await changeUserRole('user-1', 'editor')

@@ -85,7 +85,7 @@ export default function AdminCreateUserModal({
                 type='password'
                 name='password'
                 required
-                minLength={6}
+                minLength={8}
                 className={fieldClasses}
                 placeholder={t('adminPasswordMinLength')}
               />

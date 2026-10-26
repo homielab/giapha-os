@@ -68,9 +68,17 @@ export function fakeSupabase(respond: (call: FakeCall) => FakeResult) {
         call.filters.push(['is', column, value])
         return builder
       },
+      or: (expression: string) => {
+        call.filters.push(['or', '', expression])
+        return builder
+      },
       order: () => builder,
       range: () => builder,
       single: () => {
+        call.single = true
+        return builder
+      },
+      maybeSingle: () => {
         call.single = true
         return builder
       },

@@ -12,6 +12,9 @@ import {
   userAdminErrorKey
 } from '@/utils/userAdminErrors'
 
+// Same minimum as public.admin_create_user in docs/schema.sql.
+const MIN_PASSWORD_LENGTH = 8
+
 type UserAdminResult = { error?: string; success?: boolean }
 
 type Translate = Awaited<ReturnType<typeof getServerTranslations>>['t']
@@ -95,6 +98,10 @@ export async function adminCreateUser(
 
   if (!email || !password) {
     return { error: t('emailPasswordRequired') }
+  }
+
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return { error: t('userAdminPasswordTooShort') }
   }
 
   const supabase = await getSupabase()
