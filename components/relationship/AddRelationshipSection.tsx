@@ -13,7 +13,8 @@ import { PERSON_PICKER_COLUMNS } from '@/utils/personColumns'
 import { addRelationshipWithTargetSync } from '@/utils/relationshipMutations'
 import {
   relationshipErrorKey,
-  RelationshipValidationError
+  RelationshipValidationError,
+  RelationshipWarningError
 } from '@/utils/relationshipValidation'
 import { searchPersons } from '@/utils/search'
 import { createClient } from '@/utils/supabase/client'
@@ -52,6 +53,8 @@ export default function AddRelationshipSection({
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // A link that only looks wrong: shown with a button to add it anyway.
+  const [pendingWarning, setPendingWarning] = useState<string | null>(null)
 
   const showError = (message: string) => {
     setError(message)
@@ -107,10 +110,11 @@ export default function AddRelationshipSection({
     setSearchTerm(p.full_name)
   }
 
-  const handleSave = async () => {
+  const handleSave = async (acceptWarnings = false) => {
     if (!selectedTargetId) return
     setProcessing(true)
     setError(null)
+    setPendingWarning(null)
 
     try {
       const { targetUpdateError } = await addRelationshipWithTargetSync(
@@ -121,7 +125,8 @@ export default function AddRelationshipSection({
           direction: newRelDirection,
           relType: newRelType,
           note: newRelNote,
-          person
+          person,
+          acceptWarnings
         }
       )
 
@@ -134,6 +139,10 @@ export default function AddRelationshipSection({
           : undefined
       )
     } catch (err: unknown) {
+      if (err instanceof RelationshipWarningError) {
+        setPendingWarning(t('relationshipFatherDiedLongBeforeBirth'))
+        return
+      }
       if (err instanceof RelationshipValidationError) {
         showError(t(relationshipErrorKey(err.code)))
         return
@@ -161,6 +170,24 @@ export default function AddRelationshipSection({
           onDismiss={() => setError(null)}
         />
       )}
+      {pendingWarning && (
+        <div className='flex items-center justify-between gap-3'>
+          <div className='min-w-0 flex-1'>
+            <RelationshipErrorBanner
+              tone='warning'
+              error={pendingWarning}
+              onDismiss={() => setPendingWarning(null)}
+            />
+          </div>
+          <button
+            type='button'
+            onClick={() => handleSave(true)}
+            disabled={processing}
+            className='btn mt-4 shrink-0'>
+            {t('continueAction')}
+          </button>
+        </div>
+      )}
       <AddRelationshipForm
         newRelNote={newRelNote}
         onNoteChange={setNewRelNote}
@@ -175,7 +202,7 @@ export default function AddRelationshipSection({
         selectedTargetId={selectedTargetId}
         onTargetSelect={handleTargetSelect}
         processing={processing}
-        onSave={handleSave}
+        onSave={() => handleSave()}
         onCancel={() => {
           onClose()
           setSelectedTargetId(null)

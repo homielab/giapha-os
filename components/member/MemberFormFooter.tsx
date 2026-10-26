@@ -12,6 +12,9 @@ interface MemberFormFooterProps {
   /** "Saved, but…" message; the user continues with onContinue. */
   warning: string | null
   onContinue: () => void
+  /** "Save anyway?" question; the user answers with onConfirm. */
+  confirmation: string | null
+  onConfirm: () => void
   errorRef: RefObject<HTMLDivElement | null>
   loading: boolean
   processingAvatar: boolean
@@ -23,6 +26,8 @@ export default function MemberFormFooter({
   error,
   warning,
   onContinue,
+  confirmation,
+  onConfirm,
   errorRef,
   loading,
   processingAvatar,
@@ -46,10 +51,26 @@ export default function MemberFormFooter({
             <p>{error}</p>
           </m.div>
         )}
+        {confirmation && (
+          <m.div
+            key='confirmation'
+            ref={error ? undefined : errorRef}
+            role='alert'
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className='flex flex-wrap items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800'>
+            <AlertTriangle className='mt-0.5 size-5 shrink-0' />
+            <p className='min-w-0 flex-1 whitespace-pre-line'>{confirmation}</p>
+            <button type='button' onClick={onConfirm} className='btn'>
+              {t('continueAction')}
+            </button>
+          </m.div>
+        )}
         {warning && (
           <m.div
             key='warning'
-            ref={error ? undefined : errorRef}
+            ref={error || confirmation ? undefined : errorRef}
             role='alert'
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}

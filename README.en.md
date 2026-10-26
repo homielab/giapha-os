@@ -61,6 +61,9 @@ Export and import GEDCOM (7.0) to open the family tree in Gramps, MyHeritage… 
 
 - **Relationships**: before saving, the app refuses a link from a person to themselves, a couple that is already married (A–B and B–A count as the same), a parent–child link that would create a loop (making a grandchild the parent of their grandfather) and a child born before the parent. Birth dates are compared as far as both people have them: year, then month, then day; without a birth year this check is skipped. The "add several children" form checks every child's birth year against the parents before creating anyone.
 - **Death date**: cannot be before the birth date, comparing month and day within the same year.
+- **Name**: a name of only spaces is refused; extra spaces at the ends are trimmed when saving.
+- **Possible duplicates**: creating a member with the same name (ignoring accents and case) and birth year as an existing one (two members without a birth year match on the name alone) asks first and lists them; Continue creates it anyway. Editing never asks.
+- **Parents' death dates**: a mother who died before the child's birth is refused (when adding the link and when editing birth or death dates); a father who died more than 10 months before the birth (more than 1 year when a month or day is missing) asks for confirmation. Adopted children are not checked.
 - **JSON backup version**: files carry a `version` (currently 3). On restore, a file without `version` is read as version 1 (old file); a file with a higher version than the app reads is refused with a hint to upgrade the app, so new columns are not lost.
 
 ### Photo gallery

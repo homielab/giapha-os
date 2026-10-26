@@ -50,6 +50,7 @@ export default function MemberForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [warning, setWarning] = useState<MemberSaveWarning | null>(null)
+  const [confirmation, setConfirmation] = useState<string | null>(null)
 
   // Form states (defaults resolved by a plain helper to keep this component
   // free of per-field fallback branches)
@@ -103,10 +104,10 @@ export default function MemberForm({
 
   // Bring validation/save errors into view on long forms
   useEffect(() => {
-    if (error || warning) {
+    if (error || warning || confirmation) {
       errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
-  }, [error, warning])
+  }, [error, warning, confirmation])
 
   // Private fields
   const [phoneNumber, setPhoneNumber] = useState(init.phoneNumber)
@@ -115,9 +116,9 @@ export default function MemberForm({
     init.currentResidence
   )
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const submit = (confirmed: boolean) => {
     void submitMemberForm({
+      confirmed,
       supabase,
       router,
       t,
@@ -162,8 +163,14 @@ export default function MemberForm({
       setLoading,
       setError,
       setWarning,
+      setConfirmation,
       onSuccess
     })
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    submit(false)
   }
 
   return (
@@ -258,6 +265,8 @@ export default function MemberForm({
           setWarning(null)
           finishMemberSave({ router, onSuccess }, warning.personId)
         }}
+        confirmation={confirmation}
+        onConfirm={() => submit(true)}
         errorRef={errorRef}
         loading={loading}
         processingAvatar={processingAvatar}

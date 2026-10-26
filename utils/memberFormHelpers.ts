@@ -58,6 +58,7 @@ export function comparePartialDates(
 }
 
 export type MemberValidationError =
+  | 'fullNameRequired'
   | 'invalidBirthDate'
   | 'invalidLunarDate'
   | 'invalidDeathDate'
@@ -71,8 +72,13 @@ export function validateMemberForm(
   birthMonth: number | '',
   birthYear: number | '',
   isDeceased: boolean,
-  deathValues: DeathDateValues
+  deathValues: DeathDateValues,
+  fullName?: string
 ): MemberValidationError {
+  // Only checked when given: a name of spaces passes the input's `required`.
+  if (fullName !== undefined && fullName.trim() === '')
+    return 'fullNameRequired'
+
   if (!isValidDate(birthDay, birthMonth, birthYear)) return 'invalidBirthDate'
 
   if (
@@ -202,7 +208,7 @@ const toNumberOrNull = (v: number | '') => (v === '' ? null : Number(v))
 export function buildPersonData(fields: MemberFormFields, url: string | null) {
   const d = fields.isDeceased
   return {
-    full_name: fields.fullName,
+    full_name: fields.fullName.trim(),
     gender: fields.gender,
     birth_year: toNumberOrNull(fields.birthYear),
     birth_month: toNumberOrNull(fields.birthMonth),
@@ -217,7 +223,7 @@ export function buildPersonData(fields: MemberFormFields, url: string | null) {
     is_in_law: fields.isInLaw,
     birth_order: toNumberOrNull(fields.birthOrder),
     generation: toNumberOrNull(fields.generation),
-    other_names: fields.otherNames || null,
+    other_names: fields.otherNames.trim() || null,
     avatar_url: url,
     note: fields.note || null
   }

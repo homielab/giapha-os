@@ -885,6 +885,17 @@ export const messages = {
       'Ngày sinh không hợp lệ: sớm hơn ngày sinh của cha/mẹ {name}.',
     memberBornAfterChild:
       'Ngày sinh không hợp lệ: muộn hơn ngày sinh của con {name}.',
+    fullNameRequired: 'Vui lòng nhập họ và tên.',
+    memberPossibleDuplicate:
+      'Có {count} người trùng tên và năm sinh: {names}. Vẫn tạo thêm người mới?',
+    memberMotherDiedBeforeBirth:
+      'Ngày mất/ngày sinh không hợp lệ: mẹ {parent} mất trước ngày sinh của {child}.',
+    memberFatherDiedLongBeforeBirth:
+      'Cha {parent} mất hơn 10 tháng trước ngày sinh của {child}. Vẫn lưu?',
+    relationshipMotherDiedBeforeBirth:
+      'Không thể thêm: người mẹ mất trước ngày sinh của người con.',
+    relationshipFatherDiedLongBeforeBirth:
+      'Người cha mất hơn 10 tháng trước ngày sinh của người con. Vẫn thêm quan hệ này?',
     childNameRequired: 'Vui lòng nhập ít nhất tên của 1 người con.',
     bulkAddPartial:
       'Đã xảy ra lỗi. Chỉ lưu thành công {success}/{total} người.',
@@ -1793,6 +1804,17 @@ export const messages = {
       'Invalid birth date: earlier than the birth date of parent {name}.',
     memberBornAfterChild:
       'Invalid birth date: later than the birth date of child {name}.',
+    fullNameRequired: 'Please enter the full name.',
+    memberPossibleDuplicate:
+      '{count} existing people have the same name and birth year: {names}. Create another one anyway?',
+    memberMotherDiedBeforeBirth:
+      'Invalid dates: mother {parent} died before the birth of {child}.',
+    memberFatherDiedLongBeforeBirth:
+      'Father {parent} died more than 10 months before the birth of {child}. Save anyway?',
+    relationshipMotherDiedBeforeBirth:
+      'Cannot add: the mother died before the child was born.',
+    relationshipFatherDiedLongBeforeBirth:
+      'The father died more than 10 months before the child was born. Add this relationship anyway?',
     childNameRequired: 'Please enter at least one child’s name.',
     bulkAddPartial:
       'An error occurred. Only {success}/{total} people were saved.',

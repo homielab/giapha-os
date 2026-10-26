@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Member form: a new member with the same name (ignoring accents) and birth year as an existing one now asks "Create another one anyway?" and lists the matches. A mother who died before the child's birth is refused, and a father who died more than 10 months before it (a year when the month or day is unknown) asks for confirmation, when adding a parent link and when editing birth or death dates; adopted children are not checked.
 - Adding a relationship: typing a name without accents ("nguyen van duc") now finds "Nguyễn Văn Đức". The member list loads once when the form opens and is filtered in the browser, showing up to 20 matches (names starting with what you typed first); a failed load now shows an error. The English README also covers GEDCOM, the photo gallery and the lunar death date recompute tool.
 - Unit tests (`bun run test`) for GEDCOM and CSV import/export, kinship terms, tree helpers, the lunar calendar and upcoming events; also for generation, in-law and birth-order computation, member sorting and family stats.
 - Search and share metadata for the public pages (home, about, login) in Vietnamese and English: page titles, descriptions, Open Graph and Twitter cards with a 1200×630 share image (`public/og-image.png`), plus `robots.txt` (keeps `/dashboard`, `/api`, `/setup` out of search engines) and `sitemap.xml`. Links use `APP_URL`, or the Vercel production domain.
@@ -28,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A member name of only spaces is refused, and extra spaces around names are trimmed when saving.
 - A profile photo is checked by its content, not its name or the type the browser reports: a text file renamed to `.jpg` is refused, and the photo is stored with the extension of its real type.
 - Adding several children at once no longer reports success for a child whose parent link was refused: that child is removed again, its row shows the reason and stays in the form for another try.
 - Adding a relationship or saving a member now warns when the generation update that follows it fails, instead of only logging it; the member family list shows a load error with a retry button instead of an empty list.

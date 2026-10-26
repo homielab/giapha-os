@@ -6,6 +6,8 @@ import {
   DatedPerson,
   RelationshipLink,
   RelationshipValidationError,
+  relationshipWarning,
+  RelationshipWarningError,
   validateNewChildren,
   validateRelationship
 } from '@/utils/relationshipValidation'
@@ -17,6 +19,8 @@ export interface NewRelationshipInput {
   relType: RelationshipType
   note: string
   person: Person
+  /** Save even when the link only looks wrong (RelationshipWarningError). */
+  acceptWarnings?: boolean
 }
 
 export interface AddRelationshipResult {
@@ -76,6 +80,9 @@ export async function addRelationshipWithTargetSync(
     candidate
   )
   if (invalid) throw new RelationshipValidationError(invalid)
+  const warning = relationshipWarning(context.persons, candidate)
+  if (warning && !input.acceptWarnings)
+    throw new RelationshipWarningError(warning)
 
   const { error } = await supabase.from('relationships').insert({
     ...candidate,
@@ -107,7 +114,9 @@ async function loadRelationshipContext(
   const [personsResult, betweenResult] = await Promise.all([
     supabase
       .from('persons')
-      .select('id, birth_year, birth_month, birth_day')
+      .select(
+        'id, gender, birth_year, birth_month, birth_day, death_year, death_month, death_day'
+      )
       .in('id', pair),
     supabase
       .from('relationships')

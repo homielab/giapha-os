@@ -178,6 +178,7 @@ describe('submitMemberForm', () => {
     const state = {
       error: null as string | null,
       warning: null as { message: string; personId: string } | null,
+      confirmation: null as string | null,
       loading: false,
       pushed: [] as string[],
       succeeded: [] as string[]
@@ -217,6 +218,9 @@ describe('submitMemberForm', () => {
       },
       setWarning: (value: { message: string; personId: string } | null) => {
         state.warning = value
+      },
+      setConfirmation: (value: string | null) => {
+        state.confirmation = value
       }
     }
     return { ctx, state }
@@ -333,5 +337,196 @@ describe('submitMemberForm', () => {
     await submitMemberForm({ ...ctx, supabase: client })
     expect(state.error).toBe('offline')
     expect(calls.some((c) => c.op === 'update')).toBe(false)
+  })
+})
+
+describe('submitMemberForm names, duplicates and parent deaths', () => {
+  const t = (key: TranslationKey, values?: TranslationValues) =>
+    values ? `${key} ${JSON.stringify(values)}` : key
+
+  function context(
+    respond: (call: FakeCall) => FakeResult,
+    overrides: Record<string, unknown> = {}
+  ) {
+    const { client, calls } = fakeSupabase(respond)
+    const state = {
+      error: null as string | null,
+      confirmation: null as string | null,
+      pushed: [] as string[]
+    }
+    const ctx = {
+      supabase: client,
+      router: {
+        push: (url: string) => state.pushed.push(url),
+        refresh: () => {}
+      },
+      t,
+      isEditing: false,
+      initialData: undefined as Person | undefined,
+      fields: {
+        ...fields,
+        fullName: ' Nguyen Van A ',
+        generation: '' as const
+      },
+      death: {
+        currentValues: emptyDeath,
+        deathYear: '' as const,
+        deathMonth: '' as const,
+        deathDay: '' as const,
+        deathLunarYear: '' as const,
+        deathLunarMonth: '' as const,
+        deathLunarDay: '' as const
+      },
+      birthYear: 1950 as number | '',
+      birthMonth: '' as number | '',
+      birthDay: '' as number | '',
+      isDeceased: false,
+      isInLaw: false,
+      birthOrder: '' as const,
+      generation: '' as const,
+      otherNames: '',
+      note: '',
+      avatarUrl: '',
+      avatarFile: null,
+      removeExistingAvatar: false,
+      isAdmin: false,
+      privateFields: { phoneNumber: '', occupation: '', currentResidence: '' },
+      hasGenerationChanged: false,
+      updateDescendantGenerations: false,
+      setLoading: () => {},
+      setError: (value: string | null) => {
+        state.error = value
+      },
+      setWarning: () => {},
+      setConfirmation: (value: string | null) => {
+        state.confirmation = value
+      },
+      ...overrides
+    }
+    return { ctx, state, calls }
+  }
+
+  const existing = {
+    id: 'old',
+    full_name: 'Nguyễn Văn A',
+    birth_year: 1950
+  }
+  const withDuplicate = (call: FakeCall): FakeResult => {
+    if (call.op === 'insert') return { data: { id: 'new-1' } }
+    if (call.table === 'persons' && call.op === 'select')
+      return { data: [existing] }
+    return ok()
+  }
+
+  test('a name of spaces is refused before anything is queried', async () => {
+    const { ctx, state, calls } = context(ok, {
+      fields: { ...fields, fullName: '   ' }
+    })
+    await submitMemberForm(ctx)
+    expect(state.error).toBe('fullNameRequired')
+    expect(calls).toEqual([])
+  })
+
+  test('a possible duplicate asks first, then creates the trimmed name', async () => {
+    const first = context(withDuplicate)
+    await submitMemberForm(first.ctx)
+    expect(first.state.confirmation).toContain('memberPossibleDuplicate')
+    expect(first.state.confirmation).toContain('Nguyễn Văn A (1950)')
+    expect(first.calls.some((c) => c.op === 'insert')).toBe(false)
+
+    const again = context(withDuplicate, { confirmed: true })
+    await submitMemberForm(again.ctx)
+    const insert = again.calls.find((c) => c.op === 'insert')
+    expect((insert?.payload as { full_name: string }).full_name).toBe(
+      'Nguyen Van A'
+    )
+    expect(again.state.pushed).toEqual(['/dashboard/members/new-1'])
+  })
+
+  test('a new member without a duplicate is created straight away', async () => {
+    const { ctx, state } = context((call) =>
+      call.op === 'insert' ? { data: { id: 'new-1' } } : ok()
+    )
+    await submitMemberForm(ctx)
+    expect(state.confirmation).toBeNull()
+    expect(state.pushed).toEqual(['/dashboard/members/new-1'])
+  })
+
+  test('editing a member does not look for duplicates', async () => {
+    const { ctx, calls } = context(withDuplicate, {
+      isEditing: true,
+      initialData: {
+        ...initialData,
+        birth_year: 1950,
+        gender: 'male'
+      } as Person
+    })
+    await submitMemberForm(ctx)
+    expect(calls.some((c) => c.op === 'select')).toBe(false)
+  })
+
+  // Person 'person-1' is the child of a parent with the given death year.
+  const parentDied =
+    (gender: string, year: number, type = 'biological_child') =>
+    (call: FakeCall): FakeResult => {
+      if (call.table === 'relationships') {
+        return call.filters.some(([, c]) => c === 'person_a')
+          ? { data: [] }
+          : { data: [{ person_a: 'par', type }] }
+      }
+      if (call.table === 'persons' && call.op === 'select')
+        return {
+          data: [
+            {
+              id: 'par',
+              full_name: 'Phụ huynh',
+              gender,
+              birth_year: 1920,
+              death_year: year
+            }
+          ]
+        }
+      return ok()
+    }
+  const editing = {
+    isEditing: true,
+    initialData: { ...initialData, birth_year: 1990, gender: 'male' } as Person,
+    birthYear: 1980 as number | ''
+  }
+
+  test('a birth date after the mother died is refused', async () => {
+    const { ctx, state, calls } = context(parentDied('female', 1975), editing)
+    await submitMemberForm(ctx)
+    expect(state.error).toBe(
+      'memberMotherDiedBeforeBirth {"parent":"Phụ huynh","child":"Nguyen Van A"}'
+    )
+    expect(calls.some((c) => c.op === 'update')).toBe(false)
+  })
+
+  test('a father who died long before asks, then saves', async () => {
+    const first = context(parentDied('male', 1975), editing)
+    await submitMemberForm(first.ctx)
+    expect(first.state.error).toBeNull()
+    expect(first.state.confirmation).toContain(
+      'memberFatherDiedLongBeforeBirth'
+    )
+    expect(first.calls.some((c) => c.op === 'update')).toBe(false)
+
+    const again = context(parentDied('male', 1975), {
+      ...editing,
+      confirmed: true
+    })
+    await submitMemberForm(again.ctx)
+    expect(again.calls.some((c) => c.op === 'update')).toBe(true)
+  })
+
+  test('an adopted parent is not checked', async () => {
+    const { ctx, state } = context(
+      parentDied('female', 1975, 'adopted_child'),
+      editing
+    )
+    await submitMemberForm(ctx)
+    expect(state.error).toBeNull()
+    expect(state.confirmation).toBeNull()
   })
 })

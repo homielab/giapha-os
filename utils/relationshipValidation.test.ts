@@ -1,11 +1,14 @@
 import { describe, expect, test } from 'bun:test'
 
 import {
+  checkParentDeath,
   compareBirthDates,
   findBirthDateConflict,
+  findParentDeathIssues,
   findRelationshipIssues,
   isDescendant,
   relationshipErrorKey,
+  relationshipWarning,
   validateNewChildren,
   validateRelationship,
   type DatedPerson,
@@ -280,5 +283,146 @@ describe('findRelationshipIssues', () => {
     expect(findRelationshipIssues(chain)).toEqual([])
     chain.push(child('p20000', 'p0'))
     expect(findRelationshipIssues(chain)).toHaveLength(1)
+  })
+})
+
+describe('parent death checks', () => {
+  const parent = (
+    gender: string,
+    death_year: number | null,
+    death_month: number | null = null,
+    death_day: number | null = null
+  ): DatedPerson => ({
+    id: 'p',
+    birth_year: 1920,
+    gender,
+    death_year,
+    death_month,
+    death_day
+  })
+
+  test('a mother who died before the birth is an error', () => {
+    expect(checkParentDeath(parent('female', 1979), person('c', 1980))).toBe(
+      'motherDiedBeforeBirth'
+    )
+    expect(
+      checkParentDeath(parent('female', 1980, 6, 1), person('c', 1980, 6, 2))
+    ).toBe('motherDiedBeforeBirth')
+  })
+
+  test('a mother who died on the birth day or later is fine', () => {
+    expect(
+      checkParentDeath(parent('female', 1980, 6, 1), person('c', 1980, 6, 1))
+    ).toBeNull()
+    expect(
+      checkParentDeath(parent('female', 1980), person('c', 1980))
+    ).toBeNull()
+    expect(
+      checkParentDeath(parent('female', 1990), person('c', 1980))
+    ).toBeNull()
+  })
+
+  test('a father who died two years before the birth is a warning', () => {
+    expect(checkParentDeath(parent('male', 1978), person('c', 1980))).toBe(
+      'fatherDiedLongBeforeBirth'
+    )
+  })
+
+  test('year-only dates allow one year of difference', () => {
+    expect(checkParentDeath(parent('male', 1979), person('c', 1980))).toBeNull()
+    expect(
+      checkParentDeath(parent('male', 1979, 1, 1), person('c', 1980))
+    ).toBeNull()
+  })
+
+  test('full dates allow ten months', () => {
+    const dad = parent('male', 1979, 1, 15)
+    expect(checkParentDeath(dad, person('c', 1979, 11, 15))).toBeNull()
+    expect(checkParentDeath(dad, person('c', 1979, 11, 16))).toBe(
+      'fatherDiedLongBeforeBirth'
+    )
+    expect(
+      checkParentDeath(parent('male', 1979, 11, 20), person('c', 1980, 9, 20))
+    ).toBeNull()
+    expect(
+      checkParentDeath(parent('male', 1979, 11, 20), person('c', 1980, 9, 21))
+    ).toBe('fatherDiedLongBeforeBirth')
+  })
+
+  test('unknown dates or gender never raise an issue', () => {
+    expect(checkParentDeath(parent('male', null), person('c', 1980))).toBeNull()
+    expect(checkParentDeath(parent('male', 1900), person('c', null))).toBeNull()
+    expect(
+      checkParentDeath(parent('other', 1900), person('c', 1980))
+    ).toBeNull()
+  })
+
+  test('validateRelationship refuses a mother who died before the birth', () => {
+    const mum = { ...parent('female', 1979), id: 'mum' }
+    const kid = person('kid', 1980)
+    expect(validateRelationship([mum, kid], [], child('mum', 'kid'))).toBe(
+      'motherDiedBeforeBirth'
+    )
+    expect(
+      validateRelationship([mum, kid], [], {
+        ...child('mum', 'kid'),
+        type: 'adopted_child'
+      })
+    ).toBeNull()
+  })
+
+  test('relationshipWarning flags a father, but not for adopted children', () => {
+    const dad = { ...parent('male', 1978), id: 'dad' }
+    const kid = person('kid', 1980)
+    expect(relationshipWarning([dad, kid], child('dad', 'kid'))).toBe(
+      'fatherDiedLongBeforeBirth'
+    )
+    expect(
+      relationshipWarning([dad, kid], {
+        ...child('dad', 'kid'),
+        type: 'adopted_child'
+      })
+    ).toBeNull()
+  })
+
+  test('findParentDeathIssues skips adopted relatives and lists errors first', () => {
+    const me = { ...person('me', 1980), full_name: 'Tôi', gender: 'female' }
+    const named = (
+      id: string,
+      gender: string,
+      death_year: number,
+      adopted = false
+    ) => ({
+      ...parent(gender, death_year),
+      id,
+      full_name: id,
+      adopted
+    })
+    const result = findParentDeathIssues(
+      me,
+      [
+        named('dad', 'male', 1970),
+        named('mum', 'female', 1975),
+        named('adoptive', 'female', 1960, true)
+      ],
+      []
+    )
+    expect(result.map((f) => [f.issue, f.parent])).toEqual([
+      ['motherDiedBeforeBirth', 'mum'],
+      ['fatherDiedLongBeforeBirth', 'dad']
+    ])
+  })
+
+  test('findParentDeathIssues checks the member as a parent', () => {
+    const me = {
+      ...person('me', 1950),
+      full_name: 'Mẹ',
+      gender: 'female',
+      death_year: 1979
+    }
+    const kid = { ...person('kid', 1980), full_name: 'Con' }
+    expect(findParentDeathIssues(me, [], [kid])).toEqual([
+      { issue: 'motherDiedBeforeBirth', parent: 'Mẹ', child: 'Con' }
+    ])
   })
 })

@@ -4,6 +4,7 @@ import { updateDescendantGenerationsAction } from '@/app/actions/member'
 import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
 import { Person } from '@/types'
 import { getAvatarStoragePath } from '@/utils/avatar'
+import { findPossibleDuplicates } from '@/utils/duplicatePeople'
 import { IMAGE_EXTENSIONS, readImageType } from '@/utils/imageUpload'
 import {
   buildPersonData,
@@ -15,9 +16,10 @@ import {
 } from '@/utils/memberFormHelpers'
 import {
   findBirthDateConflict,
+  findParentDeathIssues,
   type BirthDateConflict,
-  type DatedPerson,
-  type NamedDatedPerson
+  type LinkedRelative,
+  type ParentDeathFinding
 } from '@/utils/relationshipValidation'
 
 export interface SaveMemberOptions {
@@ -210,55 +212,75 @@ export async function saveMember(
   return { personId: currentPersonId, generationUpdateError }
 }
 
-const RELATIVE_COLUMNS = 'id, full_name, birth_year, birth_month, birth_day'
+const RELATIVE_COLUMNS =
+  'id, full_name, gender, birth_year, birth_month, birth_day, death_year, death_month, death_day'
 const PARENT_CHILD_TYPES = ['biological_child', 'adopted_child']
 
-/**
- * Loads the parents and children of a saved member and checks the member's
- * new birth date against theirs. Throws when a query fails.
- */
-export async function findSavedBirthDateConflict(
-  supabase: SupabaseClient,
-  person: DatedPerson
-): Promise<BirthDateConflict | null> {
-  if (person.birth_year == null) return null
+export interface SavedRelatives {
+  parents: LinkedRelative[]
+  children: LinkedRelative[]
+}
 
+/**
+ * Loads the parents and children of a saved member (adopted ones flagged).
+ * Throws when a query fails.
+ */
+export async function loadSavedRelatives(
+  supabase: SupabaseClient,
+  personId: string
+): Promise<SavedRelatives> {
   const [asParent, asChild] = await Promise.all([
     supabase
       .from('relationships')
-      .select('person_b')
-      .eq('person_a', person.id)
+      .select('person_b, type')
+      .eq('person_a', personId)
       .in('type', PARENT_CHILD_TYPES),
     supabase
       .from('relationships')
-      .select('person_a')
-      .eq('person_b', person.id)
+      .select('person_a, type')
+      .eq('person_b', personId)
       .in('type', PARENT_CHILD_TYPES)
   ])
   if (asParent.error) throw asParent.error
   if (asChild.error) throw asChild.error
 
-  const childIds = new Set(
-    ((asParent.data ?? []) as { person_b: string }[]).map((r) => r.person_b)
-  )
-  const parentIds = new Set(
-    ((asChild.data ?? []) as { person_a: string }[]).map((r) => r.person_a)
-  )
-  if (childIds.size === 0 && parentIds.size === 0) return null
+  // A relative linked twice counts as adopted only when every link is.
+  const link = (rows: unknown, key: 'person_a' | 'person_b') => {
+    const ids = new Map<string, boolean>()
+    for (const row of (rows ?? []) as Record<string, string>[]) {
+      const adopted = row.type === 'adopted_child'
+      ids.set(row[key], (ids.get(row[key]) ?? true) && adopted)
+    }
+    return ids
+  }
+  const childIds = link(asParent.data, 'person_b')
+  const parentIds = link(asChild.data, 'person_a')
+  if (childIds.size === 0 && parentIds.size === 0)
+    return { parents: [], children: [] }
 
   const { data, error } = await supabase
     .from('persons')
     .select(RELATIVE_COLUMNS)
-    .in('id', [...parentIds, ...childIds])
+    .in('id', [...parentIds.keys(), ...childIds.keys()])
   if (error) throw error
 
-  const relatives = (data ?? []) as NamedDatedPerson[]
-  return findBirthDateConflict(
-    person,
-    relatives.filter((p) => parentIds.has(p.id)),
-    relatives.filter((p) => childIds.has(p.id))
-  )
+  const relatives = (data ?? []) as LinkedRelative[]
+  return {
+    parents: relatives
+      .filter((p) => parentIds.has(p.id))
+      .map((p) => ({ ...p, adopted: parentIds.get(p.id) })),
+    children: relatives
+      .filter((p) => childIds.has(p.id))
+      .map((p) => ({ ...p, adopted: childIds.get(p.id) }))
+  }
 }
+
+const MAX_LISTED_DUPLICATES = 5
+
+const deathNames = (finding: ParentDeathFinding) => ({
+  parent: finding.parent,
+  child: finding.child
+})
 
 const toNullable = (value: number | '') => (value === '' ? null : value)
 
@@ -268,6 +290,23 @@ function birthDateChanged(ctx: MemberFormSubmitContext) {
     toNullable(ctx.birthYear) !== (before?.birth_year ?? null) ||
     toNullable(ctx.birthMonth) !== (before?.birth_month ?? null) ||
     toNullable(ctx.birthDay) !== (before?.birth_day ?? null)
+  )
+}
+
+function deathOrGenderChanged(
+  before: Person | undefined,
+  after: {
+    gender: string
+    death_year: number | null
+    death_month: number | null
+    death_day: number | null
+  }
+) {
+  return (
+    (before?.gender != null && before.gender !== after.gender) ||
+    after.death_year !== (before?.death_year ?? null) ||
+    after.death_month !== (before?.death_month ?? null) ||
+    after.death_day !== (before?.death_day ?? null)
   )
 }
 
@@ -332,6 +371,14 @@ export interface MemberFormSubmitContext {
    * continues (finishMemberSave).
    */
   setWarning: (value: MemberSaveWarning | null) => void
+  /**
+   * Asks before saving something that only looks wrong (a possible duplicate,
+   * a father who died long before a birth). The form repeats the submit with
+   * `confirmed` set when the user continues.
+   */
+  setConfirmation: (value: string | null) => void
+  /** The user accepted the confirmation: skip the checks that ask. */
+  confirmed?: boolean
   onSuccess?: (personId: string) => void
 }
 
@@ -339,10 +386,11 @@ export interface MemberFormSubmitContext {
 // The component only wires state; every branch lives here so the React
 // function stays simple.
 export async function submitMemberForm(ctx: MemberFormSubmitContext) {
-  const { t, setLoading, setError, setWarning } = ctx
+  const { t, setLoading, setError, setWarning, setConfirmation } = ctx
   setLoading(true)
   setError(null)
   setWarning(null)
+  setConfirmation(null)
 
   const normalized = normalizeDeathDates(
     ctx.isDeceased,
@@ -359,7 +407,8 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
     ctx.birthMonth,
     ctx.birthYear,
     ctx.isDeceased,
-    normalized.values
+    normalized.values,
+    ctx.fields.fullName
   )
   if (validationError) {
     setError(t(validationError))
@@ -368,27 +417,87 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
   }
 
   try {
-    // A changed birth date must still fall after the parents' and before the
-    // children's (new members have no relatives yet).
+    const fullName = ctx.fields.fullName.trim()
+    const warnings: string[] = []
+
+    // A changed birth or death date must still fit the parents and children
+    // (new members have no relatives yet).
     const personId = ctx.initialData?.id
-    if (ctx.isEditing && personId && birthDateChanged(ctx)) {
-      const conflict = await findSavedBirthDateConflict(ctx.supabase, {
+    if (ctx.isEditing && personId) {
+      const birthChanged = birthDateChanged(ctx)
+      const person = {
         id: personId,
+        full_name: fullName,
+        gender: ctx.fields.gender,
         birth_year: toNullable(ctx.birthYear),
         birth_month: toNullable(ctx.birthMonth),
-        birth_day: toNullable(ctx.birthDay)
-      })
-      if (conflict) {
-        setError(
-          t(
-            conflict.relation === 'parent'
-              ? 'memberBornBeforeParent'
-              : 'memberBornAfterChild',
-            { name: conflict.name }
-          )
-        )
-        return
+        birth_day: toNullable(ctx.birthDay),
+        death_year: ctx.isDeceased ? toNullable(normalized.values.year) : null,
+        death_month: ctx.isDeceased
+          ? toNullable(normalized.values.month)
+          : null,
+        death_day: ctx.isDeceased ? toNullable(normalized.values.day) : null
       }
+      if (
+        (birthChanged && person.birth_year != null) ||
+        deathOrGenderChanged(ctx.initialData, person)
+      ) {
+        const { parents, children } = await loadSavedRelatives(
+          ctx.supabase,
+          personId
+        )
+        const conflict = birthChanged
+          ? findBirthDateConflict(person, parents, children)
+          : null
+        if (conflict) {
+          setError(
+            t(
+              conflict.relation === 'parent'
+                ? 'memberBornBeforeParent'
+                : 'memberBornAfterChild',
+              { name: conflict.name }
+            )
+          )
+          return
+        }
+
+        const findings = findParentDeathIssues(person, parents, children)
+        const mother = findings.find((f) => f.issue === 'motherDiedBeforeBirth')
+        if (mother) {
+          setError(t('memberMotherDiedBeforeBirth', deathNames(mother)))
+          return
+        }
+        for (const finding of findings)
+          warnings.push(
+            t('memberFatherDiedLongBeforeBirth', deathNames(finding))
+          )
+      }
+    } else {
+      const duplicates = await findPossibleDuplicates(
+        ctx.supabase,
+        fullName,
+        toNullable(ctx.birthYear)
+      )
+      if (duplicates.length > 0) {
+        warnings.push(
+          t('memberPossibleDuplicate', {
+            count: duplicates.length,
+            names: duplicates
+              .slice(0, MAX_LISTED_DUPLICATES)
+              .map((p) =>
+                p.birth_year == null
+                  ? p.full_name
+                  : `${p.full_name} (${p.birth_year})`
+              )
+              .join(', ')
+          })
+        )
+      }
+    }
+
+    if (warnings.length > 0 && !ctx.confirmed) {
+      setConfirmation(warnings.join('\n'))
+      return
     }
 
     const { personId: currentPersonId, generationUpdateError } =

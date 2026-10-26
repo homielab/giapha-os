@@ -235,3 +235,48 @@ describe('slugify', () => {
     expect(slugify('Nguyễn Văn Đức!')).toBe('nguyen-van-duc')
   })
 })
+
+describe('member name', () => {
+  test('a name of spaces is refused, a name with spaces is trimmed', () => {
+    expect(
+      validateMemberForm('', '', '', false, death('', '', ''), '   ')
+    ).toBe('fullNameRequired')
+    expect(
+      validateMemberForm(
+        '',
+        '',
+        '',
+        false,
+        death('', '', ''),
+        ' Nguyễn Văn An '
+      )
+    ).toBeNull()
+  })
+
+  test('buildPersonData trims the names', () => {
+    const data = buildPersonData(
+      {
+        fullName: '  Nguyễn  Văn An ',
+        gender: 'male',
+        birthYear: '',
+        birthMonth: '',
+        birthDay: '',
+        deathYear: '',
+        deathMonth: '',
+        deathDay: '',
+        deathLunarYear: '',
+        deathLunarMonth: '',
+        deathLunarDay: '',
+        isDeceased: false,
+        isInLaw: false,
+        birthOrder: '',
+        generation: '',
+        otherNames: '   ',
+        note: ''
+      },
+      null
+    )
+    expect(data.full_name).toBe('Nguyễn  Văn An')
+    expect(data.other_names).toBeNull()
+  })
+})

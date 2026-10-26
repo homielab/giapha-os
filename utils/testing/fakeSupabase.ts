@@ -64,6 +64,12 @@ export function fakeSupabase(respond: (call: FakeCall) => FakeResult) {
         call.filters.push(['in', column, value])
         return builder
       },
+      is: (column: string, value: unknown) => {
+        call.filters.push(['is', column, value])
+        return builder
+      },
+      order: () => builder,
+      range: () => builder,
       single: () => {
         call.single = true
         return builder

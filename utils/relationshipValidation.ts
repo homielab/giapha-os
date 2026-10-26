@@ -1,14 +1,25 @@
 import type { TranslationKey } from '@/lib/i18n/messages'
 
 export type RelationshipValidationCode =
-  'selfLink' | 'duplicateSpouse' | 'cycle' | 'childOlderThanParent'
+  | 'selfLink'
+  | 'duplicateSpouse'
+  | 'cycle'
+  | 'childOlderThanParent'
+  | 'motherDiedBeforeBirth'
 
-/** The birth date fields a check needs; month and day may be unknown. */
+/**
+ * The date fields a check needs; month and day may be unknown. `gender` and
+ * the death date are only read by the parent death checks.
+ */
 export interface DatedPerson {
   id: string
   birth_year: number | null
   birth_month?: number | null
   birth_day?: number | null
+  gender?: string | null
+  death_year?: number | null
+  death_month?: number | null
+  death_day?: number | null
 }
 
 /** A relationship row: for child types `person_a` is the parent. */
@@ -40,6 +51,58 @@ export function compareBirthDates(
   if (a.birth_month !== b.birth_month) return a.birth_month - b.birth_month
   if (a.birth_day == null || b.birth_day == null) return 0
   return a.birth_day - b.birth_day
+}
+
+export type ParentDeathIssue =
+  'motherDiedBeforeBirth' | 'fatherDiedLongBeforeBirth'
+
+/** Months a father may be dead before the birth of a child (pregnancy). */
+const FATHER_DEATH_GRACE_MONTHS = 10
+
+/**
+ * Checks a parent's death against the child's birth. A mother who died
+ * before the birth is an error; a father who died more than ten months before
+ * it (more than one year when either date lacks a month or day) is a
+ * warning. Needs the parent's gender; unknown dates never raise an issue.
+ * The caller skips adopted children.
+ */
+export function checkParentDeath(
+  parent: DatedPerson,
+  child: DatedPerson
+): ParentDeathIssue | null {
+  const deathYear = parent.death_year
+  const birthYear = child.birth_year
+  if (deathYear == null || birthYear == null) return null
+
+  if (parent.gender === 'female') {
+    const order = compareBirthDates(
+      {
+        id: parent.id,
+        birth_year: deathYear,
+        birth_month: parent.death_month,
+        birth_day: parent.death_day
+      },
+      child
+    )
+    return order != null && order < 0 ? 'motherDiedBeforeBirth' : null
+  }
+
+  if (parent.gender !== 'male') return null
+
+  const { death_month: dm, death_day: dd } = parent
+  const { birth_month: bm, birth_day: bd } = child
+  if (dm == null || dd == null || bm == null || bd == null) {
+    return birthYear - deathYear > 1 ? 'fatherDiedLongBeforeBirth' : null
+  }
+
+  const months = deathYear * 12 + (dm - 1) + FATHER_DEATH_GRACE_MONTHS
+  const cutoff = [Math.floor(months / 12), (months % 12) + 1, dd]
+  const born = [birthYear, bm, bd]
+  for (let i = 0; i < 3; i++) {
+    if (born[i] !== cutoff[i])
+      return born[i] > cutoff[i] ? 'fatherDiedLongBeforeBirth' : null
+  }
+  return null
 }
 
 /** True when `descendantId` is reachable from `ancestorId` via parent links. */
@@ -105,8 +168,31 @@ export function validateRelationship(
   if (parent && child) {
     const order = compareBirthDates(child, parent)
     if (order != null && order < 0) return 'childOlderThanParent'
+    if (
+      type === 'biological_child' &&
+      checkParentDeath(parent, child) === 'motherDiedBeforeBirth'
+    )
+      return 'motherDiedBeforeBirth'
   }
   return null
+}
+
+/**
+ * Problems of a candidate relationship that the user may accept: a father who
+ * died long before the child's birth. Returns the issue, or null. Adopted
+ * children and non-parent links are never checked.
+ */
+export function relationshipWarning(
+  persons: DatedPerson[],
+  candidate: RelationshipLink
+): 'fatherDiedLongBeforeBirth' | null {
+  if (candidate.type !== 'biological_child') return null
+  const parent = persons.find((p) => p.id === candidate.person_a)
+  const child = persons.find((p) => p.id === candidate.person_b)
+  if (!parent || !child) return null
+  return checkParentDeath(parent, child) === 'fatherDiedLongBeforeBirth'
+    ? 'fatherDiedLongBeforeBirth'
+    : null
 }
 
 /**
@@ -252,7 +338,8 @@ const ERROR_KEYS: Record<RelationshipValidationCode, TranslationKey> = {
   selfLink: 'relationshipSelfLink',
   duplicateSpouse: 'relationshipDuplicateSpouse',
   cycle: 'relationshipCycle',
-  childOlderThanParent: 'relationshipChildOlderThanParent'
+  childOlderThanParent: 'relationshipChildOlderThanParent',
+  motherDiedBeforeBirth: 'relationshipMotherDiedBeforeBirth'
 }
 
 /** Translation key of the message shown for a validation code. */
@@ -274,4 +361,65 @@ export class RelationshipValidationError extends Error {
     this.code = code
     this.subject = subject
   }
+}
+
+/**
+ * Thrown by the relationship mutations when the link is allowed but looks
+ * wrong; nothing is saved until the caller repeats it with the warning
+ * accepted.
+ */
+export class RelationshipWarningError extends Error {
+  readonly issue: 'fatherDiedLongBeforeBirth'
+
+  constructor(issue: 'fatherDiedLongBeforeBirth') {
+    super(issue)
+    this.name = 'RelationshipWarningError'
+    this.issue = issue
+  }
+}
+
+/** A parent whose death does not fit a child's birth, with both names. */
+export interface ParentDeathFinding {
+  issue: ParentDeathIssue
+  parent: string
+  child: string
+}
+
+/** A relative of the member with the link type, for the death checks. */
+export interface LinkedRelative extends NamedDatedPerson {
+  adopted?: boolean
+}
+
+/**
+ * Checks the death of the member's parents against the member's birth and the
+ * member's death against the children's births. Adopted links are skipped.
+ * Errors (a mother) come before warnings (a father); in order of relatives.
+ */
+export function findParentDeathIssues(
+  person: DatedPerson & { full_name: string },
+  parents: LinkedRelative[],
+  children: LinkedRelative[]
+): ParentDeathFinding[] {
+  const findings: ParentDeathFinding[] = []
+  for (const parent of parents) {
+    if (parent.adopted) continue
+    const issue = checkParentDeath(parent, person)
+    if (issue)
+      findings.push({
+        issue,
+        parent: parent.full_name,
+        child: person.full_name
+      })
+  }
+  for (const child of children) {
+    if (child.adopted) continue
+    const issue = checkParentDeath(person, child)
+    if (issue)
+      findings.push({ issue, parent: person.full_name, child: child.full_name })
+  }
+  return findings.sort(
+    (a, b) =>
+      Number(b.issue === 'motherDiedBeforeBirth') -
+      Number(a.issue === 'motherDiedBeforeBirth')
+  )
 }
