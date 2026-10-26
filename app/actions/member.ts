@@ -4,12 +4,14 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 import { getServerTranslations } from '@/lib/i18n/server'
+import { deleteMember } from '@/utils/deleteMember'
 import {
   applyGenerationUpdates,
   buildDescendantGenerationUpdates
 } from '@/utils/generationUpdates'
 import { fetchAllRows, fetchInChunks } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase, getUser } from '@/utils/supabase/queries'
+import { PersonNotDeletedError } from '@/utils/writeErrors'
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -54,20 +56,15 @@ export async function deleteMemberProfile(memberId: string) {
     }
   }
 
-  // 3. Delete the member
-  // RLS turns a refused delete into "0 rows" without an error.
-  const { data: deleted, error: deleteError } = await supabase
-    .from('persons')
-    .delete()
-    .eq('id', memberId)
-    .select('id')
-
-  if (deleteError) {
-    console.error('Error deleting person:', deleteError)
+  // 3. Delete the member row, then its avatar file
+  try {
+    await deleteMember(supabase, memberId)
+  } catch (err) {
+    if (err instanceof PersonNotDeletedError) {
+      return { error: t('memberDeleteAccessDenied') }
+    }
+    console.error('Error deleting person:', err)
     return { error: t('memberDeleteError') }
-  }
-  if (!deleted || deleted.length === 0) {
-    return { error: t('memberDeleteAccessDenied') }
   }
 
   // 4. Revalidate and redirect

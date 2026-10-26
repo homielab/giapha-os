@@ -27,3 +27,11 @@ export class GalleryItemNotUpdatedError extends Error {
     this.name = 'GalleryItemNotUpdatedError'
   }
 }
+
+/** A delete of a person removed no row: the person is gone or the user may not delete it. */
+export class PersonNotDeletedError extends Error {
+  constructor() {
+    super('Person not deleted')
+    this.name = 'PersonNotDeletedError'
+  }
+}
