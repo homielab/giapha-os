@@ -1,4 +1,4 @@
-export interface KinshipResult {
+export interface KinshipTerms {
   /** Person A gọi Person B là gì */
   aCallsB: string
   /** Person B gọi Person A là gì */
@@ -9,6 +9,16 @@ export interface KinshipResult {
   distance: number
   /** Các bước quan hệ chi tiết */
   pathLabels: string[]
+}
+
+export interface KinshipResult extends KinshipTerms {
+  /** Cách gọi chung chung ("Họ hàng") hoặc nhiều cách ("Bố/Mẹ"): cần lưu ý */
+  hasAmbiguousTerm: boolean
+}
+
+/** True for a term that offers several alternatives or is only "Họ hàng". */
+export function isAmbiguousTerm(term: string): boolean {
+  return term.includes('/') || term.toLowerCase().includes('họ hàng')
 }
 
 export interface PersonNode {
@@ -328,7 +338,7 @@ function findBloodKinship(
   personB: PersonNode,
   personsMap: Map<string, PersonNode>,
   parentMap: Map<string, string[]>
-): KinshipResult | null {
+): KinshipTerms | null {
   const ancA = getAncestryData(personA.id, parentMap, personsMap)
   const ancB = getAncestryData(personB.id, parentMap, personsMap)
 
@@ -385,6 +395,20 @@ export function computeKinship(
   persons: PersonNode[],
   relationships: RelEdge[]
 ): KinshipResult | null {
+  const terms = resolveKinship(personA, personB, persons, relationships)
+  if (!terms) return null
+  return {
+    ...terms,
+    hasAmbiguousTerm: isAmbiguousTerm(terms.aCallsB)
+  }
+}
+
+function resolveKinship(
+  personA: PersonNode,
+  personB: PersonNode,
+  persons: PersonNode[],
+  relationships: RelEdge[]
+): KinshipTerms | null {
   if (personA.id === personB.id) return null
 
   const personsMap = new Map(persons.map((p) => [p.id, p]))

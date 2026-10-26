@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { computeKinship, PersonNode } from './kinshipHelpers'
+import { computeKinship, isAmbiguousTerm, PersonNode } from './kinshipHelpers'
 
 type Edge = { type: string; person_a: string; person_b: string }
 
@@ -233,5 +233,15 @@ describe('computeKinship', () => {
       { type: 'adopted_child', person_a: 'p', person_b: 'c' }
     ])!
     expect(r.aCallsB).toBe('Mẹ')
+  })
+
+  test('flags ambiguous terms for the disclaimer', () => {
+    expect(isAmbiguousTerm('Bố/Mẹ')).toBe(true)
+    expect(isAmbiguousTerm('Họ hàng')).toBe(true)
+    expect(isAmbiguousTerm('Chồng của Họ hàng')).toBe(true)
+    expect(isAmbiguousTerm('Bố')).toBe(false)
+    expect(isAmbiguousTerm('Anh em cột chèo')).toBe(false)
+    expect(kin('anh', 'bo')!.hasAmbiguousTerm).toBe(false)
+    expect(kin('anh', 'nguoiLa')!.hasAmbiguousTerm).toBe(false)
   })
 })

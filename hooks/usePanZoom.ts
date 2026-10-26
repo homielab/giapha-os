@@ -1,4 +1,5 @@
 import {
+  KeyboardEvent,
   PointerEvent,
   useCallback,
   useEffect,
@@ -15,6 +16,10 @@ import {
   pointerDistance,
   pointerMidpoint
 } from '@/utils/pinchZoom'
+import {
+  scrollAfterZoomAroundCenter,
+  treeKeyAction
+} from '@/utils/treeKeyboard'
 
 export function usePanZoom(
   containerRef: React.RefObject<HTMLDivElement | null>
@@ -168,6 +173,38 @@ export function usePanZoom(
     setIsDragging(false)
   }
 
+  // Keyboard shortcuts of the focused canvas: + / - zoom around the centre,
+  // 0 resets, arrows scroll. Keys from focusable nodes inside are left alone.
+  const handleKeyDown = (e: KeyboardEvent<HTMLElement>) => {
+    const el = containerRef.current
+    if (!el || e.target !== e.currentTarget) return
+    const action = treeKeyAction(e.key, scaleRef.current, e)
+    if (!action) return
+    e.preventDefault()
+    if (action.type === 'scroll') {
+      el.scrollBy({ left: action.dx, top: action.dy })
+      return
+    }
+    const next = action.type === 'zoom' ? action.scale : 1
+    const current = scaleRef.current
+    if (next === current) return
+    pendingScrollRef.current = {
+      left: scrollAfterZoomAroundCenter(
+        el.scrollLeft,
+        el.clientWidth,
+        current,
+        next
+      ),
+      top: scrollAfterZoomAroundCenter(
+        el.scrollTop,
+        el.clientHeight,
+        current,
+        next
+      )
+    }
+    setScale(next)
+  }
+
   const handleClickCapture = (e: React.MouseEvent<HTMLElement>) => {
     // Intercept clicks if we were dragging, prevent links from opening
     if (hasDraggedRef.current) {
@@ -186,6 +223,7 @@ export function usePanZoom(
       handlePointerMove,
       handlePointerUpOrLeave,
       handleClickCapture,
+      handleKeyDown,
       handleZoomIn,
       handleZoomOut,
       handleResetZoom

@@ -18,6 +18,8 @@ interface UseBubbleTreeRenderOptions {
   onSelectionChange: () => void
   onNodeClick: (nodeId: string) => void
   onRenderError: (error: Error) => void
+  canvasLabel: string
+  getNodeLabel: (node: GraphNode) => string
 }
 
 export function useBubbleTreeRender({
@@ -31,7 +33,9 @@ export function useBubbleTreeRender({
   onZoomLevelChange,
   onSelectionChange,
   onNodeClick,
-  onRenderError
+  onRenderError,
+  canvasLabel,
+  getNodeLabel
 }: UseBubbleTreeRenderOptions) {
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return
@@ -47,7 +51,9 @@ export function useBubbleTreeRender({
         avatarUrl,
         onZoomLevelChange,
         onSelectionChange,
-        onNodeClick
+        onNodeClick,
+        canvasLabel,
+        getNodeLabel
       })
     } catch (err) {
       console.error('D3 rendering error:', err)
@@ -70,6 +76,8 @@ export function useBubbleTreeRender({
     onZoomLevelChange,
     onSelectionChange,
     onNodeClick,
-    onRenderError
+    onRenderError,
+    canvasLabel,
+    getNodeLabel
   ])
 }

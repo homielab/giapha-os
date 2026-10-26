@@ -1,7 +1,14 @@
 'use client'
 
 import { Minus, Plus } from 'lucide-react'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState
+} from 'react'
 
 import FamilyTreeNodeRenderer from '@/components/FamilyTreeNodeRenderer'
 import TreeLinesStyle from '@/components/TreeLinesStyle'
@@ -33,6 +40,7 @@ export default function FamilyTree({
   canEdit?: boolean
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const keyboardHintId = useId()
   const [hideDaughtersInLaw, setHideDaughtersInLaw] = useState(false)
   const [hideSonsInLaw, setHideSonsInLaw] = useState(false)
   const [hideDaughters, setHideDaughters] = useState(false)
@@ -64,6 +72,7 @@ export default function FamilyTree({
       handlePointerMove,
       handlePointerUpOrLeave,
       handleClickCapture,
+      handleKeyDown,
       handleZoomIn,
       handleZoomOut,
       handleResetZoom
@@ -244,12 +253,14 @@ export default function FamilyTree({
         ref={containerRef}
         role='group'
         aria-label={t('treeCanvasLabel')}
+        aria-describedby={keyboardHintId}
         className={`h-full w-full [touch-action:pan-x_pan-y] overflow-auto bg-stone-50 ${isPressed ? 'cursor-grabbing' : 'cursor-grab'}`}
         tabIndex={0}
         onKeyDown={(e) => {
           // Keyboard users get the same "release" affordance as mouse users:
           // Escape cancels a grab/drag state on the canvas.
           if (e.key === 'Escape') handlePointerUpOrLeave()
+          handleKeyDown(e)
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -260,6 +271,9 @@ export default function FamilyTree({
         onDragStart={(e) => e.preventDefault()} // Prevent browser default dragging of links/images
       >
         <TreeLinesStyle />
+        <span id={keyboardHintId} className='sr-only'>
+          {t('treeKeyboardHint')}
+        </span>
 
         {/*
         The scaled box takes the tree's scaled size, so the scroll area always

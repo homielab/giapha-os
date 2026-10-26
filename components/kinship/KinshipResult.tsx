@@ -14,6 +14,7 @@ interface KinshipResultProps {
     aCallsB: string
     bCallsA: string
     pathLabels: string[]
+    hasAmbiguousTerm: boolean
   } | null
 }
 
@@ -109,8 +110,7 @@ export default function KinshipResult({
           )}
 
           {/* Disclaimer for ambiguous terms */}
-          {(result.aCallsB.includes('/') ||
-            result.aCallsB.includes('họ hàng')) && (
+          {result.hasAmbiguousTerm && (
             <p className='px-1 text-sm text-stone-400 italic'>
               {t('kinshipDisclaimer')}
             </p>

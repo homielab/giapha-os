@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Keyboard access to the tree views: in the Bubble view every family can be reached with Tab (read out with the names and birth years) and selected with Enter or Space; on the Tree, `+`/`-` zoom around the centre, `0` resets and the arrow keys scroll by 40 px. Both canvases announce how to use them.
 - Events page: an "Add to calendar (.ics)" button downloads birthdays (repeating yearly), death anniversaries for this and next year (lunar dates, same solar dates as the page) and custom events, ready to import into Google or Apple Calendar for reminders. The README feature lists (Vietnamese and English) now cover the bubble view, A4/A3 PDF, pinch zoom, duplicate checks, custom events, the lunar recompute tool and the English interface.
 - Members list view: shows the first 60 members and a "Show 60 more" button instead of rendering everyone at once; a new search, filter or sort starts again from the first 60. Tree, mind map and bubble views are unchanged.
 - Restore: the file is read as soon as you choose it. A broken or invalid file shows its error right away, and the confirmation now says how many members, relationships and events the file holds (and its export date), with a "Download the current backup first" button before anything is deleted.
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Kinship page: the note about ambiguous terms is now decided by the calculation itself instead of searching the text of the answer, so it also appears for the generic "Họ hàng" result.
 - Members and lineage pages load only the relationship columns they use (no note or timestamps): for 2,000 people with about 4,800 relationship links the data sent with the page drops from about 1,310 KB to about 810 KB. The language dictionaries were already not part of the page data (only the chosen language code is sent).
 - The members and lineage pages no longer load `note`, `created_at` and `updated_at` of every person, which no view reads: about 24% less data for 2,000 members (≈ 983 KB → 743 KB in a synthetic test).
 - The gallery signs all image links of a page in one storage request instead of one request per image.

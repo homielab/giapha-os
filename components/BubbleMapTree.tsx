@@ -12,6 +12,7 @@ import { useBubbleTreeRender } from '@/hooks/useBubbleTreeRender'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
 import { buildBubbleGraph, GraphLink, GraphNode } from '@/utils/bubbleGraph'
+import { bubbleNodeLabel } from '@/utils/bubbleLayout'
 
 import { AVATAR_VERSION } from './DefaultAvatar'
 
@@ -115,6 +116,15 @@ export default function BubbleMapTree({
     []
   )
 
+  const canvasLabel = t('bubbleTreeLabel')
+  const getNodeLabel = useCallback(
+    (node: GraphNode) =>
+      bubbleNodeLabel(node, (name, year) =>
+        t('bubbleNodeBorn', { name, year: String(year) })
+      ),
+    [t]
+  )
+
   useBubbleTreeRender({
     svgRef,
     containerRef,
@@ -126,7 +136,9 @@ export default function BubbleMapTree({
     onZoomLevelChange: handleZoomLevelChange,
     onSelectionChange: handleSelectionClear,
     onNodeClick: handleNodeClick,
-    onRenderError: handleRenderError
+    onRenderError: handleRenderError,
+    canvasLabel,
+    getNodeLabel
   })
 
   // Update visual emphasis without rebuilding the force simulation.
@@ -148,6 +160,10 @@ export default function BubbleMapTree({
       .style('opacity', (node) =>
         highlightedNodeIds && !highlightedNodeIds.has(node.id) ? 0.16 : 1
       )
+
+    nodeSelection.attr('aria-pressed', (node) =>
+      effectiveSelectedNodeId === node.id ? 'true' : 'false'
+    )
 
     nodeSelection
       .select<SVGRectElement>('rect')

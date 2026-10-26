@@ -855,6 +855,11 @@ export const messages = {
     animalGoat: 'Mùi',
     lunarDayMonth: '{day} tháng {month}',
     treeCanvasLabel: 'Khung cây gia phả',
+    treeKeyboardHint:
+      'Phím + và - phóng to, thu nhỏ; phím 0 về mặc định; phím mũi tên cuộn cây.',
+    bubbleTreeLabel:
+      'Sơ đồ bong bóng gia phả. Dùng phím Tab để chọn một gia đình, Enter hoặc Space để chọn và xem nhánh con cháu.',
+    bubbleNodeBorn: '{name}, sinh năm {year}',
     longevity: 'Hưởng thọ',
     livedYears: 'Hưởng dương',
     yearsOldLabel: 'tuổi',
@@ -1821,6 +1826,11 @@ export const messages = {
     animalGoat: 'Goat',
     lunarDayMonth: 'Month {month}, day {day}',
     treeCanvasLabel: 'Family tree canvas',
+    treeKeyboardHint:
+      'Press + and - to zoom in and out, 0 to reset the zoom, and the arrow keys to scroll the tree.',
+    bubbleTreeLabel:
+      'Family bubble map. Use Tab to move between families and Enter or Space to select one and highlight its descendants.',
+    bubbleNodeBorn: '{name}, born {year}',
     longevity: 'Longevity',
     livedYears: 'Years lived',
     yearsOldLabel: 'years old',
