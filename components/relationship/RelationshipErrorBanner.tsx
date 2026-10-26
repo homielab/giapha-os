@@ -2,19 +2,28 @@
 
 import { useI18n } from '@/lib/i18n/useI18n'
 
+const TONES = {
+  error: 'border-red-100 bg-red-50 text-red-600',
+  warning: 'border-amber-200 bg-amber-50 text-amber-800'
+}
+
 export default function RelationshipErrorBanner({
   error,
-  onDismiss
+  onDismiss,
+  tone = 'error'
 }: {
   error: string
   onDismiss: () => void
+  tone?: keyof typeof TONES
 }) {
   const { t } = useI18n()
   return (
-    <div className='animate-in fade-in slide-in-from-top-2 mt-4 flex items-center justify-between gap-2 rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-600'>
+    <div
+      role='alert'
+      className={`animate-in fade-in slide-in-from-top-2 mt-4 flex items-center justify-between gap-2 rounded-xl border p-3 text-sm ${TONES[tone]}`}>
       <div className='flex items-center gap-2'>
         <svg
-          className='h-5 w-5 shrink-0 text-red-500'
+          className={`h-5 w-5 shrink-0 ${tone === 'warning' ? 'text-amber-500' : 'text-red-500'}`}
           fill='none'
           viewBox='0 0 24 24'
           stroke='currentColor'>
@@ -30,7 +39,7 @@ export default function RelationshipErrorBanner({
       <button
         onClick={onDismiss}
         aria-label={t('clearError')}
-        className='p-1 text-red-400 transition-colors hover:text-red-600'>
+        className={`p-1 transition-colors ${tone === 'warning' ? 'text-amber-500 hover:text-amber-700' : 'text-red-400 hover:text-red-600'}`}>
         <svg
           className='h-4 w-4'
           fill='none'

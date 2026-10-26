@@ -873,6 +873,15 @@ export const messages = {
     bulkAddPartial:
       'Đã xảy ra lỗi. Chỉ lưu thành công {success}/{total} người.',
     bulkAddError: 'Không thể thêm danh sách con: {error}',
+    bulkAddChildOrphaned:
+      'đã tạo nhưng chưa gắn được cha mẹ, hãy thêm quan hệ cho người này',
+    bulkAddFailedRowsKept: 'Các dòng lỗi được giữ lại để thử lại.',
+    relationshipSavedTargetNotUpdated:
+      'Đã lưu quan hệ nhưng chưa cập nhật đời / dâu rể cho người kia: {error}',
+    relationshipsLoadError: 'Không tải được thông tin gia đình: {error}',
+    memberSavedGenerationNotUpdated:
+      'Đã lưu thành viên nhưng chưa cập nhật thế hệ cho con cháu: {error}. Bấm lưu lần nữa để thử lại, hoặc Tiếp tục để bỏ qua.',
+    continueAction: 'Tiếp tục',
     spouseNameRequired: 'Vui lòng nhập tên Vợ/Chồng.',
     spouseAddError: 'Không thể thêm vợ/chồng: {error}',
     confirmDeleteRelationship: 'Bạn có chắc chắn muốn xóa mối quan hệ này?',
@@ -1756,6 +1765,15 @@ export const messages = {
     bulkAddPartial:
       'An error occurred. Only {success}/{total} people were saved.',
     bulkAddError: 'Could not add the children list: {error}',
+    bulkAddChildOrphaned:
+      'created but not linked to the parents, add the relationship for this person',
+    bulkAddFailedRowsKept: 'The failed rows are kept so you can try again.',
+    relationshipSavedTargetNotUpdated:
+      'The relationship was saved, but the other person’s generation / in-law flag was not updated: {error}',
+    relationshipsLoadError: 'Could not load family information: {error}',
+    memberSavedGenerationNotUpdated:
+      'The member was saved, but the descendants’ generations were not updated: {error}. Save again to retry, or Continue to skip.',
+    continueAction: 'Continue',
     spouseNameRequired: 'Please enter the spouse’s name.',
     spouseAddError: 'Could not add spouse: {error}',
     confirmDeleteRelationship:

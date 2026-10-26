@@ -20,7 +20,11 @@ import {
   hasGenerationChanged,
   toNumberOrEmpty
 } from '@/utils/memberFormInit'
-import { submitMemberForm } from '@/utils/memberFormSubmit'
+import {
+  finishMemberSave,
+  MemberSaveWarning,
+  submitMemberForm
+} from '@/utils/memberFormSubmit'
 import { createClient } from '@/utils/supabase/client'
 
 interface MemberFormProps {
@@ -45,6 +49,7 @@ export default function MemberForm({
   const { t } = useI18n()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [warning, setWarning] = useState<MemberSaveWarning | null>(null)
 
   // Form states (defaults resolved by a plain helper to keep this component
   // free of per-field fallback branches)
@@ -98,10 +103,10 @@ export default function MemberForm({
 
   // Bring validation/save errors into view on long forms
   useEffect(() => {
-    if (error) {
+    if (error || warning) {
       errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
-  }, [error])
+  }, [error, warning])
 
   // Private fields
   const [phoneNumber, setPhoneNumber] = useState(init.phoneNumber)
@@ -156,6 +161,7 @@ export default function MemberForm({
       updateDescendantGenerations,
       setLoading,
       setError,
+      setWarning,
       onSuccess
     })
   }
@@ -246,6 +252,12 @@ export default function MemberForm({
 
       <MemberFormFooter
         error={error}
+        warning={warning?.message ?? null}
+        onContinue={() => {
+          if (!warning) return
+          setWarning(null)
+          finishMemberSave({ router, onSuccess }, warning.personId)
+        }}
         errorRef={errorRef}
         loading={loading}
         processingAvatar={processingAvatar}

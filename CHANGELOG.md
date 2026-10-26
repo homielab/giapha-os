@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Adding several children at once no longer reports success for a child whose parent link was refused: that child is removed again, its row shows the reason and stays in the form for another try.
+- Adding a relationship or saving a member now warns when the generation update that follows it fails, instead of only logging it; the member family list shows a load error with a retry button instead of an empty list.
 - Recomputing generations (Lineage) no longer freezes when the data contains a parent–child loop; the members of the loop stop at a bounded generation.
 - The English interface no longer shows Vietnamese text in dates and stats: "Unknown", leap-month marker, zodiac signs and animals, today's lunar date on the dashboard and the family tree label. The email to admins about a new account waiting for approval follows the language of the browser that signed up.
 - Adding a relationship now refuses a couple that is already married (in either order), a parent–child link that would create a loop, and a child born before the parent (comparing month and day when both are known); the "add several children" form checks birth years before creating anyone.

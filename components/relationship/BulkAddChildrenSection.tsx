@@ -62,7 +62,7 @@ export default function BulkAddChildrenSection({
     setError(null)
 
     try {
-      const successCount = await bulkCreateChildren(supabase, {
+      const { created, failures } = await bulkCreateChildren(supabase, {
         children: validChildren,
         parentId: personId,
         otherParentId: selectedSpouseId,
@@ -75,18 +75,32 @@ export default function BulkAddChildrenSection({
         ]
       })
 
-      if (successCount === validChildren.length) {
+      if (failures.length === 0) {
         onClose()
         onSaved()
-      } else {
-        showError(
-          t('bulkAddPartial', {
-            success: successCount,
-            total: validChildren.length
-          })
-        )
-        onSaved()
+        return
       }
+
+      // Keep only the rows that can be retried: saved rows and rows whose
+      // person exists without parents would be added twice.
+      const retryRows = failures.filter((f) => !f.orphaned).map((f) => f.child)
+      setBulkChildren(retryRows.length > 0 ? retryRows : [emptyBulkChildRow()])
+      setError(
+        [
+          t('bulkAddPartial', {
+            success: created,
+            total: validChildren.length
+          }),
+          ...failures.map(
+            (f) =>
+              `${f.child.name.trim()}: ${
+                f.orphaned ? t('bulkAddChildOrphaned') : f.error
+              }`
+          ),
+          ...(retryRows.length > 0 ? [t('bulkAddFailedRowsKept')] : [])
+        ].join('\n')
+      )
+      if (created > 0 || failures.some((f) => f.orphaned)) onSaved()
     } catch (err: unknown) {
       if (err instanceof RelationshipValidationError) {
         const message = t(relationshipErrorKey(err.code))
@@ -105,9 +119,11 @@ export default function BulkAddChildrenSection({
   return (
     <>
       {error && (
-        <div className='animate-in fade-in slide-in-from-top-1 mt-2 flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-600'>
+        <div
+          role='alert'
+          className='animate-in fade-in slide-in-from-top-1 mt-2 flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-600'>
           <svg
-            className='h-4 w-4 shrink-0'
+            className='mt-0.5 h-4 w-4 shrink-0'
             fill='none'
             viewBox='0 0 24 24'
             stroke='currentColor'>
@@ -118,7 +134,7 @@ export default function BulkAddChildrenSection({
               d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
             />
           </svg>
-          {error}
+          <span className='whitespace-pre-line'>{error}</span>
         </div>
       )}
       <BulkAddChildrenForm

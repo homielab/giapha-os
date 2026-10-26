@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 
 import { updateDescendantGenerationsAction } from '@/app/actions/member'
-import type { TranslationKey } from '@/lib/i18n/messages'
+import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
 import { Person } from '@/types'
 import { getAvatarStoragePath } from '@/utils/avatar'
 import {
@@ -41,12 +41,22 @@ export interface SaveMemberOptions {
   updateDescendantGenerations: boolean
 }
 
+export interface SaveMemberResult {
+  /** The saved person's ID (undefined when the insert returned none). */
+  personId: string | undefined
+  /**
+   * Set when the member was saved but shifting the descendants' generations
+   * failed; the form shows it as a warning instead of a success.
+   */
+  generationUpdateError: string | null
+}
+
 // Persists the person row, avatar file, private details and descendant
-// generation deltas. Returns the saved person's ID (undefined when the insert
-// failed to return one). Throws on blocking errors.
+// generation deltas. Throws on blocking errors; a failed generation update is
+// returned instead because the member itself is already saved.
 export async function saveMember(
   options: SaveMemberOptions
-): Promise<string | undefined> {
+): Promise<SaveMemberResult> {
   const {
     supabase,
     isEditing,
@@ -161,27 +171,47 @@ export async function saveMember(
   }
 
   // 4. Update descendants' generations if checked and changed
+  let generationUpdateError: string | null = null
   if (hasGenerationChanged && updateDescendantGenerations && currentPersonId) {
     const delta = Number(fields.generation) - (initialData?.generation || 0)
     if (delta !== 0) {
-      const res = await updateDescendantGenerationsAction(
-        currentPersonId,
-        delta
-      )
-      if (res.error) {
-        console.error('Failed to update descendant generations:', res.error)
-        // Non-blocking error, but we could show a toast if we had one
+      try {
+        const res = await updateDescendantGenerationsAction(
+          currentPersonId,
+          delta
+        )
+        if (res.error) generationUpdateError = res.error
+      } catch (err) {
+        generationUpdateError = (err as Error)?.message || String(err)
       }
     }
   }
 
-  return currentPersonId
+  return { personId: currentPersonId, generationUpdateError }
+}
+
+export interface MemberSaveWarning {
+  message: string
+  personId: string
+}
+
+// What happens after a save: the caller's onSuccess, or the member's page.
+export function finishMemberSave(
+  ctx: Pick<MemberFormSubmitContext, 'router' | 'onSuccess'>,
+  personId: string
+) {
+  if (ctx.onSuccess) {
+    ctx.onSuccess(personId)
+  } else {
+    ctx.router.push('/dashboard/members/' + personId)
+    ctx.router.refresh()
+  }
 }
 
 export interface MemberFormSubmitContext {
   supabase: SupabaseClient
   router: { push: (url: string) => void; refresh: () => void }
-  t: (key: import('@/lib/i18n/messages').TranslationKey) => string
+  t: (key: TranslationKey, values?: TranslationValues) => string
   isEditing: boolean
   initialData?: Person
   fields: MemberFormFields
@@ -216,6 +246,11 @@ export interface MemberFormSubmitContext {
   updateDescendantGenerations: boolean
   setLoading: (value: boolean) => void
   setError: (value: string | null) => void
+  /**
+   * Shows "saved, but…" warnings; the form stays open until the user
+   * continues (finishMemberSave).
+   */
+  setWarning: (value: MemberSaveWarning | null) => void
   onSuccess?: (personId: string) => void
 }
 
@@ -223,9 +258,10 @@ export interface MemberFormSubmitContext {
 // The component only wires state; every branch lives here so the React
 // function stays simple.
 export async function submitMemberForm(ctx: MemberFormSubmitContext) {
-  const { t, setLoading, setError, router, onSuccess } = ctx
+  const { t, setLoading, setError, setWarning } = ctx
   setLoading(true)
   setError(null)
+  setWarning(null)
 
   const normalized = normalizeDeathDates(
     ctx.isDeceased,
@@ -251,28 +287,33 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
   }
 
   try {
-    const currentPersonId = await saveMember({
-      supabase: ctx.supabase,
-      isEditing: ctx.isEditing,
-      initialData: ctx.initialData,
-      fields: ctx.fields,
-      deathValues: normalized.values,
-      avatarUrl: ctx.avatarUrl,
-      avatarFile: ctx.avatarFile,
-      removeExistingAvatar: ctx.removeExistingAvatar,
-      isAdmin: ctx.isAdmin,
-      privateFields: ctx.privateFields,
-      hasGenerationChanged: ctx.hasGenerationChanged,
-      updateDescendantGenerations: ctx.updateDescendantGenerations
-    })
+    const { personId: currentPersonId, generationUpdateError } =
+      await saveMember({
+        supabase: ctx.supabase,
+        isEditing: ctx.isEditing,
+        initialData: ctx.initialData,
+        fields: ctx.fields,
+        deathValues: normalized.values,
+        avatarUrl: ctx.avatarUrl,
+        avatarFile: ctx.avatarFile,
+        removeExistingAvatar: ctx.removeExistingAvatar,
+        isAdmin: ctx.isAdmin,
+        privateFields: ctx.privateFields,
+        hasGenerationChanged: ctx.hasGenerationChanged,
+        updateDescendantGenerations: ctx.updateDescendantGenerations
+      })
 
     if (!currentPersonId) throw new Error(t('saveIdError'))
-    if (onSuccess) {
-      onSuccess(currentPersonId)
-    } else {
-      router.push('/dashboard/members/' + currentPersonId)
-      router.refresh()
+    if (generationUpdateError) {
+      setWarning({
+        message: t('memberSavedGenerationNotUpdated', {
+          error: generationUpdateError
+        }),
+        personId: currentPersonId
+      })
+      return
     }
+    finishMemberSave(ctx, currentPersonId)
   } catch (err) {
     console.error('Error saving member:', err)
     setError((err as Error).message || t('saveMemberError'))

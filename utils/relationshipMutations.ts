@@ -19,12 +19,27 @@ export interface NewRelationshipInput {
   person: Person
 }
 
+export interface AddRelationshipResult {
+  // Set when the relationship was saved but filling in the target's
+  // generation / in-law flag failed; the caller shows it as a warning.
+  targetUpdateError: string | null
+}
+
+function errorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'message' in err) {
+    const message = (err as { message: unknown }).message
+    if (typeof message === 'string' && message !== '') return message
+  }
+  return String(err)
+}
+
 // Inserts a relationship between the current person and a target, then
-// auto-fills the target's generation/is_in_law when still unset.
+// auto-fills the target's generation/is_in_law when still unset. Throws when
+// the relationship itself is not saved.
 export async function addRelationshipWithTargetSync(
   supabase: SupabaseClient,
   input: NewRelationshipInput
-) {
+): Promise<AddRelationshipResult> {
   const { personId, selectedTargetId, direction, relType, note } = input
 
   let personA = personId
@@ -69,12 +84,13 @@ export async function addRelationshipWithTargetSync(
 
   if (error) throw error
 
-  await autoUpdateTargetProperties(
+  const targetUpdateError = await autoUpdateTargetProperties(
     supabase,
     selectedTargetId,
     direction,
     input.person
   )
+  return { targetUpdateError }
 }
 
 const LOOKUP_CHUNK = 200
@@ -131,19 +147,21 @@ async function loadRelationshipContext(
   return { persons: personsResult.data ?? [], relationships }
 }
 
-// Auto-update target person generation and is_in_law if currently missing
+// Auto-update target person generation and is_in_law if currently missing.
+// Returns the error message when reading or updating the target failed.
 async function autoUpdateTargetProperties(
   supabase: SupabaseClient,
   selectedTargetId: string,
   direction: 'parent' | 'child' | 'spouse',
   person: Person
-) {
+): Promise<string | null> {
   try {
-    const { data: targetPerson } = await supabase
+    const { data: targetPerson, error: selectError } = await supabase
       .from('persons')
       .select('generation, is_in_law')
       .eq('id', selectedTargetId)
       .single()
+    if (selectError) return errorMessage(selectError)
 
     if (
       targetPerson &&
@@ -166,14 +184,16 @@ async function autoUpdateTargetProperties(
       }
 
       if (Object.keys(updates).length > 0) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('persons')
           .update(updates)
           .eq('id', selectedTargetId)
+        if (updateError) return errorMessage(updateError)
       }
     }
+    return null
   } catch (err) {
-    console.error('Failed to auto-update target person properties', err)
+    return errorMessage(err)
   }
 }
 
@@ -190,12 +210,29 @@ function parseBirthYear(value: string): number | null {
   return isNaN(year) ? null : year
 }
 
-// Creates one child person plus the parent relationship(s). Returns true on
-// success; failures are logged and reported per row.
+export interface BulkChildFailure {
+  child: BulkChildRow
+  error: string
+  // The person row exists but has no parent link (the link failed and so did
+  // removing the person again); adding the row again would duplicate it.
+  orphaned: boolean
+}
+
+export interface BulkCreateResult {
+  created: number
+  failures: BulkChildFailure[]
+}
+
+type ChildOutcome =
+  { ok: true } | { ok: false; error: string; orphaned: boolean }
+
+// Creates one child person plus the parent relationship(s). A child only
+// counts as created when every parent link is saved; when a link fails the
+// new person is removed again (its links go with it, ON DELETE CASCADE).
 async function createChildWithParents(
   supabase: SupabaseClient,
   { child, parentId, otherParentId, parentGeneration }: BulkChildInput
-): Promise<boolean> {
+): Promise<ChildOutcome> {
   const personPayload: {
     full_name: string
     gender: 'male' | 'female' | 'other'
@@ -219,41 +256,55 @@ async function createChildWithParents(
     if (!isNaN(order)) personPayload.birth_order = order
   }
 
-  const { data: newPersonData, error: insertError } = await supabase
-    .from('persons')
-    .insert(personPayload)
-    .select('id')
-    .single()
+  try {
+    const { data: newPersonData, error: insertError } = await supabase
+      .from('persons')
+      .insert(personPayload)
+      .select('id')
+      .single()
 
-  if (insertError || !newPersonData) {
-    console.error('Error inserting child:', child.name, insertError)
-    return false // Skip setting relationships for this if person insert failed
+    if (insertError || !newPersonData) {
+      return {
+        ok: false,
+        error: insertError ? errorMessage(insertError) : 'no id returned',
+        orphaned: false
+      }
+    }
+
+    const newChildId: string = newPersonData.id
+    const parentIds = [parentId]
+    if (otherParentId && otherParentId !== 'unknown') {
+      parentIds.push(otherParentId)
+    }
+
+    const { error: linkError } = await supabase.from('relationships').insert(
+      parentIds.map((id) => ({
+        person_a: id,
+        person_b: newChildId,
+        type: 'biological_child'
+      }))
+    )
+    if (!linkError) return { ok: true }
+
+    // RLS turns a refused delete into "0 rows", so check what was removed.
+    const { data: removed, error: removeError } = await supabase
+      .from('persons')
+      .delete()
+      .eq('id', newChildId)
+      .select('id')
+    return {
+      ok: false,
+      error: errorMessage(linkError),
+      orphaned: removeError != null || !removed || removed.length === 0
+    }
+  } catch (err) {
+    return { ok: false, error: errorMessage(err), orphaned: false }
   }
-
-  const newChildId = newPersonData.id
-
-  // Insert Relationship to Main Person (parent)
-  await supabase.from('relationships').insert({
-    person_a: parentId,
-    person_b: newChildId,
-    type: 'biological_child'
-  })
-
-  // Insert Relationship to Second Parent (spouse), if selected
-  if (otherParentId && otherParentId !== 'unknown') {
-    await supabase.from('relationships').insert({
-      person_a: otherParentId,
-      person_b: newChildId,
-      type: 'biological_child'
-    })
-  }
-
-  return true
 }
 
 // Bulk-inserts children in bounded batches of 5 (rows are independent but we
 // avoid firing every insert at once from the browser). Returns how many
-// children were created successfully.
+// children were created with their parent links, and the rows that failed.
 export async function bulkCreateChildren(
   supabase: SupabaseClient,
   input: {
@@ -264,7 +315,7 @@ export async function bulkCreateChildren(
     // Birth dates of the parent(s), checked against each child's birth year.
     parents: DatedPerson[]
   }
-): Promise<number> {
+): Promise<BulkCreateResult> {
   const { children, parentId, otherParentId, parentGeneration } = input
 
   const invalid = validateNewChildren(
@@ -278,7 +329,8 @@ export async function bulkCreateChildren(
     )
   }
 
-  let successCount = 0
+  let created = 0
+  const failures: BulkChildFailure[] = []
 
   const BATCH_SIZE = 5
   for (let i = 0; i < children.length; i += BATCH_SIZE) {
@@ -294,10 +346,18 @@ export async function bulkCreateChildren(
         })
       )
     )
-    successCount += results.filter(Boolean).length
+    results.forEach((result, index) => {
+      if (result.ok) created++
+      else
+        failures.push({
+          child: batch[index],
+          error: result.error,
+          orphaned: result.orphaned
+        })
+    })
   }
 
-  return successCount
+  return { created, failures }
 }
 
 export interface SpouseInput {

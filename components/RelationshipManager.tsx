@@ -53,6 +53,10 @@ export default function RelationshipManager({
 
   const [relationships, setRelationships] = useState<EnrichedRelationship[]>([])
   const [loading, setLoading] = useState(true)
+  // Set when loading failed: show it with a retry instead of an empty list
+  const [loadError, setLoadError] = useState<string | null>(null)
+  // "Saved, but…" warning from the add forms
+  const [saveWarning, setSaveWarning] = useState<string | null>(null)
 
   // Which admin form is open (mutually exclusive)
   const [isAdding, setIsAdding] = useState(false)
@@ -69,9 +73,12 @@ export default function RelationshipManager({
         t
       )
       setRelationships(relationships)
+      setLoadError(null)
       onStatsLoaded?.(stats)
     } catch (err) {
       console.error('Error fetching relationships:', err)
+      const message = (err as Error)?.message || String(err)
+      setLoadError(t('relationshipsLoadError', { error: message }))
     } finally {
       setLoading(false)
     }
@@ -82,7 +89,8 @@ export default function RelationshipManager({
     return () => window.clearTimeout(timeoutId)
   }, [fetchRelationships])
 
-  const handleSaved = () => {
+  const handleSaved = (warning?: string) => {
+    setSaveWarning(warning ?? null)
     fetchRelationships()
     router.refresh()
   }
@@ -104,9 +112,26 @@ export default function RelationshipManager({
     }
   }
 
+  const handleRetry = () => {
+    setLoading(true)
+    fetchRelationships()
+  }
+
   if (loading)
     return (
       <div className='text-sm text-stone-500'>{t('loadingFamilyInfo')}</div>
+    )
+
+  if (loadError)
+    return (
+      <div
+        role='alert'
+        className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-600'>
+        <span>{loadError}</span>
+        <button type='button' onClick={handleRetry} className='btn'>
+          {t('tryAgain')}
+        </button>
+      </div>
     )
 
   return (
@@ -127,6 +152,18 @@ export default function RelationshipManager({
           onAddSpouse={() => setIsAddingSpouse(true)}
         />
       )}
+
+      {canEdit &&
+        saveWarning &&
+        !isAdding &&
+        !isAddingBulk &&
+        !isAddingSpouse && (
+          <RelationshipErrorBanner
+            tone='warning'
+            error={saveWarning}
+            onDismiss={() => setSaveWarning(null)}
+          />
+        )}
 
       {canEdit &&
         deleteError &&

@@ -60,6 +60,7 @@ Xuất/nhập GEDCOM (7.0) để mở gia phả trong Gramps, MyHeritage… ho�
 ### Kiểm tra dữ liệu
 
 - **Quan hệ**: trước khi lưu, ứng dụng từ chối quan hệ của một người với chính mình, cặp vợ chồng đã có (A–B hay B–A đều tính là một), quan hệ cha/mẹ–con tạo vòng (thêm cháu làm cha của ông) và người con sinh trước cha/mẹ. Ngày sinh được so theo phần cả hai người cùng có: năm, rồi tháng, rồi ngày; thiếu năm sinh thì bỏ qua bước này. Form thêm nhiều con kiểm tra năm sinh từng con với cha/mẹ trước khi tạo ai.
+- **Lỗi khi lưu**: ở form thêm nhiều con, một người con chỉ tính là đã thêm khi đã gắn được với cha/mẹ; gắn lỗi (ví dụ bị chặn quyền) thì người vừa tạo được xoá lại, dòng đó báo lỗi kèm lý do và được giữ trong form để thử lại. Khi quan hệ hoặc thành viên đã lưu nhưng bước cập nhật đời/thế hệ đi kèm bị lỗi, ứng dụng hiện cảnh báo thay vì báo thành công. Danh sách quan hệ tải lỗi thì hiện lỗi và nút thử lại.
 - **Ngày mất**: không được trước ngày sinh, so cả tháng và ngày khi cùng năm.
 - **Phiên bản file sao lưu JSON**: file ghi `version` (hiện là 3). Khi phục hồi, file không có `version` được coi là bản 1 (file cũ); file có `version` lớn hơn bản ứng dụng đọc được bị từ chối với lời nhắc nâng cấp ứng dụng, để không mất dữ liệu của cột mới.
 
@@ -304,7 +305,7 @@ bun run typecheck     # tsc --noEmit
 
 GitHub Actions (`.github/workflows/test.yml`) chạy đúng các lệnh này cho mỗi push lên `main` và mỗi pull request.
 
-Test đặt cạnh file được kiểm tra (`utils/gedcom.ts` → `utils/gedcom.test.ts`). Thay đổi đáng chú ý ghi vào [CHANGELOG.md](CHANGELOG.md), mục `## [Unreleased]`.
+Test đặt cạnh file được kiểm tra (`utils/gedcom.ts` → `utils/gedcom.test.ts`). Hàm gọi Supabase được test với client giả `utils/testing/fakeSupabase.ts` (trả `{ data, error }` theo từng lệnh). Thay đổi đáng chú ý ghi vào [CHANGELOG.md](CHANGELOG.md), mục `## [Unreleased]`.
 
 Trang chỉ hiển thị số liệu (như `/dashboard/stats`) tính kết quả trên server và chỉ `select` các cột cần (xem `STATS_PERSON_COLUMNS` trong `utils/familyStats.ts`), không gửi cả bảng `persons` xuống trình duyệt.
 

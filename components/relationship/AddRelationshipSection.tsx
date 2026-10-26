@@ -18,7 +18,8 @@ interface AddRelationshipSectionProps {
   person: Person
   open: boolean
   onClose: () => void
-  onSaved: () => void
+  /** Called after saving; `warning` is set when only part of it succeeded. */
+  onSaved: (warning?: string) => void
 }
 
 export default function AddRelationshipSection({
@@ -104,17 +105,26 @@ export default function AddRelationshipSection({
     setError(null)
 
     try {
-      await addRelationshipWithTargetSync(supabase, {
-        personId,
-        selectedTargetId,
-        direction: newRelDirection,
-        relType: newRelType,
-        note: newRelNote,
-        person
-      })
+      const { targetUpdateError } = await addRelationshipWithTargetSync(
+        supabase,
+        {
+          personId,
+          selectedTargetId,
+          direction: newRelDirection,
+          relType: newRelType,
+          note: newRelNote,
+          person
+        }
+      )
 
       onClose()
-      onSaved()
+      onSaved(
+        targetUpdateError
+          ? t('relationshipSavedTargetNotUpdated', {
+              error: targetUpdateError
+            })
+          : undefined
+      )
     } catch (err: unknown) {
       if (err instanceof RelationshipValidationError) {
         showError(t(relationshipErrorKey(err.code)))
