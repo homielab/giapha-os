@@ -43,6 +43,7 @@ Phù hợp với người Việt Nam.
 - **Sao lưu dữ liệu**: Xuất/nhập file JSON, CSV, GEDCOM để lưu trữ hoặc di chuyển dễ dàng; xem trước nội dung file trước khi phục hồi. Ô CSV bắt đầu bằng `=`, `+`, `-`, `@` được thêm dấu `'` ở đầu khi xuất (để Excel không chạy như công thức; số điện thoại `+84…` hiện `'+84…` trong Excel) và tự bỏ dấu `'` đó khi nhập lại.
 - **Bảo mật**: Phân quyền (Admin, Editor, Member) và bảo vệ dữ liệu bằng Supabase.
 - **Đa thiết bị, hai ngôn ngữ**: Giao diện hiện đại, tối ưu cho cả máy tính và điện thoại; chuyển giữa tiếng Việt và tiếng Anh.
+- **Cài lên màn hình chính**: có web manifest và biểu tượng ứng dụng, nên "Thêm vào màn hình chính" trên điện thoại hiện đúng tên "Gia Phả OS" (đổi bằng `SITE_NAME`/`SHORT_NAME`) và mở thẳng vào bảng điều khiển. Không có service worker nên vẫn cần mạng.
 
 ### Âm lịch và ngày giỗ
 

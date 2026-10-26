@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import config from '@/app/config'
 import type { Locale } from '@/lib/i18n/messages'
+import { APPLE_TOUCH_ICON, MANIFEST_PATH } from '@/lib/manifest'
 
 const OG_IMAGE = {
   url: '/og-image.png',
@@ -46,5 +47,26 @@ export function publicPageMetadata({
       description,
       images: [OG_IMAGE.url]
     }
+  }
+}
+
+/**
+ * Metadata shared by every page: the site URL, the default title, the web app
+ * manifest and the iOS home-screen icon. Pages merge their own metadata on top.
+ */
+export function rootMetadata({
+  description,
+  locale
+}: {
+  description: string
+  locale: Locale
+}): Metadata {
+  return {
+    metadataBase: new URL(config.siteUrl),
+    applicationName: config.siteName,
+    title: { default: config.siteName, template: `%s | ${config.siteName}` },
+    manifest: MANIFEST_PATH,
+    icons: { apple: APPLE_TOUCH_ICON },
+    ...publicPageMetadata({ description, locale })
   }
 }

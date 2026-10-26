@@ -43,6 +43,7 @@ Designed primarily for Vietnamese families.
 - **Data backup**: Export and import JSON, CSV, and GEDCOM files for easy storage or migration; the restore file is previewed before anything is replaced. CSV cells starting with `=`, `+`, `-` or `@` get a leading `'` on export so spreadsheets don't run them as formulas (a phone number `+84…` shows as `'+84…` in Excel); that `'` is removed again on import.
 - **Security**: Use Admin, Editor, and Member roles with data protection through Supabase.
 - **Responsive, bilingual**: A modern interface optimized for desktop and mobile devices, switchable between Vietnamese and English.
+- **Install on the home screen**: a web app manifest and app icons, so "Add to Home Screen" on a phone shows the site name "Gia Phả OS" (change it with `SITE_NAME`/`SHORT_NAME`) and opens the dashboard directly. There is no service worker, so a connection is still required.
 
 ### Lunar calendar and death anniversaries
 

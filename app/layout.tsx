@@ -1,12 +1,11 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 
 import MotionProvider from '@/components/MotionProvider'
 import { I18nProvider } from '@/lib/i18n/I18nProvider'
 import { getServerLocale, getServerTranslations } from '@/lib/i18n/server'
-import { publicPageMetadata } from '@/lib/metadata'
-
-import config from './config'
+import { MANIFEST_THEME_COLOR } from '@/lib/manifest'
+import { rootMetadata } from '@/lib/metadata'
 
 import './globals.css'
 
@@ -18,17 +17,18 @@ const playfair = Playfair_Display({
   subsets: ['latin', 'vietnamese'],
   variable: '--font-playfair'
 })
+
+export const viewport: Viewport = {
+  // Same stone colour as the web app manifest, for the mobile browser chrome.
+  themeColor: MANIFEST_THEME_COLOR
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const { t, locale } = await getServerTranslations()
-  return {
-    metadataBase: new URL(config.siteUrl),
-    applicationName: config.siteName,
-    title: { default: config.siteName, template: `%s | ${config.siteName}` },
-    ...publicPageMetadata({
-      description: t('landingDescription'),
-      locale
-    })
-  }
+  return rootMetadata({
+    description: t('landingDescription'),
+    locale
+  })
 }
 
 export default async function RootLayout({
