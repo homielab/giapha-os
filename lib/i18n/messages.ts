@@ -285,6 +285,12 @@ export const messages = {
     generationsFetchError: 'Lỗi lấy thông tin thế hệ',
     descendantGenerationUpdateError:
       'Có lỗi xảy ra khi cập nhật một số thế hệ sau.',
+    generationTransactionError: 'không có thay đổi nào được lưu ({error})',
+    generationUpgradeDatabase:
+      'Database chưa được nâng cấp nên thế hệ được cập nhật từng người một, không trong một giao dịch (lỗi giữa chừng có thể để lại thế hệ cập nhật dở). Hãy chạy migration ở trang Nâng cấp hệ thống (/dashboard/upgrade).',
+    lineageTransactionError: 'Chưa áp dụng thay đổi nào: {error}',
+    lineagePartialUpdateError:
+      'Không cập nhật được {failed}/{total} thành viên ({error}); các thành viên còn lại đã được lưu.',
     calculating: 'Đang tính...',
     calculate: 'Tính toán',
     updating: 'Đang cập nhật...',
@@ -1187,6 +1193,12 @@ export const messages = {
     generationsFetchError: 'Could not load generations.',
     descendantGenerationUpdateError:
       'Some descendant generations could not be updated.',
+    generationTransactionError: 'nothing was saved ({error})',
+    generationUpgradeDatabase:
+      'The database is not upgraded, so generations are updated one member at a time, not in a single transaction (a failure halfway can leave generations partly updated). Run the migrations on the System upgrade page (/dashboard/upgrade).',
+    lineageTransactionError: 'No changes were applied: {error}',
+    lineagePartialUpdateError:
+      'Could not update {failed} of {total} members ({error}); the other members were saved.',
     calculating: 'Calculating...',
     calculate: 'Calculate',
     updating: 'Updating...',

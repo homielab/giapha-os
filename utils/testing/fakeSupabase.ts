@@ -15,6 +15,7 @@ export type FakeOp =
   | 'upload'
   | 'remove'
   | 'createSignedUrls'
+  | 'rpc'
 
 export interface FakeCall {
   table: string
@@ -85,9 +86,9 @@ export function fakeSupabase(respond: (call: FakeCall) => FakeResult) {
     return builder
   }
 
-  const storageCall = (bucket: string, op: FakeOp, payload: unknown[]) => {
+  const directCall = (table: string, op: FakeOp, payload: unknown) => {
     const call: FakeCall = {
-      table: `storage:${bucket}`,
+      table,
       op,
       payload,
       filters: [],
@@ -107,12 +108,20 @@ export function fakeSupabase(respond: (call: FakeCall) => FakeResult) {
 
   const storage = {
     from: (bucket: string) => ({
-      upload: (...args: unknown[]) => storageCall(bucket, 'upload', args),
-      remove: (...args: unknown[]) => storageCall(bucket, 'remove', args),
+      upload: (...args: unknown[]) =>
+        directCall(`storage:${bucket}`, 'upload', args),
+      remove: (...args: unknown[]) =>
+        directCall(`storage:${bucket}`, 'remove', args),
       createSignedUrls: (...args: unknown[]) =>
-        storageCall(bucket, 'createSignedUrls', args)
+        directCall(`storage:${bucket}`, 'createSignedUrls', args)
     })
   }
 
-  return { client: { from, storage } as unknown as SupabaseClient, calls }
+  const rpc = (fn: string, args?: unknown) =>
+    directCall(`rpc:${fn}`, 'rpc', args)
+
+  return {
+    client: { from, storage, rpc } as unknown as SupabaseClient,
+    calls
+  }
 }

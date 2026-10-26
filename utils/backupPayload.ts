@@ -3,6 +3,7 @@ import {
   findRelationshipIssues,
   type RelationshipLink
 } from '@/utils/relationshipValidation'
+import { isMissingDatabaseFunction } from '@/utils/supabase/missingFunction'
 
 /**
  * Payload shape cho file backup JSON.
@@ -379,6 +380,5 @@ export function buildRestorePayload(input: ImportPayload): RestorePayload {
 export function isMissingRestoreFunction(
   error: { code?: string | null; message?: string | null } | null
 ) {
-  if (!error) return false
-  return error.code === 'PGRST202' || error.code === '42883'
+  return isMissingDatabaseFunction(error)
 }

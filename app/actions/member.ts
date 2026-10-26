@@ -4,6 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 import { getServerTranslations } from '@/lib/i18n/server'
+import {
+  applyGenerationUpdates,
+  buildDescendantGenerationUpdates
+} from '@/utils/generationUpdates'
 import { fetchAllRows, fetchInChunks } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase, getUser } from '@/utils/supabase/queries'
 
@@ -158,38 +162,23 @@ export async function updateDescendantGenerationsAction(
     return { error: t('generationsFetchError') }
   }
 
-  // 4. Update each descendant's generation, in bounded batches so a large
-  // subtree doesn't open hundreds of concurrent requests at once.
-  const BATCH_SIZE = 10
-  let hasError = false
+  // 4. Save all new generations at once, in one transaction.
+  const result = await applyGenerationUpdates(
+    supabase,
+    buildDescendantGenerationUpdates(persons, generationDelta)
+  )
 
-  for (let i = 0; i < persons.length; i += BATCH_SIZE) {
-    const batch = persons.slice(i, i + BATCH_SIZE)
-    const failedIds = await Promise.all(
-      batch.map(async (person) => {
-        if (person.generation === null || person.generation === undefined) {
-          return false
-        }
-
-        const newGen = Math.max(1, person.generation + generationDelta)
-        const { error: updateError } = await supabase
-          .from('persons')
-          .update({ generation: newGen })
-          .eq('id', person.id)
-
-        if (updateError) {
-          console.error(`Error updating person ${person.id}:`, updateError)
-          return true
-        }
-        return false
-      })
-    )
-
-    if (failedIds.some(Boolean)) hasError = true
+  if (!result.ok) {
+    console.error('Error updating descendant generations:', result.error)
+    return {
+      error: result.legacy
+        ? `${t('descendantGenerationUpdateError')} ${t('generationUpgradeDatabase')}`
+        : t('generationTransactionError', { error: result.error })
+    }
   }
 
-  if (hasError) {
-    return { error: t('descendantGenerationUpdateError') }
+  if (result.legacy) {
+    return { success: true, warning: t('generationUpgradeDatabase') }
   }
 
   return { success: true }

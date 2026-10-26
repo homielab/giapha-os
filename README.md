@@ -256,6 +256,8 @@ Admin có thể mở mục **Nâng cấp hệ thống** trong menu quản trị 
 
 **Phục hồi dữ liệu cần migration `20261026000000_add_restore_backup.sql`.** Từ bản này, chức năng phục hồi (Dashboard → Dữ liệu) chạy trong một transaction của database qua hàm `restore_backup`: nếu có lỗi giữa chừng, dữ liệu hiện tại được giữ nguyên. Bản tự host đã cài từ trước cần chạy migration này (bấm chạy migration ở `/dashboard/upgrade`, hoặc chạy file trong `docs/migrations/` bằng Supabase SQL Editor). Khi chưa chạy, phục hồi vẫn hoạt động theo cách cũ (xoá rồi chèn từng phần, không có transaction) và hiển thị nhắc nâng cấp database. File phục hồi tối đa 25 MB; trên Vercel, request gửi lên server bị giới hạn khoảng 4,5 MB, nên gia phả rất lớn (vài nghìn thành viên trở lên) nên phục hồi trên bản self-host.
 
+**Cập nhật thế hệ cần migration `20261026120000_add_update_generations.sql`.** Nút "Áp dụng" ở trang Phả hệ và tuỳ chọn cập nhật thế hệ con cháu khi sửa thành viên lưu tất cả thành viên bằng một lần gọi hàm `update_generations` của database, trong một transaction: một dòng lỗi (thành viên vừa bị xoá, không có quyền sửa) thì không dòng nào bị đổi và ứng dụng báo lỗi. Hàm chạy với quyền của người gọi (SECURITY INVOKER) nên RLS của bảng `persons` vẫn áp dụng. Khi chưa chạy migration, ứng dụng cập nhật từng người như trước và nhắc nâng cấp database.
+
 ### Hướng dẫn cập nhật source code
 
 Khi trang `/dashboard/upgrade` thông báo source code đang cũ, hãy cập nhật **toàn bộ source code** lên version mới nhất. Không chỉ sửa số `version` trong `package.json` để bỏ qua cảnh báo, vì migration có thể yêu cầu các thay đổi tương ứng trong code.
