@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- GEDCOM export writes other names (`NAME` with `TYPE aka`) and the lunar death date as a custom `_LUNAR` tag under `DEAT`; import reads them back, so an export followed by an import keeps both.
 - Export: besides the single-page PDF, the menu now offers multi-page A4 and A3 landscape PDFs. The tree is cut into sheets with a 10 mm overlap for gluing and a "row,column / rows x columns" label on every page; the last choice is remembered.
 - Family tree: pinch with two fingers on a phone or tablet to zoom around the fingers; one finger still scrolls. Mouse and Ctrl/⌘ + scroll behave as before.
 - Member form: a new member with the same name (ignoring accents) and birth year as an existing one now asks "Create another one anyway?" and lists the matches. A mother who died before the child's birth is refused, and a father who died more than 10 months before it (a year when the month or day is unknown) asks for confirmation, when adding a parent link and when editing birth or death dates; adopted children are not checked.
@@ -32,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- GEDCOM import no longer cuts long notes (`CONC` lines are now joined), keeps the first date of `BET … AND …` and `FROM … TO …` ranges (the original text goes to the note), ignores `@#DJULIAN@` escapes and keeps second and later names as other names.
 - Dashboard pages (home, family tree, kinship, lineage, events, statistics) now show the "could not load data, try again" error when a page of rows fails to load, instead of a family with missing people; the lineage page no longer offers Apply on partial data.
 - Gallery: deleting an image removes the database row first and reports an error when it is refused (the file is kept); the stored file is removed only after that.
 - Create user (Dashboard → Users): the password hint and field now say "At least 8 characters" (they said 6), and a shorter password is refused with a translated message before reaching the database instead of showing a database error.

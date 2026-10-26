@@ -513,3 +513,134 @@ describe('parseGedcom with other name and family formats', () => {
     ])
   })
 })
+
+describe('GEDCOM notes, dates and other names from other programs', () => {
+  const indi = (...lines: string[]) =>
+    ['0 HEAD', '0 @I1@ INDI', '1 NAME /Lê/ Văn Bình', ...lines, '0 TRLR'].join(
+      '\n'
+    )
+
+  test('joins CONC lines without a line break and keeps CONT breaks', () => {
+    const { persons } = parseGedcom(
+      indi(
+        '1 NOTE Born in a small vil ',
+        '2 CONC lage near the river and ',
+        '2 CONC moved north.',
+        '2 CONT Second paragraph'
+      )
+    )
+    expect(persons[0].note).toBe(
+      'Born in a small vil lage near the river and moved north.\nSecond paragraph'
+    )
+  })
+
+  test('keeps the first date of BET ... AND and FROM ... TO ranges', () => {
+    const { persons } = parseGedcom(
+      indi(
+        '1 BIRT',
+        '2 DATE BET 12 MAR 1850 AND 1855',
+        '1 DEAT Y',
+        '2 DATE FROM 1920 TO 1925'
+      )
+    )
+    const p = persons[0]
+    expect([p.birth_day, p.birth_month, p.birth_year]).toEqual([12, 3, 1850])
+    expect([p.death_day, p.death_month, p.death_year]).toEqual([
+      null,
+      null,
+      1920
+    ])
+    expect(p.note).toBe(
+      'BIRT: BET 12 MAR 1850 AND 1855\nDEAT: FROM 1920 TO 1925'
+    )
+  })
+
+  test('ignores calendar escapes and qualifiers', () => {
+    const { persons } = parseGedcom(
+      indi(
+        '1 BIRT',
+        '2 DATE @#DJULIAN@ 5 JAN 1700',
+        '1 DEAT',
+        '2 DATE ABT @#DGREGORIAN@ MAR 1790'
+      )
+    )
+    const p = persons[0]
+    expect([p.birth_day, p.birth_month, p.birth_year]).toEqual([5, 1, 1700])
+    expect([p.death_month, p.death_year]).toEqual([3, 1790])
+    expect(p.note).toBeNull()
+  })
+
+  test('reads later NAME records as other names', () => {
+    const { persons } = parseGedcom(
+      indi('1 NAME Bình /Lê/', '2 TYPE aka', '1 NAME Ba Bình')
+    )
+    expect(persons[0].full_name).toBe('Lê Văn Bình')
+    expect(persons[0].other_names).toBe('Bình Lê, Ba Bình')
+  })
+})
+
+describe('GEDCOM other names and lunar death date', () => {
+  test('writes other names as NAME with TYPE aka and the lunar date under DEAT', () => {
+    const ged = exportToGedcom({
+      persons: [
+        person('a', 'male', {
+          full_name: 'Lê Văn Bình',
+          other_names: 'Ba Bình, Cậu Tư',
+          is_deceased: true,
+          death_year: 1990,
+          death_month: 2,
+          death_day: 3,
+          death_lunar_day: 8,
+          death_lunar_month: 1,
+          death_lunar_year: 1990,
+          death_lunar_leap: true
+        })
+      ],
+      relationships: []
+    })
+    expect(ged).toContain('1 NAME Ba Bình\n2 TYPE aka\n')
+    expect(ged).toContain('1 NAME Cậu Tư\n2 TYPE aka\n')
+    expect(ged).toContain('2 DATE 03 FEB 1990\n2 _LUNAR 8 1 1990 LEAP\n')
+  })
+
+  test('keeps other names and the lunar death date', () => {
+    const { persons } = parseGedcom(
+      exportToGedcom({
+        persons: [
+          person('a', 'female', {
+            full_name: 'Trần Thị Hoa',
+            other_names: 'Hoa Nhỏ; Cô Hai',
+            is_deceased: true,
+            death_year: 2001,
+            death_month: 7,
+            death_day: 1,
+            death_lunar_day: 11,
+            death_lunar_month: 5,
+            death_lunar_year: 2001
+          }),
+          person('b', 'male', { full_name: 'Phạm Văn An' })
+        ],
+        relationships: []
+      })
+    )
+    expect(persons[0].other_names).toBe('Hoa Nhỏ, Cô Hai')
+    expect(persons[0].death_lunar_day).toBe(11)
+    expect(persons[0].death_lunar_month).toBe(5)
+    expect(persons[0].death_lunar_year).toBe(2001)
+    expect(persons[0].death_lunar_leap).toBeUndefined()
+    expect(persons[1].other_names).toBeNull()
+    expect(persons[1].death_lunar_day).toBeNull()
+  })
+
+  test('keeps the leap flag and ignores an invalid _LUNAR', () => {
+    const lunar = (v: string) =>
+      parseGedcom(
+        ['0 @I1@ INDI', '1 DEAT Y', '2 DATE 1 JAN 2000', `2 _LUNAR ${v}`].join(
+          '\n'
+        )
+      ).persons[0]
+    expect(lunar('4 6 1999 LEAP').death_lunar_leap).toBe(true)
+    expect(lunar('40 6 1999').death_lunar_day).toBeNull()
+    expect(lunar('abc').death_lunar_month).toBeNull()
+  })
+})

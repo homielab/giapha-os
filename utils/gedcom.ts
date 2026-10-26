@@ -8,6 +8,13 @@ export interface GedcomPerson {
   death_year?: number | null
   death_month?: number | null
   death_day?: number | null
+  /** Lunar date of death; `death_lunar_leap` is only carried by GEDCOM files. */
+  death_lunar_day?: number | null
+  death_lunar_month?: number | null
+  death_lunar_year?: number | null
+  death_lunar_leap?: boolean
+  /** Other names, comma separated (written as extra NAME records). */
+  other_names?: string | null
   is_deceased?: boolean
   is_in_law?: boolean
   birth_order?: number | null
@@ -196,6 +203,21 @@ export function exportToGedcom(data: {
         person.death_month,
         person.death_year
       )
+      // Custom tag: GEDCOM has no lunar calendar, so the lunar death date
+      // (the anniversary) travels as `2 _LUNAR <day> <month> <year> [LEAP]`.
+      if (
+        person.death_lunar_day &&
+        person.death_lunar_month &&
+        person.death_lunar_year
+      ) {
+        const leap = person.death_lunar_leap ? ' LEAP' : ''
+        gedcom += `2 _LUNAR ${person.death_lunar_day} ${person.death_lunar_month} ${person.death_lunar_year}${leap}\n`
+      }
+    }
+
+    // Other names
+    for (const other of splitOtherNames(person.other_names)) {
+      gedcom += `1 NAME ${other}\n2 TYPE aka\n`
     }
 
     // Family Links
@@ -232,6 +254,13 @@ export function exportToGedcom(data: {
 
   gedcom += '0 TRLR\n'
   return gedcom
+}
+
+function splitOtherNames(value: string | null | undefined): string[] {
+  return (value ?? '')
+    .split(/[,;\n]/)
+    .map((n) => n.replace(/\//g, ' ').replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
 }
 
 function formatName(fullName: string | null | undefined): string {
@@ -317,6 +346,57 @@ function readName(
   return clean(value) || 'Unknown'
 }
 
+type ParsedDate = {
+  day: number | null
+  month: number | null
+  year: number | null
+  /** The original text when only the first date of a range was kept. */
+  rangeText: string | null
+}
+
+const CALENDAR_ESCAPE = /^@#D[^@]*@\s*/i
+const DATE_QUALIFIER = /^(ABT|EST|AFT|BEF|CAL|INT)\s+/i
+
+/**
+ * Reads a GEDCOM date value. Qualifiers (ABT, EST, AFT, BEF, CAL, INT) and
+ * calendar escapes (`@#DJULIAN@`) are ignored; for a range (`BET a AND b`,
+ * `FROM a TO b`, `TO b`) the first date is kept and the original text is
+ * returned in `rangeText`.
+ */
+function parseGedcomDate(raw: string): ParsedDate {
+  const clean = (v: string) => {
+    let out = v.replace(/\(.*\)/, ' ').trim()
+    for (;;) {
+      const next = out.replace(CALENDAR_ESCAPE, '').replace(DATE_QUALIFIER, '')
+      if (next === out) return out.trim()
+      out = next
+    }
+  }
+  let value = clean(raw)
+  let rangeText: string | null = null
+  const between = value.match(/^BET\s+(.+?)\s+AND\s+(.+)$/i)
+  const from = value.match(/^FROM\s+(.+?)(?:\s+TO\s+(.+))?$/i)
+  const to = value.match(/^TO\s+(.+)$/i)
+  const first = between?.[1] ?? from?.[1] ?? to?.[1]
+  if (first !== undefined) {
+    rangeText = value
+    value = clean(first)
+  }
+  const parts = value.split(/\s+/).filter(Boolean)
+  const date: ParsedDate = { day: null, month: null, year: null, rangeText }
+  if (parts.length === 3) {
+    date.day = parseInt(parts[0]) || null
+    date.month = parseMonthName(parts[1])
+    date.year = parseInt(parts[2]) || null
+  } else if (parts.length === 1) {
+    date.year = parseInt(parts[0]) || null
+  } else if (parts.length === 2) {
+    date.month = parseMonthName(parts[0])
+    date.year = parseInt(parts[1]) || null
+  }
+  return date
+}
+
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0,
@@ -360,7 +440,8 @@ export function parseGedcom(gedcom: string): {
         currentRecord = null
       }
     } else if (currentRecord) {
-      currentRecord.lines.push(line.trim())
+      // Keep trailing spaces: a CONC line may end with a word break.
+      currentRecord.lines.push(line.trimStart())
     }
   }
   if (currentRecord) records.push(currentRecord)
@@ -383,24 +464,35 @@ export function parseGedcom(gedcom: string): {
     let death_month = null
     let death_year = null
     let note = ''
+    let deathLunar: { day: number; month: number; year: number } | null = null
+    let deathLunarLeap = false
+    const otherNames: string[] = []
+    const rangeNotes: string[] = []
 
     let currentTag = ''
 
     for (let i = 0; i < record.lines.length; i++) {
       const line = record.lines[i]
-      const match = line.match(/^(\d+)\s+([A-Z0-9_]+)(?:\s+(.*))?$/)
+      const match = line.match(/^(\d+)\s+([A-Z0-9_]+)(?:\s(.*))?$/)
       if (!match) continue
 
       const level = parseInt(match[1])
       const tag = match[2]
-      const val = match[3] || ''
+      // NOTE/CONC/CONT values keep their spaces (the break may fall on a space).
+      const val =
+        tag === 'CONC' || tag === 'CONT' || tag === 'NOTE'
+          ? match[3] || ''
+          : (match[3] || '').trim()
 
       if (level === 1) {
         currentTag = tag
         if (tag === 'NAME') {
-          // Only the first (primary) name is kept.
-          if (nameValue !== null) currentTag = 'NAME_OTHER'
-          else nameValue = val
+          // The first NAME is the primary name; later ones are other names.
+          if (nameValue !== null) {
+            currentTag = 'NAME_OTHER'
+            const other = readName(val, null, null)
+            if (other !== 'Unknown') otherNames.push(other)
+          } else nameValue = val
         } else if (tag === 'FAMC') {
           famc = val.match(/^@([^@]+)@/)?.[1] ?? ''
         } else if (tag === 'SEX') {
@@ -422,35 +514,37 @@ export function parseGedcom(gedcom: string): {
           }
         } else if (currentTag === 'NOTE' && tag === 'CONT') {
           note += '\n' + val
+        } else if (currentTag === 'NOTE' && tag === 'CONC') {
+          note += val
         } else if (currentTag === 'BIRT' && tag === 'DATE') {
-          const cleanVal = val.replace(/^(ABT|EST|AFT|BEF|CAL)\s+/i, '')
-          const parts = cleanVal.split(' ')
-          if (parts.length === 3) {
-            birth_day = parseInt(parts[0]) || null
-            birth_month = parseMonthName(parts[1])
-            birth_year = parseInt(parts[2]) || null
-          } else if (parts.length === 1) {
-            birth_year = parseInt(parts[0]) || null
-          } else if (parts.length === 2) {
-            birth_month = parseMonthName(parts[0])
-            birth_year = parseInt(parts[1]) || null
-          }
+          const date = parseGedcomDate(val)
+          birth_day = date.day
+          birth_month = date.month
+          birth_year = date.year
+          if (date.rangeText) rangeNotes.push(`BIRT: ${date.rangeText}`)
         } else if (currentTag === 'DEAT' && tag === 'DATE') {
           is_deceased = true
-          const cleanVal = val.replace(/^(ABT|EST|AFT|BEF|CAL)\s+/i, '')
-          const parts = cleanVal.split(' ')
-          if (parts.length === 3) {
-            death_day = parseInt(parts[0]) || null
-            death_month = parseMonthName(parts[1])
-            death_year = parseInt(parts[2]) || null
-          } else if (parts.length === 1) {
-            death_year = parseInt(parts[0]) || null
-          } else if (parts.length === 2) {
-            death_month = parseMonthName(parts[0])
-            death_year = parseInt(parts[1]) || null
+          const date = parseGedcomDate(val)
+          death_day = date.day
+          death_month = date.month
+          death_year = date.year
+          if (date.rangeText) rangeNotes.push(`DEAT: ${date.rangeText}`)
+        } else if (currentTag === 'DEAT' && tag === '_LUNAR') {
+          const [d, m, y, flag] = val.split(/\s+/)
+          const day = parseInt(d)
+          const month = parseInt(m)
+          const year = parseInt(y)
+          if (day >= 1 && day <= 30 && month >= 1 && month <= 12 && year > 0) {
+            deathLunar = { day, month, year }
+            deathLunarLeap = flag?.toUpperCase() === 'LEAP'
           }
         }
       }
+    }
+
+    // A range keeps only its first date: say so in the note.
+    if (rangeNotes.length > 0) {
+      note = [note, ...rangeNotes].filter(Boolean).join('\n')
     }
 
     persons.push({
@@ -464,6 +558,11 @@ export function parseGedcom(gedcom: string): {
       death_day: Number.isNaN(death_day) ? null : death_day,
       death_month,
       death_year: Number.isNaN(death_year) ? null : death_year,
+      death_lunar_day: deathLunar?.day ?? null,
+      death_lunar_month: deathLunar?.month ?? null,
+      death_lunar_year: deathLunar?.year ?? null,
+      ...(deathLunar && deathLunarLeap ? { death_lunar_leap: true } : {}),
+      other_names: otherNames.length > 0 ? otherNames.join(', ') : null,
       is_in_law: false,
       birth_order: null,
       generation: null,

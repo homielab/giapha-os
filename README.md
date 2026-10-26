@@ -57,7 +57,10 @@ Xuất/nhập GEDCOM (7.0) để mở gia phả trong Gramps, MyHeritage… ho�
 - **Gia đình (FAM)**: mỗi con nằm trong gia đình của đúng cặp cha mẹ của mình (con vợ hai ở gia đình với vợ hai); con chỉ nối với một người (cha, mẹ hoặc người có giới tính "khác") có gia đình một cha/mẹ riêng. Người giới tính "khác" được ghi ở vị trí `HUSB`.
 - **Con nuôi**: ghi `2 PEDI ADOPTED` dưới `1 FAMC`; khi nhập, `PEDI ADOPTED` thành quan hệ con nuôi.
 - **Ngày tháng**: GEDCOM không có ngày thiếu tháng hay thiếu năm, nên ngày có ngày + năm mà không có tháng chỉ xuất năm, ngày không có năm thì bỏ.
-- Không xuất: âm lịch ngày mất, dâu/rể (`is_in_law`), thứ tự sinh, đời, tên khác, ảnh đại diện.
+- **Tên khác**: mỗi tên trong `other_names` (cách nhau dấu phẩy hoặc chấm phẩy) xuất thành một `1 NAME` kèm `2 TYPE aka`; khi nhập, các `NAME` từ thứ hai trở đi nối lại thành tên khác.
+- **Ngày giỗ âm lịch**: GEDCOM không có âm lịch nên ngày mất âm lịch ghi bằng tag riêng `2 _LUNAR <ngày> <tháng> <năm> [LEAP]` dưới `1 DEAT`, và được đọc lại khi nhập. Chương trình khác bỏ qua tag này. Cờ `LEAP` chỉ có trong file GEDCOM (CSDL không lưu tháng nhuận).
+- **Ghi chú dài và ngày khoảng**: nhập đọc cả `CONC` (nối liền, không xuống dòng) lẫn `CONT`, nên ghi chú dài từ MyHeritage, Ancestry không bị cắt. `BET a AND b`, `FROM a TO b` lấy ngày đầu và ghi nguyên văn vào cuối ghi chú (`BIRT: BET 1850 AND 1855`); `@#DJULIAN@` và các tiền tố ABT/EST/AFT/BEF/CAL bị bỏ qua.
+- Không xuất: dâu/rể (`is_in_law`), thứ tự sinh, đời, ảnh đại diện.
 
 ### Kiểm tra dữ liệu
 

@@ -57,7 +57,10 @@ Export and import GEDCOM (7.0) to open the family tree in Gramps, MyHeritage… 
 - **Families (FAM)**: each child belongs to the family of their own parent pair (a second wife's child is in the family with the second wife); a child linked to only one person (father, mother or a person with gender "other") gets a single-parent family. A person with gender "other" is written in the `HUSB` position.
 - **Adopted children**: written as `2 PEDI ADOPTED` under `1 FAMC`; on import, `PEDI ADOPTED` becomes an adoptive relationship.
 - **Dates**: GEDCOM has no date without a month or without a year, so a date with day + year but no month exports only the year, and a date without a year is dropped.
-- Not exported: lunar death date, in-law flag (`is_in_law`), birth order, generation, other names, profile photo.
+- **Other names**: each name in `other_names` (separated by commas or semicolons) is written as its own `1 NAME` with `2 TYPE aka`; on import, the second and later `NAME` records are joined back into other names.
+- **Lunar death anniversary**: GEDCOM has no lunar calendar, so the lunar date of death is written with the custom tag `2 _LUNAR <day> <month> <year> [LEAP]` under `1 DEAT` and read back on import. Other programs ignore it. The `LEAP` flag exists only in GEDCOM files (the database does not store leap months).
+- **Long notes and date ranges**: import reads both `CONC` (joined without a line break) and `CONT`, so long notes from MyHeritage or Ancestry are no longer cut. `BET a AND b` and `FROM a TO b` keep the first date and append the original text to the note (`BIRT: BET 1850 AND 1855`); `@#DJULIAN@` escapes and ABT/EST/AFT/BEF/CAL prefixes are ignored.
+- Not exported: in-law flag (`is_in_law`), birth order, generation, profile photo.
 
 ### Data checks
 
