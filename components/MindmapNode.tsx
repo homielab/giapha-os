@@ -265,7 +265,6 @@ export const MindmapNode = memo(
     isLast?: boolean
     ctx: MindmapContextData
   }) => {
-    const { t } = useI18n()
     const data = getTreeData(personId, ctx)
     const [isExpanded, setIsExpanded] = useState(
       ctx.autoCollapseLevel > 0 ? level < ctx.autoCollapseLevel : level < 2

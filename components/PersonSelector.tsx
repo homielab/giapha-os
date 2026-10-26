@@ -4,7 +4,6 @@ import { AnimatePresence } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 
 import {
-  PersonAvatarBadge,
   SelectorDropdown,
   SelectorTrigger
 } from '@/components/PersonSelectorParts'

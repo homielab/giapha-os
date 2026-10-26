@@ -1,7 +1,6 @@
 'use client'
 
 import { AnimatePresence, m, Variants } from 'framer-motion'
-import { Calendar as CalendarIcon, Loader2, Moon, Sun } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
 
 import EventDateFields from '@/components/modal/EventDateFields'

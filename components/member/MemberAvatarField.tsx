@@ -2,7 +2,6 @@
 
 import { AlertCircle, Image as ImageIcon, Loader2, Trash2 } from 'lucide-react'
 
-import { inputClasses } from '@/components/member/memberFormStyles'
 import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Gender } from '@/types'

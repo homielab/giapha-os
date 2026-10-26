@@ -2,7 +2,7 @@
 
 import { ReactNode, useMemo, useState } from 'react'
 
-import { getLocale, getMessages, Locale } from './messages'
+import { getMessages, Locale } from './messages'
 import { I18nContext, I18nContextValue } from './useI18n'
 
 export function I18nProvider({

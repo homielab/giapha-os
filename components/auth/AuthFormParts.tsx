@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, m } from 'framer-motion'
-import { Mail, UserPlus } from 'lucide-react'
+import { UserPlus } from 'lucide-react'
 import { ReactNode } from 'react'
 
 import { useI18n } from '@/lib/i18n/useI18n'

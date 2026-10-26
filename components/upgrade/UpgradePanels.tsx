@@ -5,7 +5,6 @@ import {
   ArrowUpCircle,
   CheckCircle2,
   Loader2,
-  RefreshCw,
   ServerCog
 } from 'lucide-react'
 import Link from 'next/link'

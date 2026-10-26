@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Lint now fails on any warning (`--max-warnings 0`, also in CI); unused imports and variables across the components were removed, no behaviour change.
 - Internal: relationship mutation logic in `utils/relationshipMutations.ts` is split into `utils/relationships/` (`add`, `bulkChildren`, `spouse`, `shared`; each file under 200 lines) with a barrel re-export. Imports and tests are unchanged.
 
 - Internal: GEDCOM import/export in `utils/gedcom.ts` is split into `utils/gedcom/` (`types`, `dates`, `names`, `export`, `import`; each file under 250 lines). Imports from `@/utils/gedcom` and the exported files are unchanged.

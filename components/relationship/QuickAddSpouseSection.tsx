@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import QuickAddSpouseForm from '@/components/relationship/QuickAddSpouseForm'
@@ -25,7 +24,6 @@ export default function QuickAddSpouseSection({
 }: QuickAddSpouseSectionProps) {
   const { t } = useI18n()
   const supabase = createClient()
-  const router = useRouter()
 
   const [newSpouseName, setNewSpouseName] = useState('')
   const [newSpouseBirthYear, setNewSpouseBirthYear] = useState('')

@@ -1,12 +1,9 @@
 'use client'
 
 import { AnimatePresence, m } from 'framer-motion'
-import { Settings2, User } from 'lucide-react'
+import { Settings2 } from 'lucide-react'
 
-import {
-  formSectionVariants,
-  inputClasses
-} from '@/components/member/memberFormStyles'
+import { inputClasses } from '@/components/member/memberFormStyles'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Gender } from '@/types'
 

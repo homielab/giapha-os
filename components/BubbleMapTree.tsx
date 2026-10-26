@@ -14,16 +14,12 @@ import { Person, Relationship } from '@/types'
 import { buildBubbleGraph, GraphLink, GraphNode } from '@/utils/bubbleGraph'
 import { bubbleNodeLabel } from '@/utils/bubbleLayout'
 
-import { AVATAR_VERSION } from './DefaultAvatar'
-
 export interface BubbleMapTreeProps {
   personsMap: Map<string, Person>
   relationships: Relationship[]
   roots: Person[]
   canEdit?: boolean
 }
-
-const showAvatar = true
 
 export default function BubbleMapTree({
   personsMap,
@@ -40,7 +36,6 @@ export default function BubbleMapTree({
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [zoomLevel, setZoomLevel] = useState(1)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  // const { showAvatar } = useMemberListView();
 
   const { nodes, links } = useMemo(
     () => buildBubbleGraph(personsMap, relationships, roots),

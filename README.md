@@ -336,7 +336,7 @@ Trước khi gửi pull request, hãy chạy:
 
 ```bash
 bun run test          # unit test (bun test) cho các hàm trong utils/
-bun run lint
+bun run lint          # eslint, no warnings allowed (--max-warnings 0)
 bun run format:check
 bun run typecheck     # tsc --noEmit
 ```

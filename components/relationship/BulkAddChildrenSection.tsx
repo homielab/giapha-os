@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import BulkAddChildrenForm from '@/components/relationship/BulkAddChildrenForm'
@@ -35,7 +34,6 @@ export default function BulkAddChildrenSection({
 }: BulkAddChildrenSectionProps) {
   const { t } = useI18n()
   const supabase = createClient()
-  const router = useRouter()
   const personId = person.id
 
   const [selectedSpouseId, setSelectedSpouseId] = useState<string>('')

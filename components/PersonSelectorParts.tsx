@@ -3,7 +3,6 @@
 import { m } from 'framer-motion'
 import { Check, ChevronDown, Database, Search } from 'lucide-react'
 import Image from 'next/image'
-import { useState } from 'react'
 
 import DefaultAvatar from '@/components/DefaultAvatar'
 import { FemaleIcon, MaleIcon } from '@/components/GenderIcons'

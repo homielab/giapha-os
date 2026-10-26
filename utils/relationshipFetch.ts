@@ -5,7 +5,6 @@ import {
   RelationshipStats
 } from '@/components/relationship/relationshipTypes'
 import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
-import { Person } from '@/types'
 
 type Translate = (key: TranslationKey, values?: TranslationValues) => string
 

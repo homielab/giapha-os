@@ -1,7 +1,7 @@
 'use client'
 
 import dayjs from 'dayjs'
-import { CalendarDays, Clock, Maximize2, X } from 'lucide-react'
+import { CalendarDays, Clock, Maximize2 } from 'lucide-react'
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
 

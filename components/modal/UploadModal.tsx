@@ -1,9 +1,8 @@
 'use client'
 
 import { AnimatePresence, m } from 'framer-motion'
-import { Loader2, X } from 'lucide-react'
-import Image from 'next/image'
-import { useEffect, useId, useRef, useState } from 'react'
+import { X } from 'lucide-react'
+import { useId, useRef, useState } from 'react'
 
 import UploadDropzone from '@/components/modal/UploadDropzone'
 import UploadFormFields from '@/components/modal/UploadFormFields'

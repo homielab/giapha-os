@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { ViewMode } from '@/components/ViewToggle'
 
-import { MemberListContext, MemberListViewState } from './memberListViewContext'
+import { MemberListContext } from './memberListViewContext'
 
 function setUrlParam(key: string, value: string | null) {
   if (typeof window === 'undefined') return

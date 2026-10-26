@@ -92,7 +92,6 @@ export default function LineageManager({
   const [applied, setApplied] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [warning, setWarning] = useState<string | null>(null)
-  const [showAll, setShowAll] = useState(false)
 
   const handleCompute = () => {
     setComputing(true)
@@ -177,7 +176,6 @@ export default function LineageManager({
   }
 
   const changedCount = updates?.filter((u) => u.changed).length ?? 0
-  const displayedRows = showAll ? (updates ?? []) : (updates ?? []).slice(0, 20)
 
   return (
     <div className='space-y-6'>

@@ -1,8 +1,8 @@
 'use client'
 
 import { AnimatePresence, m } from 'framer-motion'
-import { AlertTriangle, CheckCircle2, Download, Upload } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { AlertTriangle, Download, Upload } from 'lucide-react'
+import { useRef, useState } from 'react'
 
 import { exportData, importData } from '@/app/actions/data'
 import DataCard from '@/components/DataCard'

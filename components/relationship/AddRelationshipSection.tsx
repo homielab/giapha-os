@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 
 import AddRelationshipForm, {
@@ -37,7 +36,6 @@ export default function AddRelationshipSection({
 }: AddRelationshipSectionProps) {
   const { t } = useI18n()
   const supabase = createClient()
-  const router = useRouter()
   const personId = person.id
 
   const [newRelType, setNewRelType] =

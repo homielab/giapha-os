@@ -1,18 +1,7 @@
 'use client'
 
 import { m } from 'framer-motion'
-import {
-  Crown,
-  Flower2,
-  Heart,
-  HeartOff,
-  Mars,
-  Moon,
-  Skull,
-  Star,
-  Users,
-  Venus
-} from 'lucide-react'
+import { Crown, Moon, Star, Users } from 'lucide-react'
 
 import StatCardsGrid from '@/components/StatCardsGrid'
 import { useI18n } from '@/lib/i18n/useI18n'

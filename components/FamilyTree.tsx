@@ -1,6 +1,5 @@
 'use client'
 
-import { Minus, Plus } from 'lucide-react'
 import React, {
   useCallback,
   useEffect,
@@ -23,7 +22,6 @@ import {
   getFilteredTreeData
 } from '@/utils/treeHelpers'
 
-import FamilyNodeCard from './FamilyNodeCard'
 import TreeToolbar from './TreeToolbar'
 
 const DEFAULT_AUTO_COLLAPSE_LEVEL = 4

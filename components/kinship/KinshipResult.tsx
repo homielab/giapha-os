@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, m } from 'framer-motion'
-import { GitMerge, Sparkles, Users } from 'lucide-react'
+import { GitMerge, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 import { PersonNode } from '@/components/kinship/kinshipTypes'
