@@ -6,6 +6,7 @@ import { AlertCircle } from 'lucide-react'
 import { inputClasses } from '@/components/member/memberFormStyles'
 import { CheckboxIcon } from '@/components/member/MemberGeneralFields'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { hasLeapMonth } from '@/utils/memberFormHelpers'
 
 interface MemberDeathFieldsProps {
   isDeceased: boolean
@@ -16,6 +17,8 @@ interface MemberDeathFieldsProps {
   deathLunarDay: number | ''
   deathLunarMonth: number | ''
   deathLunarYear: number | ''
+  deathLunarLeap: boolean
+  onLunarLeapChange: (leap: boolean) => void
   onSolarChange: (field: 'day' | 'month' | 'year', value: string) => void
   onLunarChange: (field: 'day' | 'month' | 'year', value: string) => void
 }
@@ -29,6 +32,8 @@ export default function MemberDeathFields({
   deathLunarDay,
   deathLunarMonth,
   deathLunarYear,
+  deathLunarLeap,
+  onLunarLeapChange,
   onSolarChange,
   onLunarChange
 }: MemberDeathFieldsProps) {
@@ -104,6 +109,17 @@ export default function MemberDeathFields({
                     className={inputClasses}
                   />
                 </div>
+                {hasLeapMonth(deathLunarMonth, deathLunarYear) && (
+                  <label className='mt-2 flex items-center gap-2 text-sm text-stone-600'>
+                    <input
+                      type='checkbox'
+                      checked={deathLunarLeap}
+                      onChange={(e) => onLunarLeapChange(e.target.checked)}
+                      className='size-4 rounded border-stone-300'
+                    />
+                    {t('lunarLeapMonth')}
+                  </label>
+                )}
               </div>
 
               {/* Solar Date */}

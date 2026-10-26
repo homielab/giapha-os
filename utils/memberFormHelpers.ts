@@ -1,7 +1,8 @@
 import { Gender } from '@/types'
 import {
   lunarToSolar as convertLunarToSolar,
-  solarToLunar as convertSolarToLunar
+  solarToLunar as convertSolarToLunar,
+  leapMonthOf
 } from '@/utils/lunarCalendar'
 
 export function slugify(str: string) {
@@ -166,21 +167,46 @@ export function solarToLunar(
   d: number | '',
   m: number | '',
   y: number | ''
-): { day: number; month: number; year: number } | null {
+): { day: number; month: number; year: number; leap: boolean } | null {
   if (d === '' || m === '' || y === '') return null
   // The leap-month flag is not stored: a leap month is saved as its number.
   const lunar = convertSolarToLunar(y, m, d)
-  return lunar ? { day: lunar.day, month: lunar.month, year: lunar.year } : null
+  return lunar
+    ? { day: lunar.day, month: lunar.month, year: lunar.year, leap: lunar.leap }
+    : null
 }
 
 export function lunarToSolar(
   d: number | '',
   m: number | '',
-  y: number | ''
+  y: number | '',
+  leap = false
 ): { day: number; month: number; year: number } | null {
   if (d === '' || m === '' || y === '') return null
-  // Entered lunar dates are read as regular (non-leap) months.
-  return convertLunarToSolar(y, m, d)
+  // Regular month unless the caller says it is the leap one.
+  return convertLunarToSolar(y, m, d, leap)
+}
+
+/** True when the lunar year has a leap month with this number. */
+export function hasLeapMonth(month: number | '', year: number | ''): boolean {
+  if (month === '' || year === '' || year <= 100) return false
+  return leapMonthOf(year) === month
+}
+
+/**
+ * Leap flag after the lunar month or year was edited: kept only while the
+ * month and year are unchanged and the year still has that leap month.
+ */
+export function nextLeapFlag(
+  prev: { month: number | ''; year: number | ''; leap: boolean },
+  next: { month: number | ''; year: number | '' }
+): boolean {
+  return (
+    prev.leap &&
+    prev.month === next.month &&
+    prev.year === next.year &&
+    hasLeapMonth(next.month, next.year)
+  )
 }
 
 export interface MemberFormFields {
@@ -235,7 +261,7 @@ export function solarToLunarSafe(
   d: number | '',
   m: number | '',
   y: number | ''
-): { day: number; month: number; year: number } | null {
+): { day: number; month: number; year: number; leap: boolean } | null {
   if (d === '' || m === '' || y === '' || y <= 100) return null
   return solarToLunar(d, m, y)
 }
@@ -243,8 +269,9 @@ export function solarToLunarSafe(
 export function lunarToSolarSafe(
   d: number | '',
   m: number | '',
-  y: number | ''
+  y: number | '',
+  leap = false
 ): { day: number; month: number; year: number } | null {
   if (d === '' || m === '' || y === '' || y <= 100) return null
-  return lunarToSolar(d, m, y)
+  return lunarToSolar(d, m, y, leap)
 }

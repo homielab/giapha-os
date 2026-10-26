@@ -530,6 +530,7 @@ export const messages = {
     dateHint:
       '* Nhập ngày dương lịch hoặc ngày âm lịch. Hệ thống sẽ tự tính toán và điền phần còn lại.',
     lunarDeathDate: 'Ngày mất (Âm lịch)',
+    lunarLeapMonth: 'Tháng nhuận (chỉ để quy đổi sang dương lịch)',
     solarDeathDate: 'Ngày mất (Dương lịch)',
     note: 'Ghi chú',
     notePlaceholder: 'Thêm thông tin bổ sung, tiểu sử...',
@@ -1532,6 +1533,7 @@ export const messages = {
     dateHint:
       '* Enter a solar or lunar date. The system will calculate and fill in the other date automatically.',
     lunarDeathDate: 'Lunar death date',
+    lunarLeapMonth: 'Leap month (only used to convert to the solar date)',
     solarDeathDate: 'Solar death date',
     note: 'Notes',
     notePlaceholder: 'Add additional information or biography...',

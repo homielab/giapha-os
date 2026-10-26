@@ -5,6 +5,7 @@ import { useState } from 'react'
 import {
   DeathDateValues,
   lunarToSolarSafe,
+  nextLeapFlag,
   solarToLunarSafe
 } from '@/utils/memberFormHelpers'
 
@@ -15,6 +16,9 @@ export interface DeathDateState {
   deathLunarDay: number | ''
   deathLunarMonth: number | ''
   deathLunarYear: number | ''
+  // Only used to convert lunar -> solar; not stored.
+  deathLunarLeap: boolean
+  setLunarLeap: (leap: boolean) => void
   setSolarField: (field: 'day' | 'month' | 'year', value: number | '') => void
   setLunarField: (field: 'day' | 'month' | 'year', value: number | '') => void
   clearAll: () => void
@@ -37,6 +41,16 @@ export function useDeathDates(initial: {
   const [deathLunarDay, setDeathLunarDay] = useState(initial.lunarDay)
   const [deathLunarMonth, setDeathLunarMonth] = useState(initial.lunarMonth)
   const [deathLunarYear, setDeathLunarYear] = useState(initial.lunarYear)
+  // The database keeps only the month number, so the leap flag is read back
+  // from the saved solar date when it still matches the saved lunar month.
+  const [deathLunarLeap, setDeathLunarLeap] = useState(() => {
+    const lunar = solarToLunarSafe(initial.day, initial.month, initial.year)
+    return Boolean(
+      lunar?.leap &&
+      lunar.month === initial.lunarMonth &&
+      lunar.year === initial.lunarYear
+    )
+  })
 
   const setSolarField = (
     field: 'day' | 'month' | 'year',
@@ -56,6 +70,7 @@ export function useDeathDates(initial: {
       setDeathLunarDay(lunar.day)
       setDeathLunarMonth(lunar.month)
       setDeathLunarYear(lunar.year)
+      setDeathLunarLeap(lunar.leap)
     }
   }
 
@@ -72,7 +87,27 @@ export function useDeathDates(initial: {
     else if (field === 'month') setDeathLunarMonth(value)
     else setDeathLunarYear(value)
 
-    const solar = lunarToSolarSafe(next.day, next.month, next.year)
+    const leap = nextLeapFlag(
+      { month: deathLunarMonth, year: deathLunarYear, leap: deathLunarLeap },
+      next
+    )
+    setDeathLunarLeap(leap)
+    const solar = lunarToSolarSafe(next.day, next.month, next.year, leap)
+    if (solar) {
+      setDeathDay(solar.day)
+      setDeathMonth(solar.month)
+      setDeathYear(solar.year)
+    }
+  }
+
+  const setLunarLeap = (leap: boolean) => {
+    setDeathLunarLeap(leap)
+    const solar = lunarToSolarSafe(
+      deathLunarDay,
+      deathLunarMonth,
+      deathLunarYear,
+      leap
+    )
     if (solar) {
       setDeathDay(solar.day)
       setDeathMonth(solar.month)
@@ -87,6 +122,7 @@ export function useDeathDates(initial: {
     setDeathLunarDay('')
     setDeathLunarMonth('')
     setDeathLunarYear('')
+    setDeathLunarLeap(false)
   }
 
   return {
@@ -96,6 +132,8 @@ export function useDeathDates(initial: {
     deathLunarDay,
     deathLunarMonth,
     deathLunarYear,
+    deathLunarLeap,
+    setLunarLeap,
     setSolarField,
     setLunarField,
     clearAll,

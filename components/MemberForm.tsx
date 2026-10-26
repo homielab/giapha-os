@@ -241,6 +241,8 @@ export default function MemberForm({
             deathLunarDay={death.deathLunarDay}
             deathLunarMonth={death.deathLunarMonth}
             deathLunarYear={death.deathLunarYear}
+            deathLunarLeap={death.deathLunarLeap}
+            onLunarLeapChange={death.setLunarLeap}
             onSolarChange={(field, value) =>
               death.setSolarField(field, toNumberOrEmpty(value))
             }

@@ -3,8 +3,10 @@ import { describe, expect, test } from 'bun:test'
 import {
   buildPersonData,
   comparePartialDates,
+  hasLeapMonth,
   isValidDate,
   lunarToSolarSafe,
+  nextLeapFlag,
   normalizeDeathDates,
   slugify,
   solarToLunarSafe,
@@ -177,12 +179,74 @@ describe('safe converters', () => {
     expect(solarToLunarSafe(10, 2, 2024)).toEqual({
       day: 1,
       month: 1,
-      year: 2024
+      year: 2024,
+      leap: false
     })
     expect(lunarToSolarSafe(1, 1, 2024)).toEqual({
       day: 10,
       month: 2,
       year: 2024
+    })
+  })
+})
+
+describe('leap lunar months', () => {
+  // 2023 has a leap month 2: 15/2 leap 2023 = 5 Apr 2023.
+  test('lunar -> solar honours the leap flag', () => {
+    expect(lunarToSolarSafe(15, 2, 2023)).toEqual({
+      day: 6,
+      month: 3,
+      year: 2023
+    })
+    expect(lunarToSolarSafe(15, 2, 2023, true)).toEqual({
+      day: 5,
+      month: 4,
+      year: 2023
+    })
+    expect(lunarToSolarSafe(16, 2, 2023, true)).toEqual({
+      day: 6,
+      month: 4,
+      year: 2023
+    })
+  })
+
+  test('solar -> lunar reports the leap flag', () => {
+    expect(solarToLunarSafe(5, 4, 2023)).toEqual({
+      day: 15,
+      month: 2,
+      year: 2023,
+      leap: true
+    })
+  })
+
+  test('hasLeapMonth only matches the leap month of that year', () => {
+    expect(hasLeapMonth(2, 2023)).toBe(true)
+    expect(hasLeapMonth(3, 2023)).toBe(false)
+    expect(hasLeapMonth(6, 2025)).toBe(true)
+    expect(hasLeapMonth(2, 2024)).toBe(false)
+    expect(hasLeapMonth('', 2023)).toBe(false)
+  })
+
+  test('nextLeapFlag keeps the flag only while month and year stay', () => {
+    const prev = { month: 2, year: 2023, leap: true } as const
+    expect(nextLeapFlag(prev, { month: 2, year: 2023 })).toBe(true)
+    expect(nextLeapFlag(prev, { month: 3, year: 2023 })).toBe(false)
+    expect(nextLeapFlag(prev, { month: 2, year: 2024 })).toBe(false)
+    expect(
+      nextLeapFlag({ ...prev, leap: false }, { month: 2, year: 2023 })
+    ).toBe(false)
+  })
+
+  test('editing the day of a leap-month date keeps the leap month', () => {
+    const lunar = solarToLunarSafe(5, 4, 2023)!
+    const leap = nextLeapFlag(
+      { month: lunar.month, year: lunar.year, leap: lunar.leap },
+      { month: lunar.month, year: lunar.year }
+    )
+    expect(lunarToSolarSafe(16, lunar.month, lunar.year, leap)).toEqual({
+      day: 6,
+      month: 4,
+      year: 2023
     })
   })
 })

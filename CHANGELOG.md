@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Member form: a "Leap month" checkbox next to the lunar death date, shown when that lunar year has the typed leap month (e.g. 2023 month 2, 2025 month 6), so a death date in a leap month can be entered from the lunar date alone.
 - Keyboard access to the tree views: in the Bubble view every family can be reached with Tab (read out with the names and birth years) and selected with Enter or Space; on the Tree, `+`/`-` zoom around the centre, `0` resets and the arrow keys scroll by 40 px. Both canvases announce how to use them.
 - Events page: an "Add to calendar (.ics)" button downloads birthdays (repeating yearly), death anniversaries for this and next year (lunar dates, same solar dates as the page) and custom events, ready to import into Google or Apple Calendar for reminders. The README feature lists (Vietnamese and English) now cover the bubble view, A4/A3 PDF, pinch zoom, duplicate checks, custom events, the lunar recompute tool and the English interface.
 - Members list view: shows the first 60 members and a "Show 60 more" button instead of rendering everyone at once; a new search, filter or sort starts again from the first 60. Tree, mind map and bubble views are unchanged.
@@ -40,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Editing the lunar death date of someone who died in a leap month no longer moves the solar date a month earlier: the leap month is kept while the lunar month and year are unchanged.
 - English interface: the relationship (kinship) page no longer shows Vietnamese sentences (relation type, common ancestor, path steps; the kinship terms such as Bác or Chú stay Vietnamese), and a not-updated person or an invalid CSV ZIP now shows its error in the chosen language. A failed log out now shows an error and stays on the page instead of going to the login page.
 - Editing a member no longer wipes their private details (phone, occupation, residence) when those could not be read, for example after a network error: the fields are locked with a message and saving leaves them untouched. A database error on a member or edit page now shows the error page instead of "not found"; only a missing member is a 404.
 - Deleting a member now also removes their profile photo from storage, after the member is deleted (a failed file removal is only logged), so photos are no longer left behind forever.
