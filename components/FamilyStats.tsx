@@ -13,17 +13,13 @@ import {
   Users,
   Venus
 } from 'lucide-react'
-import { useMemo } from 'react'
 
 import StatCardsGrid from '@/components/StatCardsGrid'
 import { useI18n } from '@/lib/i18n/useI18n'
-import { Person, Relationship } from '@/types'
-import { getZodiacAnimal, getZodiacSign } from '@/utils/dateHelpers'
-import { computeFamilyStats } from '@/utils/familyStats'
+import type { FamilyStatsResult } from '@/utils/familyStats'
 
 interface FamilyStatsProps {
-  persons: Person[]
-  relationships: Relationship[]
+  stats: FamilyStatsResult
 }
 
 function GenerationRow({
@@ -60,15 +56,8 @@ function GenerationRow({
   )
 }
 
-export default function FamilyStats({
-  persons,
-  relationships
-}: FamilyStatsProps) {
+export default function FamilyStats({ stats }: FamilyStatsProps) {
   const { t } = useI18n()
-  const stats = useMemo(
-    () => computeFamilyStats(persons, relationships),
-    [persons, relationships]
-  )
 
   return (
     <div className='space-y-8'>

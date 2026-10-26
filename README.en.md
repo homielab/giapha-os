@@ -290,6 +290,8 @@ GitHub Actions (`.github/workflows/test.yml`) runs the same commands on every pu
 
 Tests live next to the file they cover (`utils/gedcom.ts` → `utils/gedcom.test.ts`). Notable changes go in [CHANGELOG.md](CHANGELOG.md) under `## [Unreleased]`.
 
+Pages that only show numbers (such as `/dashboard/stats`) compute them on the server and `select` only the columns they need (see `STATS_PERSON_COLUMNS` in `utils/familyStats.ts`) instead of sending the whole `persons` table to the browser.
+
 ## Disclaimer and privacy
 
 > **This project provides source code only. The author does not collect or store any personal data.**

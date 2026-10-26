@@ -77,8 +77,14 @@ export function computeGenerations(
     gen: 1
   }))
 
+  // A real tree has at most one generation per person. Deeper paths only come
+  // from a parent-child loop in the data, which would otherwise never stop.
+  const maxGeneration = persons.length
+
   while (queue.length > 0) {
     const { id, gen } = queue.shift()!
+
+    if (gen > maxGeneration) continue
 
     // Use the longest path (deepest generation)
     // If we've already found a path that makes this person an equal or deeper generation, stop

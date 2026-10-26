@@ -306,6 +306,8 @@ GitHub Actions (`.github/workflows/test.yml`) chạy đúng các lệnh này cho
 
 Test đặt cạnh file được kiểm tra (`utils/gedcom.ts` → `utils/gedcom.test.ts`). Thay đổi đáng chú ý ghi vào [CHANGELOG.md](CHANGELOG.md), mục `## [Unreleased]`.
 
+Trang chỉ hiển thị số liệu (như `/dashboard/stats`) tính kết quả trên server và chỉ `select` các cột cần (xem `STATS_PERSON_COLUMNS` trong `utils/familyStats.ts`), không gửi cả bảng `persons` xuống trình duyệt.
+
 ## Tuyên bố từ chối trách nhiệm & Quyền riêng tư
 
 > **Dự án này chỉ cung cấp mã nguồn (source code). Không có bất kỳ dữ liệu cá nhân nào được thu thập hay lưu trữ bởi tác giả.**

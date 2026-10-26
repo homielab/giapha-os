@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Unit tests (`bun run test`) for GEDCOM and CSV import/export, kinship terms, tree helpers, the lunar calendar and upcoming events.
+- Unit tests (`bun run test`) for GEDCOM and CSV import/export, kinship terms, tree helpers, the lunar calendar and upcoming events; also for generation, in-law and birth-order computation, member sorting and family stats.
 - Search and share metadata for the public pages (home, about, login) in Vietnamese and English: page titles, descriptions, Open Graph and Twitter cards with a 1200×630 share image (`public/og-image.png`), plus `robots.txt` (keeps `/dashboard`, `/api`, `/setup` out of search engines) and `sitemap.xml`. Links use `APP_URL`, or the Vercel production domain.
 - GitHub Actions workflow running lint, format check, type-check (`bun run typecheck`) and unit tests on every push and pull request.
 - The gallery shows 24 images per page with previous/next links (`?page=`), so galleries with more than 1,000 images are no longer cut off silently; a page past the end shows the last page.
@@ -18,11 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The gallery signs all image links of a page in one storage request instead of one request per image.
+- The statistics page (`/dashboard/stats`) computes the totals on the server from the few columns it needs and sends only the numbers to the browser: for a family of 2,000 members the page data drops from about 2 MB to about 1 KB.
 - The PDF/image export libraries (jspdf, html-to-image) load only when you export: opening the tree or mindmap view downloads 25 KB instead of 446 KB of JavaScript (7 KB instead of 143 KB gzipped). d3 is replaced by the d3 modules the bubble view uses (`d3-selection`, `d3-zoom`, `d3-force`, `d3-drag`, `d3-transition`).
 - Lunar dates and death anniversaries use the Vietnamese lunar calendar (UTC+7) instead of the Chinese one, so dates no longer shift by a day or a month in the years where the two calendars differ. The `lunar-javascript` dependency is removed.
 
 ### Fixed
 
+- Recomputing generations (Lineage) no longer freezes when the data contains a parent–child loop; the members of the loop stop at a bounded generation.
 - The English interface no longer shows Vietnamese text in dates and stats: "Unknown", leap-month marker, zodiac signs and animals, today's lunar date on the dashboard and the family tree label. The email to admins about a new account waiting for approval follows the language of the browser that signed up.
 - Adding a relationship now refuses a couple that is already married (in either order), a parent–child link that would create a loop, and a child born before the parent (comparing month and day when both are known); the "add several children" form checks birth years before creating anyone.
 - A death date earlier in the same year as the birth date is refused (it was only compared by year).

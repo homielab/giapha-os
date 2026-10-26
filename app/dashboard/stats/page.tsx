@@ -1,5 +1,12 @@
 import FamilyStats from '@/components/FamilyStats'
 import { getServerTranslations } from '@/lib/i18n/server'
+import {
+  computeFamilyStats,
+  STATS_PERSON_COLUMNS,
+  STATS_RELATIONSHIP_COLUMNS,
+  type StatsPerson,
+  type StatsRelationship
+} from '@/utils/familyStats'
 import { fetchAllRows } from '@/utils/supabase/fetchAll'
 import { getSupabase } from '@/utils/supabase/queries'
 
@@ -15,14 +22,27 @@ export default async function StatsPage() {
     getSupabase()
   ])
 
+  // Only the columns the counts need, and only marriages; the totals are
+  // computed here so the browser receives the numbers, not the whole family.
   const [{ data: persons }, { data: relationships }] = await Promise.all([
-    fetchAllRows((from, to) =>
-      supabase.from('persons').select('*').order('id').range(from, to)
+    fetchAllRows<StatsPerson>((from, to) =>
+      supabase
+        .from('persons')
+        .select(STATS_PERSON_COLUMNS)
+        .order('id')
+        .range(from, to)
     ),
-    fetchAllRows((from, to) =>
-      supabase.from('relationships').select('*').order('id').range(from, to)
+    fetchAllRows<StatsRelationship>((from, to) =>
+      supabase
+        .from('relationships')
+        .select(STATS_RELATIONSHIP_COLUMNS)
+        .eq('type', 'marriage')
+        .order('id')
+        .range(from, to)
     )
   ])
+
+  const stats = computeFamilyStats(persons ?? [], relationships ?? [])
 
   return (
     <div className='relative flex w-full flex-1 flex-col pb-12'>
@@ -34,10 +54,7 @@ export default async function StatsPage() {
       </div>
 
       <main className='mx-auto w-full max-w-5xl flex-1 px-4 sm:px-6 lg:px-8'>
-        <FamilyStats
-          persons={persons ?? []}
-          relationships={relationships ?? []}
-        />
+        <FamilyStats stats={stats} />
       </main>
     </div>
   )
