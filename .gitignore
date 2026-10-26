@@ -46,3 +46,6 @@ next-env.d.ts
 .agents/
 .agent/
 skills-lock.json
+
+# Mimosa security-scan hook state (workspace tooling, not part of the app)
+/.mimosa
