@@ -65,9 +65,8 @@ export default function AdminUserList({
       )
       showNotification(t('adminRoleUpdated'), 'success')
     } catch (error: unknown) {
-      const msg =
-        error instanceof Error ? error.message : t('adminUnknownRoleError')
-      showNotification(msg, 'error')
+      console.error(error)
+      showNotification(t('adminUnknownRoleError'), 'error')
     } finally {
       setLoadingId(null)
     }
@@ -95,9 +94,8 @@ export default function AdminUserList({
         'success'
       )
     } catch (error: unknown) {
-      const msg =
-        error instanceof Error ? error.message : t('adminUnknownStatusError')
-      showNotification(msg, 'error')
+      console.error(error)
+      showNotification(t('adminUnknownStatusError'), 'error')
     } finally {
       setLoadingId(null)
     }
@@ -121,9 +119,8 @@ export default function AdminUserList({
       setUsers(users.filter((u) => u.id !== userId))
       showNotification(t('adminDeleted'), 'success')
     } catch (error: unknown) {
-      const msg =
-        error instanceof Error ? error.message : t('adminUnknownDeleteError')
-      showNotification(msg, 'error')
+      console.error(error)
+      showNotification(t('adminUnknownDeleteError'), 'error')
     } finally {
       setLoadingId(null)
     }
@@ -150,9 +147,8 @@ export default function AdminUserList({
       setIsCreateModalOpen(false)
       setTimeout(() => window.location.reload(), 1500)
     } catch (error: unknown) {
-      const msg =
-        error instanceof Error ? error.message : t('adminUnknownCreateError')
-      showNotification(msg, 'error')
+      console.error(error)
+      showNotification(t('adminUnknownCreateError'), 'error')
     } finally {
       setIsCreating(false)
     }

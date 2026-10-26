@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- User management (Dashboard → Users): creating users, changing roles, locking and deleting now check on the server that you are an active admin before reaching the database, and database refusals ("Cannot remove the last active administrator.", "Access denied.", a taken email…) are shown as translated messages in Vietnamese and English; an unexpected error shows a generic message and is logged on the server.
 - A member name of only spaces is refused, and extra spaces around names are trimmed when saving.
 - A profile photo is checked by its content, not its name or the type the browser reports: a text file renamed to `.jpg` is refused, and the photo is stored with the extension of its real type.
 - Adding several children at once no longer reports success for a child whose parent link was refused: that child is removed again, its row shows the reason and stays in the form for another try.

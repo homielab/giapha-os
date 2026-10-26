@@ -44,6 +44,19 @@ export const messages = {
     adminCreated:
       'Tạo người dùng thành công! Họ có thể đăng nhập ngay bây giờ.',
     adminUnknownCreateError: 'Lỗi không xác định khi tạo user',
+    userAdminAccessDenied:
+      'Từ chối truy cập. Chỉ admin đang hoạt động mới quản lý được người dùng.',
+    userAdminOwnRole: 'Bạn không thể tự đổi vai trò của chính mình.',
+    userAdminLastAdminRole:
+      'Không thể bỏ quyền admin của admin cuối cùng đang hoạt động.',
+    userAdminDeleteSelf: 'Bạn không thể tự xoá tài khoản của chính mình.',
+    userAdminLastAdminDelete: 'Không thể xoá admin cuối cùng đang hoạt động.',
+    userAdminInvalidEmail: 'Email không hợp lệ.',
+    userAdminPasswordTooShort: 'Mật khẩu phải có ít nhất 8 ký tự.',
+    userAdminEmailTaken: 'Email này đã có tài khoản.',
+    userAdminOwnStatus: 'Bạn không thể tự khoá hoặc mở khoá chính mình.',
+    userAdminLastAdminDeactivate:
+      'Không thể khoá admin cuối cùng đang hoạt động.',
     adminNoUsers: 'Không tìm thấy người dùng nào.',
     adminCreateTitle: 'Tạo người dùng mới',
     adminPasswordMinLength: 'Ít nhất 6 ký tự',
@@ -959,6 +972,18 @@ export const messages = {
     adminDemoCreateNotice: 'This is a demo site; creating users is restricted.',
     adminCreated: 'User created successfully! They can log in now.',
     adminUnknownCreateError: 'Unknown error while creating user',
+    userAdminAccessDenied:
+      'Access denied. Only active admins can manage users.',
+    userAdminOwnRole: 'You cannot change your own role.',
+    userAdminLastAdminRole:
+      'You cannot remove the admin role from the last active admin.',
+    userAdminDeleteSelf: 'You cannot delete your own account.',
+    userAdminLastAdminDelete: 'You cannot delete the last active admin.',
+    userAdminInvalidEmail: 'Invalid email address.',
+    userAdminPasswordTooShort: 'The password must be at least 8 characters.',
+    userAdminEmailTaken: 'An account with this email already exists.',
+    userAdminOwnStatus: 'You cannot lock or unlock your own account.',
+    userAdminLastAdminDeactivate: 'You cannot lock the last active admin.',
     adminNoUsers: 'No users found.',
     adminCreateTitle: 'Create new user',
     adminPasswordMinLength: 'At least 6 characters',

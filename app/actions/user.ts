@@ -4,9 +4,47 @@ import { revalidatePath } from 'next/cache'
 
 import { getServerTranslations } from '@/lib/i18n/server'
 import { UserRole } from '@/types'
-import { getSupabase } from '@/utils/supabase/queries'
+import { getIsAdmin, getSupabase } from '@/utils/supabase/queries'
+import {
+  knownUserAdminErrorKey,
+  UserAdminAction,
+  UserAdminDatabaseError,
+  userAdminErrorKey
+} from '@/utils/userAdminErrors'
 
-export async function changeUserRole(userId: string, newRole: UserRole) {
+type UserAdminResult = { error?: string; success?: boolean }
+
+type Translate = Awaited<ReturnType<typeof getServerTranslations>>['t']
+
+// The database functions check public.is_admin() too; this check stops a
+// non-admin before any call reaches the database.
+async function checkAdmin() {
+  const [isAdmin, { t }] = await Promise.all([
+    getIsAdmin(),
+    getServerTranslations()
+  ])
+  return { isAdmin, t }
+}
+
+function failure(
+  t: Translate,
+  action: UserAdminAction,
+  error: UserAdminDatabaseError,
+  logMessage: string
+): UserAdminResult {
+  if (!knownUserAdminErrorKey(error)) {
+    console.error(logMessage, error)
+  }
+  return { error: t(userAdminErrorKey(action, error)) }
+}
+
+export async function changeUserRole(
+  userId: string,
+  newRole: UserRole
+): Promise<UserAdminResult> {
+  const { isAdmin, t } = await checkAdmin()
+  if (!isAdmin) return { error: t('userAdminAccessDenied') }
+
   const supabase = await getSupabase()
   const { error } = await supabase.rpc('set_user_role', {
     target_user_id: userId,
@@ -14,31 +52,36 @@ export async function changeUserRole(userId: string, newRole: UserRole) {
   })
 
   if (error) {
-    console.error('Failed to change user role:', error)
-    return { error: error.message }
+    return failure(t, 'role', error, 'Failed to change user role:')
   }
 
   revalidatePath('/dashboard/users')
   return { success: true }
 }
 
-export async function deleteUser(userId: string) {
+export async function deleteUser(userId: string): Promise<UserAdminResult> {
+  const { isAdmin, t } = await checkAdmin()
+  if (!isAdmin) return { error: t('userAdminAccessDenied') }
+
   const supabase = await getSupabase()
   const { error } = await supabase.rpc('delete_user', {
     target_user_id: userId
   })
 
   if (error) {
-    console.error('Failed to delete user:', error)
-    return { error: error.message }
+    return failure(t, 'delete', error, 'Failed to delete user:')
   }
 
   revalidatePath('/dashboard/users')
   return { success: true }
 }
 
-export async function adminCreateUser(formData: FormData) {
-  const { t } = await getServerTranslations()
+export async function adminCreateUser(
+  formData: FormData
+): Promise<UserAdminResult> {
+  const { isAdmin, t } = await checkAdmin()
+  if (!isAdmin) return { error: t('userAdminAccessDenied') }
+
   const email = formData.get('email')?.toString()
   const password = formData.get('password')?.toString()
   const role = formData.get('role')?.toString() || 'member'
@@ -64,15 +107,20 @@ export async function adminCreateUser(formData: FormData) {
   })
 
   if (error) {
-    console.error('Failed to create user:', error)
-    return { error: error.message }
+    return failure(t, 'create', error, 'Failed to create user:')
   }
 
   revalidatePath('/dashboard/users')
   return { success: true }
 }
 
-export async function toggleUserStatus(userId: string, newStatus: boolean) {
+export async function toggleUserStatus(
+  userId: string,
+  newStatus: boolean
+): Promise<UserAdminResult> {
+  const { isAdmin, t } = await checkAdmin()
+  if (!isAdmin) return { error: t('userAdminAccessDenied') }
+
   const supabase = await getSupabase()
   const { error } = await supabase.rpc('set_user_active_status', {
     target_user_id: userId,
@@ -80,8 +128,7 @@ export async function toggleUserStatus(userId: string, newStatus: boolean) {
   })
 
   if (error) {
-    console.error('Failed to change user status:', error)
-    return { error: error.message }
+    return failure(t, 'status', error, 'Failed to change user status:')
   }
 
   revalidatePath('/dashboard/users')
