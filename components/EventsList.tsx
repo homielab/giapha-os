@@ -1,7 +1,7 @@
 'use client'
 
 import { m } from 'framer-motion'
-import { CalendarDays, Plus } from 'lucide-react'
+import { CalendarDays, CalendarPlus, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 
@@ -15,6 +15,7 @@ import {
   CustomEventRecord,
   FamilyEvent
 } from '@/utils/eventHelpers'
+import { buildIcs } from '@/utils/icsExport'
 import { solarToLunar } from '@/utils/lunarCalendar'
 
 interface EventsListProps {
@@ -76,6 +77,25 @@ export default function EventsList({
   const handleOpenCreateModal = () => {
     setEditingCustomEvent(null)
     setIsModalOpen(true)
+  }
+
+  const handleDownloadIcs = () => {
+    const ics = buildIcs({
+      persons,
+      customEvents,
+      t,
+      siteUrl: window.location.origin
+    })
+    const url = URL.createObjectURL(
+      new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+    )
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'giapha-events.ics'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   const handleModalSuccess = () => {
@@ -196,12 +216,21 @@ export default function EventsList({
           </div>
         </div>
 
-        <button
-          onClick={handleOpenCreateModal}
-          className='btn-primary relative z-10 w-full sm:w-auto'>
-          <Plus className='size-5 text-stone-300' />
-          <span>{t('addEvent')}</span>
-        </button>
+        <div className='relative z-10 flex w-full flex-col gap-2 sm:w-auto'>
+          <button
+            onClick={handleOpenCreateModal}
+            className='btn-primary w-full sm:w-auto'>
+            <Plus className='size-5 text-stone-300' />
+            <span>{t('addEvent')}</span>
+          </button>
+          <button
+            onClick={handleDownloadIcs}
+            title={t('addToCalendarHint')}
+            className='btn w-full sm:w-auto'>
+            <CalendarPlus className='size-5' />
+            <span>{t('addToCalendar')}</span>
+          </button>
+        </div>
       </m.div>
 
       {/* Controls */}

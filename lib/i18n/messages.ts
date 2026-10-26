@@ -551,6 +551,15 @@ export const messages = {
     eventsTitle: 'Sự kiện gia phả',
     eventsDescription: 'Sinh nhật, ngày giỗ (âm lịch) và các sự kiện tuỳ chỉnh',
     addEvent: 'Thêm sự kiện',
+    addToCalendar: 'Thêm vào lịch (.ics)',
+    addToCalendarHint:
+      'Tải file lịch có sinh nhật (lặp hằng năm), ngày giỗ của năm nay và năm sau, và các sự kiện tuỳ chỉnh để nhập vào Google/Apple Calendar',
+    icsCalendarName: 'Gia phả: sinh nhật và ngày giỗ',
+    icsBirthdaySummary: 'Sinh nhật {name}',
+    icsDeathSummary: 'Giỗ {name}',
+    icsBirthYear: 'Sinh năm {year}',
+    icsLunarDate: 'Ngày giỗ theo âm lịch: {date}',
+    icsApproximate: 'Ngày ước tính, chưa có năm mất hoặc ngày mất âm lịch.',
     lunarCalendar: 'Âm lịch',
     weekdaySunday: 'Chủ nhật',
     weekdayMonday: 'Thứ hai',
@@ -1511,6 +1520,16 @@ export const messages = {
     eventsDescription:
       'Birthdays, lunar death anniversaries, and custom events',
     addEvent: 'Add event',
+    addToCalendar: 'Add to calendar (.ics)',
+    addToCalendarHint:
+      'Download a calendar file with birthdays (repeating every year), death anniversaries for this and next year, and custom events, to import into Google/Apple Calendar',
+    icsCalendarName: 'Family tree: birthdays and death anniversaries',
+    icsBirthdaySummary: "{name}'s birthday",
+    icsDeathSummary: 'Death anniversary of {name}',
+    icsBirthYear: 'Born in {year}',
+    icsLunarDate: 'Lunar date of the anniversary: {date}',
+    icsApproximate:
+      'Estimated date: the death year or lunar death date is not recorded.',
     lunarCalendar: 'Lunar calendar',
     weekdaySunday: 'Sunday',
     weekdayMonday: 'Monday',

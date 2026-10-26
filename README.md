@@ -30,14 +30,17 @@ Phù hợp với người Việt Nam.
 
 ## Các tính năng chính
 
-- **Sơ đồ trực quan**: Xem gia phả dạng Cây (Tree) và Sơ đồ tư duy (Mindmap).
+- **Sơ đồ trực quan**: Xem gia phả dạng Cây (Tree), Sơ đồ tư duy (Mindmap) và Bong bóng (Bubble). Trên cây: kéo, Ctrl/⌘ + cuộn chuột hoặc chụm hai ngón (pinch) để phóng to/thu nhỏ.
+- **Xuất ảnh và PDF**: Xuất cây ra ảnh, PDF một trang hoặc PDF nhiều trang A4/A3 ngang (có lề chồng để dán ghép và nhãn "hàng,cột" trên từng tờ).
 - **Tìm danh xưng**: Tự động xác định cách gọi tên (Bác, Chú, Cô, Dì...) chính xác.
-- **Quản lý thành viên**: Lưu trữ thông tin, avatar và sắp xếp thứ tự nhánh dòng họ.
+- **Quản lý thành viên**: Lưu trữ thông tin, avatar và sắp xếp thứ tự nhánh dòng họ; tìm không dấu.
 - **Quản lý quan hệ**: Quản lý các mối quan hệ trong gia phả (hỗ trợ các trường hợp đặc biệt như đa thê, đa phu,...).
-- **Thống kê & Sự kiện**: Theo dõi ngày giỗ và các chỉ số nhân khẩu học của dòng họ.
-- **Sao lưu dữ liệu**: Xuất/nhập file JSON, CSV, GEDCOM để lưu trữ hoặc di chuyển dễ dàng.
+- **Kiểm tra dữ liệu**: Cảnh báo quan hệ vô lý (vòng cha–con, con sinh trước cha mẹ, cha mẹ mất trước khi con sinh) và người trùng tên + năm sinh.
+- **Thống kê & Sự kiện**: Theo dõi sinh nhật, ngày giỗ (âm lịch Việt Nam), sự kiện tuỳ chỉnh và các chỉ số nhân khẩu học của dòng họ; công cụ "Tính lại ngày giỗ âm lịch" cho quản trị viên.
+- **Thêm vào lịch**: Trang Sự kiện có nút "Thêm vào lịch (.ics)" để nhập sinh nhật, ngày giỗ và sự kiện vào Google/Apple Calendar và nhận nhắc nhở trên điện thoại.
+- **Sao lưu dữ liệu**: Xuất/nhập file JSON, CSV, GEDCOM để lưu trữ hoặc di chuyển dễ dàng; xem trước nội dung file trước khi phục hồi.
 - **Bảo mật**: Phân quyền (Admin, Editor, Member) và bảo vệ dữ liệu bằng Supabase.
-- **Đa thiết bị**: Giao diện hiện đại, tối ưu cho cả máy tính và điện thoại.
+- **Đa thiết bị, hai ngôn ngữ**: Giao diện hiện đại, tối ưu cho cả máy tính và điện thoại; chuyển giữa tiếng Việt và tiếng Anh.
 
 ### Âm lịch và ngày giỗ
 
@@ -48,6 +51,16 @@ Phù hợp với người Việt Nam.
 - **Múi giờ và ngày 29/2**: "hôm nay" của sự kiện sắp tới luôn theo giờ Việt Nam (UTC+7), cả trên server lẫn trình duyệt, nên giỗ và sinh nhật không lệch một ngày trong khoảng 0–7 giờ sáng. Sinh nhật 29/2 rơi vào 28/2 ở năm thường.
 - **Không rõ năm mất**: nếu chỉ có ngày/tháng mất dương lịch (không có năm và không có ngày âm lịch), ngày giỗ được đổi sang âm lịch theo năm hiện tại và hiện nhãn "(ước tính)"; nhập năm mất hoặc ngày mất âm lịch để có ngày giỗ cố định.
 - **Ngày âm lịch lưu từ bản cũ**: trước khi chuyển sang âm lịch Việt Nam, ngày âm lịch được tính theo lịch Trung Quốc và không tự tính lại. Quản trị viên vào **Dashboard → Sao lưu & Phục hồi → Tính lại ngày giỗ âm lịch**, bấm "Kiểm tra ngày giỗ" để xem các thành viên có ngày âm lịch đang lưu khác ngày tính lại từ ngày mất dương lịch (chỉ xét người có đủ ngày/tháng/năm cả hai ngày). Mặc định không dòng nào được chọn; chọn từng dòng hoặc tất cả rồi xác nhận để áp dụng. Nếu ngày âm lịch là ngày nhập tay (ngày dương suy ra từ đó có thể sai) thì đừng chọn dòng đó. Nên xuất bản sao lưu JSON trước. Mỗi dòng được cập nhật riêng và chỉ khi ngày mất chưa bị sửa từ lúc tính; dòng nào lỗi hay bị bỏ qua sẽ hiện lại ở lần kiểm tra sau. Công cụ không bao giờ tự chạy và không cần migration.
+
+### Thêm sự kiện vào lịch (.ics)
+
+Ở **Dashboard → Sự kiện**, nút **Thêm vào lịch (.ics)** tải file `giapha-events.ics` để nhập vào Google Calendar, Apple Calendar, Outlook…:
+
+- **Sinh nhật** của người còn sống: một sự kiện cả ngày lặp hằng năm (sinh nhật 29/2 rơi vào 28/2 ở năm thường).
+- **Ngày giỗ**: âm lịch không lặp hằng năm theo dương lịch được, nên mỗi năm là một sự kiện riêng — file có ngày giỗ của năm nay và năm sau (ngày dương đúng như trang Sự kiện, ghi chú "ước tính" nếu thiếu năm mất). Tải lại file khi sang năm.
+- **Sự kiện tuỳ chỉnh**: đúng ngày, địa điểm và ghi chú đã nhập.
+
+Mỗi sự kiện có mã (UID) ổn định theo thành viên, nên nhập lại file vào cùng lịch sẽ cập nhật thay vì tạo trùng. File được tạo ngay trên trình duyệt, không cần máy chủ hay email; nhắc nhở do ứng dụng lịch của bạn đảm nhiệm.
 
 ### GEDCOM
 

@@ -30,14 +30,17 @@ Designed primarily for Vietnamese families.
 
 ## Key features
 
-- **Interactive family trees**: Explore your genealogy as a Tree or Mindmap.
+- **Interactive family trees**: Explore your genealogy as a Tree, Mindmap or Bubble view. On the tree, drag, Ctrl/⌘ + scroll or pinch with two fingers to zoom.
+- **Image and PDF export**: Export the tree as an image, a single-page PDF, or a multi-page A4/A3 landscape PDF (with an overlap for gluing sheets together and a "row,column" label on each page).
 - **Kinship finder**: Automatically determine accurate Vietnamese forms of address, such as uncle, aunt, or cousin.
-- **Member management**: Store member information and avatars, and organize family branches.
+- **Member management**: Store member information and avatars, and organize family branches; accent-insensitive search.
 - **Relationship management**: Manage family relationships, including special cases such as polygamous relationships.
-- **Statistics and events**: Track death anniversaries and family demographic statistics.
-- **Data backup**: Export and import JSON, CSV, and GEDCOM files for easy storage or migration.
+- **Data checks**: Warnings for impossible relationships (parent-child loops, a child born before a parent, a parent who died before the child's birth) and for people with the same name and birth year.
+- **Statistics and events**: Track birthdays, death anniversaries (Vietnamese lunar calendar), custom events and family demographic statistics; admins get a "recompute lunar death dates" tool.
+- **Add to calendar**: The Events page has an "Add to calendar (.ics)" button to import birthdays, anniversaries and events into Google/Apple Calendar and get reminders on your phone.
+- **Data backup**: Export and import JSON, CSV, and GEDCOM files for easy storage or migration; the restore file is previewed before anything is replaced.
 - **Security**: Use Admin, Editor, and Member roles with data protection through Supabase.
-- **Responsive design**: A modern interface optimized for desktop and mobile devices.
+- **Responsive, bilingual**: A modern interface optimized for desktop and mobile devices, switchable between Vietnamese and English.
 
 ### Lunar calendar and death anniversaries
 
@@ -48,6 +51,16 @@ The app uses the Vietnamese lunar calendar (computed for UTC+7 with Hồ Ngọc 
 - **Time zone and 29 February**: "today" for upcoming events is always the date in Vietnam (UTC+7), on the server and in the browser, so anniversaries and birthdays are not a day off between midnight and 7 a.m. A 29 February birthday falls on 28 February in a common year.
 - **Unknown year of death**: with only a solar day and month of death (no year and no lunar date), the anniversary is converted to the lunar calendar using the current year and shown as "(estimated)"; enter the year of death or the lunar date for a fixed anniversary.
 - **Lunar dates saved by older versions**: before the switch to the Vietnamese lunar calendar, lunar dates were computed with the Chinese calendar and are not recomputed automatically. An administrator opens **Dashboard → Backup & Restore → Recompute lunar death dates** and clicks "Check death anniversaries" to list members whose stored lunar date differs from the one computed from the solar date of death (only people with a full day/month/year on both dates). No row is selected by default; select rows one by one or all, then confirm to apply. Do not select a row whose lunar date was typed by hand (the solar date derived from it may be wrong). Export a JSON backup first. Each row is updated on its own and only if the date of death has not been edited since the check; rows that fail or are skipped show up again at the next check. The tool never runs by itself and needs no migration.
+
+### Add events to a calendar (.ics)
+
+On **Dashboard → Events**, the **Add to calendar (.ics)** button downloads `giapha-events.ics`, which you can import into Google Calendar, Apple Calendar, Outlook and others:
+
+- **Birthdays** of living members: one all-day event repeating every year (a 29 Feb birthday falls on 28 Feb in a common year).
+- **Death anniversaries**: a lunar date cannot repeat yearly on the solar calendar, so each year is its own event. The file holds this year's and next year's anniversaries (the same solar dates as the Events page, marked "estimated" when the death year is missing). Download it again next year.
+- **Custom events**: on their own date, with the location and notes you entered.
+
+Every event has a UID that is stable per member, so importing the file again into the same calendar updates events instead of duplicating them. The file is generated in the browser, with no server or email involved; reminders are handled by your calendar app.
 
 ### GEDCOM
 

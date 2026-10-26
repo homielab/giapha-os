@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Events page: an "Add to calendar (.ics)" button downloads birthdays (repeating yearly), death anniversaries for this and next year (lunar dates, same solar dates as the page) and custom events, ready to import into Google or Apple Calendar for reminders. The README feature lists (Vietnamese and English) now cover the bubble view, A4/A3 PDF, pinch zoom, duplicate checks, custom events, the lunar recompute tool and the English interface.
 - Members list view: shows the first 60 members and a "Show 60 more" button instead of rendering everyone at once; a new search, filter or sort starts again from the first 60. Tree, mind map and bubble views are unchanged.
 - Restore: the file is read as soon as you choose it. A broken or invalid file shows its error right away, and the confirmation now says how many members, relationships and events the file holds (and its export date), with a "Download the current backup first" button before anything is deleted.
 - A translated (Vietnamese/English) "page not found" page, for example for a wrong member link, and a fallback error page; every dashboard page now has its own browser tab title (the member's name on a member page).
