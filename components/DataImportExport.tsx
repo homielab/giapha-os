@@ -172,10 +172,15 @@ export default function DataImportExport() {
 
       setImportStatus({
         type: 'success',
-        message: t('restoreSuccess', {
-          persons: result.imported?.persons || 0,
-          relationships: result.imported?.relationships || 0
-        })
+        message: [
+          t('restoreSuccess', {
+            persons: result.imported?.persons || 0,
+            relationships: result.imported?.relationships || 0
+          }),
+          result.warning
+        ]
+          .filter(Boolean)
+          .join(' ')
       })
       setShowConfirm(false)
       setSelectedFile(null)

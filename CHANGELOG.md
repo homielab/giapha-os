@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A death in a leap month keeps its leap month: the anniversary falls in the leap month in years that have it, otherwise in the regular month.
 - CSV import keeps text columns as text: phone numbers keep their leading zero, ids and dates are no longer turned into numbers or dates. Only the number and yes/no columns of `persons.csv` are converted.
 - Kinship terms through marriage: no more double spaces ("Em vợ (họ)"), and a younger sibling's husband or wife is "Em rể" / "Em dâu" instead of "Em rể (họ)" / "Em dâu (họ)".
+- Restoring a backup no longer leaves the family tree half deleted when something fails: the delete and all inserts run in one database transaction (`restore_backup` function, migration `20261026000000_add_restore_backup.sql`), so on any error the current data stays as it was. Databases that have not run the migration yet keep the old restore and show a reminder to upgrade on `/dashboard/upgrade`.
+- Restoring a backup larger than 1 MB (a few thousand members) is no longer rejected by the server: server actions accept up to 25 MB, the limit of the restore file picker.
 
 ### Known issues
 

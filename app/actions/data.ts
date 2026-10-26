@@ -2,249 +2,24 @@
 
 import { revalidatePath } from 'next/cache'
 
-import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
+import type { TranslationKey } from '@/lib/i18n/messages'
 import { getServerTranslations } from '@/lib/i18n/server'
-import { Relationship } from '@/types'
+import {
+  buildRestorePayload,
+  isMissingRestoreFunction,
+  validateImportPayload,
+  type BackupPayload,
+  type CustomEventExport,
+  type ImportPayload,
+  type PersonDetailsPrivateExport,
+  type PersonExport,
+  type RelationshipExport,
+  type RestoreCounts,
+  type RestorePayload,
+  type Translator
+} from '@/utils/backupPayload'
 import { fetchAllRows } from '@/utils/supabase/fetchAll'
 import { getIsAdmin, getSupabase } from '@/utils/supabase/queries'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-/**
- * Payload shape cho file backup JSON.
- * Các field DB-managed (created_at, updated_at) được giữ để tham khảo
- * nhưng sẽ bị loại bỏ khi import lại.
- */
-interface PersonExport {
-  id: string
-  full_name: string
-  gender: 'male' | 'female' | 'other'
-  birth_year: number | null
-  birth_month: number | null
-  birth_day: number | null
-  death_year: number | null
-  death_month: number | null
-  death_day: number | null
-  death_lunar_year: number | null
-  death_lunar_month: number | null
-  death_lunar_day: number | null
-  is_deceased: boolean
-  is_in_law: boolean
-  birth_order: number | null
-  generation: number | null
-  other_names: string | null
-  avatar_url: string | null
-  note: string | null
-  // DB-managed fields (kept in export for traceability, stripped on import)
-  created_at?: string
-  updated_at?: string
-}
-
-interface RelationshipExport {
-  id?: string
-  type: string
-  person_a: string
-  person_b: string
-  note?: string | null
-  created_at?: string
-  updated_at?: string
-}
-
-interface PersonDetailsPrivateExport {
-  person_id: string
-  phone_number: string | null
-  occupation: string | null
-  current_residence: string | null
-}
-
-interface CustomEventExport {
-  id: string
-  name: string
-  content: string | null
-  event_date: string
-  location: string | null
-  created_by: string | null
-}
-
-interface BackupPayload {
-  version: number
-  timestamp: string
-  persons: PersonExport[]
-  relationships: RelationshipExport[]
-  person_details_private?: PersonDetailsPrivateExport[]
-  custom_events?: CustomEventExport[]
-}
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-const MAX_PERSONS = 10000
-const MAX_RELATIONSHIPS = 30000
-const MAX_PRIVATE_DETAILS = 10000
-const MAX_CUSTOM_EVENTS = 10000
-
-function isShortText(value: unknown, maxLength: number) {
-  return (
-    value === null ||
-    value === undefined ||
-    (typeof value === 'string' && value.length <= maxLength)
-  )
-}
-
-type Translator = (key: TranslationKey, values?: TranslationValues) => string
-
-function validateImportPayload(input: unknown, t: Translator): string | null {
-  if (!input || typeof input !== 'object') return t('invalidData')
-  const payload = input as Record<string, unknown>
-  const persons = payload.persons
-  const relationships = payload.relationships
-
-  if (!Array.isArray(persons) || !Array.isArray(relationships)) {
-    return t('invalidDataStructure')
-  }
-  if (persons.length === 0) return t('emptyBackup')
-  if (persons.length > MAX_PERSONS)
-    return t('tooManyPersons', { count: MAX_PERSONS })
-  if (relationships.length > MAX_RELATIONSHIPS)
-    return t('tooManyRelationships', { count: MAX_RELATIONSHIPS })
-
-  const personIds = new Set<string>()
-  for (const person of persons) {
-    if (!person || typeof person !== 'object') return t('invalidPersonRecord')
-    const row = person as Record<string, unknown>
-    if (typeof row.id !== 'string' || !UUID_PATTERN.test(row.id))
-      return t('invalidPersonId')
-    if (personIds.has(row.id)) return t('duplicatePersonId')
-    personIds.add(row.id)
-    if (
-      typeof row.full_name !== 'string' ||
-      row.full_name.trim().length === 0 ||
-      row.full_name.length > 200
-    ) {
-      return t('invalidPersonName')
-    }
-    if (!['male', 'female', 'other'].includes(String(row.gender)))
-      return t('invalidGender')
-    for (const field of ['other_names', 'avatar_url', 'note']) {
-      if (!isShortText(row[field], 2000)) return t('fieldTooLong', { field })
-    }
-  }
-
-  for (const relationship of relationships) {
-    if (!relationship || typeof relationship !== 'object')
-      return t('invalidRelationship')
-    const row = relationship as Record<string, unknown>
-    if (
-      typeof row.person_a !== 'string' ||
-      !personIds.has(row.person_a) ||
-      typeof row.person_b !== 'string' ||
-      !personIds.has(row.person_b) ||
-      row.person_a === row.person_b ||
-      !['marriage', 'biological_child', 'adopted_child'].includes(
-        String(row.type)
-      )
-    )
-      return t('invalidRelationshipData')
-    if (!isShortText(row.note, 2000)) return t('relationshipNoteTooLong')
-  }
-
-  const privateDetails = payload.person_details_private
-  if (privateDetails !== undefined) {
-    if (
-      !Array.isArray(privateDetails) ||
-      privateDetails.length > MAX_PRIVATE_DETAILS
-    ) {
-      return t('privateDetailsLimit')
-    }
-    for (const detail of privateDetails) {
-      if (!detail || typeof detail !== 'object')
-        return t('invalidPrivateDetails')
-      const row = detail as Record<string, unknown>
-      if (typeof row.person_id !== 'string' || !personIds.has(row.person_id))
-        return t('invalidPrivateDetailsPerson')
-      for (const field of ['phone_number', 'occupation', 'current_residence']) {
-        if (!isShortText(row[field], 500)) return t('fieldTooLong', { field })
-      }
-    }
-  }
-
-  const customEvents = payload.custom_events
-  if (customEvents !== undefined) {
-    if (
-      !Array.isArray(customEvents) ||
-      customEvents.length > MAX_CUSTOM_EVENTS
-    ) {
-      return t('eventsLimit')
-    }
-    for (const event of customEvents) {
-      if (!event || typeof event !== 'object') return t('invalidEvent')
-      const row = event as Record<string, unknown>
-      if (typeof row.id !== 'string' || !UUID_PATTERN.test(row.id))
-        return t('invalidEventId')
-      if (
-        typeof row.name !== 'string' ||
-        row.name.trim().length === 0 ||
-        row.name.length > 200
-      )
-        return t('invalidEventName')
-      for (const field of ['content', 'location']) {
-        if (!isShortText(row[field], 2000)) return t('fieldTooLong', { field })
-      }
-    }
-  }
-  return null
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-// Các field được phép insert vào bảng persons (loại bỏ created_at/updated_at)
-function sanitizePerson(
-  p: PersonExport
-): Omit<PersonExport, 'created_at' | 'updated_at'> {
-  return {
-    id: p.id,
-    full_name: p.full_name,
-    gender: p.gender,
-    birth_year: p.birth_year ?? null,
-    birth_month: p.birth_month ?? null,
-    birth_day: p.birth_day ?? null,
-    death_year: p.death_year ?? null,
-    death_month: p.death_month ?? null,
-    death_day: p.death_day ?? null,
-    death_lunar_year: p.death_lunar_year ?? null,
-    death_lunar_month: p.death_lunar_month ?? null,
-    death_lunar_day: p.death_lunar_day ?? null,
-    is_deceased: p.is_deceased ?? false,
-    is_in_law: p.is_in_law ?? false,
-    birth_order: p.birth_order ?? null,
-    generation: p.generation ?? null,
-    other_names: p.other_names ?? null,
-    avatar_url: p.avatar_url ?? null,
-    note: p.note ?? null
-  }
-}
-
-function sanitizeRelationship(
-  r: RelationshipExport
-): Omit<RelationshipExport, 'id' | 'created_at' | 'updated_at'> {
-  return {
-    type: r.type,
-    person_a: r.person_a,
-    person_b: r.person_b,
-    note: r.note ?? null
-  }
-}
-
-function sanitizeCustomEvent(
-  e: CustomEventExport
-): Omit<CustomEventExport, 'created_by'> {
-  return {
-    id: e.id,
-    name: e.name,
-    content: e.content ?? null,
-    event_date: e.event_date,
-    location: e.location ?? null
-  }
-}
 
 // ─── Export ───────────────────────────────────────────────────────────────────
 
@@ -391,16 +166,14 @@ export async function exportData(
 
 // ─── Import ───────────────────────────────────────────────────────────────────
 
-export async function importData(
-  importPayload:
-    | BackupPayload
-    | {
-        persons: PersonExport[]
-        relationships: Relationship[]
-        person_details_private?: PersonDetailsPrivateExport[]
-        custom_events?: CustomEventExport[]
-      }
-) {
+type SupabaseClient = Awaited<ReturnType<typeof getSupabase>>
+
+/**
+ * Restores a backup: replaces all members, relationships, private details and
+ * custom events. Runs as one database transaction through the
+ * `restore_backup` function, so a failure leaves the current data untouched.
+ */
+export async function importData(importPayload: ImportPayload) {
   const [{ t }, isAdmin] = await Promise.all([
     getServerTranslations(),
     getIsAdmin()
@@ -409,142 +182,82 @@ export async function importData(
     return { error: t('dataAccessDenied') }
   }
 
-  const supabase = await getSupabase()
-
   const validationError = validateImportPayload(importPayload, t)
   if (validationError) return { error: validationError }
 
-  // 1. Xoá custom_events
-  const { error: delEventsError } = await supabase
-    .from('custom_events')
-    .delete()
-    .neq('id', '00000000-0000-0000-0000-000000000000')
+  const supabase = await getSupabase()
+  const payload = buildRestorePayload(importPayload)
 
-  if (delEventsError)
-    return {
-      error: t('deleteEventsError', { error: delEventsError.message })
+  const { data, error } = await supabase.rpc('restore_backup', { payload })
+  let imported: RestoreCounts
+  let warning: string | undefined
+
+  if (!error) {
+    imported = data as RestoreCounts
+  } else if (isMissingRestoreFunction(error)) {
+    // Database not upgraded yet: fall back to the old, non-atomic restore.
+    const legacy = await legacyImport(supabase, payload, t)
+    if ('error' in legacy) {
+      return { error: `${legacy.error} ${t('restoreUpgradeDatabase')}` }
     }
-
-  // 2. Xoá relationships (FK constraint)
-  const { error: delRelError } = await supabase
-    .from('relationships')
-    .delete()
-    .neq('id', '00000000-0000-0000-0000-000000000000')
-
-  if (delRelError)
-    return {
-      error: t('deleteRelationshipsError', { error: delRelError.message })
-    }
-
-  // 3. Xoá person_details_private (FK constraint on persons)
-  const { error: delPrivateError } = await supabase
-    .from('person_details_private')
-    .delete()
-    .neq('person_id', '00000000-0000-0000-0000-000000000000')
-
-  if (delPrivateError)
-    return {
-      error: t('deletePrivateDetailsError', {
-        error: delPrivateError.message
-      })
-    }
-
-  // 4. Xoá persons
-  const { error: delPersonsError } = await supabase
-    .from('persons')
-    .delete()
-    .neq('id', '00000000-0000-0000-0000-000000000000')
-
-  if (delPersonsError)
-    return {
-      error: t('deletePersonsError', { error: delPersonsError.message })
-    }
-
-  // 5. Insert persons (sanitized — chỉ giữ các field schema hiện tại)
-  const CHUNK = 200
-  const persons = importPayload.persons.map(sanitizePerson)
-
-  for (let i = 0; i < persons.length; i += CHUNK) {
-    const chunk = persons.slice(i, i + CHUNK)
-    const { error } = await supabase.from('persons').insert(chunk)
-    if (error)
-      return {
-        error: t('importPersonsError', {
-          chunk: i / CHUNK + 1,
-          error: error.message
-        })
-      }
-  }
-
-  // 6. Insert relationships (stripped of id/created_at to avoid conflicts)
-  // Filter out self-relationships to avoid "no_self_relationship" constraint violation
-  const relationships = importPayload.relationships
-    .filter((r) => r.person_a !== r.person_b)
-    .map(sanitizeRelationship)
-
-  for (let i = 0; i < relationships.length; i += CHUNK) {
-    const chunk = relationships.slice(i, i + CHUNK)
-    const { error } = await supabase.from('relationships').insert(chunk)
-    if (error)
-      return {
-        error: t('importRelationshipsError', {
-          chunk: i / CHUNK + 1,
-          error: error.message
-        })
-      }
-  }
-
-  // 7. Insert person_details_private (if present in payload)
-  let privateDetailsCount = 0
-  const privateDetails = importPayload.person_details_private ?? []
-  if (privateDetails.length > 0) {
-    for (let i = 0; i < privateDetails.length; i += CHUNK) {
-      const chunk = privateDetails.slice(i, i + CHUNK)
-      const { error } = await supabase
-        .from('person_details_private')
-        .insert(chunk)
-      if (error)
-        return {
-          error: t('importPrivateDetailsError', {
-            chunk: i / CHUNK + 1,
-            error: error.message
-          })
-        }
-    }
-    privateDetailsCount = privateDetails.length
-  }
-
-  // 8. Insert custom_events (if present in payload, strip created_by)
-  let customEventsCount = 0
-  const customEvents = (importPayload.custom_events ?? []).map(
-    sanitizeCustomEvent
-  )
-  if (customEvents.length > 0) {
-    for (let i = 0; i < customEvents.length; i += CHUNK) {
-      const chunk = customEvents.slice(i, i + CHUNK)
-      const { error } = await supabase.from('custom_events').insert(chunk)
-      if (error)
-        return {
-          error: t('importEventsError', {
-            chunk: i / CHUNK + 1,
-            error: error.message
-          })
-        }
-    }
-    customEventsCount = customEvents.length
+    imported = legacy
+    warning = t('restoreUpgradeDatabase')
+  } else {
+    return { error: t('restoreTransactionError', { error: error.message }) }
   }
 
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/members')
   revalidatePath('/dashboard/data')
 
-  return {
-    success: true,
-    imported: {
-      persons: persons.length,
-      relationships: relationships.length,
-      person_details_private: privateDetailsCount,
-      custom_events: customEventsCount
+  return { success: true, imported, warning }
+}
+
+/**
+ * Restore path for databases without the `restore_backup` function: deletes
+ * then inserts in chunks, without a transaction.
+ */
+async function legacyImport(
+  supabase: SupabaseClient,
+  payload: RestorePayload,
+  t: Translator
+): Promise<RestoreCounts | { error: string }> {
+  const NIL_UUID = '00000000-0000-0000-0000-000000000000'
+
+  // Xoá theo thứ tự ràng buộc khoá ngoại
+  const deletions = [
+    ['custom_events', 'id', 'deleteEventsError'],
+    ['relationships', 'id', 'deleteRelationshipsError'],
+    ['person_details_private', 'person_id', 'deletePrivateDetailsError'],
+    ['persons', 'id', 'deletePersonsError']
+  ] as const
+  for (const [table, column, errorKey] of deletions) {
+    const { error } = await supabase.from(table).delete().neq(column, NIL_UUID)
+    if (error) return { error: t(errorKey, { error: error.message }) }
+  }
+
+  const CHUNK = 200
+  const insertions: Array<[string, object[], TranslationKey]> = [
+    ['persons', payload.persons, 'importPersonsError'],
+    ['relationships', payload.relationships, 'importRelationshipsError'],
+    [
+      'person_details_private',
+      payload.person_details_private,
+      'importPrivateDetailsError'
+    ],
+    ['custom_events', payload.custom_events, 'importEventsError']
+  ]
+  for (const [table, rows, errorKey] of insertions) {
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      const { error } = await supabase
+        .from(table)
+        .insert(rows.slice(i, i + CHUNK))
+      if (error)
+        return {
+          error: t(errorKey, { chunk: i / CHUNK + 1, error: error.message })
+        }
     }
   }
+
+  return payload.counts
 }

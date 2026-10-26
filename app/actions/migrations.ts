@@ -15,16 +15,6 @@ const SOURCE_README_URL = `https://github.com/${SOURCE_REPOSITORY}/blob/${SOURCE
 const SOURCE_README_EN_URL = `https://github.com/${SOURCE_REPOSITORY}/blob/${SOURCE_BRANCH}/README.en.md#source-code-updates`
 const SOURCE_PACKAGE_URL = `https://raw.githubusercontent.com/${SOURCE_REPOSITORY}/${SOURCE_BRANCH}/package.json`
 
-const MIGRATION_FILES = [
-  'docs/schema.sql',
-  'docs/migrations/20260312015736_add_lunar_death_date.sql',
-  'docs/migrations/20260320230020_add_editor_permission.sql',
-  'docs/migrations/20260524125731_add_gallery.sql',
-  'docs/migrations/20260831140135_security_and_approval_hardening.sql',
-  'docs/migrations/20260901000000_security_definer_and_rls_hardening.sql',
-  'docs/migrations/20260904000000_add_data_api_table_grants.sql'
-] as const
-
 interface MigrationDefinition {
   id: string
   file: string
@@ -160,19 +150,27 @@ export async function getSourceVersionStatus(): Promise<SourceVersionStatus> {
   }
 }
 
+// schema.sql first, then every docs/migrations/*.sql in file-name (timestamp)
+// order — the same bundle as /setup, so a new migration needs no list update.
 async function getMigrationDefinitions(): Promise<MigrationDefinition[]> {
-  return Promise.all(
-    MIGRATION_FILES.map(async (file) => ({
-      id: file,
-      file,
-      sql: await fs.readFile(
-        file === 'docs/schema.sql'
-          ? path.join(process.cwd(), 'docs', 'schema.sql')
-          : path.join(process.cwd(), 'docs', 'migrations', path.basename(file)),
-        'utf8'
-      )
+  const schemaPath = path.join(process.cwd(), 'docs', 'schema.sql')
+  const migrationsPath = path.join(process.cwd(), 'docs', 'migrations')
+  const migrationFiles = (await fs.readdir(migrationsPath))
+    .filter((fileName) => fileName.endsWith('.sql'))
+    .sort()
+
+  return Promise.all([
+    fs.readFile(schemaPath, 'utf8').then((sql) => ({
+      id: 'docs/schema.sql',
+      file: 'docs/schema.sql',
+      sql
+    })),
+    ...migrationFiles.map(async (fileName) => ({
+      id: `docs/migrations/${fileName}`,
+      file: `docs/migrations/${fileName}`,
+      sql: await fs.readFile(path.join(migrationsPath, fileName), 'utf8')
     }))
-  )
+  ])
 }
 
 function createDatabaseClient() {

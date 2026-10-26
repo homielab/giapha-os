@@ -97,6 +97,10 @@ export const messages = {
     importPrivateDetailsError:
       'Lỗi khi import person_details_private (chunk {chunk}): {error}',
     importEventsError: 'Lỗi khi import custom_events (chunk {chunk}): {error}',
+    restoreTransactionError:
+      'Phục hồi thất bại, dữ liệu hiện tại vẫn được giữ nguyên: {error}',
+    restoreUpgradeDatabase:
+      'Database chưa được nâng cấp nên phục hồi chưa chạy trong một giao dịch (lỗi giữa chừng có thể làm mất dữ liệu). Hãy chạy migration ở trang Nâng cấp hệ thống (/dashboard/upgrade).',
     familyTreeDescription: 'Xem và tương tác với sơ đồ dòng họ',
     approvalTitle: 'Duyệt tài khoản',
     approvalInvalidTitle: 'Liên kết không hợp lệ',
@@ -895,6 +899,10 @@ export const messages = {
       'Could not import private member details (chunk {chunk}): {error}',
     importEventsError:
       'Could not import custom events (chunk {chunk}): {error}',
+    restoreTransactionError:
+      'Restore failed, the current data is unchanged: {error}',
+    restoreUpgradeDatabase:
+      'The database is not upgraded, so the restore did not run in a single transaction (a failure halfway can lose data). Run the migrations on the System upgrade page (/dashboard/upgrade).',
     familyTreeDescription: 'View and interact with the family tree',
     approvalTitle: 'Approve account',
     approvalInvalidTitle: 'Invalid link',

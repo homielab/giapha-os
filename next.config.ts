@@ -2,6 +2,14 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   output: process.env.BUILD_STANDALONE === '1' ? 'standalone' : undefined,
+  experimental: {
+    serverActions: {
+      // Restoring a backup sends the whole family tree to a server action;
+      // the 1 MB default rejects a few thousand members. Matches the 25 MB
+      // limit of the restore file picker.
+      bodySizeLimit: '25mb'
+    }
+  },
   async headers() {
     return [
       {
