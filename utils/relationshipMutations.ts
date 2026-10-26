@@ -11,6 +11,10 @@ import {
   validateNewChildren,
   validateRelationship
 } from '@/utils/relationshipValidation'
+import {
+  PersonNotUpdatedError,
+  RelationshipNotDeletedError
+} from '@/utils/writeErrors'
 
 export interface NewRelationshipInput {
   personId: string
@@ -35,6 +39,21 @@ function errorMessage(err: unknown): string {
     if (typeof message === 'string' && message !== '') return message
   }
   return String(err)
+}
+
+// Deletes a relationship. RLS turns a refused delete into "0 rows" without an
+// error, so zero removed rows throws RelationshipNotDeletedError.
+export async function deleteRelationship(
+  supabase: SupabaseClient,
+  relationshipId: string
+): Promise<void> {
+  const { data, error } = await supabase
+    .from('relationships')
+    .delete()
+    .eq('id', relationshipId)
+    .select('id')
+  if (error) throw error
+  if (!data || data.length === 0) throw new RelationshipNotDeletedError()
 }
 
 // Inserts a relationship between the current person and a target, then
@@ -193,11 +212,15 @@ async function autoUpdateTargetProperties(
       }
 
       if (Object.keys(updates).length > 0) {
-        const { error: updateError } = await supabase
+        const { data: updated, error: updateError } = await supabase
           .from('persons')
           .update(updates)
           .eq('id', selectedTargetId)
+          .select('id')
         if (updateError) return errorMessage(updateError)
+        if (!updated || updated.length === 0) {
+          return new PersonNotUpdatedError().message
+        }
       }
     }
     return null

@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { ComputedUpdate } from '@/utils/lineageCompute'
 import { isMissingDatabaseFunction } from '@/utils/supabase/missingFunction'
+import { PersonNotUpdatedError } from '@/utils/writeErrors'
 
 /**
  * One row of the `update_generations(updates jsonb)` database function. A
@@ -91,14 +92,17 @@ async function legacyApplyGenerationUpdates(
     const batch = updates.slice(i, i + LEGACY_BATCH_SIZE)
     await Promise.all(
       batch.map(async ({ id, ...columns }) => {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('persons')
           .update(columns)
           .eq('id', id)
-        if (error) {
-          console.error(`Error updating person ${id}:`, error)
+          .select('id')
+        if (error || !data || data.length === 0) {
+          // RLS turns a refused update into "0 rows" without an error.
+          const message = error?.message ?? new PersonNotUpdatedError().message
+          console.error(`Error updating person ${id}:`, message)
           failedIds.push(id)
-          firstError ??= error.message
+          firstError ??= message
         }
       })
     )

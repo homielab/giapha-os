@@ -21,6 +21,7 @@ import {
   type LinkedRelative,
   type ParentDeathFinding
 } from '@/utils/relationshipValidation'
+import { PersonNotUpdatedError } from '@/utils/writeErrors'
 
 export interface SaveMemberOptions {
   supabase: SupabaseClient
@@ -118,11 +119,14 @@ export async function saveMember(
     currentPersonId = newPerson.id
   } else {
     // Update existing member info first
-    const { error: updateError } = await supabase
+    // RLS turns a refused update into "0 rows" without an error.
+    const { data: updated, error: updateError } = await supabase
       .from('persons')
       .update(buildPersonData(fullFields, currentAvatarUrl || null))
       .eq('id', currentPersonId)
+      .select('id')
     if (updateError) throw updateError
+    if (!updated || updated.length === 0) throw new PersonNotUpdatedError()
   }
 
   // 2. Handle Avatar Upload if a new file is selected (now we have currentPersonId)
@@ -141,11 +145,15 @@ export async function saveMember(
     currentAvatarUrl = filePath
 
     // Update the person with the final avatar URL
-    const { error: updateAvatarError } = await supabase
+    const { data: avatarRows, error: updateAvatarError } = await supabase
       .from('persons')
       .update({ avatar_url: currentAvatarUrl })
       .eq('id', currentPersonId)
+      .select('id')
     if (updateAvatarError) throw updateAvatarError
+    if (!avatarRows || avatarRows.length === 0) {
+      throw new PersonNotUpdatedError()
+    }
   }
 
   // Delete the previous photo from storage only after a successful save
@@ -532,7 +540,9 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
     setError(
       err instanceof InvalidAvatarError
         ? t('invalidImageType')
-        : (err as Error).message || t('saveMemberError')
+        : err instanceof PersonNotUpdatedError
+          ? t('personNotUpdated')
+          : (err as Error).message || t('saveMemberError')
     )
   } finally {
     setLoading(false)

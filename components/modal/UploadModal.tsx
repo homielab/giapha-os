@@ -16,6 +16,7 @@ import { validateImageFile } from '@/utils/imageUpload'
 import { createClient } from '@/utils/supabase/client'
 import { InvalidImageError, uploadGalleryImage } from '@/utils/supabase/storage'
 import { getGalleryStoragePath } from '@/utils/supabase/storage-path'
+import { GalleryItemNotUpdatedError } from '@/utils/writeErrors'
 
 interface UploadModalProps {
   isOpen: boolean
@@ -121,11 +122,15 @@ export default function UploadModal({
 
       if (initialData) {
         // Update
-        const { error: dbError } = await supabase
+        const { data: updated, error: dbError } = await supabase
           .from('gallery_items')
           .update(itemData)
           .eq('id', initialData.id)
+          .select('id')
         if (dbError) throw dbError
+        if (!updated || updated.length === 0) {
+          throw new GalleryItemNotUpdatedError()
+        }
       } else {
         // Insert
         const { error: dbError } = await supabase.from('gallery_items').insert([
@@ -141,7 +146,13 @@ export default function UploadModal({
       resetForm()
       onSuccess()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('systemError'))
+      setError(
+        err instanceof GalleryItemNotUpdatedError
+          ? t('galleryItemNotUpdated')
+          : err instanceof Error
+            ? err.message
+            : t('systemError')
+      )
     } finally {
       setIsUploading(false)
     }

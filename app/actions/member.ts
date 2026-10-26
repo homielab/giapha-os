@@ -55,14 +55,19 @@ export async function deleteMemberProfile(memberId: string) {
   }
 
   // 3. Delete the member
-  const { error: deleteError } = await supabase
+  // RLS turns a refused delete into "0 rows" without an error.
+  const { data: deleted, error: deleteError } = await supabase
     .from('persons')
     .delete()
     .eq('id', memberId)
+    .select('id')
 
   if (deleteError) {
     console.error('Error deleting person:', deleteError)
     return { error: t('memberDeleteError') }
+  }
+  if (!deleted || deleted.length === 0) {
+    return { error: t('memberDeleteAccessDenied') }
   }
 
   // 4. Revalidate and redirect

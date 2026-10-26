@@ -27,6 +27,7 @@ mock.module('@/app/actions/member', () => ({
 
 const { InvalidAvatarError, saveMember, submitMemberForm } =
   await import('./memberFormSubmit')
+const { PersonNotUpdatedError } = await import('./writeErrors')
 
 const initialData = {
   id: 'person-1',
@@ -64,7 +65,12 @@ const emptyDeath = {
   lunarYear: '' as const
 }
 
-const ok = (): FakeResult => ({ data: [] })
+// Updates and deletes answer with the row they changed, like PostgREST does
+// when `.select('id')` is chained; no rows would mean RLS refused them.
+const ok = (call?: FakeCall): FakeResult =>
+  call && (call.op === 'update' || call.op === 'delete')
+    ? { data: [{ id: 'person-1' }] }
+    : { data: [] }
 
 function saveOptions(respond: (call: FakeCall) => FakeResult = ok) {
   const { client, calls } = fakeSupabase(respond)
@@ -128,10 +134,43 @@ describe('saveMember', () => {
 
   test('a failed person update throws before touching descendants', async () => {
     const { options } = saveOptions((call) =>
-      call.table === 'persons' ? { error: { message: 'refused' } } : ok()
+      call.table === 'persons' ? { error: { message: 'refused' } } : ok(call)
     )
     await expect(saveMember(options)).rejects.toEqual({ message: 'refused' })
     expect(updateDescendantGenerationsAction).not.toHaveBeenCalled()
+  })
+})
+
+describe('saveMember when RLS refuses the write', () => {
+  const refuse = (call: FakeCall): FakeResult =>
+    call.table === 'persons' && call.op === 'update' ? { data: [] } : ok(call)
+
+  test('an update that changes no row throws PersonNotUpdatedError', async () => {
+    const { options } = saveOptions(refuse)
+    await expect(saveMember(options)).rejects.toBeInstanceOf(
+      PersonNotUpdatedError
+    )
+    expect(updateDescendantGenerationsAction).not.toHaveBeenCalled()
+  })
+
+  test('the avatar url update is checked too', async () => {
+    const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]
+    let updates = 0
+    const { options } = saveOptions((call) => {
+      if (call.table === 'persons' && call.op === 'update') {
+        updates += 1
+        return updates === 1 ? { data: [{ id: 'person-1' }] } : { data: [] }
+      }
+      return ok(call)
+    })
+    await expect(
+      saveMember({
+        ...options,
+        avatarFile: new File([new Uint8Array(PNG)], 'photo.png', {
+          type: 'image/png'
+        })
+      })
+    ).rejects.toBeInstanceOf(PersonNotUpdatedError)
   })
 })
 
@@ -234,6 +273,17 @@ describe('submitMemberForm', () => {
     expect(state.pushed).toEqual(['/dashboard/members/person-1'])
   })
 
+  test('a refused update shows the not-saved message and keeps the form', async () => {
+    const { client } = fakeSupabase((call) =>
+      call.op === 'update' ? { data: [] } : ok(call)
+    )
+    const { ctx, state } = submitContext()
+    await submitMemberForm({ ...ctx, supabase: client })
+    expect(state.error).toBe('personNotUpdated')
+    expect(state.pushed).toEqual([])
+    expect(state.loading).toBe(false)
+  })
+
   test('a file that is not an image shows the image type error', async () => {
     const { ctx, state } = submitContext()
     await submitMemberForm({
@@ -280,7 +330,7 @@ describe('submitMemberForm', () => {
         ]
       }
     }
-    return ok()
+    return ok(call)
   }
 
   function familyContext(birthYear: number, birthMonth: number | '' = '') {
@@ -331,7 +381,9 @@ describe('submitMemberForm', () => {
 
   test('a failed family lookup is shown and nothing is saved', async () => {
     const { client, calls } = fakeSupabase((call) =>
-      call.table === 'relationships' ? { error: { message: 'offline' } } : ok()
+      call.table === 'relationships'
+        ? { error: { message: 'offline' } }
+        : ok(call)
     )
     const { ctx, state } = submitContext()
     await submitMemberForm({ ...ctx, supabase: client })
@@ -415,7 +467,7 @@ describe('submitMemberForm names, duplicates and parent deaths', () => {
     if (call.op === 'insert') return { data: { id: 'new-1' } }
     if (call.table === 'persons' && call.op === 'select')
       return { data: [existing] }
-    return ok()
+    return ok(call)
   }
 
   test('a name of spaces is refused before anything is queried', async () => {
@@ -486,7 +538,7 @@ describe('submitMemberForm names, duplicates and parent deaths', () => {
             }
           ]
         }
-      return ok()
+      return ok(call)
     }
   const editing = {
     isEditing: true,

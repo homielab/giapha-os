@@ -4,13 +4,15 @@ import { emptyBulkChildRow } from '@/components/relationship/relationshipTypes'
 import { Person } from '@/types'
 import {
   addRelationshipWithTargetSync,
-  bulkCreateChildren
+  bulkCreateChildren,
+  deleteRelationship
 } from '@/utils/relationshipMutations'
 import {
   FakeCall,
   FakeResult,
   fakeSupabase
 } from '@/utils/testing/fakeSupabase'
+import { RelationshipNotDeletedError } from '@/utils/writeErrors'
 
 const denied = { message: 'permission denied for table relationships' }
 
@@ -149,6 +151,7 @@ describe('addRelationshipWithTargetSync', () => {
       if (call.table === 'persons' && call.single) {
         return { data: { generation: null, is_in_law: null } }
       }
+      if (call.op === 'update') return { data: [{ id: 'target' }] }
       return { data: [] }
     }
   }
@@ -172,6 +175,14 @@ describe('addRelationshipWithTargetSync', () => {
     )
     const result = await addRelationshipWithTargetSync(client, input)
     expect(result).toEqual({ targetUpdateError: 'update refused' })
+  })
+
+  test('a target update that changed no row is returned (RLS)', async () => {
+    const { client } = fakeSupabase(
+      respond((call) => (call.op === 'update' ? { data: [] } : undefined))
+    )
+    const result = await addRelationshipWithTargetSync(client, input)
+    expect(result).toEqual({ targetUpdateError: 'Person not updated' })
   })
 
   test('a failed target read is returned as well', async () => {
@@ -198,5 +209,27 @@ describe('addRelationshipWithTargetSync', () => {
     await expect(addRelationshipWithTargetSync(client, input)).rejects.toEqual(
       denied
     )
+  })
+})
+
+describe('deleteRelationship', () => {
+  test('deletes the relationship and checks the removed row', async () => {
+    const { client, calls } = fakeSupabase(() => ({ data: [{ id: 'rel-1' }] }))
+    await deleteRelationship(client, 'rel-1')
+    expect(calls[0].op).toBe('delete')
+    expect(calls[0].filters).toEqual([['eq', 'id', 'rel-1']])
+  })
+
+  test('zero removed rows (RLS) throws RelationshipNotDeletedError', async () => {
+    const { client } = fakeSupabase(() => ({ data: [] }))
+    await expect(deleteRelationship(client, 'rel-1')).rejects.toBeInstanceOf(
+      RelationshipNotDeletedError
+    )
+  })
+
+  test('a database error is thrown as is', async () => {
+    const error = { message: 'offline' }
+    const { client } = fakeSupabase(() => ({ error }))
+    await expect(deleteRelationship(client, 'rel-1')).rejects.toEqual(error)
   })
 })

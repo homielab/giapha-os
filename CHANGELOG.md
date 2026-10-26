@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Saving a member, changing or deleting a relationship, deleting a member and editing a gallery photo no longer say "saved" when the database refused the change (for example after your role was lowered or your session expired). You now see a clear message to reload the page, and the form keeps what you typed.
 - GEDCOM import no longer cuts long notes (`CONC` lines are now joined), keeps the first date of `BET … AND …` and `FROM … TO …` ranges (the original text goes to the note), ignores `@#DJULIAN@` escapes and keeps second and later names as other names.
 - Dashboard pages (home, family tree, kinship, lineage, events, statistics) now show the "could not load data, try again" error when a page of rows fails to load, instead of a family with missing people; the lineage page no longer offers Apply on partial data.
 - Gallery: deleting an image removes the database row first and reports an error when it is refused (the file is kept); the stored file is removed only after that.

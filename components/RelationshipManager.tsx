@@ -8,7 +8,9 @@ import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
 import { fetchRelationshipData } from '@/utils/relationshipFetch'
+import { deleteRelationship } from '@/utils/relationshipMutations'
 import { createClient } from '@/utils/supabase/client'
+import { RelationshipNotDeletedError } from '@/utils/writeErrors'
 
 import AddRelationshipSection from './relationship/AddRelationshipSection'
 import BulkAddChildrenSection from './relationship/BulkAddChildrenSection'
@@ -98,16 +100,16 @@ export default function RelationshipManager({
   const handleDelete = async (relId: string) => {
     if (!confirm(t('confirmDeleteRelationship'))) return
     try {
-      const { error } = await supabase
-        .from('relationships')
-        .delete()
-        .eq('id', relId)
-      if (error) throw error
+      await deleteRelationship(supabase, relId)
       fetchRelationships()
       router.refresh()
     } catch (err: unknown) {
       const e = err as Error
-      setDeleteError(t('deleteRelationshipError', { error: e.message }))
+      setDeleteError(
+        err instanceof RelationshipNotDeletedError
+          ? t('relationshipNotDeleted')
+          : t('deleteRelationshipError', { error: e.message })
+      )
       setTimeout(() => setDeleteError(null), 5000)
     }
   }

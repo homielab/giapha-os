@@ -118,7 +118,7 @@ describe('applyGenerationUpdates', () => {
 
   it('falls back to one update per member when the function is missing', async () => {
     const { client, calls } = fakeSupabase((call) =>
-      call.op === 'rpc' ? { error: MISSING } : {}
+      call.op === 'rpc' ? { error: MISSING } : { data: [{ id: 'x' }] }
     )
     const result = await applyGenerationUpdates(client, rows)
     expect(result).toEqual({ ok: true, count: 2, legacy: true })
@@ -138,11 +138,24 @@ describe('applyGenerationUpdates', () => {
       if (call.op === 'rpc') return { error: { ...MISSING, code: '42883' } }
       return call.filters[0][2] === 'b'
         ? { error: { message: 'permission denied' } }
-        : {}
+        : { data: [{ id: 'x' }] }
     })
     expect(await applyGenerationUpdates(client, rows)).toEqual({
       ok: false,
       error: 'permission denied',
+      legacy: true,
+      failedIds: ['b']
+    })
+  })
+
+  it('counts an update that changed no row as failed (RLS)', async () => {
+    const { client } = fakeSupabase((call) => {
+      if (call.op === 'rpc') return { error: MISSING }
+      return call.filters[0][2] === 'b' ? { data: [] } : { data: [{ id: 'x' }] }
+    })
+    expect(await applyGenerationUpdates(client, rows)).toEqual({
+      ok: false,
+      error: 'Person not updated',
       legacy: true,
       failedIds: ['b']
     })
