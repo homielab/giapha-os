@@ -27,6 +27,13 @@ export const DESCENDANTS = [
 ]
 
 /**
+ * Danh xưng của tổ tiên theo đời; quá bảng thì 'Tổ đời N'
+ */
+export function ancestorTitle(depth: number): string {
+  return ANCESTORS[depth] || `Tổ đời ${depth}`
+}
+
+/**
  * Lấy danh xưng trực hệ vế trên
  */
 export function getDirectAncestorTerm(
@@ -39,12 +46,11 @@ export function getDirectAncestorTerm(
     const base = gender === 'female' ? 'Bà' : 'Ông'
     return `${base} ${isPaternal ? 'nội' : 'ngoại'}`
   }
-  const title = ANCESTORS[depth] || `Tổ đời ${depth}`
   if (depth === 3) {
     const base = gender === 'female' ? 'Cụ bà (bà cố)' : 'Cụ ông (ông cố)'
     return `${base} ${isPaternal ? 'nội' : 'ngoại'}`
   }
-  return title
+  return ancestorTitle(depth)
 }
 
 /**

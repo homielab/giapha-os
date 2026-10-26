@@ -257,3 +257,53 @@ describe('computeKinship', () => {
     expect(kin('anh', 'nguoiLa')!.hasAmbiguousTerm).toBe(false)
   })
 })
+
+describe('computeKinship across many generations', () => {
+  // c0 → c1 → … → c15 in a straight line, each with a brother "b<i>" (older,
+  // birth_order 1, so the chain person is the younger one) and c<i> married.
+  const deep: PersonNode[] = []
+  const deepEdges: Edge[] = []
+  for (let i = 0; i <= 15; i++) {
+    deep.push(person(`c${i}`, 'male', { birth_order: 2 }))
+    deep.push(person(`w${i}`, 'female'))
+    deepEdges.push(marriage(`c${i}`, `w${i}`))
+    if (i > 0) {
+      deep.push(person(`b${i}`, 'male', { birth_order: 1 }))
+      deepEdges.push(child(`c${i - 1}`, `c${i}`), child(`c${i - 1}`, `b${i}`))
+    }
+  }
+  const deepById = new Map(deep.map((p) => [p.id, p]))
+  const deepKin = (a: string, b: string) =>
+    computeKinship(deepById.get(a)!, deepById.get(b)!, deep, deepEdges)!
+
+  test('an uncle 11, 12 and 15 generations up gets a title instead of "undefined"', () => {
+    // b<i> is the older brother of c<i>; c(i+d) is d generations below c<i>.
+    expect(deepKin('c11', 'b1').aCallsB).toBe('Tổ đời 10 Bác')
+    expect(deepKin('c12', 'b1').aCallsB).toBe('Tổ đời 11 Bác')
+    expect(deepKin('c15', 'b1').aCallsB).toBe('Tổ đời 14 Bác')
+  })
+
+  test('a nephew 11 generations down is "Cháu đời 11"', () => {
+    const r = deepKin('c11', 'b1')
+    expect(r.bCallsA).toBe('Cháu đời 11')
+  })
+
+  test('titles up to 10 generations are unchanged', () => {
+    expect(deepKin('c4', 'b1').aCallsB).toBe('Cụ ông Bác')
+    expect(deepKin('c5', 'b1').aCallsB).toBe('Kỵ Bác')
+    expect(deepKin('c10', 'b1').aCallsB).toBe('Diễn Bác')
+  })
+
+  test('no result for any pair of the 15-generation tree contains "undefined"', () => {
+    let checked = 0
+    for (const a of deep) {
+      for (const b of deep) {
+        const r = computeKinship(a, b, deep, deepEdges)
+        if (!r) continue
+        checked++
+        expect(JSON.stringify(r)).not.toContain('undefined')
+      }
+    }
+    expect(checked).toBeGreaterThan(2000)
+  })
+})

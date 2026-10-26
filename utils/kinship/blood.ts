@@ -1,6 +1,6 @@
 import { findLca, getAncestryData, type KinshipGraph } from './graph'
 import {
-  ANCESTORS,
+  ancestorTitle,
   getDirectAncestorTerm,
   getDirectDescendantTerm
 } from './terms'
@@ -133,7 +133,7 @@ export function resolveBloodTerms(
     let prefix = ''
     if (depthA === 3) prefix = genderB === 'female' ? 'Bà ' : 'Ông '
     else if (depthA === 4) prefix = genderB === 'female' ? 'Cụ bà ' : 'Cụ ông '
-    else if (depthA > 4) prefix = ANCESTORS[depthA - 1] + ' '
+    else if (depthA > 4) prefix = ancestorTitle(depthA - 1) + ' '
 
     return [
       (prefix + termForB).trim(),
