@@ -69,6 +69,11 @@ ENV PORT=3000
 # set hostname to localhost
 ENV HOSTNAME="0.0.0.0"
 
+# Reports "healthy" in `docker ps` once the public /login page answers.
+# The bun image has no curl, so the check runs through bun itself.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+  CMD ["bun", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/login').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
 CMD ["bun", "server.js"]

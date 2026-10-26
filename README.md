@@ -220,6 +220,8 @@ docker build -t giapha-os \
 docker run -d -p 3000:3000 --env-file .env.local --restart always giapha-os
 ```
 
+Image có sẵn `HEALTHCHECK` gọi trang `/login` mỗi 30 giây: `docker ps` hiện `healthy` hoặc `unhealthy` ở cột STATUS, và `docker inspect --format '{{.State.Health.Status}}' <container>` cho kết quả tương tự. Container báo `unhealthy` nghĩa là ứng dụng không còn trả lời; xem `docker logs <container>`.
+
 Image đã có sẵn `docs/schema.sql` và `docs/migrations/`, nên trang `/setup` và `/dashboard/upgrade` hoạt động như bản Vercel. **Cập nhật:** `git pull`, chạy lại lệnh `docker compose --env-file .env.local up -d --build`, rồi vào `/dashboard/upgrade` để chạy migration mới (nếu có).
 
 ---

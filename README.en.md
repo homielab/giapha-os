@@ -219,6 +219,8 @@ docker build -t giapha-os \
 docker run -d -p 3000:3000 --env-file .env.local --restart always giapha-os
 ```
 
+The image has a built-in `HEALTHCHECK` that requests the `/login` page every 30 seconds: `docker ps` shows `healthy` or `unhealthy` in the STATUS column, and `docker inspect --format '{{.State.Health.Status}}' <container>` reports the same. An `unhealthy` container means the app no longer answers; check `docker logs <container>`.
+
 The image includes `docs/schema.sql` and `docs/migrations/`, so `/setup` and `/dashboard/upgrade` work as on Vercel. **Updating:** `git pull`, run `docker compose --env-file .env.local up -d --build` again, then open `/dashboard/upgrade` to run new migrations (if any).
 
 ---
@@ -276,6 +278,8 @@ If SSO is not configured, set `NEXT_PUBLIC_DISABLE_SSO=true` in Vercel and deplo
 Administrators can open **System upgrade** from the administration menu to check the source code version on GitHub and the database version, then run pending migrations. If the current source code is older than the latest GitHub version, the system requires the source code to be updated before migrations can run. Direct migration support requires `SUPABASE_DB_URL` on the server. Without it, `/dashboard/upgrade` still provides the SQL bundle from `/setup` for manual execution.
 
 **Restoring data needs the migration `20261026000000_add_restore_backup.sql`.** From this version, restore (Dashboard → Data) runs in a single database transaction through the `restore_backup` function: if anything fails halfway, the current data is kept as it was. Existing self-hosted installs must run this migration (run the migrations on `/dashboard/upgrade`, or run the file from `docs/migrations/` in the Supabase SQL Editor). Until then, restore still works the old way (delete, then insert in chunks, without a transaction) and shows a reminder to upgrade the database. Restore files can be up to 25 MB; on Vercel, request bodies are limited to about 4.5 MB, so very large family trees (several thousand members or more) are best restored on a self-hosted install.
+
+**Updating generations needs the migration `20261026120000_add_update_generations.sql`.** The "Apply" button on the Lineage page and the option to update descendants' generations when editing a member save all members with a single call to the database function `update_generations`, in one transaction: if one row fails (a member that was just deleted, or one you are not allowed to edit), no row is changed and the app reports the error. The function runs with the caller's rights (SECURITY INVOKER), so the Row Level Security of the `persons` table still applies. Until the migration is run, the app updates people one by one as before and shows a reminder to upgrade the database.
 
 ### Source code updates
 

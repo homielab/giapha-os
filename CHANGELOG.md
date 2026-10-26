@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Docker: the image has a `HEALTHCHECK` on the `/login` page, so `docker ps` shows `healthy`/`unhealthy`. The English README now also documents the `update_generations` migration.
 - Member page: a "Print profile" button prints the profile on A4 without the header, footer and edit buttons, in black on white, with the photo, the full note and the family list; the page title is the name with birth and death years.
 - Dashboard: a search button in the header (also Ctrl/⌘ + K on any dashboard page) finds a member by name without accents ("nguyen van" finds "Nguyễn Văn …"), shows birth/death years to tell namesakes apart, and Enter opens the profile. The list loads only when the search is first opened.
 - Member form: a "Leap month" checkbox next to the lunar death date, shown when that lunar year has the typed leap month (e.g. 2023 month 2, 2025 month 6), so a death date in a leap month can be entered from the lunar date alone.
