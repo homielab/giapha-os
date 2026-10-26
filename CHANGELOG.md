@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Export: besides the single-page PDF, the menu now offers multi-page A4 and A3 landscape PDFs. The tree is cut into sheets with a 10 mm overlap for gluing and a "row,column / rows x columns" label on every page; the last choice is remembered.
 - Family tree: pinch with two fingers on a phone or tablet to zoom around the fingers; one finger still scrolls. Mouse and Ctrl/⌘ + scroll behave as before.
 - Member form: a new member with the same name (ignoring accents) and birth year as an existing one now asks "Create another one anyway?" and lists the matches. A mother who died before the child's birth is refused, and a father who died more than 10 months before it (a year when the month or day is unknown) asks for confirmation, when adding a parent link and when editing birth or death dates; adopted children are not checked.
 - Adding a relationship: typing a name without accents ("nguyen van duc") now finds "Nguyễn Văn Đức". The member list loads once when the form opens and is filtered in the browser, showing up to 20 matches (names starting with what you typed first); a failed load now shows an error. The English README also covers GEDCOM, the photo gallery and the lunar death date recompute tool.

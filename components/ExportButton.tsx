@@ -12,11 +12,36 @@ import {
 import { useEffect, useRef, useState } from 'react'
 
 import { useI18n } from '@/lib/i18n/useI18n'
+import {
+  chooseTileScale,
+  PDF_OVERLAP_PT,
+  PDF_PAGE_SIZES_PT,
+  planPdfTiles,
+  type PdfPageFormat
+} from '@/utils/pdfTiles'
+
+const PDF_FORMAT_KEY = 'giapha-pdf-format'
+const PDF_FORMATS: PdfPageFormat[] = ['single', 'a4', 'a3']
+
+// The menu is closed while hydrating, so reading storage here cannot mismatch.
+function readSavedPdfFormat(): PdfPageFormat {
+  if (typeof window === 'undefined') return 'single'
+  try {
+    const saved = localStorage.getItem(PDF_FORMAT_KEY)
+    if (PDF_FORMATS.includes(saved as PdfPageFormat)) {
+      return saved as PdfPageFormat
+    }
+  } catch {
+    // Storage can be blocked; the default format still works.
+  }
+  return 'single'
+}
 
 export default function ExportButton() {
   const [isExporting, setIsExporting] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pdfFormat, setPdfFormat] = useState<PdfPageFormat>(readSavedPdfFormat)
   const { t } = useI18n()
   const menuRef = useRef<HTMLDivElement>(null)
   const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -96,7 +121,10 @@ export default function ExportButton() {
     )
   }
 
-  const handleExportPdf = async (element: HTMLElement) => {
+  const handleExportPdf = async (
+    element: HTMLElement,
+    format: PdfPageFormat
+  ) => {
     const { height: cssHeight, width: cssWidth } = getExportSize(element)
     const pixelRatio = getSafePixelRatio(cssWidth, cssHeight)
     const [{ toPng }, { jsPDF }] = await Promise.all([
@@ -138,6 +166,75 @@ export default function ExportButton() {
       pdfHeight *= scale
     }
 
+    const filename = `giapha-sodo-${new Date().toISOString().split('T')[0]}.pdf`
+
+    if (format !== 'single') {
+      const page = PDF_PAGE_SIZES_PT[format]
+      // Points per bitmap pixel so the tree is legible on paper.
+      const scale = chooseTileScale(
+        cssWidth,
+        cssHeight,
+        page.width,
+        page.height,
+        PDF_OVERLAP_PT
+      )
+      const ptPerPx = scale / pixelRatio
+      const plan = planPdfTiles(
+        imgWidth * ptPerPx,
+        imgHeight * ptPerPx,
+        page.width,
+        page.height,
+        PDF_OVERLAP_PT
+      )
+      const tiled = new jsPDF({
+        compress: true,
+        format: [page.width, page.height],
+        orientation: 'landscape',
+        unit: 'pt'
+      })
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      if (!ctx) throw new Error('canvas')
+      const total = plan.tiles.length
+      plan.tiles.forEach((tile, index) => {
+        if (index > 0) tiled.addPage([page.width, page.height], 'landscape')
+        const sx = Math.round(tile.x / ptPerPx)
+        const sy = Math.round(tile.y / ptPerPx)
+        const sw = Math.min(Math.round(tile.w / ptPerPx), imgWidth - sx)
+        const sh = Math.min(Math.round(tile.h / ptPerPx), imgHeight - sy)
+        canvas.width = sw
+        canvas.height = sh
+        ctx.fillStyle = '#f5f5f4'
+        ctx.fillRect(0, 0, sw, sh)
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh)
+        tiled.addImage(
+          canvas.toDataURL('image/png'),
+          'PNG',
+          0,
+          0,
+          sw * ptPerPx,
+          sh * ptPerPx,
+          undefined,
+          'FAST'
+        )
+        const label = `${t('pdfPageLabel')} ${tile.row + 1},${tile.col + 1} / ${plan.rows}x${plan.cols} (${index + 1}/${total})`
+        tiled.setFontSize(8)
+        const textWidth = tiled.getTextWidth(label)
+        tiled.setFillColor(255, 255, 255)
+        tiled.rect(
+          page.width - textWidth - 12,
+          page.height - 16,
+          textWidth + 8,
+          12,
+          'F'
+        )
+        tiled.setTextColor(87, 83, 78)
+        tiled.text(label, page.width - 8, page.height - 7, { align: 'right' })
+      })
+      tiled.save(filename)
+      return
+    }
+
     const pdf = new jsPDF({
       compress: true,
       format: [pdfWidth, pdfHeight],
@@ -145,14 +242,22 @@ export default function ExportButton() {
       unit: 'pt'
     })
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST')
-    pdf.save(`giapha-sodo-${new Date().toISOString().split('T')[0]}.pdf`)
+    pdf.save(filename)
   }
 
-  const handleExport = async (format: 'png' | 'pdf') => {
+  const handleExport = async (format: 'png' | PdfPageFormat) => {
     try {
       setIsExporting(true)
       setShowMenu(false)
       setError(null)
+      if (format !== 'png') {
+        setPdfFormat(format)
+        try {
+          localStorage.setItem(PDF_FORMAT_KEY, format)
+        } catch {
+          // Remembering the choice is optional.
+        }
+      }
 
       // Add a small delay to allow UI to update (close menu) before capturing
       await new Promise((resolve) => setTimeout(resolve, 100))
@@ -163,7 +268,7 @@ export default function ExportButton() {
       if (format === 'png') {
         await handleExportPng(element)
       } else {
-        await handleExportPdf(element)
+        await handleExportPdf(element, format)
       }
     } catch (err) {
       console.error('Export error:', err)
@@ -202,19 +307,28 @@ export default function ExportButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className='absolute top-full right-0 z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-stone-200/60 bg-white/90 py-2 backdrop-blur-xl sm:right-auto sm:left-0'>
+            className='absolute top-full right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-stone-200/60 bg-white/90 py-2 backdrop-blur-xl sm:right-auto sm:left-0'>
             <button
               onClick={() => handleExport('png')}
               className='flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-amber-50 hover:text-amber-700'>
               <FileImage className='size-4' />
               {t('saveAsImage')}
             </button>
-            <button
-              onClick={() => handleExport('pdf')}
-              className='flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-amber-50 hover:text-amber-700'>
-              <FileText className='size-4' />
-              {t('saveAsPdf')}
-            </button>
+            {PDF_FORMATS.map((format) => (
+              <button
+                key={format}
+                onClick={() => handleExport(format)}
+                className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-colors hover:bg-amber-50 hover:text-amber-700 ${
+                  pdfFormat === format ? 'text-amber-700' : 'text-stone-700'
+                }`}>
+                <FileText className='size-4 shrink-0' />
+                {format === 'single'
+                  ? t('saveAsPdf')
+                  : format === 'a4'
+                    ? t('saveAsPdfA4')
+                    : t('saveAsPdfA3')}
+              </button>
+            ))}
           </m.div>
         )}
       </AnimatePresence>
