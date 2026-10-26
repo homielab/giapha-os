@@ -5,7 +5,7 @@ import MemberDetailModal from '@/components/modal/MemberDetailModal'
 import { MemberListProvider } from '@/context/MemberListContext'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { fetchAllRows } from '@/utils/supabase/fetchAll'
-import { getSupabase } from '@/utils/supabase/queries'
+import { getIsAdmin, getSupabase, getUser } from '@/utils/supabase/queries'
 
 export async function generateMetadata() {
   const { t } = await getServerTranslations()
@@ -13,9 +13,11 @@ export async function generateMetadata() {
 }
 
 export default async function EventsPage() {
-  const [{ t }, supabase] = await Promise.all([
+  const [{ t }, supabase, user, isAdmin] = await Promise.all([
     getServerTranslations(),
-    getSupabase()
+    getSupabase(),
+    getUser(),
+    getIsAdmin()
   ])
 
   const [personsRes, customEventsRes] = await Promise.all([
@@ -55,6 +57,8 @@ export default async function EventsPage() {
             <EventsList
               persons={persons ?? []}
               customEvents={customEvents ?? []}
+              currentUserId={user?.id ?? null}
+              isAdmin={Boolean(isAdmin)}
             />
           </main>
         </div>

@@ -689,6 +689,8 @@ export const messages = {
     confirmDeleteEvent: 'Bạn có chắc chắn muốn xoá sự kiện này?',
     saveEventError: 'Đã xảy ra lỗi khi lưu sự kiện.',
     deleteEventError: 'Đã xảy ra lỗi khi xoá sự kiện.',
+    eventNotAllowed:
+      'Bạn chỉ có thể sửa hoặc xoá sự kiện do chính mình tạo (quản trị viên sửa được mọi sự kiện).',
     fileTooLarge10: 'Kích thước file phải nhỏ hơn 10MB.',
     unsupportedImageType: 'Chỉ hỗ trợ ảnh JPG, PNG, GIF hoặc WEBP.',
     galleryPagination: 'Phân trang phòng trưng bày',
@@ -1618,6 +1620,8 @@ export const messages = {
     confirmDeleteEvent: 'Are you sure you want to delete this event?',
     saveEventError: 'An error occurred while saving the event.',
     deleteEventError: 'An error occurred while deleting the event.',
+    eventNotAllowed:
+      'You can only edit or delete events you created (admins can change any event).',
     fileTooLarge10: 'The file must be smaller than 10MB.',
     unsupportedImageType: 'Only JPG, PNG, GIF or WEBP images are supported.',
     galleryPagination: 'Gallery pages',

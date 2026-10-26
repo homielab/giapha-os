@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Events: custom events created by someone else are no longer clickable for members (only the creator or an admin can edit or delete them). If the database still refuses an edit or delete, the form now shows "You can only edit or delete events you created" instead of closing as if it had saved.
 - Upcoming events: "today" now follows the date in Vietnam on the dashboard and the events page, so an anniversary or birthday is no longer shown as "tomorrow" between midnight and 7 a.m. Vietnam time. A 29 February birthday is on 28 February in a common year (it used to jump to 1 March), and an anniversary with only a solar day and month of death (no year, no lunar date) is labelled "(estimated)" because its lunar date depends on the current year.
 - Accessibility: the custom event, gallery upload, restore confirmation and create-user dialogs and the gallery lightbox now announce themselves as dialogs to screen readers, close with Escape, move keyboard focus into the dialog and give it back to the button that opened it. The page behind no longer scrolls while they are open.
 - Family tree: zooming in no longer cuts off the leftmost branches (the canvas now scrolls to the full width) and zooming out leaves no empty space.

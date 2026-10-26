@@ -12,6 +12,11 @@ import EventNameField from '@/components/modal/EventNameField'
 import EventTextFields from '@/components/modal/EventTextFields'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
+import {
+  CustomEventNotAllowedError,
+  deleteCustomEvent,
+  saveCustomEvent
+} from '@/utils/customEventMutations'
 import { CustomEventRecord } from '@/utils/eventHelpers'
 import { lunarToSolar } from '@/utils/lunarCalendar'
 import { createClient } from '@/utils/supabase/client'
@@ -121,27 +126,15 @@ export default function CustomEventModal({
         content: content || null
       }
 
-      let resultError
-      if (eventToEdit) {
-        const { error: err } = await supabase
-          .from('custom_events')
-          .update(payload)
-          .eq('id', eventToEdit.id)
-        resultError = err
-      } else {
-        const { error: err } = await supabase
-          .from('custom_events')
-          .insert([payload])
-        resultError = err
-      }
-
-      if (resultError) throw resultError
+      await saveCustomEvent(supabase, payload, eventToEdit?.id)
 
       onSuccess()
       onClose()
     } catch (err) {
       console.error(err)
-      if (err instanceof Error) {
+      if (err instanceof CustomEventNotAllowedError) {
+        setError(t('eventNotAllowed'))
+      } else if (err instanceof Error) {
         setError(err.message || t('saveEventError'))
       } else {
         setError(t('saveEventError'))
@@ -159,18 +152,15 @@ export default function CustomEventModal({
     setError(null)
     try {
       const supabase = createClient()
-      const { error: err } = await supabase
-        .from('custom_events')
-        .delete()
-        .eq('id', eventToEdit.id)
-
-      if (err) throw err
+      await deleteCustomEvent(supabase, eventToEdit.id)
 
       onSuccess()
       onClose()
     } catch (err) {
       console.error(err)
-      if (err instanceof Error) {
+      if (err instanceof CustomEventNotAllowedError) {
+        setError(t('eventNotAllowed'))
+      } else if (err instanceof Error) {
         setError(err.message || t('deleteEventError'))
       } else {
         setError(t('deleteEventError'))
