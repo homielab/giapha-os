@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
+import DataCheck from '@/components/DataCheck'
 import DataImportExport from '@/components/DataImportExport'
 import DuplicateScan from '@/components/DuplicateScan'
 import LunarRecompute from '@/components/LunarRecompute'
@@ -43,6 +44,7 @@ export default async function DataManagementPage() {
           <DataImportExport />
           <LunarRecompute />
           <DuplicateScan />
+          <DataCheck />
         </div>
       </div>
     </main>
