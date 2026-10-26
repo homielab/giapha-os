@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 
 import LineageManager from '@/components/LineageManager'
 import { getServerTranslations } from '@/lib/i18n/server'
+import { Person } from '@/types'
+import { PERSON_LIST_COLUMNS } from '@/utils/personColumns'
 import { fetchAllRows } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
 
@@ -21,7 +23,7 @@ export default async function LineagePage() {
     fetchAllRows((from, to) =>
       supabase
         .from('persons')
-        .select('*')
+        .select(PERSON_LIST_COLUMNS)
         .order('birth_year', { ascending: true, nullsFirst: false })
         .order('id')
         .range(from, to)
@@ -32,7 +34,8 @@ export default async function LineagePage() {
   ])
 
   // Identify "roots" - people with no parents
-  const persons = personsData || []
+  // PERSON_LIST_COLUMNS leaves out note/created_at/updated_at; no view reads them.
+  const persons = (personsData || []) as Person[]
   const relationships = relsData || []
 
   return (

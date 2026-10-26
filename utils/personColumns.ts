@@ -1,0 +1,11 @@
+/**
+ * Person columns the members and lineage views read. `note` and
+ * `created_at`/`updated_at` are left out: no list, tree or mindmap view uses
+ * them (the member detail and edit pages still load the whole row).
+ */
+export const PERSON_LIST_COLUMNS =
+  'id, full_name, gender, birth_year, birth_month, birth_day, death_year, death_month, death_day, death_lunar_year, death_lunar_month, death_lunar_day, is_deceased, is_in_law, birth_order, generation, other_names, avatar_url'
+
+/** Columns of the relationship picker's name list. */
+export const PERSON_PICKER_COLUMNS =
+  'id, full_name, gender, birth_year, birth_month, birth_day, other_names'

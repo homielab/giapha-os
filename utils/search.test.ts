@@ -1,0 +1,54 @@
+import { describe, expect, it } from 'bun:test'
+
+import { normalizeSearchText, searchPersons } from '@/utils/search'
+
+const p = (full_name: string, other_names: string | null = null) => ({
+  full_name,
+  other_names
+})
+
+describe('normalizeSearchText', () => {
+  it('strips accents, đ and extra spaces', () => {
+    expect(normalizeSearchText('  Nguyễn  Văn Đức ')).toBe('nguyen van duc')
+    expect(normalizeSearchText(null)).toBe('')
+  })
+})
+
+describe('searchPersons', () => {
+  const people = [
+    p('Trần Văn Đức'),
+    p('Nguyễn Văn Đức'),
+    p('Lê Nguyễn Văn Đức'),
+    p('Phạm Thị Hoa', 'Bé Nguyên'),
+    p('Đinh Công')
+  ]
+
+  it('finds accented names from unaccented input', () => {
+    const r = searchPersons(people, 'nguyen van duc')
+    expect(r.map((x) => x.full_name)).toEqual([
+      'Nguyễn Văn Đức',
+      'Lê Nguyễn Văn Đức'
+    ])
+  })
+
+  it('ranks prefix, then word start, then contains, then other names', () => {
+    const r = searchPersons(people, 'nguyen')
+    expect(r.map((x) => x.full_name)).toEqual([
+      'Nguyễn Văn Đức',
+      'Lê Nguyễn Văn Đức',
+      'Phạm Thị Hoa'
+    ])
+  })
+
+  it('matches đ as d and accented queries', () => {
+    expect(searchPersons(people, 'dinh')[0].full_name).toBe('Đinh Công')
+    expect(searchPersons(people, 'ĐỨC')).toHaveLength(3)
+  })
+
+  it('returns nothing for an empty query and caps results', () => {
+    expect(searchPersons(people, '  ')).toEqual([])
+    const many = Array.from({ length: 50 }, (_, i) => p(`Nguyễn ${i}`))
+    expect(searchPersons(many, 'nguyen')).toHaveLength(20)
+    expect(searchPersons(many, 'nguyen', 5)).toHaveLength(5)
+  })
+})

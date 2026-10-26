@@ -873,6 +873,8 @@ export const messages = {
     autoGenderNote:
       '* Giới tính sẽ tự động gán là {gender} (dựa theo giới tính người hiện tại).',
     relationshipAddError: 'Không thể thêm mối quan hệ: {error}',
+    relationshipSearchLoadError:
+      'Không tải được danh sách thành viên để tìm: {error}. Bấm đóng (×) để thử lại.',
     relationshipSelfLink: 'Không thể tạo quan hệ của một người với chính mình.',
     relationshipDuplicateSpouse: 'Hai người này đã là vợ chồng.',
     relationshipCycle:
@@ -1779,6 +1781,8 @@ export const messages = {
     autoGenderNote:
       '* Gender will be automatically set to {gender} (based on the current person’s gender).',
     relationshipAddError: 'Could not add relationship: {error}',
+    relationshipSearchLoadError:
+      'Could not load the member list for search: {error}. Dismiss (×) to retry.',
     relationshipSelfLink: 'A person cannot be related to themselves.',
     relationshipDuplicateSpouse: 'These two people are already married.',
     relationshipCycle:

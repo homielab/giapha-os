@@ -45,12 +45,28 @@ The app uses the Vietnamese lunar calendar (computed for UTC+7 with Hồ Ngọc 
 
 - **Day 30 in a 29-day month**: in a year where that month has only 29 days, the anniversary falls on day 29 (the last day of the month).
 - **Death in a leap month**: in a year with the same leap month, the anniversary falls in the leap month; otherwise in the regular month with the same number. The leap month is known from the solar date of death; a lunar date typed in by hand is read as a regular month.
+- **Lunar dates saved by older versions**: before the switch to the Vietnamese lunar calendar, lunar dates were computed with the Chinese calendar and are not recomputed automatically. An administrator opens **Dashboard → Backup & Restore → Recompute lunar death dates** and clicks "Check death anniversaries" to list members whose stored lunar date differs from the one computed from the solar date of death (only people with a full day/month/year on both dates). No row is selected by default; select rows one by one or all, then confirm to apply. Do not select a row whose lunar date was typed by hand (the solar date derived from it may be wrong). Export a JSON backup first. Each row is updated on its own and only if the date of death has not been edited since the check; rows that fail or are skipped show up again at the next check. The tool never runs by itself and needs no migration.
+
+### GEDCOM
+
+Export and import GEDCOM (7.0) to open the family tree in Gramps, MyHeritage… or import it back:
+
+- **Names**: the first word of the full name is the surname: `Nguyễn Văn An` is written `1 NAME /Nguyễn/ Văn An` with `2 SURN Nguyễn` and `2 GIVN Văn An`. On import the app prefers `SURN`/`GIVN` (keeping the surname–given-name order of the `NAME` line); without them it reads `NAME` and drops the `/` marks, so files exported by older versions read as before.
+- **Families (FAM)**: each child belongs to the family of their own parent pair (a second wife's child is in the family with the second wife); a child linked to only one person (father, mother or a person with gender "other") gets a single-parent family. A person with gender "other" is written in the `HUSB` position.
+- **Adopted children**: written as `2 PEDI ADOPTED` under `1 FAMC`; on import, `PEDI ADOPTED` becomes an adoptive relationship.
+- **Dates**: GEDCOM has no date without a month or without a year, so a date with day + year but no month exports only the year, and a date without a year is dropped.
+- Not exported: lunar death date, in-law flag (`is_in_law`), birth order, generation, other names, profile photo.
 
 ### Data checks
 
 - **Relationships**: before saving, the app refuses a link from a person to themselves, a couple that is already married (A–B and B–A count as the same), a parent–child link that would create a loop (making a grandchild the parent of their grandfather) and a child born before the parent. Birth dates are compared as far as both people have them: year, then month, then day; without a birth year this check is skipped. The "add several children" form checks every child's birth year against the parents before creating anyone.
 - **Death date**: cannot be before the birth date, comparing month and day within the same year.
 - **JSON backup version**: files carry a `version` (currently 3). On restore, a file without `version` is read as version 1 (old file); a file with a higher version than the app reads is refused with a hint to upgrade the app, so new columns are not lost.
+
+### Photo gallery
+
+- Accepts JPG, PNG, GIF and WEBP up to 10 MB, whether picked with the file button or dragged in. The app reads the start of the file to find the real image type (a text file renamed to `.jpg` is refused) and sets the extension in the `gallery` bucket from that type, not from the file name.
+- Each page shows 24 images (`/dashboard/gallery?page=2`…); the signed links for the whole page are created in one Supabase Storage call, valid for 1 hour. A page past the end shows the last page.
 
 ### Profile photos
 

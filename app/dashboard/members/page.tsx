@@ -5,8 +5,10 @@ import MemberDetailModal from '@/components/modal/MemberDetailModal'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
 import { AvatarUrlProvider } from '@/context/AvatarUrlContext'
 import { MemberListProvider } from '@/context/MemberListContext'
+import { Person } from '@/types'
 import { NO_SIGNED_AVATAR_URLS } from '@/utils/avatar'
 import { signAvatarUrls } from '@/utils/avatarSigning'
+import { PERSON_LIST_COLUMNS } from '@/utils/personColumns'
 import { fetchAllRows } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
 
@@ -33,7 +35,7 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
     fetchAllRows((from, to) =>
       supabase
         .from('persons')
-        .select('*')
+        .select(PERSON_LIST_COLUMNS)
         .order('birth_year', { ascending: true, nullsFirst: false })
         .order('id')
         .range(from, to)
@@ -43,7 +45,8 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
     )
   ])
 
-  const persons = personsRes.data || []
+  // PERSON_LIST_COLUMNS leaves out note/created_at/updated_at; no view reads them.
+  const persons = (personsRes.data || []) as Person[]
   const relationships = relsRes.data || []
 
   // One storage request signs every avatar of the tree/list/mindmap instead

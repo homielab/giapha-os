@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Adding a relationship: typing a name without accents ("nguyen van duc") now finds "Nguyễn Văn Đức". The member list loads once when the form opens and is filtered in the browser, showing up to 20 matches (names starting with what you typed first); a failed load now shows an error. The English README also covers GEDCOM, the photo gallery and the lunar death date recompute tool.
 - Unit tests (`bun run test`) for GEDCOM and CSV import/export, kinship terms, tree helpers, the lunar calendar and upcoming events; also for generation, in-law and birth-order computation, member sorting and family stats.
 - Search and share metadata for the public pages (home, about, login) in Vietnamese and English: page titles, descriptions, Open Graph and Twitter cards with a 1200×630 share image (`public/og-image.png`), plus `robots.txt` (keeps `/dashboard`, `/api`, `/setup` out of search engines) and `sitemap.xml`. Links use `APP_URL`, or the Vercel production domain.
 - GitHub Actions workflow running lint, format check, type-check (`bun run typecheck`) and unit tests on every push and pull request.
@@ -17,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The members and lineage pages no longer load `note`, `created_at` and `updated_at` of every person, which no view reads: about 24% less data for 2,000 members (≈ 983 KB → 743 KB in a synthetic test).
 - The gallery signs all image links of a page in one storage request instead of one request per image.
 - Profile photos on the members page (tree, list, mindmap, bubble view) and the kinship page load from links signed in one storage request for the whole page, instead of one request through the app server per member. Other pages still load them through `/api/avatar`.
 - The statistics page (`/dashboard/stats`) computes the totals on the server from the few columns it needs and sends only the numbers to the browser: for a family of 2,000 members the page data drops from about 2 MB to about 1 KB.

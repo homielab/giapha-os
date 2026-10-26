@@ -13,14 +13,26 @@ interface AddRelationshipFormProps {
   onTypeChange: (value: RelationshipType) => void
   searchTerm: string
   onSearchTermChange: (value: string) => void
-  searchResults: Person[]
-  recentMembers: Person[]
+  searchResults: PickerPerson[]
+  recentMembers: PickerPerson[]
   selectedTargetId: string | null
-  onTargetSelect: (person: Person) => void
+  onTargetSelect: (person: PickerPerson) => void
   processing: boolean
   onSave: () => void
   onCancel: () => void
 }
+
+/** The few person fields the relationship picker lists and needs to choose one. */
+export type PickerPerson = Pick<
+  Person,
+  | 'id'
+  | 'full_name'
+  | 'gender'
+  | 'birth_year'
+  | 'birth_month'
+  | 'birth_day'
+  | 'other_names'
+>
 
 export default function AddRelationshipForm({
   newRelNote,
