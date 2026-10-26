@@ -45,6 +45,16 @@ Phù hợp với người Việt Nam.
 - **Ngày 30 ở tháng thiếu**: năm nào tháng đó chỉ có 29 ngày thì giỗ vào ngày 29 (ngày cuối tháng).
 - **Mất trong tháng nhuận**: năm nào có đúng tháng nhuận đó thì giỗ trong tháng nhuận, năm khác thì giỗ trong tháng thường cùng số. Ứng dụng biết tháng nhuận từ ngày mất dương lịch; ngày âm lịch nhập tay được hiểu là tháng thường.
 
+### GEDCOM
+
+Xuất/nhập GEDCOM (7.0) để mở gia phả trong Gramps, MyHeritage… hoặc nhập lại:
+
+- **Họ tên**: từ đầu tiên của họ tên là họ: `Nguyễn Văn An` được ghi `1 NAME /Nguyễn/ Văn An` kèm `2 SURN Nguyễn`, `2 GIVN Văn An`. Khi nhập, ứng dụng ưu tiên `SURN`/`GIVN` (giữ thứ tự họ–tên như dòng `NAME`), không có thì đọc `NAME` bỏ dấu `/` — file do bản cũ xuất vẫn đọc như trước.
+- **Gia đình (FAM)**: mỗi con nằm trong gia đình của đúng cặp cha mẹ của mình (con vợ hai ở gia đình với vợ hai); con chỉ nối với một người (cha, mẹ hoặc người có giới tính "khác") có gia đình một cha/mẹ riêng. Người giới tính "khác" được ghi ở vị trí `HUSB`.
+- **Con nuôi**: ghi `2 PEDI ADOPTED` dưới `1 FAMC`; khi nhập, `PEDI ADOPTED` thành quan hệ con nuôi.
+- **Ngày tháng**: GEDCOM không có ngày thiếu tháng hay thiếu năm, nên ngày có ngày + năm mà không có tháng chỉ xuất năm, ngày không có năm thì bỏ.
+- Không xuất: âm lịch ngày mất, dâu/rể (`is_in_law`), thứ tự sinh, đời, tên khác, ảnh đại diện.
+
 ## Demo
 
 - Demo: [giapha-os.homielab.com](https://giapha-os.homielab.com)

@@ -20,6 +20,11 @@ const child = (parent: string, kid: string): GedcomRelationship => ({
   person_a: parent,
   person_b: kid
 })
+const adopted = (parent: string, kid: string): GedcomRelationship => ({
+  type: 'adopted_child',
+  person_a: parent,
+  person_b: kid
+})
 const marriage = (a: string, b: string): GedcomRelationship => ({
   type: 'marriage',
   person_a: a,
@@ -267,6 +272,244 @@ describe('GEDCOM round trip', () => {
     expect(rels).toEqual([
       'biological_child Mẹ Con 1',
       'biological_child Mẹ Con 2'
+    ])
+  })
+
+  test('keeps the children of each wife with their own mother', () => {
+    const { rels } = roundTrip({
+      persons: [
+        person('Chồng', 'male'),
+        person('Vợ cả', 'female'),
+        person('Vợ hai', 'female'),
+        person('Con cả', 'male'),
+        person('Con thứ', 'female')
+      ],
+      relationships: [
+        marriage('Chồng', 'Vợ cả'),
+        marriage('Chồng', 'Vợ hai'),
+        child('Chồng', 'Con cả'),
+        child('Vợ cả', 'Con cả'),
+        child('Chồng', 'Con thứ'),
+        child('Vợ hai', 'Con thứ')
+      ]
+    })
+    expect(rels).toEqual(
+      [
+        'marriage Chồng Vợ cả',
+        'marriage Chồng Vợ hai',
+        'biological_child Chồng Con cả',
+        'biological_child Vợ cả Con cả',
+        'biological_child Chồng Con thứ',
+        'biological_child Vợ hai Con thứ'
+      ].sort()
+    )
+  })
+
+  test('keeps a child linked only to the father out of his marriage', () => {
+    const { rels } = roundTrip({
+      persons: [
+        person('Bố', 'male'),
+        person('Mẹ kế', 'female'),
+        person('Con riêng', 'male')
+      ],
+      relationships: [marriage('Bố', 'Mẹ kế'), child('Bố', 'Con riêng')]
+    })
+    expect(rels).toEqual(
+      ['marriage Bố Mẹ kế', 'biological_child Bố Con riêng'].sort()
+    )
+  })
+
+  test('keeps the children of a parent with gender other', () => {
+    const { rels, parsed } = roundTrip({
+      persons: [
+        person('Cha mẹ', 'other'),
+        person('Con 1', 'male'),
+        person('Con 2', 'female')
+      ],
+      relationships: [child('Cha mẹ', 'Con 1'), child('Cha mẹ', 'Con 2')]
+    })
+    expect(rels).toEqual([
+      'biological_child Cha mẹ Con 1',
+      'biological_child Cha mẹ Con 2'
+    ])
+    expect(parsed.persons[0].gender).toBe('other')
+  })
+
+  test('keeps adopted children adopted', () => {
+    const data = {
+      persons: [
+        person('Bố', 'male'),
+        person('Mẹ', 'female'),
+        person('Con ruột', 'male'),
+        person('Con nuôi', 'female'),
+        person('Con riêng', 'male')
+      ],
+      relationships: [
+        marriage('Bố', 'Mẹ'),
+        child('Bố', 'Con ruột'),
+        child('Mẹ', 'Con ruột'),
+        adopted('Bố', 'Con nuôi'),
+        adopted('Mẹ', 'Con nuôi'),
+        child('Bố', 'Con riêng'),
+        adopted('Mẹ', 'Con riêng')
+      ]
+    }
+    const ged = exportToGedcom(data)
+    // Con nuôi: adopted by the couple (F1); Con riêng: Bố's own child (F2),
+    // adopted by Mẹ alone (F3)
+    expect(ged).toContain('0 @I4@ INDI\n1 NAME /Con/ nuôi\n2 GIVN nuôi\n')
+    expect(ged).toContain('1 FAMC @F1@\n2 PEDI ADOPTED\n0 @I5@')
+    expect(ged).toContain('1 FAMC @F2@\n1 FAMC @F3@\n2 PEDI ADOPTED\n')
+    expect(roundTrip(data).rels).toEqual(
+      [
+        'marriage Bố Mẹ',
+        'biological_child Bố Con ruột',
+        'biological_child Mẹ Con ruột',
+        'adopted_child Bố Con nuôi',
+        'adopted_child Mẹ Con nuôi',
+        'biological_child Bố Con riêng',
+        'adopted_child Mẹ Con riêng'
+      ].sort()
+    )
+  })
+
+  test('writes the first word of a name as the surname', () => {
+    const data = {
+      persons: [
+        person('a', 'male', { full_name: 'Nguyễn Văn An' }),
+        person('b', 'female', { full_name: '  Trần   Thị Bích ' }),
+        person('c', 'male', { full_name: 'Tùng' })
+      ],
+      relationships: []
+    }
+    const ged = exportToGedcom(data)
+    expect(ged).toContain(
+      '1 NAME /Nguyễn/ Văn An\n2 GIVN Văn An\n2 SURN Nguyễn\n'
+    )
+    expect(ged).toContain('1 NAME /Trần/ Thị Bích\n')
+    expect(ged).toContain('1 NAME Tùng\n2 GIVN Tùng\n')
+    expect(roundTrip(data).parsed.persons.map((p) => p.full_name)).toEqual([
+      'Nguyễn Văn An',
+      'Trần Thị Bích',
+      'Tùng'
+    ])
+  })
+
+  test('drops a day without a month and keeps the year', () => {
+    const data = {
+      persons: [
+        person('a', 'male', {
+          birth_year: 1950,
+          birth_day: 12,
+          is_deceased: true,
+          death_year: 2020,
+          death_day: 3
+        }),
+        person('b', 'female', { birth_month: 5, birth_day: 1 })
+      ],
+      relationships: []
+    }
+    const ged = exportToGedcom(data)
+    expect(ged).toContain('1 BIRT\n2 DATE 1950\n')
+    expect(ged).toContain('1 DEAT Y\n2 DATE 2020\n')
+    expect(ged).not.toContain('2 DATE 01 MAY')
+    const [a, b] = roundTrip(data).parsed.persons
+    expect(a).toMatchObject({
+      birth_year: 1950,
+      birth_month: null,
+      birth_day: null,
+      death_year: 2020,
+      death_day: null
+    })
+    expect(b.birth_year).toBeNull()
+  })
+})
+
+describe('parseGedcom with other name and family formats', () => {
+  test('reads files written by earlier versions as before', () => {
+    const ged = [
+      '0 HEAD',
+      '0 @I1@ INDI',
+      '1 NAME Nguyễn Văn /An/',
+      '1 SEX M',
+      '1 FAMS @F1@',
+      '0 @I2@ INDI',
+      '1 NAME Trần Thị /Bích/',
+      '1 SEX F',
+      '1 FAMS @F1@',
+      '0 @I3@ INDI',
+      '1 NAME Tùng //',
+      '1 SEX U',
+      '1 BIRT',
+      '2 DATE 02 AUG 1945',
+      '1 FAMC @F1@',
+      '0 @F1@ FAM',
+      '1 HUSB @I1@',
+      '1 WIFE @I2@',
+      '1 CHIL @I3@',
+      '0 TRLR'
+    ].join('\n')
+    const { persons, relationships } = parseGedcom(ged)
+    expect(persons.map((p) => p.full_name)).toEqual([
+      'Nguyễn Văn An',
+      'Trần Thị Bích',
+      'Tùng'
+    ])
+    expect(persons[2]).toMatchObject({
+      birth_day: 2,
+      birth_month: 8,
+      birth_year: 1945
+    })
+    const [an, bich, tung] = persons.map((p) => p.id)
+    expect(relationships).toEqual([
+      { type: 'marriage', person_a: an, person_b: bich },
+      { type: 'biological_child', person_a: an, person_b: tung },
+      { type: 'biological_child', person_a: bich, person_b: tung }
+    ])
+  })
+
+  test('prefers SURN and GIVN in the order the NAME writes them', () => {
+    const ged = [
+      '0 @I1@ INDI',
+      '1 NAME John /Smith/',
+      '2 GIVN John',
+      '2 SURN Smith',
+      '0 @I2@ INDI',
+      '1 NAME',
+      '2 GIVN Thị Mai',
+      '2 SURN Lê',
+      '0 @I3@ INDI',
+      '1 NAME /Phạm/ Hùng',
+      '1 NAME Bí danh /Khác/'
+    ].join('\n')
+    expect(parseGedcom(ged).persons.map((p) => p.full_name)).toEqual([
+      'John Smith',
+      'Lê Thị Mai',
+      'Phạm Hùng'
+    ])
+  })
+
+  test('reads PEDI ADOPTED per family', () => {
+    const ged = [
+      '0 @I1@ INDI',
+      '0 @I2@ INDI',
+      '0 @I3@ INDI',
+      '1 FAMC @F1@',
+      '2 PEDI ADOPTED',
+      '1 FAMC @F2@',
+      '2 PEDI BIRTH',
+      '0 @F1@ FAM',
+      '1 WIFE @I1@',
+      '1 CHIL @I3@',
+      '0 @F2@ FAM',
+      '1 HUSB @I2@',
+      '1 CHIL @I3@'
+    ].join('\n')
+    const { persons, relationships } = parseGedcom(ged)
+    const [p1, p2, p3] = persons.map((p) => p.id)
+    expect(relationships).toEqual([
+      { type: 'adopted_child', person_a: p1, person_b: p3 },
+      { type: 'biological_child', person_a: p2, person_b: p3 }
     ])
   })
 })

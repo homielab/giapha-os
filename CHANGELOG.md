@@ -27,17 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Kinship terms through marriage: no more double spaces ("Em vợ (họ)"), and a younger sibling's husband or wife is "Em rể" / "Em dâu" instead of "Em rể (họ)" / "Em dâu (họ)".
 - Restoring a backup no longer leaves the family tree half deleted when something fails: the delete and all inserts run in one database transaction (`restore_backup` function, migration `20261026000000_add_restore_backup.sql`), so on any error the current data stays as it was. Databases that have not run the migration yet keep the old restore and show a reminder to upgrade on `/dashboard/upgrade`.
 - Restoring a backup larger than 1 MB (a few thousand members) is no longer rejected by the server: server actions accept up to 25 MB, the limit of the restore file picker.
+- GEDCOM export puts each child in the family of its own two parents: a child of a man's second wife is no longer also linked to his first wife, and a child linked only to the father no longer becomes a child of his wife after re-import. A parent with gender "other" and no spouse keeps the link to the children.
+- GEDCOM keeps adopted children adopted (`PEDI ADOPTED`) on export and import.
+- GEDCOM export writes the first word of a Vietnamese name as the surname (`/Nguyễn/ Văn An`, with `SURN` and `GIVN`); import reads `SURN`/`GIVN` when present, and files from earlier versions still import as before.
 
 ### Known issues
 
 - Lunar death dates saved before this change were computed with the Chinese calendar and are not recomputed; in the years where the calendars differ they can be a day or a month off. Clearing and re-entering the lunar date of a member fixes it.
-- GEDCOM export/import loses or changes some relationships:
-  - a child of a man's second wife is also linked to his first wife;
-  - a child linked only to the father becomes a child of his wife (e.g. a stepmother) after re-import;
-  - a parent with gender "other" and no spouse loses the link to the children;
-  - adopted children come back as biological children.
-- GEDCOM export drops the day of a birth or death date that has a day and a year but no month.
-- GEDCOM export marks the last word of a Vietnamese name as the surname (`Nguyễn Văn /An/`).
+- GEDCOM has no date with a day but no month, or without a year: export keeps only the year, or leaves such a date out. Lunar death dates, in-law flags, birth order, generation and other names are not exported to GEDCOM.
 
 ## [2.4.0] - 2026-10-18
 

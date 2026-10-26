@@ -52,62 +52,94 @@ export function exportToGedcom(data: {
   const getIndiXref = (id: string | undefined) =>
     id ? `@${exportIdMap.get(id) || id.replace(/-/g, '')}@` : ''
 
-  // Helper formatting Date
-  const formatNum = (n: number | null) =>
-    n && n > 0 ? String(n).padStart(2, '0') : ''
-
   // Pre-process Families
   let familyCounter = 1
-  const marriages = data.relationships.filter((r) => r.type === 'marriage')
-  const childrenRels = data.relationships.filter(
-    (r) => r.type === 'biological_child' || r.type === 'adopted_child'
-  )
-
-  const families: {
+  type ExportFamily = {
     id: string
     husb?: string
     wife?: string
     children: string[]
-  }[] = []
-
-  for (const marriage of marriages) {
-    if (!marriage.person_a || !marriage.person_b) continue
-    const pA = personMap.get(marriage.person_a)
-    const pB = personMap.get(marriage.person_b)
-    if (!pA || !pB || !pA.id || !pB.id) continue
-
-    const fam = {
-      id: `F${familyCounter++}`,
-      husb: pA.gender === 'male' ? pA.id : pB.gender === 'male' ? pB.id : pA.id,
-      wife:
-        pA.gender === 'female' ? pA.id : pB.gender === 'female' ? pB.id : pB.id,
-      children: [] as string[]
-    }
-    families.push(fam)
   }
-
-  // Assign children to families
-  for (const childRel of childrenRels) {
-    const parentId = childRel.person_a
-    const childId = childRel.person_b
-    if (!parentId || !childId) continue
-
-    let fam = families.find((f) => f.husb === parentId || f.wife === parentId)
-
+  const families: ExportFamily[] = []
+  // GEDCOM has no "spouse" role without a sex: a man (or a person of another
+  // gender) goes in HUSB, a woman in WIFE, so no parent link gets lost.
+  const singleParentFamilies = new Map<string, ExportFamily>()
+  const singleParentFamily = (parentId: string) => {
+    let fam = singleParentFamilies.get(parentId)
     if (!fam) {
-      const pP = personMap.get(parentId)
-      if (!pP) continue
+      const female = personMap.get(parentId)?.gender === 'female'
       fam = {
         id: `F${familyCounter++}`,
-        husb: pP.gender === 'male' ? parentId : undefined,
-        wife: pP.gender === 'female' ? parentId : undefined,
+        husb: female ? undefined : parentId,
+        wife: female ? parentId : undefined,
         children: []
       }
+      singleParentFamilies.set(parentId, fam)
       families.push(fam)
     }
+    return fam
+  }
 
-    if (!fam.children.includes(childId)) {
-      fam.children.push(childId)
+  const marriageFamilies: ExportFamily[] = []
+  for (const marriage of data.relationships) {
+    if (marriage.type !== 'marriage') continue
+    const pA = personMap.get(marriage.person_a ?? '')
+    const pB = personMap.get(marriage.person_b ?? '')
+    if (!pA?.id || !pB?.id || pA.id === pB.id) continue
+    const aIsWife = pA.gender === 'female' && pB.gender !== 'female'
+    const bIsHusb = pB.gender === 'male' && pA.gender !== 'male'
+    const swap = aIsWife || bIsHusb
+    const fam: ExportFamily = {
+      id: `F${familyCounter++}`,
+      husb: swap ? pB.id : pA.id,
+      wife: swap ? pA.id : pB.id,
+      children: []
+    }
+    families.push(fam)
+    marriageFamilies.push(fam)
+  }
+
+  // Parents of each child, by relationship type, in relationship order.
+  const parentsOf = new Map<
+    string,
+    { biological: string[]; adopted: string[] }
+  >()
+  for (const rel of data.relationships) {
+    if (rel.type !== 'biological_child' && rel.type !== 'adopted_child')
+      continue
+    const parentId = rel.person_a
+    const childId = rel.person_b
+    if (!parentId || !childId || parentId === childId) continue
+    if (!personMap.has(parentId) || !personMap.has(childId)) continue
+    const entry = parentsOf.get(childId) ?? { biological: [], adopted: [] }
+    const list = rel.type === 'adopted_child' ? entry.adopted : entry.biological
+    if (!list.includes(parentId)) list.push(parentId)
+    parentsOf.set(childId, entry)
+  }
+
+  // Put each child in the family of its actual parents: a marriage of two of
+  // its parents, otherwise one single-parent family per remaining parent.
+  // Adopted links go in their own families, marked PEDI ADOPTED.
+  const adoptedLinks = new Set<string>() // `${childId} ${famId}`
+  const addChild = (fam: ExportFamily, childId: string, adopted: boolean) => {
+    if (!fam.children.includes(childId)) fam.children.push(childId)
+    if (adopted) adoptedLinks.add(`${childId} ${fam.id}`)
+  }
+  for (const [childId, entry] of parentsOf) {
+    for (const adopted of [false, true]) {
+      const remaining = [...(adopted ? entry.adopted : entry.biological)]
+      for (const fam of marriageFamilies) {
+        if (remaining.length < 2) break
+        const h = remaining.indexOf(fam.husb!)
+        const w = remaining.indexOf(fam.wife!)
+        if (h === -1 || w === -1) continue
+        addChild(fam, childId, adopted)
+        remaining.splice(Math.max(h, w), 1)
+        remaining.splice(Math.min(h, w), 1)
+      }
+      for (const parentId of remaining) {
+        addChild(singleParentFamily(parentId), childId, adopted)
+      }
     }
   }
 
@@ -138,15 +170,8 @@ export function exportToGedcom(data: {
     if (!person.id) continue
     gedcom += `0 ${getIndiXref(person.id)} INDI\n`
 
-    // Name
-    if (person.full_name) {
-      const parts = person.full_name.trim().split(' ')
-      const lastName = parts.length > 1 ? parts.pop() : ''
-      const firstName = parts.join(' ')
-      gedcom += `1 NAME ${firstName} /${lastName}/\n`
-    } else {
-      gedcom += `1 NAME Unknown /Unknown/\n`
-    }
+    // Name: Vietnamese names start with the surname (họ)
+    gedcom += formatName(person.full_name)
 
     // Sex
     if (person.gender === 'male') gedcom += '1 SEX M\n'
@@ -156,33 +181,30 @@ export function exportToGedcom(data: {
     // Birth
     if (person.birth_year || person.birth_month || person.birth_day) {
       gedcom += '1 BIRT\n'
-      const day = formatNum(person.birth_day ?? null)
-      const mont = getMonthName(person.birth_month ?? null)
-      const yea = person.birth_year ? String(person.birth_year) : ''
-      const dateParts = [day, mont, yea].filter(Boolean)
-      if (dateParts.length > 0) {
-        gedcom += `2 DATE ${dateParts.join(' ')}\n`
-      }
+      gedcom += formatDate(
+        person.birth_day,
+        person.birth_month,
+        person.birth_year
+      )
     }
 
     // Death
     if (person.is_deceased) {
       gedcom += '1 DEAT Y\n'
-      if (person.death_year || person.death_month || person.death_day) {
-        const day = formatNum(person.death_day ?? null)
-        const mont = getMonthName(person.death_month ?? null)
-        const yea = person.death_year ? String(person.death_year) : ''
-        const dateParts = [day, mont, yea].filter(Boolean)
-        if (dateParts.length > 0) {
-          gedcom += `2 DATE ${dateParts.join(' ')}\n`
-        }
-      }
+      gedcom += formatDate(
+        person.death_day,
+        person.death_month,
+        person.death_year
+      )
     }
 
     // Family Links
     const famcs = personFamc.get(person.id) || []
     for (const famId of famcs) {
       gedcom += `1 FAMC @${famId}@\n`
+      if (adoptedLinks.has(`${person.id} ${famId}`)) {
+        gedcom += '2 PEDI ADOPTED\n'
+      }
     }
     const famss = personFams.get(person.id) || []
     for (const famId of famss) {
@@ -210,6 +232,31 @@ export function exportToGedcom(data: {
 
   gedcom += '0 TRLR\n'
   return gedcom
+}
+
+function formatName(fullName: string | null | undefined): string {
+  const parts = (fullName ?? '').trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '1 NAME Unknown /Unknown/\n'
+  if (parts.length === 1) return `1 NAME ${parts[0]}\n2 GIVN ${parts[0]}\n`
+  const [surname, ...rest] = parts
+  const given = rest.join(' ')
+  return `1 NAME /${surname}/ ${given}\n2 GIVN ${given}\n2 SURN ${surname}\n`
+}
+
+/**
+ * A GEDCOM date is `[[DD] MON] YYYY`: a day needs a month and every date
+ * needs a year, so a day without a month (or a date without a year) is left
+ * out instead of being written as an invalid or misread date.
+ */
+function formatDate(
+  day: number | null | undefined,
+  month: number | null | undefined,
+  year: number | null | undefined
+): string {
+  if (!year || year <= 0) return ''
+  const mon = getMonthName(month ?? null)
+  const dd = mon && day && day > 0 ? String(day).padStart(2, '0') : ''
+  return `2 DATE ${[dd, mon, String(year)].filter(Boolean).join(' ')}\n`
 }
 
 function getMonthName(month: number | null): string {
@@ -250,6 +297,26 @@ function parseMonthName(name: string): number | null {
   return index !== -1 ? index + 1 : null
 }
 
+/**
+ * Full name from a GEDCOM NAME: SURN/GIVN when present, in the order the NAME
+ * writes them (surname first for `/Nguyễn/ Văn An`), otherwise the NAME
+ * without its slashes (`Văn /An/` → `Văn An`, as older exports wrote it).
+ */
+function readName(
+  nameValue: string | null,
+  surname: string | null,
+  givenName: string | null
+): string {
+  const clean = (s: string) => s.replace(/\//g, ' ').replace(/\s+/g, ' ').trim()
+  const value = nameValue?.trim() ?? ''
+  if (surname || givenName) {
+    const surnameFirst = value === '' || value.startsWith('/')
+    const parts = surnameFirst ? [surname, givenName] : [givenName, surname]
+    return clean(parts.filter(Boolean).join(' '))
+  }
+  return clean(value) || 'Unknown'
+}
+
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0,
@@ -267,6 +334,8 @@ export function parseGedcom(gedcom: string): {
   const persons: GedcomPerson[] = []
   const relationships: GedcomRelationship[] = []
   const idMap = new Map<string, string>()
+  // `${indiXref} ${famXref}` of FAMC links marked PEDI ADOPTED
+  const adoptedLinks = new Set<string>()
 
   type ParseRecord = {
     type: 'INDI' | 'FAM'
@@ -301,7 +370,10 @@ export function parseGedcom(gedcom: string): {
     const uuid = generateUUID()
     idMap.set(record.id, uuid)
 
-    let fullName = 'Unknown'
+    let nameValue: string | null = null
+    let surname: string | null = null
+    let givenName: string | null = null
+    let famc = ''
     let gender: 'male' | 'female' | 'other' = 'other'
     let is_deceased = false
     let birth_day = null
@@ -326,7 +398,11 @@ export function parseGedcom(gedcom: string): {
       if (level === 1) {
         currentTag = tag
         if (tag === 'NAME') {
-          fullName = val.replace(/\//g, '').trim()
+          // Only the first (primary) name is kept.
+          if (nameValue !== null) currentTag = 'NAME_OTHER'
+          else nameValue = val
+        } else if (tag === 'FAMC') {
+          famc = val.match(/^@([^@]+)@/)?.[1] ?? ''
         } else if (tag === 'SEX') {
           if (val === 'M') gender = 'male'
           else if (val === 'F') gender = 'female'
@@ -336,7 +412,15 @@ export function parseGedcom(gedcom: string): {
           note = val
         }
       } else if (level === 2) {
-        if (currentTag === 'NOTE' && tag === 'CONT') {
+        if (currentTag === 'NAME' && tag === 'SURN') {
+          surname = val.trim() || null
+        } else if (currentTag === 'NAME' && tag === 'GIVN') {
+          givenName = val.trim() || null
+        } else if (currentTag === 'FAMC' && tag === 'PEDI') {
+          if (famc && val.trim().toUpperCase() === 'ADOPTED') {
+            adoptedLinks.add(`${record.id} ${famc}`)
+          }
+        } else if (currentTag === 'NOTE' && tag === 'CONT') {
           note += '\n' + val
         } else if (currentTag === 'BIRT' && tag === 'DATE') {
           const cleanVal = val.replace(/^(ABT|EST|AFT|BEF|CAL)\s+/i, '')
@@ -371,7 +455,7 @@ export function parseGedcom(gedcom: string): {
 
     persons.push({
       id: uuid,
-      full_name: fullName,
+      full_name: readName(nameValue, surname, givenName),
       gender,
       is_deceased,
       birth_day: Number.isNaN(birth_day) ? null : birth_day,
@@ -392,7 +476,7 @@ export function parseGedcom(gedcom: string): {
   for (const record of records.filter((r) => r.type === 'FAM')) {
     let husb = null
     let wife = null
-    const children: string[] = []
+    const children: { uuid: string; xref: string }[] = []
 
     for (const line of record.lines) {
       const match = line.match(/^1\s+(HUSB|WIFE|CHIL)\s+@([^@]+)@/)
@@ -404,7 +488,7 @@ export function parseGedcom(gedcom: string): {
 
         if (tag === 'HUSB') husb = uuid
         else if (tag === 'WIFE') wife = uuid
-        else if (tag === 'CHIL') children.push(uuid)
+        else if (tag === 'CHIL') children.push({ uuid, xref: refId })
       }
     }
 
@@ -416,21 +500,15 @@ export function parseGedcom(gedcom: string): {
       })
     }
 
-    // Assigning children to both parents
-    for (const childId of children) {
-      if (husb && husb !== childId) {
-        relationships.push({
-          type: 'biological_child',
-          person_a: husb,
-          person_b: childId
-        })
-      }
-      if (wife && wife !== childId) {
-        relationships.push({
-          type: 'biological_child',
-          person_a: wife,
-          person_b: childId
-        })
+    // Link each child to the parents this family actually has
+    for (const { uuid: childId, xref } of children) {
+      const type = adoptedLinks.has(`${xref} ${record.id}`)
+        ? 'adopted_child'
+        : 'biological_child'
+      for (const parent of [husb, wife]) {
+        if (parent && parent !== childId) {
+          relationships.push({ type, person_a: parent, person_b: childId })
+        }
       }
     }
   }
