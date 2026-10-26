@@ -1,4 +1,5 @@
 import { Gender } from '@/types'
+import { vnToday } from '@/utils/dateHelpers'
 import {
   lunarToSolar as convertLunarToSolar,
   solarToLunar as convertSolarToLunar,
@@ -64,6 +65,8 @@ export type MemberValidationError =
   | 'invalidLunarDate'
   | 'invalidDeathDate'
   | 'deathBeforeBirth'
+  | 'birthInFuture'
+  | 'deathInFuture'
   | null
 
 // Full submit-time validation for the member form. Returns a translation key
@@ -74,7 +77,8 @@ export function validateMemberForm(
   birthYear: number | '',
   isDeceased: boolean,
   deathValues: DeathDateValues,
-  fullName?: string
+  fullName?: string,
+  today: Date = vnToday()
 ): MemberValidationError {
   // Only checked when given: a name of spaces passes the input's `required`.
   if (fullName !== undefined && fullName.trim() === '')
@@ -87,6 +91,22 @@ export function validateMemberForm(
     !isValidDate(deathValues.day, deathValues.month, deathValues.year)
   )
     return 'invalidDeathDate'
+
+  // Typos such as 2062 for 1962. A date missing its month or day is only
+  // compared as far as it is known. Death dates are already solar here: a
+  // lunar-only date was converted by normalizeDeathDates.
+  const now = {
+    day: today.getDate(),
+    month: today.getMonth() + 1,
+    year: today.getFullYear()
+  }
+  const birth = { day: birthDay, month: birthMonth, year: birthYear }
+  const afterToday = (d: typeof birth) => {
+    const order = comparePartialDates(d, now)
+    return order != null && order > 0
+  }
+  if (afterToday(birth)) return 'birthInFuture'
+  if (isDeceased && afterToday(deathValues)) return 'deathInFuture'
 
   if (isDeceased) {
     const order = comparePartialDates(deathValues, {

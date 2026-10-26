@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Member form: a birth or death date after today (for example 2062 typed instead of 1962) is refused with a message. A date with only the year or month is compared as far as it is known; CSV and GEDCOM imports are not affected.
 - Member dialog: focus moves into it when it opens, it is announced with the member's name, and closing it returns focus to the button that opened it. Escape still closes the detail view but not a form being edited.
 - Kinship page: an uncle or aunt 11 or more generations up is now titled "Tổ đời 10 Chú" instead of "undefined Chú".
 - CSV export: cells that start with `=`, `+`, `-` or `@` (a name, note or phone number such as `+84…`) are written with a leading apostrophe so Excel and LibreOffice no longer run them as formulas; importing the CSV removes that apostrophe again, so values come back unchanged.

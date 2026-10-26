@@ -75,6 +75,38 @@ describe('validateMemberForm', () => {
   })
 })
 
+describe('validateMemberForm future dates', () => {
+  const today = new Date(2026, 9, 27)
+  const check = (
+    b: [number | '', number | '', number | ''],
+    deceased: boolean,
+    d: ReturnType<typeof death>
+  ) => validateMemberForm(b[0], b[1], b[2], deceased, d, undefined, today)
+
+  test('rejects a birth after today', () => {
+    expect(check(['', '', 2062], false, emptyDeath)).toBe('birthInFuture')
+    expect(check([28, 10, 2026], false, emptyDeath)).toBe('birthInFuture')
+    expect(check(['', 11, 2026], false, emptyDeath)).toBe('birthInFuture')
+  })
+
+  test('rejects a death after today', () => {
+    expect(check([1, 1, 1962], true, death('', '', 2062))).toBe('deathInFuture')
+    expect(check([1, 1, 1962], true, death(28, 10, 2026))).toBe('deathInFuture')
+  })
+
+  test('accepts today and dates known only up to the year or month', () => {
+    expect(check([27, 10, 2026], false, emptyDeath)).toBeNull()
+    expect(check(['', '', 2026], false, emptyDeath)).toBeNull()
+    expect(check(['', 10, 2026], false, emptyDeath)).toBeNull()
+    expect(check([1, 1, 2025], true, death(27, 10, 2026))).toBeNull()
+    expect(check([1, 1, 1962], true, death('', 10, 2026))).toBeNull()
+  })
+
+  test('ignores a death date when the person is alive', () => {
+    expect(check([1, 1, 1962], false, death('', '', 2062))).toBeNull()
+  })
+})
+
 test('comparePartialDates returns null without both years', () => {
   expect(
     comparePartialDates(
