@@ -720,6 +720,9 @@ export const messages = {
     deleteImageError: 'Đã xảy ra lỗi khi xóa hình ảnh.',
     personNotUpdated:
       'Không lưu được: bạn không còn quyền sửa hồ sơ này hoặc phiên đã hết hạn. Hãy tải lại trang; dữ liệu bạn nhập vẫn còn trong form.',
+    personChanged:
+      'Người này vừa được người khác sửa nên thay đổi của bạn chưa được lưu (không ghi đè). Hãy tải lại để xem bản mới nhất rồi nhập lại.',
+    reloadPage: 'Tải lại',
     relationshipNotDeleted:
       'Không xoá được quan hệ: bạn không còn quyền hoặc quan hệ đã bị xoá. Hãy tải lại trang.',
     galleryItemNotUpdated:
@@ -1732,6 +1735,9 @@ export const messages = {
     deleteImageError: 'An error occurred while deleting the image.',
     personNotUpdated:
       'Not saved: you can no longer edit this profile, or your session expired. Reload the page; what you typed is still in the form.',
+    personChanged:
+      'Someone else just edited this person, so your changes were not saved (nothing was overwritten). Reload to see the latest version, then re-enter your changes.',
+    reloadPage: 'Reload',
     relationshipNotDeleted:
       'The relationship was not deleted: you no longer have permission, or it was already removed. Reload the page.',
     galleryItemNotUpdated:

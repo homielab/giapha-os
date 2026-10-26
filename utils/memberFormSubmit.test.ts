@@ -27,7 +27,8 @@ mock.module('@/app/actions/member', () => ({
 
 const { InvalidAvatarError, saveMember, submitMemberForm } =
   await import('./memberFormSubmit')
-const { PersonNotUpdatedError } = await import('./writeErrors')
+const { PersonChangedError, PersonNotUpdatedError } =
+  await import('./writeErrors')
 
 const initialData = {
   id: 'person-1',
@@ -194,6 +195,88 @@ describe('saveMember when RLS refuses the write', () => {
         })
       })
     ).rejects.toBeInstanceOf(PersonNotUpdatedError)
+  })
+})
+
+describe('saveMember when someone else edited the person meanwhile', () => {
+  const LOADED = '2026-10-26T10:00:00+00:00'
+  const stamped = { ...initialData, updated_at: LOADED } as Person
+
+  // The conditional update matches no row; `readBack` answers the re-read.
+  const respond =
+    (readBack: FakeResult) =>
+    (call: FakeCall): FakeResult => {
+      if (call.table !== 'persons') return ok(call)
+      if (call.op === 'update') {
+        const matches = call.filters.some(
+          ([, column, value]) => column === 'updated_at' && value === LOADED
+        )
+        return { data: matches ? [{ id: 'person-1', updated_at: 'new' }] : [] }
+      }
+      return readBack
+    }
+
+  test('updates only the row with the loaded updated_at', async () => {
+    const { options, calls } = saveOptions(
+      respond({ data: { id: 'person-1', updated_at: LOADED } })
+    )
+    const result = await saveMember({ ...options, initialData: stamped })
+    expect(result.personId).toBe('person-1')
+    const update = calls.find((c) => c.op === 'update')
+    expect(update?.filters).toContainEqual(['eq', 'updated_at', LOADED])
+    expect(update?.filters).toContainEqual(['eq', 'id', 'person-1'])
+  })
+
+  test('0 rows and a person that cannot be read is PersonNotUpdatedError', async () => {
+    const { options } = saveOptions(
+      respond({ data: null }) // never matches below
+    )
+    await expect(
+      saveMember({
+        ...options,
+        initialData: { ...stamped, updated_at: 'stale' } as Person
+      })
+    ).rejects.toBeInstanceOf(PersonNotUpdatedError)
+  })
+
+  test('0 rows and another updated_at is PersonChangedError, nothing else is written', async () => {
+    const { options, calls } = saveOptions(
+      respond({ data: { id: 'person-1', updated_at: 'someone-elses' } })
+    )
+    await expect(
+      saveMember({
+        ...options,
+        initialData: { ...stamped, updated_at: 'stale' } as Person
+      })
+    ).rejects.toBeInstanceOf(PersonChangedError)
+    expect(calls.filter((c) => c.op === 'update')).toHaveLength(1)
+    expect(updateDescendantGenerationsAction).not.toHaveBeenCalled()
+  })
+
+  test('0 rows on a row that still has the same updated_at is an RLS refusal', async () => {
+    const { options } = saveOptions((call) =>
+      call.table === 'persons' && call.op === 'update'
+        ? { data: [] }
+        : call.table === 'persons'
+          ? { data: { id: 'person-1', updated_at: LOADED } }
+          : ok(call)
+    )
+    await expect(
+      saveMember({ ...options, initialData: stamped })
+    ).rejects.toBeInstanceOf(PersonNotUpdatedError)
+  })
+
+  test('a failed re-read is thrown as is', async () => {
+    const { options } = saveOptions((call) =>
+      call.table === 'persons' && call.op === 'update'
+        ? { data: [] }
+        : call.table === 'persons'
+          ? { error: { message: 'network' } }
+          : ok(call)
+    )
+    await expect(
+      saveMember({ ...options, initialData: stamped })
+    ).rejects.toEqual({ message: 'network' })
   })
 })
 
@@ -436,6 +519,30 @@ describe('submitMemberForm', () => {
     expect(state.error).toBe('personNotUpdated')
     expect(state.pushed).toEqual([])
     expect(state.loading).toBe(false)
+  })
+
+  test('submitMemberForm shows the changed message and asks for a reload', async () => {
+    const { client } = fakeSupabase((call) =>
+      call.table === 'persons' && call.op === 'update'
+        ? { data: [] }
+        : call.table === 'persons'
+          ? { data: { id: 'person-1', updated_at: 'someone-elses' } }
+          : ok(call)
+    )
+    const { ctx, state } = submitContext()
+    const changed: boolean[] = []
+    await submitMemberForm({
+      ...ctx,
+      supabase: client,
+      initialData: {
+        ...initialData,
+        updated_at: '2026-10-26T10:00:00+00:00'
+      } as Person,
+      setChanged: (value) => changed.push(value)
+    })
+    expect(state.error).toBe('personChanged')
+    expect(changed).toEqual([false, true])
+    expect(state.pushed).toEqual([])
   })
 
   test('a file that is not an image shows the image type error', async () => {

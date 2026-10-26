@@ -55,6 +55,7 @@ export default function MemberForm({
   const { t } = useI18n()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [changed, setChanged] = useState(false)
   const [warning, setWarning] = useState<MemberSaveWarning | null>(null)
   // Set when a new member was inserted but a later step failed: the form then
   // edits that person, so saving again cannot create a duplicate.
@@ -176,6 +177,7 @@ export default function MemberForm({
       setError,
       setWarning,
       setConfirmation,
+      setChanged,
       onSuccess,
       onCreated: setCreatedPerson
     })
@@ -275,6 +277,7 @@ export default function MemberForm({
 
       <MemberFormFooter
         error={error}
+        onReload={changed ? () => window.location.reload() : undefined}
         warning={warning?.message ?? null}
         onContinue={() => {
           if (!warning) return

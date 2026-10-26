@@ -43,3 +43,15 @@ export class PersonNotCreatedError extends Error {
     this.name = 'PersonNotCreatedError'
   }
 }
+
+/**
+ * A person was changed by someone else since the form loaded it: the
+ * conditional update on `updated_at` matched no row although the person is
+ * still readable. Nothing was written.
+ */
+export class PersonChangedError extends Error {
+  constructor() {
+    super('Person changed by someone else')
+    this.name = 'PersonChangedError'
+  }
+}

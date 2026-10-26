@@ -9,6 +9,8 @@ import { useI18n } from '@/lib/i18n/useI18n'
 
 interface MemberFormFooterProps {
   error: string | null
+  /** Set when someone else changed the person: shows a reload button. */
+  onReload?: () => void
   /** "Saved, but…" message; the user continues with onContinue. */
   warning: string | null
   onContinue: () => void
@@ -24,6 +26,7 @@ interface MemberFormFooterProps {
 
 export default function MemberFormFooter({
   error,
+  onReload,
   warning,
   onContinue,
   confirmation,
@@ -48,7 +51,12 @@ export default function MemberFormFooter({
             exit={{ opacity: 0, scale: 0.95 }}
             className='flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-700'>
             <AlertCircle className='mt-0.5 size-5 shrink-0' />
-            <p>{error}</p>
+            <p className='min-w-0 flex-1'>{error}</p>
+            {onReload && (
+              <button type='button' onClick={onReload} className='btn'>
+                {t('reloadPage')}
+              </button>
+            )}
           </m.div>
         )}
         {confirmation && (

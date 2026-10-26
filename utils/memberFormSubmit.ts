@@ -21,7 +21,7 @@ import {
   type LinkedRelative,
   type ParentDeathFinding
 } from '@/utils/relationshipValidation'
-import { PersonNotUpdatedError } from '@/utils/writeErrors'
+import { PersonChangedError, PersonNotUpdatedError } from '@/utils/writeErrors'
 
 export interface SaveMemberOptions {
   supabase: SupabaseClient
@@ -75,6 +75,28 @@ export interface SaveMemberResult {
   createdPerson?: Person
 }
 
+/**
+ * An update that changed no row: read the person back to tell RLS (not
+ * readable, or readable with the same `updated_at`) from a concurrent edit
+ * (readable with another `updated_at`). Returns the error to throw.
+ */
+async function explainRefusedUpdate(
+  supabase: SupabaseClient,
+  personId: string,
+  expectedUpdatedAt: string | undefined
+): Promise<Error> {
+  const { data, error } = await supabase
+    .from('persons')
+    .select('id, updated_at')
+    .eq('id', personId)
+    .maybeSingle()
+  if (error) return error as unknown as Error
+  if (!data || !expectedUpdatedAt || data.updated_at === expectedUpdatedAt) {
+    return new PersonNotUpdatedError()
+  }
+  return new PersonChangedError()
+}
+
 const errorMessage = (err: unknown) =>
   (err as { message?: string } | null)?.message || String(err)
 
@@ -126,6 +148,7 @@ export async function saveMember(
 
   let currentPersonId = initialData?.id
   let createdPerson: Person | undefined
+  let savedUpdatedAt: string | undefined
   const warnings: string[] = []
   // After the insert, a failing step is reported instead of thrown: throwing
   // would leave the form in "create" mode and a second save would add the
@@ -146,16 +169,30 @@ export async function saveMember(
     if (createError) throw createError
     currentPersonId = newPerson.id
     createdPerson = newPerson as Person
+    savedUpdatedAt = createdPerson.updated_at
   } else {
-    // Update existing member info first
+    // Update existing member info first. The update only matches while the
+    // row still has the `updated_at` the form was loaded with, so a change
+    // saved by someone else in the meantime is never overwritten.
     // RLS turns a refused update into "0 rows" without an error.
-    const { data: updated, error: updateError } = await supabase
+    let update = supabase
       .from('persons')
       .update(buildPersonData(fullFields, currentAvatarUrl || null))
       .eq('id', currentPersonId)
-      .select('id')
+    if (initialData?.updated_at) {
+      update = update.eq('updated_at', initialData.updated_at)
+    }
+    const { data: updated, error: updateError } =
+      await update.select('id, updated_at')
     if (updateError) throw updateError
-    if (!updated || updated.length === 0) throw new PersonNotUpdatedError()
+    if (!updated || updated.length === 0) {
+      throw await explainRefusedUpdate(
+        supabase,
+        currentPersonId,
+        initialData?.updated_at
+      )
+    }
+    savedUpdatedAt = updated[0].updated_at
   }
 
   // 2. Handle Avatar Upload if a new file is selected (now we have currentPersonId)
@@ -179,11 +216,12 @@ export async function saveMember(
         .from('persons')
         .update({ avatar_url: currentAvatarUrl })
         .eq('id', currentPersonId)
-        .select('id')
+        .select('id, updated_at')
       if (updateAvatarError) throw updateAvatarError
       if (!avatarRows || avatarRows.length === 0) {
         throw new PersonNotUpdatedError()
       }
+      savedUpdatedAt = avatarRows[0].updated_at
     } catch (err) {
       fail(err)
     }
@@ -258,7 +296,12 @@ export async function saveMember(
     personId: currentPersonId,
     generationUpdateError,
     warnings,
-    createdPerson
+    // The avatar update moves updated_at; keep the new row in step so that a
+    // second save is not mistaken for someone else's change.
+    createdPerson: createdPerson && {
+      ...createdPerson,
+      updated_at: savedUpdatedAt ?? createdPerson.updated_at
+    }
   }
 }
 
@@ -431,6 +474,11 @@ export interface MemberFormSubmitContext {
   /** The user accepted the confirmation: skip the checks that ask. */
   confirmed?: boolean
   onSuccess?: (personId: string) => void
+  /**
+   * The person was changed by someone else since the form loaded: the form
+   * offers a reload (nothing was saved).
+   */
+  setChanged?: (value: boolean) => void
   /** A new member was inserted but a later step failed: switch to edit mode. */
   onCreated?: (person: Person) => void
 }
@@ -444,6 +492,7 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
   setError(null)
   setWarning(null)
   setConfirmation(null)
+  ctx.setChanged?.(false)
 
   const normalized = normalizeDeathDates(
     ctx.isDeceased,
@@ -599,12 +648,15 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
     finishMemberSave(ctx, currentPersonId)
   } catch (err) {
     console.error('Error saving member:', err)
+    if (err instanceof PersonChangedError) ctx.setChanged?.(true)
     setError(
       err instanceof InvalidAvatarError
         ? t('invalidImageType')
-        : err instanceof PersonNotUpdatedError
-          ? t('personNotUpdated')
-          : (err as Error).message || t('saveMemberError')
+        : err instanceof PersonChangedError
+          ? t('personChanged')
+          : err instanceof PersonNotUpdatedError
+            ? t('personNotUpdated')
+            : (err as Error).message || t('saveMemberError')
     )
   } finally {
     setLoading(false)
