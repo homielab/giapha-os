@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import JSZip from 'jszip'
 
 import { exportToCsvZip, parseCsvZip } from './csv'
+import { CsvZipInvalidError } from './csvErrors'
 
 const persons = [
   {
@@ -78,6 +79,13 @@ describe('exportToCsvZip', () => {
 })
 
 describe('parseCsvZip', () => {
+  test('a ZIP without the CSV files throws CsvZipInvalidError', async () => {
+    const zip = new JSZip()
+    zip.file('other.txt', 'x')
+    const blob = new Blob([await zip.generateAsync({ type: 'arraybuffer' })])
+    await expect(parseCsvZip(blob)).rejects.toBeInstanceOf(CsvZipInvalidError)
+  })
+
   test('round-trips persons and relationships', async () => {
     const result = await parseCsvZip(
       await exportToCsvZip({ persons, relationships })

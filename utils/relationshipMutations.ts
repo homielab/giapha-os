@@ -30,7 +30,9 @@ export interface NewRelationshipInput {
 export interface AddRelationshipResult {
   // Set when the relationship was saved but filling in the target's
   // generation / in-law flag failed; the caller shows it as a warning.
-  targetUpdateError: string | null
+  // A PersonNotUpdatedError means no row changed (the person is gone or the
+  // user may not edit it); the caller words it in the user's language.
+  targetUpdateError: string | PersonNotUpdatedError | null
 }
 
 function errorMessage(err: unknown): string {
@@ -182,7 +184,7 @@ async function autoUpdateTargetProperties(
   selectedTargetId: string,
   direction: 'parent' | 'child' | 'spouse',
   person: Person
-): Promise<string | null> {
+): Promise<string | PersonNotUpdatedError | null> {
   try {
     const { data: targetPerson, error: selectError } = await supabase
       .from('persons')
@@ -219,7 +221,7 @@ async function autoUpdateTargetProperties(
           .select('id')
         if (updateError) return errorMessage(updateError)
         if (!updated || updated.length === 0) {
-          return new PersonNotUpdatedError().message
+          return new PersonNotUpdatedError()
         }
       }
     }

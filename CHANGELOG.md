@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- English interface: the relationship (kinship) page no longer shows Vietnamese sentences (relation type, common ancestor, path steps; the kinship terms such as Bác or Chú stay Vietnamese), and a not-updated person or an invalid CSV ZIP now shows its error in the chosen language. A failed log out now shows an error and stays on the page instead of going to the login page.
 - Editing a member no longer wipes their private details (phone, occupation, residence) when those could not be read, for example after a network error: the fields are locked with a message and saving leaves them untouched. A database error on a member or edit page now shows the error page instead of "not found"; only a missing member is a 404.
 - Deleting a member now also removes their profile photo from storage, after the member is deleted (a failed file removal is only logged), so photos are no longer left behind forever.
 - Saving a member, changing or deleting a relationship, deleting a member and editing a gallery photo no longer say "saved" when the database refused the change (for example after your role was lowered or your session expired). You now see a clear message to reload the page, and the form keeps what you typed.

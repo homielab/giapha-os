@@ -12,26 +12,38 @@ export default function LogoutButton() {
   const supabase = createClient()
   const { t } = useI18n()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleLogout = async () => {
     setIsLoggingOut(true)
+    setError(null)
     try {
-      await supabase.auth.signOut()
+      // signOut reports failure in `error` instead of throwing
+      const { error: signOutError } = await supabase.auth.signOut()
+      if (signOutError) throw signOutError
       router.push('/login')
       router.refresh() // Refresh to clear any cached Server Component data
-    } catch (error) {
-      console.error('Lỗi đăng xuất:', error)
+    } catch (err) {
+      console.error('Sign out failed:', err)
+      setError(t('logoutFailed'))
       setIsLoggingOut(false)
     }
   }
 
   return (
-    <button
-      onClick={handleLogout}
-      disabled={isLoggingOut}
-      className='flex w-full items-center gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-rose-50 hover:text-rose-700'>
-      <LogOut className='size-4' />
-      {isLoggingOut ? t('processing') : t('logout')}
-    </button>
+    <>
+      <button
+        onClick={handleLogout}
+        disabled={isLoggingOut}
+        className='flex w-full items-center gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-rose-50 hover:text-rose-700'>
+        <LogOut className='size-4' />
+        {isLoggingOut ? t('processing') : t('logout')}
+      </button>
+      {error && (
+        <p role='alert' className='px-4 pb-2 text-xs text-rose-600'>
+          {error}
+        </p>
+      )}
+    </>
   )
 }

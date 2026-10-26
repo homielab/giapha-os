@@ -19,6 +19,7 @@ import {
 import { searchPersons } from '@/utils/search'
 import { createClient } from '@/utils/supabase/client'
 import { fetchAllRows } from '@/utils/supabase/fetchAll'
+import { PersonNotUpdatedError } from '@/utils/writeErrors'
 
 interface AddRelationshipSectionProps {
   person: Person
@@ -134,7 +135,10 @@ export default function AddRelationshipSection({
       onSaved(
         targetUpdateError
           ? t('relationshipSavedTargetNotUpdated', {
-              error: targetUpdateError
+              error:
+                targetUpdateError instanceof PersonNotUpdatedError
+                  ? t('personNotUpdatedShort')
+                  : targetUpdateError
             })
           : undefined
       )

@@ -5,15 +5,20 @@ import { GitMerge, Sparkles, Users } from 'lucide-react'
 
 import { PersonNode } from '@/components/kinship/kinshipTypes'
 import { useI18n } from '@/lib/i18n/useI18n'
+import type {
+  KinshipDescription,
+  KinshipPathStep
+} from '@/utils/kinshipHelpers'
+import { describeKinship, describePathStep } from '@/utils/kinshipText'
 
 interface KinshipResultProps {
   personA: PersonNode
   personB: PersonNode
   result: {
-    description: string
+    description: KinshipDescription
     aCallsB: string
     bCallsA: string
-    pathLabels: string[]
+    pathLabels: KinshipPathStep[]
     hasAmbiguousTerm: boolean
   } | null
 }
@@ -24,6 +29,7 @@ export default function KinshipResult({
   result
 }: KinshipResultProps) {
   const { t } = useI18n()
+  const unknown = result?.description.kind === 'none'
   return (
     <AnimatePresence mode='wait'>
       {result === null ? (
@@ -41,7 +47,9 @@ export default function KinshipResult({
           {/* Description badge */}
           <div className='flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4'>
             <Sparkles className='size-5 shrink-0 text-amber-500' />
-            <p className='font-medium text-amber-800'>{result.description}</p>
+            <p className='font-medium text-amber-800'>
+              {describeKinship(result.description, t)}
+            </p>
           </div>
 
           {/* Main kinship cards */}
@@ -58,7 +66,7 @@ export default function KinshipResult({
                 })}
               </p>
               <p className='font-serif text-sm font-medium text-amber-600'>
-                {result.aCallsB}
+                {unknown ? t('kinshipUnknownTerm') : result.aCallsB}
               </p>
             </m.div>
 
@@ -74,7 +82,7 @@ export default function KinshipResult({
                 })}
               </p>
               <p className='font-serif text-sm font-medium text-amber-600'>
-                {result.bCallsA}
+                {unknown ? t('kinshipUnknownTerm') : result.bCallsA}
               </p>
             </m.div>
           </div>
@@ -93,15 +101,17 @@ export default function KinshipResult({
                 </p>
               </div>
               <div className='space-y-4'>
-                {result.pathLabels.map((label, i) => (
-                  <div key={label} className='flex items-start gap-4'>
+                {result.pathLabels.map((step, i) => (
+                  <div
+                    key={describePathStep(step, t)}
+                    className='flex items-start gap-4'>
                     <div className='mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-white'>
                       <span className='text-sm font-medium text-stone-400'>
                         {i + 1}
                       </span>
                     </div>
                     <p className='pt-1 text-sm leading-relaxed text-stone-600'>
-                      {label}
+                      {describePathStep(step, t)}
                     </p>
                   </div>
                 ))}

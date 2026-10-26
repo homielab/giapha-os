@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test'
 
-import { computeKinship, isAmbiguousTerm, PersonNode } from './kinshipHelpers'
+import {
+  computeKinship,
+  isAmbiguousTerm,
+  PersonNode,
+  UNKNOWN_TERM
+} from './kinshipHelpers'
 
 type Edge = { type: string; person_a: string; person_b: string }
 
@@ -130,7 +135,7 @@ describe('computeKinship', () => {
     const r = kin('anh', 'emGai')!
     expect(r.aCallsB).toBe('Em gái')
     expect(r.bCallsA).toBe('Anh trai')
-    expect(r.description).toContain('Anh chị em ruột')
+    expect(r.description.kind).toBe('siblings')
   })
 
   test("father's older brother is Bác, younger sister is Cô", () => {
@@ -142,18 +147,24 @@ describe('computeKinship', () => {
   test("mother's brother is Cậu", () => {
     const r = kin('anh', 'cau')!
     expect(r.aCallsB).toBe('Cậu')
-    expect(r.description).toContain('Bên Ngoại')
+    expect(r.description).toMatchObject({
+      kind: 'upperBranch',
+      side: 'maternal'
+    })
   })
 
   test('paternal cousins: anh họ / em họ by branch seniority', () => {
     const r = kin('anh', 'anhHo')!
     expect(r.aCallsB).toBe('Anh họ')
     expect(r.bCallsA).toBe('Em họ')
-    expect(r.description).toContain('Anh em họ Nội')
+    expect(r.description).toMatchObject({ kind: 'cousins', side: 'paternal' })
   })
 
   test('maternal cousin is on the Ngoại side', () => {
-    expect(kin('anh', 'conCau')!.description).toContain('Anh em họ Ngoại')
+    expect(kin('anh', 'conCau')!.description).toMatchObject({
+      kind: 'cousins',
+      side: 'maternal'
+    })
   })
 
   test('grandchild through a daughter calls grandfather ông ngoại', () => {
@@ -223,7 +234,8 @@ describe('computeKinship', () => {
 
   test('unrelated people are Chưa xác định', () => {
     const r = kin('anh', 'nguoiLa')!
-    expect(r.aCallsB).toBe('Chưa xác định')
+    expect(r.aCallsB).toBe(UNKNOWN_TERM)
+    expect(r.description).toEqual({ kind: 'none' })
     expect(r.distance).toBe(-1)
   })
 

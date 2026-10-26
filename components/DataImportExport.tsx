@@ -21,6 +21,7 @@ import {
   summarizeBackup,
   type BackupSummary
 } from '@/utils/backupSummary'
+import { CsvZipInvalidError } from '@/utils/csvErrors'
 
 import PersonSelector from './PersonSelector'
 
@@ -152,9 +153,11 @@ export default function DataImportExport() {
       fail(
         error instanceof BackupParseError
           ? t('restoreFileUnreadable')
-          : error instanceof Error && error.message
-            ? error.message
-            : t('restoreFailed')
+          : error instanceof CsvZipInvalidError
+            ? t('csvZipInvalid')
+            : error instanceof Error && error.message
+              ? error.message
+              : t('restoreFailed')
       )
     } finally {
       setIsReadingFile(false)

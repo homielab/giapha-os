@@ -12,7 +12,10 @@ import {
   FakeResult,
   fakeSupabase
 } from '@/utils/testing/fakeSupabase'
-import { RelationshipNotDeletedError } from '@/utils/writeErrors'
+import {
+  PersonNotUpdatedError,
+  RelationshipNotDeletedError
+} from '@/utils/writeErrors'
 
 const denied = { message: 'permission denied for table relationships' }
 
@@ -182,7 +185,9 @@ describe('addRelationshipWithTargetSync', () => {
       respond((call) => (call.op === 'update' ? { data: [] } : undefined))
     )
     const result = await addRelationshipWithTargetSync(client, input)
-    expect(result).toEqual({ targetUpdateError: 'Person not updated' })
+    expect(result).toEqual({
+      targetUpdateError: new PersonNotUpdatedError()
+    })
   })
 
   test('a failed target read is returned as well', async () => {

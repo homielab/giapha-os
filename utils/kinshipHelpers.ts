@@ -1,14 +1,49 @@
+/** Placeholder term when no relation is found; the UI shows its own text. */
+export const UNKNOWN_TERM = ''
+
+export type KinshipSide = 'paternal' | 'maternal'
+
+/** What kind of relation was found; the UI turns it into a sentence. */
+export type KinshipDescription = (
+  | { kind: 'direct' }
+  | { kind: 'siblings' }
+  | { kind: 'upperBranch'; side: KinshipSide }
+  | { kind: 'cousins'; side: KinshipSide }
+  | { kind: 'relatives'; side: KinshipSide }
+  | { kind: 'relativesGeneric' }
+  | { kind: 'marriage' }
+  | { kind: 'viaSpouse'; name: string }
+  | { kind: 'viaBothSpouses'; nameA: string; nameB: string }
+  | { kind: 'none' }
+) & { commonAncestor?: string | null }
+
+/** One step of the relation path, as data. */
+export type KinshipPathStep =
+  | {
+      kind: 'generations'
+      name: string
+      ancestor: string | null
+      depth: number
+    }
+  | { kind: 'spouses'; nameA: string; nameB: string }
+  | {
+      kind: 'spouseOf'
+      name: string
+      spouse: string
+      spouseRole: 'husband' | 'wife'
+    }
+
 export interface KinshipTerms {
   /** Person A gọi Person B là gì */
   aCallsB: string
   /** Person B gọi Person A là gì */
   bCallsA: string
-  /** Mô tả chi tiết nhánh quan hệ */
-  description: string
+  /** Mô tả chi tiết nhánh quan hệ (mã + tham số, UI dịch) */
+  description: KinshipDescription
   /** Số bậc cách nhau */
   distance: number
   /** Các bước quan hệ chi tiết */
-  pathLabels: string[]
+  pathLabels: KinshipPathStep[]
 }
 
 export interface KinshipResult extends KinshipTerms {
@@ -129,7 +164,7 @@ function resolveBloodTerms(
   personB: PersonNode,
   pathA: PersonNode[], // Từ A lên tới LCA (không bao gồm LCA)
   pathB: PersonNode[] // Từ B lên tới LCA (không bao gồm LCA)
-): [string, string, string] {
+): [string, string, KinshipDescription] {
   const genderA = personA.gender
   const genderB = personB.gender
 
@@ -138,32 +173,33 @@ function resolveBloodTerms(
     // A chính là LCA. B là con cháu của A.
     // Xác định vế Nội/Ngoại của B đối với A: Dựa vào người con đầu tiên của A trên đường tới B
     const firstChildOfA = pathB[pathB.length - 1]
-    if (!firstChildOfA) return ['Hậu duệ', 'Tiền bối', 'Quan hệ Trực hệ']
+    if (!firstChildOfA) return ['Hậu duệ', 'Tiền bối', { kind: 'direct' }]
 
     const isPaternal = firstChildOfA.gender === 'male'
 
     const bCallsA = getDirectAncestorTerm(depthB, genderA, isPaternal)
     const aCallsB = getDirectDescendantTerm(depthB)
-    return [aCallsB, bCallsA, 'Quan hệ Trực hệ']
+    return [aCallsB, bCallsA, { kind: 'direct' }]
   }
 
   if (depthB === 0) {
     // B chính là LCA. A là con cháu của B.
     const firstChildOfB = pathA[pathA.length - 1]
-    if (!firstChildOfB) return ['Tiền bối', 'Hậu duệ', 'Quan hệ Trực hệ']
+    if (!firstChildOfB) return ['Tiền bối', 'Hậu duệ', { kind: 'direct' }]
 
     const isPaternal = firstChildOfB.gender === 'male'
 
     const aCallsB = getDirectAncestorTerm(depthA, genderB, isPaternal)
     const bCallsA = getDirectDescendantTerm(depthA)
-    return [aCallsB, bCallsA, 'Quan hệ Trực hệ']
+    return [aCallsB, bCallsA, { kind: 'direct' }]
   }
 
   // 2. QUAN HỆ NGANG HÀNG (Anh chị em ruột hoặc họ hàng)
   const branchA = pathA[pathA.length - 1] // Con của LCA phía A
   const branchB = pathB[pathB.length - 1] // Con của LCA phía B
 
-  if (!branchA || !branchB) return ['Họ hàng', 'Họ hàng', 'Quan hệ họ hàng']
+  if (!branchA || !branchB)
+    return ['Họ hàng', 'Họ hàng', { kind: 'relativesGeneric' }]
 
   const seniority = compareSeniority(branchA, branchB)
 
@@ -177,13 +213,13 @@ function resolveBloodTerms(
       return [
         genderB === 'female' ? 'Em gái' : 'Em trai',
         genderA === 'female' ? 'Chị gái' : 'Anh trai',
-        'Anh chị em ruột'
+        { kind: 'siblings' }
       ]
     } else {
       return [
         genderB === 'female' ? 'Chị gái' : 'Anh trai',
         genderA === 'female' ? 'Em gái' : 'Em trai',
-        'Anh chị em ruột'
+        { kind: 'siblings' }
       ]
     }
   }
@@ -219,7 +255,7 @@ function resolveBloodTerms(
     return [
       (prefix + termForB).trim(),
       getDirectDescendantTerm(depthA),
-      isPaternalSide ? 'Bên Nội (Vế trên)' : 'Bên Ngoại (Vế trên)'
+      { kind: 'upperBranch', side: isPaternalSide ? 'paternal' : 'maternal' }
     ]
   }
 
@@ -238,7 +274,7 @@ function resolveBloodTerms(
 
   // Anh em họ (Cùng thế hệ hoặc lệch thế hệ nhưng không trực hệ)
   if (depthA > 1 && depthB > 1) {
-    const side = isPaternalA ? 'Nội' : 'Ngoại'
+    const side: KinshipSide = isPaternalA ? 'paternal' : 'maternal'
 
     if (depthA === depthB) {
       // Cùng thế hệ
@@ -246,13 +282,13 @@ function resolveBloodTerms(
         return [
           'Em họ',
           genderA === 'female' ? 'Chị họ' : 'Anh họ',
-          `Anh em họ ${side}`
+          { kind: 'cousins', side }
         ]
       } else {
         return [
           genderB === 'female' ? 'Chị họ' : 'Anh họ',
           'Em họ',
-          `Anh em họ ${side}`
+          { kind: 'cousins', side }
         ]
       }
     } else {
@@ -278,7 +314,7 @@ function resolveBloodTerms(
         } else {
           termForB = genderB === 'female' ? 'Bà họ' : 'Ông họ'
         }
-        return [termForB, 'Cháu họ', `Họ hàng ${side}`]
+        return [termForB, 'Cháu họ', { kind: 'relatives', side }]
       } else {
         const [bCallsA, aCallsB, desc] = resolveBloodTerms(
           depthB,
@@ -293,7 +329,7 @@ function resolveBloodTerms(
     }
   }
 
-  return ['Người trong họ', 'Người trong họ', 'Quan hệ họ hàng']
+  return ['Người trong họ', 'Người trong họ', { kind: 'relativesGeneric' }]
 }
 
 // ── Data Processing ──────────────────────────────────────────────────────────
@@ -369,19 +405,29 @@ function findBloodKinship(
     dataB.path
   )
 
-  const lcaName = personsMap.get(lcaId)?.full_name ?? 'Tổ tiên chung'
-  const pathParts: string[] = []
+  const lcaName = personsMap.get(lcaId)?.full_name ?? null
+  const pathParts: KinshipPathStep[] = []
   if (personA.id !== lcaId) {
-    pathParts.push(`${personA.full_name} cách ${lcaName} ${dataA.depth} đời.`)
+    pathParts.push({
+      kind: 'generations',
+      name: personA.full_name,
+      ancestor: lcaName,
+      depth: dataA.depth
+    })
   }
   if (personB.id !== lcaId) {
-    pathParts.push(`${personB.full_name} cách ${lcaName} ${dataB.depth} đời.`)
+    pathParts.push({
+      kind: 'generations',
+      name: personB.full_name,
+      ancestor: lcaName,
+      depth: dataB.depth
+    })
   }
 
   return {
     aCallsB,
     bCallsA,
-    description: `${description} (Tổ tiên chung: ${lcaName})`,
+    description: { ...description, commonAncestor: lcaName },
     distance: minDistance,
     pathLabels: pathParts
   }
@@ -436,9 +482,11 @@ function resolveKinship(
     return {
       aCallsB: personB.gender === 'female' ? 'Vợ' : 'Chồng',
       bCallsA: personA.gender === 'female' ? 'Vợ' : 'Chồng',
-      description: 'Quan hệ Hôn nhân',
+      description: { kind: 'marriage' },
       distance: 0,
-      pathLabels: [`${personA.full_name} và ${personB.full_name} là vợ chồng.`]
+      pathLabels: [
+        { kind: 'spouses', nameA: personA.full_name, nameB: personB.full_name }
+      ]
     }
   }
 
@@ -535,9 +583,14 @@ function resolveKinship(
         ...res,
         aCallsB,
         bCallsA,
-        description: `Thông qua hôn nhân của ${spouseA.full_name}`,
+        description: { kind: 'viaSpouse', name: spouseA.full_name },
         pathLabels: [
-          `${personA.full_name} là ${personA.gender === 'male' ? 'Chồng' : 'Vợ'} của ${spouseA.full_name}`,
+          {
+            kind: 'spouseOf',
+            name: personA.full_name,
+            spouse: spouseA.full_name,
+            spouseRole: personA.gender === 'male' ? 'husband' : 'wife'
+          },
           ...res.pathLabels
         ]
       }
@@ -629,10 +682,15 @@ function resolveKinship(
         ...res,
         aCallsB,
         bCallsA,
-        description: `Thông qua hôn nhân của ${spouseB.full_name}`,
+        description: { kind: 'viaSpouse', name: spouseB.full_name },
         pathLabels: [
           ...res.pathLabels,
-          `${personB.full_name} là ${personB.gender === 'male' ? 'Chồng' : 'Vợ'} của ${spouseB.full_name}`
+          {
+            kind: 'spouseOf',
+            name: personB.full_name,
+            spouse: spouseB.full_name,
+            spouseRole: personB.gender === 'male' ? 'husband' : 'wife'
+          }
         ]
       }
     }
@@ -657,7 +715,7 @@ function resolveKinship(
         let bCallsA = `${prefixA} của ${res.bCallsA}`
 
         // Đặc biệt: Anh em cột chèo / Chị em dâu (nếu spouseA và spouseB là anh chị em ruột)
-        if (res.description.includes('Anh chị em ruột')) {
+        if (res.description.kind === 'siblings') {
           if (
             personA.gender === 'male' &&
             personB.gender === 'male' &&
@@ -681,11 +739,25 @@ function resolveKinship(
           ...res,
           aCallsB,
           bCallsA,
-          description: `Thông qua hôn nhân của cả ${spouseA.full_name} và ${spouseB.full_name}`,
+          description: {
+            kind: 'viaBothSpouses',
+            nameA: spouseA.full_name,
+            nameB: spouseB.full_name
+          },
           pathLabels: [
-            `${personA.full_name} là ${prefixA} của ${spouseA.full_name}`,
+            {
+              kind: 'spouseOf',
+              name: personA.full_name,
+              spouse: spouseA.full_name,
+              spouseRole: personA.gender === 'male' ? 'husband' : 'wife'
+            },
             ...res.pathLabels,
-            `${personB.full_name} là ${prefixB} của ${spouseB.full_name}`
+            {
+              kind: 'spouseOf',
+              name: personB.full_name,
+              spouse: spouseB.full_name,
+              spouseRole: personB.gender === 'male' ? 'husband' : 'wife'
+            }
           ]
         }
       }
@@ -693,9 +765,9 @@ function resolveKinship(
   }
 
   return {
-    aCallsB: 'Chưa xác định',
-    bCallsA: 'Chưa xác định',
-    description: 'Không tìm thấy quan hệ trong phạm vi dữ liệu',
+    aCallsB: UNKNOWN_TERM,
+    bCallsA: UNKNOWN_TERM,
+    description: { kind: 'none' },
     distance: -1,
     pathLabels: []
   }

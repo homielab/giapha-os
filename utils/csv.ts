@@ -2,6 +2,7 @@ import JSZip from 'jszip'
 import Papa from 'papaparse'
 
 import { Person, Relationship } from '@/types'
+import { CsvZipInvalidError } from '@/utils/csvErrors'
 
 const UTF8_BOM = '\uFEFF'
 
@@ -109,9 +110,7 @@ export async function parseCsvZip(zipBlob: Blob): Promise<{
   const relationshipsFile = loadedZip.file('relationships.csv')
 
   if (!personsFile || !relationshipsFile) {
-    throw new Error(
-      'File ZIP không hợp lệ: thiếu persons.csv hoặc relationships.csv.'
-    )
+    throw new CsvZipInvalidError()
   }
 
   const [personsCsvRaw, relationshipsCsvRaw] = await Promise.all([
