@@ -752,6 +752,8 @@ export const messages = {
     backToPrevious: 'Quay lại',
     loadingMember: 'Đang tải...',
     memberLoadError: 'Không thể tải thông tin thành viên.',
+    privateLoadFailed:
+      'Không đọc được thông tin riêng tư (điện thoại, nghề nghiệp, nơi ở). Các ô này bị khoá và sẽ được giữ nguyên khi lưu; đóng rồi mở lại để thử tải lại.',
     systemError: 'Đã xảy ra lỗi hệ thống.',
     pageErrorTitle: 'Không thể tải trang',
     pageErrorDescription: 'Đã có lỗi khi tải dữ liệu. Vui lòng thử lại.',
@@ -1722,6 +1724,8 @@ export const messages = {
     backToPrevious: 'Back',
     loadingMember: 'Loading...',
     memberLoadError: 'Could not load member information.',
+    privateLoadFailed:
+      'The private details (phone, occupation, residence) could not be read. These fields are locked and stay as they are when you save; close and reopen to try again.',
     systemError: 'A system error occurred.',
     pageErrorTitle: 'This page could not load',
     pageErrorDescription:

@@ -99,6 +99,27 @@ beforeEach(() => {
 })
 
 describe('saveMember', () => {
+  const emptyPrivate = { phoneNumber: '', occupation: '', currentResidence: '' }
+  const privateCalls = (calls: FakeCall[]) =>
+    calls.filter((c) => c.table === 'person_details_private')
+
+  test('emptied private fields delete the stored row when it was read', async () => {
+    const { options, calls } = saveOptions()
+    await saveMember({ ...options, isAdmin: true, privateFields: emptyPrivate })
+    expect(privateCalls(calls).map((c) => c.op)).toEqual(['delete'])
+  })
+
+  test('private fields that could not be read are left alone', async () => {
+    const { options, calls } = saveOptions()
+    await saveMember({
+      ...options,
+      isAdmin: true,
+      privateLoaded: false,
+      privateFields: emptyPrivate
+    })
+    expect(privateCalls(calls)).toEqual([])
+  })
+
   test('shifts descendant generations by the change', async () => {
     const { options } = saveOptions()
     const result = await saveMember(options)

@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation'
 import DeleteMemberButton from '@/components/DeleteMemberButton'
 import MemberDetailContent from '@/context/MemberDetailContent'
 import { getServerTranslations } from '@/lib/i18n/server'
+import { fetchPrivateDetails } from '@/utils/privateDetails'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
 
 interface PageProps {
@@ -44,25 +45,21 @@ export default async function MemberDetailPage({ params }: PageProps) {
   const supabase = await getSupabase()
 
   // Fetch Person Public Data
+  // A database error is thrown to the dashboard error page; only a missing
+  // row is a 404.
   const { data: person, error } = await supabase
     .from('persons')
     .select('*')
     .eq('id', id)
-    .single()
+    .maybeSingle()
 
-  if (error || !person) {
-    notFound()
-  }
+  if (error) throw error
+  if (!person) notFound()
 
   // Fetch Private Data if Admin
   let privateData = null
   if (isAdmin) {
-    const { data } = await supabase
-      .from('person_details_private')
-      .select('*')
-      .eq('person_id', id)
-      .single()
-    privateData = data
+    privateData = await fetchPrivateDetails(supabase, id)
   }
 
   return (

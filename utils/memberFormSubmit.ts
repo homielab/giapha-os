@@ -42,6 +42,12 @@ export interface SaveMemberOptions {
   avatarFile: File | null
   removeExistingAvatar: boolean
   isAdmin: boolean
+  /**
+   * False when the private details could not be read for this form: they are
+   * then left exactly as stored (no upsert, and above all no delete).
+   * Defaults to true.
+   */
+  privateLoaded?: boolean
   privateFields: {
     phoneNumber: string
     occupation: string
@@ -85,6 +91,7 @@ export async function saveMember(
     avatarFile,
     removeExistingAvatar,
     isAdmin,
+    privateLoaded = true,
     privateFields,
     hasGenerationChanged,
     updateDescendantGenerations
@@ -171,7 +178,7 @@ export async function saveMember(
   }
 
   // 3. Upsert private data (only if admin and currentPersonId exists)
-  if (isAdmin && currentPersonId) {
+  if (isAdmin && privateLoaded && currentPersonId) {
     const normalizedData = {
       person_id: currentPersonId,
       phone_number: privateFields.phoneNumber?.trim() || null,
@@ -365,6 +372,7 @@ export interface MemberFormSubmitContext {
   avatarFile: File | null
   removeExistingAvatar: boolean
   isAdmin: boolean
+  privateLoaded?: boolean
   privateFields: {
     phoneNumber: string
     occupation: string
@@ -519,6 +527,7 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
         avatarFile: ctx.avatarFile,
         removeExistingAvatar: ctx.removeExistingAvatar,
         isAdmin: ctx.isAdmin,
+        privateLoaded: ctx.privateLoaded,
         privateFields: ctx.privateFields,
         hasGenerationChanged: ctx.hasGenerationChanged,
         updateDescendantGenerations: ctx.updateDescendantGenerations

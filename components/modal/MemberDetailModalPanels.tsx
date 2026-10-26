@@ -54,11 +54,13 @@ export function ErrorPanel({
 export function EditPanel({
   formInitialData,
   isAdmin,
+  privateLoaded = true,
   onSuccess,
   onCancel
 }: {
   formInitialData: Person
   isAdmin: boolean
+  privateLoaded?: boolean
   onSuccess: (personId: string) => void
   onCancel: () => void
 }) {
@@ -78,6 +80,7 @@ export function EditPanel({
         initialData={formInitialData}
         isEditing={true}
         isAdmin={isAdmin}
+        privateLoaded={privateLoaded}
         onSuccess={onSuccess}
         onCancel={onCancel}
       />

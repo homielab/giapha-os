@@ -23,6 +23,7 @@ import { useUser } from '@/components/UserProvider'
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
+import { fetchPrivateDetails } from '@/utils/privateDetails'
 
 function ModalHeaderActions({
   isEditing,
@@ -84,6 +85,7 @@ function ModalBody({
   showCreateMember,
   person,
   privateData,
+  privateLoaded,
   formInitialData,
   isAdmin,
   canEdit,
@@ -98,6 +100,7 @@ function ModalBody({
   showCreateMember: boolean
   person: Person | null
   privateData: Record<string, unknown> | null
+  privateLoaded: boolean
   formInitialData: Person | undefined
   isAdmin: boolean
   canEdit: boolean
@@ -117,6 +120,7 @@ function ModalBody({
       <EditPanel
         formInitialData={formInitialData}
         isAdmin={isAdmin}
+        privateLoaded={privateLoaded}
         onSuccess={onEditSuccess}
         onCancel={onEditCancel}
       />
@@ -163,6 +167,9 @@ export default function MemberDetailModal() {
     string,
     unknown
   > | null>(null)
+  // False when an admin's read of the private details failed: the edit form
+  // locks those fields and never deletes the stored row.
+  const [privateLoaded, setPrivateLoaded] = useState(true)
   const isOpen = Boolean(memberId || showCreateMember)
 
   const closeModal = useCallback(() => {
@@ -193,11 +200,13 @@ export default function MemberDetailModal() {
         const [personRes, privateRes] = await Promise.all([
           supabase.from('persons').select('*').eq('id', id).single(),
           isAdmin
-            ? supabase
-                .from('person_details_private')
-                .select('*')
-                .eq('person_id', id)
-                .maybeSingle()
+            ? fetchPrivateDetails(supabase, id).then(
+                (data) => ({ data, failed: false }),
+                (err: unknown) => {
+                  console.error('Error fetching private details:', err)
+                  return { data: null, failed: true }
+                }
+              )
             : Promise.resolve(null)
         ])
 
@@ -205,7 +214,8 @@ export default function MemberDetailModal() {
           throw new Error(t('memberLoadError'))
         }
         setPerson(personRes.data)
-        setPrivateData(isAdmin ? privateRes?.data || {} : null)
+        setPrivateData(isAdmin ? (privateRes?.data ?? {}) : null)
+        setPrivateLoaded(!privateRes?.failed)
       } catch (err) {
         console.error('Error fetching member details:', err)
         // @ts-expect-error - err is caught as unknown, but we check for message
@@ -337,6 +347,7 @@ export default function MemberDetailModal() {
               showCreateMember={showCreateMember}
               person={person}
               privateData={privateData}
+              privateLoaded={privateLoaded}
               formInitialData={formInitialData}
               isAdmin={isAdmin}
               canEdit={canEdit}

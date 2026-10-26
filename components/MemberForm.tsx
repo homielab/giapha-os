@@ -31,6 +31,11 @@ interface MemberFormProps {
   initialData?: Person
   isEditing?: boolean
   isAdmin?: boolean
+  /**
+   * False when the private details failed to load: their fields are locked and
+   * saving leaves the stored details untouched.
+   */
+  privateLoaded?: boolean
   /** Called with the saved person's ID after a successful save. Overrides default router.push. */
   onSuccess?: (personId: string) => void
   /** Called when user clicks Cancel. Overrides default router.back(). */
@@ -41,6 +46,7 @@ export default function MemberForm({
   initialData,
   isEditing = false,
   isAdmin = false,
+  privateLoaded = true,
   onSuccess,
   onCancel
 }: MemberFormProps) {
@@ -157,6 +163,7 @@ export default function MemberForm({
       avatarFile,
       removeExistingAvatar,
       isAdmin,
+      privateLoaded,
       privateFields: { phoneNumber, occupation, currentResidence },
       hasGenerationChanged: generationChanged,
       updateDescendantGenerations,
@@ -248,6 +255,7 @@ export default function MemberForm({
       {isAdmin && (
         <MemberPrivateFields
           isDeceased={isDeceased}
+          locked={!privateLoaded}
           phoneNumber={phoneNumber}
           onPhoneNumberChange={setPhoneNumber}
           occupation={occupation}
