@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability / Báo lỗi bảo mật
+    url: https://github.com/homielab/giapha-os/security/advisories/new
+    about: Report privately. Never put keys or family data in a public issue.

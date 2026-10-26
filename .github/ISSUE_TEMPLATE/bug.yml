@@ -1,0 +1,53 @@
+name: Bug report / Báo lỗi
+description: Something does not work as expected / Có gì đó không hoạt động đúng
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a security problem, do not use this form: see [SECURITY.md](https://github.com/homielab/giapha-os/blob/main/SECURITY.md).
+        Never paste real family data, keys or `.env` contents here.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / Chuyện gì đã xảy ra?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Các bước tái hiện
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / Kết quả mong đợi
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / Phiên bản
+      description: '`version` in package.json, or the Dashboard → Upgrade page'
+  - type: dropdown
+    id: hosting
+    attributes:
+      label: How do you run it? / Bạn chạy bằng cách nào?
+      options:
+        - Vercel
+        - Docker
+        - Local (bun run dev)
+        - Other
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device / Trình duyệt và thiết bị
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error messages or screenshots / Thông báo lỗi hoặc ảnh chụp
+      description: Remove any personal data and secrets first.

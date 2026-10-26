@@ -329,7 +329,7 @@ The system has three roles for controlling who can update the family tree:
 
 ## Contributing
 
-This is an open-source project. Contributions, issue reports, and pull requests are welcome.
+This is an open-source project. Contributions, issue reports, and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide, and use the issue and pull request templates. Found a security problem? Report it privately as described in [SECURITY.md](SECURITY.md) (no public issue, and never share `SUPABASE_SERVICE_ROLE_KEY`).
 
 Before opening a pull request, run:
 

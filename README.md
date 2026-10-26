@@ -330,7 +330,7 @@ Hệ thống có 3 cấp độ phân quyền để dễ dàng quản lý ai đư
 
 ## Đóng góp (Contributing)
 
-Dự án này là mã nguồn mở, hoan nghênh mọi đóng góp, báo cáo lỗi (issues) và yêu cầu sửa đổi (pull requests) để phát triển ứng dụng ngày càng tốt hơn.
+Dự án này là mã nguồn mở, hoan nghênh mọi đóng góp, báo cáo lỗi (issues) và yêu cầu sửa đổi (pull requests) để phát triển ứng dụng ngày càng tốt hơn. Xem hướng dẫn đầy đủ ở [CONTRIBUTING.md](CONTRIBUTING.md); khi báo lỗi hoặc gửi pull request hãy dùng mẫu có sẵn. Phát hiện lỗi bảo mật? Báo riêng theo [SECURITY.md](SECURITY.md) (không mở issue công khai, không gửi `SUPABASE_SERVICE_ROLE_KEY`).
 
 Trước khi gửi pull request, hãy chạy:
 
