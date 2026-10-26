@@ -120,7 +120,7 @@ export default function RelationshipList({
                     {canEdit && rel.direction !== 'child_in_law' && (
                       <button
                         onClick={() => onDelete(rel.id)}
-                        className='ml-2 flex items-center justify-center rounded-lg p-2 text-stone-300 transition-colors hover:bg-red-50 hover:text-red-500 sm:p-2.5'
+                        className='ml-2 flex items-center justify-center rounded-lg p-2 text-stone-300 transition-colors hover:bg-red-50 hover:text-red-500 sm:p-2.5 print:hidden'
                         title={t('deleteRelationship')}
                         aria-label={t('deleteRelationship')}>
                         <svg

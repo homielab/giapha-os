@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Member page: a "Print profile" button prints the profile on A4 without the header, footer and edit buttons, in black on white, with the photo, the full note and the family list; the page title is the name with birth and death years.
 - Dashboard: a search button in the header (also Ctrl/⌘ + K on any dashboard page) finds a member by name without accents ("nguyen van" finds "Nguyễn Văn …"), shows birth/death years to tell namesakes apart, and Enter opens the profile. The list loads only when the search is first opened.
 - Member form: a "Leap month" checkbox next to the lunar death date, shown when that lunar year has the typed leap month (e.g. 2023 month 2, 2025 month 6), so a death date in a leap month can be entered from the lunar date alone.
 - Keyboard access to the tree views: in the Bubble view every family can be reached with Tab (read out with the names and birth years) and selected with Enter or Space; on the Tree, `+`/`-` zoom around the centre, `0` resets and the arrow keys scroll by 40 px. Both canvases announce how to use them.

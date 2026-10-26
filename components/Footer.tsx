@@ -15,7 +15,7 @@ export default function Footer({
 
   return (
     <footer
-      className={`py-8 text-center text-sm text-stone-500 ${className} backdrop-blur-sm`}>
+      className={`py-8 text-center text-sm text-stone-500 ${className} backdrop-blur-sm print:hidden`}>
       <div className='mx-auto max-w-7xl px-4'>
         {showDisclaimer && (
           <p className='mb-4 inline-block rounded-full border border-amber-200/50 bg-amber-50 px-3 py-1 text-sm text-amber-800/80'>

@@ -59,6 +59,41 @@ select {
   outline-offset: 2px;
 }
 
+/* Printing a member profile: plain white A4 page, no chrome */
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000;
+  }
+
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Keep photos and cards in one piece across page breaks */
+  img,
+  li,
+  section > div {
+    break-inside: avoid;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+}
+
 /* Respect users who ask for less motion */
 @media (prefers-reduced-motion: reduce) {
   *,

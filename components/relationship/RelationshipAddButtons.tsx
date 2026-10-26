@@ -15,7 +15,7 @@ export default function RelationshipAddButtons({
 }: RelationshipAddButtonsProps) {
   const { t } = useI18n()
   return (
-    <div className='mt-4 flex flex-col gap-3 sm:flex-row'>
+    <div className='mt-4 flex flex-col gap-3 sm:flex-row print:hidden'>
       <button
         onClick={onAddRelation}
         className='flex-1 rounded-xl border-2 border-dashed border-stone-200 bg-stone-50/50 py-3 text-sm font-medium text-stone-500 transition-colors duration-200 hover:border-amber-400 hover:bg-stone-50 hover:text-amber-700 sm:rounded-2xl'>
