@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
 import DataImportExport from '@/components/DataImportExport'
+import DuplicateScan from '@/components/DuplicateScan'
 import LunarRecompute from '@/components/LunarRecompute'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { getProfile } from '@/utils/supabase/queries'
@@ -41,6 +42,7 @@ export default async function DataManagementPage() {
         <div className='space-y-6'>
           <DataImportExport />
           <LunarRecompute />
+          <DuplicateScan />
         </div>
       </div>
     </main>

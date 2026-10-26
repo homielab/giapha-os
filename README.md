@@ -36,7 +36,7 @@ Phù hợp với người Việt Nam.
 - **Quản lý thành viên**: Lưu trữ thông tin, avatar và sắp xếp thứ tự nhánh dòng họ; tìm không dấu (cả ô chọn người ở trang Quan hệ), chọn bằng bàn phím (mũi tên, Enter, Esc); ⌘/Ctrl + K ở mọi trang Dashboard để tìm nhanh một thành viên.
 - **Quản lý quan hệ**: Quản lý các mối quan hệ trong gia phả (hỗ trợ các trường hợp đặc biệt như đa thê, đa phu,...).
 - **Kiểm tra dữ liệu**: Cảnh báo quan hệ vô lý (vòng cha–con, con sinh trước cha mẹ, cha mẹ mất trước khi con sinh) và người trùng tên + năm sinh.
-- **Thống kê & Sự kiện**: Theo dõi sinh nhật, ngày giỗ (âm lịch Việt Nam), sự kiện tuỳ chỉnh và các chỉ số nhân khẩu học của dòng họ; công cụ "Tính lại ngày giỗ âm lịch" cho quản trị viên.
+- **Thống kê & Sự kiện**: Theo dõi sinh nhật, ngày giỗ (âm lịch Việt Nam), sự kiện tuỳ chỉnh và các chỉ số nhân khẩu học của dòng họ; công cụ "Tính lại ngày giỗ âm lịch" và "Người có thể trùng" cho quản trị viên.
 - **Thêm vào lịch**: Trang Sự kiện có nút "Thêm vào lịch (.ics)" để nhập sinh nhật, ngày giỗ và sự kiện vào Google/Apple Calendar và nhận nhắc nhở trên điện thoại.
 - **In hồ sơ**: Trang thành viên có nút "In hồ sơ" — bản in A4 gọn (không thanh đầu/cuối trang, không nút sửa), có ảnh, ghi chú đầy đủ và danh sách gia đình; để biếu, lưu trữ hoặc để ở nhà thờ họ.
 - **Sao lưu dữ liệu**: Xuất/nhập file JSON, CSV, GEDCOM để lưu trữ hoặc di chuyển dễ dàng; xem trước nội dung file trước khi phục hồi. Ô CSV bắt đầu bằng `=`, `+`, `-`, `@` được thêm dấu `'` ở đầu khi xuất (để Excel không chạy như công thức; số điện thoại `+84…` hiện `'+84…` trong Excel) và tự bỏ dấu `'` đó khi nhập lại.
@@ -52,6 +52,8 @@ Phù hợp với người Việt Nam.
 - **Múi giờ và ngày 29/2**: "hôm nay" của sự kiện sắp tới luôn theo giờ Việt Nam (UTC+7), cả trên server lẫn trình duyệt, nên giỗ và sinh nhật không lệch một ngày trong khoảng 0–7 giờ sáng. Sinh nhật 29/2 rơi vào 28/2 ở năm thường.
 - **Không rõ năm mất**: nếu chỉ có ngày/tháng mất dương lịch (không có năm và không có ngày âm lịch), ngày giỗ được đổi sang âm lịch theo năm hiện tại và hiện nhãn "(ước tính)"; nhập năm mất hoặc ngày mất âm lịch để có ngày giỗ cố định.
 - **Ngày âm lịch lưu từ bản cũ**: trước khi chuyển sang âm lịch Việt Nam, ngày âm lịch được tính theo lịch Trung Quốc và không tự tính lại. Quản trị viên vào **Dashboard → Sao lưu & Phục hồi → Tính lại ngày giỗ âm lịch**, bấm "Kiểm tra ngày giỗ" để xem các thành viên có ngày âm lịch đang lưu khác ngày tính lại từ ngày mất dương lịch (chỉ xét người có đủ ngày/tháng/năm cả hai ngày). Mặc định không dòng nào được chọn; chọn từng dòng hoặc tất cả rồi xác nhận để áp dụng. Nếu ngày âm lịch là ngày nhập tay (ngày dương suy ra từ đó có thể sai) thì đừng chọn dòng đó. Nên xuất bản sao lưu JSON trước. Mỗi dòng được cập nhật riêng và chỉ khi ngày mất chưa bị sửa từ lúc tính; dòng nào lỗi hay bị bỏ qua sẽ hiện lại ở lần kiểm tra sau. Công cụ không bao giờ tự chạy và không cần migration.
+
+- **Người có thể trùng**: **Dashboard → Sao lưu & Phục hồi → Người có thể trùng**, bấm "Quét người có thể trùng" để quét cả cây (kể cả dữ liệu nhập từ GEDCOM/CSV). Hai thành viên được xếp chung nhóm khi cùng tên (không phân biệt dấu, hoa/thường) và cùng năm sinh, hoặc cùng tên và cùng cha/mẹ. Bảng hiện từng nhóm với năm sinh – mất, số quan hệ và liên kết mở hồ sơ (tối đa 200 nhóm đầu, ghi số còn lại). Chỉ để xem: không sửa, không xoá, không gộp; tự sửa hoặc xoá bằng công cụ sẵn có. Không cần migration.
 
 ### Thêm sự kiện vào lịch (.ics)
 
