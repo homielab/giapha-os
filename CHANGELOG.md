@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Data page: if the member list for choosing an export root fails to load, an error is shown instead of a silently incomplete list.
 - CI: every push and pull request now also runs `bun run build` and a Docker image build (not pushed), so a broken build no longer slips through.
 
 ### Added

@@ -43,7 +43,7 @@ export default function DataImportExport() {
   const [isReadingFile, setIsReadingFile] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
 
-  const persons = useAllPersons()
+  const { persons, error: personsError } = useAllPersons()
   const [exportRootId, setExportRootId] = useState<string | null>(null)
 
   const handleExport = async (
@@ -223,15 +223,26 @@ export default function DataImportExport() {
           description={t('backupDataDescription')}
           accent='amber'>
           <div className='mb-4'>
-            <PersonSelector
-              persons={persons}
-              selectedId={exportRootId}
-              onSelect={setExportRootId}
-              label={t('exportRoot')}
-              className='w-full sm:w-80'
-              showAllOption={true}
-              allOptionLabel={t('allData')}
-            />
+            {personsError ? (
+              <div
+                role='alert'
+                className='flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 p-3 text-left text-sm text-red-600'>
+                <AlertTriangle className='h-5 w-5 shrink-0 text-red-500' />
+                <span>
+                  {t('exportPersonsLoadError', { error: personsError })}
+                </span>
+              </div>
+            ) : (
+              <PersonSelector
+                persons={persons}
+                selectedId={exportRootId}
+                onSelect={setExportRootId}
+                label={t('exportRoot')}
+                className='w-full sm:w-80'
+                showAllOption={true}
+                allOptionLabel={t('allData')}
+              />
+            )}
           </div>
 
           <ExportActions

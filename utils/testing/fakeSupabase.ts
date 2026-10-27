@@ -37,6 +37,7 @@ export function fakeSupabase(respond: (call: FakeCall) => FakeResult) {
     const call: FakeCall = { table, op: 'select', filters: [], single: false }
     const builder = {
       select: () => builder,
+      returns: () => builder,
       insert: (payload: unknown) => {
         call.op = 'insert'
         call.payload = payload

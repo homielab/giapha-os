@@ -667,6 +667,8 @@ export const messages = {
     backupDataDescription:
       'Tải xuống định dạng file JSON, GEDCOM hoặc CSV (Zip). Chọn một điểm gốc bên dưới để chỉ sao lưu nhánh gia đình đó, hoặc chọn "Toàn bộ" để xuất toàn bộ cây.',
     exportRoot: 'Điểm gốc (Root) để xuất dữ liệu',
+    exportPersonsLoadError:
+      'Không tải được danh sách thành viên để chọn điểm gốc: {error}. Tải lại trang để thử lại; có thể vẫn xuất toàn bộ dữ liệu.',
     allData: 'Toàn bộ dữ liệu',
     exportJson: 'Xuất JSON',
     exportGedcom: 'Xuất GEDCOM',
@@ -1817,6 +1819,8 @@ export const messages = {
     backupDataDescription:
       'Download JSON, GEDCOM, or CSV (Zip) files. Choose a root below to back up only that family branch, or choose "All data" to export the entire tree.',
     exportRoot: 'Root for data export',
+    exportPersonsLoadError:
+      'Could not load the member list for choosing a root: {error}. Reload the page to retry; you can still export all data.',
     allData: 'All data',
     exportJson: 'Export JSON',
     exportGedcom: 'Export GEDCOM',
