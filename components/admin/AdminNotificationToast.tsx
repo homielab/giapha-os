@@ -2,6 +2,8 @@
 
 import { AnimatePresence, m } from 'framer-motion'
 
+import { noticeAria } from '@/utils/a11y'
+
 export interface AdminNotification {
   message: string
   type: 'success' | 'error' | 'info'
@@ -21,6 +23,7 @@ export default function AdminNotificationToast({
           initial={{ opacity: 0, y: -20, x: '-50%' }}
           animate={{ opacity: 1, y: 0, x: '-50%' }}
           exit={{ opacity: 0, y: -20, x: '-50%' }}
+          {...noticeAria(notification.type)}
           className={`fixed top-1/2 left-1/2 z-100 flex max-w-[90vw] min-w-[320px] items-center gap-3 rounded-xl border px-6 py-3 ${
             notification.type === 'success'
               ? 'border-emerald-200 bg-emerald-50/90 text-emerald-800'

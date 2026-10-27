@@ -278,7 +278,9 @@ export default function DataImportExport() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className='mt-4'>
-                <div className='flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 p-3 text-left text-sm text-red-600'>
+                <div
+                  role='alert'
+                  className='flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 p-3 text-left text-sm text-red-600'>
                   <AlertTriangle className='h-5 w-5 shrink-0 text-red-500' />
                   <span>{exportError}</span>
                 </div>

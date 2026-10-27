@@ -73,6 +73,7 @@ export function AuthAlerts({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
+          role='alert'
           className='rounded-xl border border-red-100/50 bg-red-50 p-3 text-center text-sm font-medium text-red-700'>
           {error}
         </m.div>
@@ -83,6 +84,8 @@ export function AuthAlerts({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
+          role='status'
+          aria-live='polite'
           className='rounded-xl border border-teal-100/50 bg-teal-50 p-3 text-center text-sm font-medium text-teal-700'>
           {successMessage}
         </m.div>

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Accessibility: error messages and notices (sign-in, import/export, admin toasts, gallery upload, events, lineage, setup) are now announced by screen readers; a second admin notification is no longer dismissed early by the first one's timer.
+
 ### Changed
 
 - Internal: the death-date input logic of the member form (solar/lunar sync and the leap-month flag) is now plain functions in `utils/deathDates.ts` with tests; behaviour is unchanged.

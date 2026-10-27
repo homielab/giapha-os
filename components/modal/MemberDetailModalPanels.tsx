@@ -43,7 +43,9 @@ export function ErrorPanel({
       <div className='mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500 shadow-inner'>
         <AlertCircle className='size-8' />
       </div>
-      <p className='text-sm font-medium text-red-600'>{error}</p>
+      <p role='alert' className='text-sm font-medium text-red-600'>
+        {error}
+      </p>
       <button onClick={onClose} className='btn mt-2 rounded-full'>
         {t('close')}
       </button>

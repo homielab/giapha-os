@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import {
   adminCreateUser,
@@ -38,12 +38,22 @@ export default function AdminUserList({
     null
   )
 
+  const notificationTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(
+    () => () => {
+      if (notificationTimer.current) clearTimeout(notificationTimer.current)
+    },
+    []
+  )
+
   const showNotification = (
     message: string,
     type: 'success' | 'error' | 'info' = 'info'
   ) => {
     setNotification({ message, type })
-    setTimeout(() => setNotification(null), 5000)
+    if (notificationTimer.current) clearTimeout(notificationTimer.current)
+    notificationTimer.current = setTimeout(() => setNotification(null), 5000)
   }
 
   const handleRoleChange = async (userId: string, newRole: UserRole) => {

@@ -44,7 +44,9 @@ export default function CopyButton({ content }: { content: string }) {
         )}
       </button>
       {error && (
-        <div className='animate-in fade-in slide-in-from-top-1 mt-2 flex items-center justify-center gap-2 rounded-lg border border-red-100 bg-red-50 p-2 text-sm text-red-600'>
+        <div
+          role='alert'
+          className='animate-in fade-in slide-in-from-top-1 mt-2 flex items-center justify-center gap-2 rounded-lg border border-red-100 bg-red-50 p-2 text-sm text-red-600'>
           {error}
         </div>
       )}

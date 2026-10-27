@@ -240,7 +240,9 @@ export default function UploadModal({
                 />
 
                 {error && (
-                  <div className='rounded-xl border border-rose-100 bg-rose-50 p-3 text-sm text-rose-600'>
+                  <div
+                    role='alert'
+                    className='rounded-xl border border-rose-100 bg-rose-50 p-3 text-sm text-rose-600'>
                     {error}
                   </div>
                 )}

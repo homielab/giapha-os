@@ -113,7 +113,9 @@ export default function QuickAddSpouseForm({
           </button>
         </div>
         {error && (
-          <div className='animate-in fade-in slide-in-from-top-1 mt-2 flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-600'>
+          <div
+            role='alert'
+            className='animate-in fade-in slide-in-from-top-1 mt-2 flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-600'>
             <svg
               className='h-4 w-4 shrink-0'
               fill='none'
