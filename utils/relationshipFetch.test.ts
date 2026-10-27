@@ -21,7 +21,7 @@ function setup(opts: {
   asB?: unknown[]
   marriages?: unknown[]
   grandchildren?: unknown[]
-  fail?: 'a' | 'b'
+  fail?: 'a' | 'b' | 'marriages' | 'grandchildren'
 }) {
   return fakeSupabase((call) => {
     if (call.table !== 'relationships') return {}
@@ -36,9 +36,13 @@ function setup(opts: {
         : { data: opts.asB ?? [] }
     }
     if (call.filters.some(([op]) => op === 'or')) {
-      return { data: opts.marriages ?? [] }
+      return opts.fail === 'marriages'
+        ? { error: { message: 'marriages failed' } }
+        : { data: opts.marriages ?? [] }
     }
-    return { data: opts.grandchildren ?? [] }
+    return opts.fail === 'grandchildren'
+      ? { error: { message: 'grandchildren failed' } }
+      : { data: opts.grandchildren ?? [] }
   })
 }
 
@@ -97,6 +101,23 @@ describe('fetchRelationshipData', () => {
   test('throws when either query fails', async () => {
     for (const fail of ['a', 'b'] as const) {
       const { client } = setup({ fail })
+      await expect(fetchRelationshipData(client, me, t)).rejects.toMatchObject({
+        message: `${fail} failed`
+      })
+    }
+  })
+
+  test('throws when the in-law or grandchildren query fails', async () => {
+    const asA = [
+      {
+        id: 'r1',
+        type: 'biological_child',
+        target: person('kid', 'male'),
+        note: null
+      }
+    ]
+    for (const fail of ['marriages', 'grandchildren'] as const) {
+      const { client } = setup({ asA, fail })
       await expect(fetchRelationshipData(client, me, t)).rejects.toMatchObject({
         message: `${fail} failed`
       })

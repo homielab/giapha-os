@@ -9,7 +9,7 @@ import RootSelector from '@/components/RootSelector'
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
-import { pickDefaultRootId } from '@/utils/treeRoot'
+import { pickDefaultRootId, resolveRootId } from '@/utils/treeRoot'
 
 const FamilyTree = dynamic(() => import('@/components/FamilyTree'))
 const MindmapTree = dynamic(() => import('@/components/MindmapTree'))
@@ -71,7 +71,7 @@ export default function MembersViews({
     }
   }, [persons, relationships, rootId])
 
-  const activeRootId = rootId || defaultRootId
+  const activeRootId = resolveRootId(rootId, personsMap, defaultRootId)
 
   // Khôi phục lựa chọn từ localStorage
   useEffect(() => {
@@ -83,8 +83,10 @@ export default function MembersViews({
       try {
         const savedRootId = localStorage.getItem('members_rootId')
 
-        if (!urlRootId && savedRootId && savedRootId !== rootId) {
-          setRootId(savedRootId)
+        if (savedRootId && personsMap.has(savedRootId)) {
+          if (savedRootId !== rootId) setRootId(savedRootId)
+        } else if (savedRootId) {
+          localStorage.removeItem('members_rootId')
         }
       } catch (e) {
         console.warn('Failed to read from localStorage:', e)
@@ -92,7 +94,7 @@ export default function MembersViews({
     }
 
     hasRestored.current = true
-  }, [rootId, searchParams, setRootId])
+  }, [rootId, personsMap, searchParams, setRootId])
 
   // Lưu lựa chọn vào localStorage
   useEffect(() => {

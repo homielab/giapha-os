@@ -75,7 +75,7 @@ export async function fetchRelationshipData(
     .map((r) => r.targetPerson.id)
 
   if (childrenIds.length > 0) {
-    const { data: childrenMarriages } = await supabase
+    const { data: childrenMarriages, error: marriagesError } = await supabase
       .from('relationships')
       .select(
         `*, person_a_data:persons!person_a(*), person_b_data:persons!person_b(*)`
@@ -84,6 +84,8 @@ export async function fetchRelationshipData(
       .or(
         `person_a.in.(${childrenIds.join(',')}),person_b.in.(${childrenIds.join(',')})`
       )
+
+    if (marriagesError) throw marriagesError
 
     if (childrenMarriages) {
       const childIdSet = new Set(childrenIds)
@@ -153,11 +155,14 @@ async function computeRelationshipStats(
   let paternalGrandchildren = 0
   let maternalGrandchildren = 0
   if (childrenIds.length > 0) {
-    const { data: grandchildrenData } = await supabase
-      .from('relationships')
-      .select('id, person_a')
-      .in('type', ['biological_child', 'adopted_child'])
-      .in('person_a', childrenIds)
+    const { data: grandchildrenData, error: grandchildrenError } =
+      await supabase
+        .from('relationships')
+        .select('id, person_a')
+        .in('type', ['biological_child', 'adopted_child'])
+        .in('person_a', childrenIds)
+
+    if (grandchildrenError) throw grandchildrenError
 
     if (grandchildrenData) {
       const maleChildrenIds = formattedRels

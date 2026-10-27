@@ -38,3 +38,18 @@ export function pickDefaultRootId(
     earliest(roots)
   return pick?.id ?? persons[0]?.id
 }
+
+/**
+ * The root to show: the chosen one while that person still exists (it may be
+ * stale after a merge or delete, from storage or a shared link), otherwise
+ * the default; null when neither exists.
+ */
+export function resolveRootId(
+  rootId: string | null | undefined,
+  personsMap: ReadonlyMap<string, unknown>,
+  defaultRootId: string | null | undefined
+): string | null {
+  if (rootId && personsMap.has(rootId)) return rootId
+  if (defaultRootId && personsMap.has(defaultRootId)) return defaultRootId
+  return null
+}

@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Members page: when the tree root saved in the browser or in a shared link no longer exists (for example after merging duplicates), the "Show from" selector now falls back to the default root and clears the stale value instead of showing an empty field. A temporary database error while loading the in-laws or grandchildren of a member now shows the usual error instead of silently showing no in-laws and 0 grandchildren.
 - English interface and calendar (.ics) no longer show the Vietnamese "nhuận" for leap-month anniversaries and lunar events: the upcoming-events card, the event cards and the calendar description use the interface language ("10/04 L leap").
 - A member link with a cut-off or mistyped id (for example one shortened when shared in a chat) now opens the "not found" page instead of the generic error page.
 - Exporting a large tree as PNG or PDF no longer fails with a generic error: wide or tall trees are now rendered at a lower resolution that fits the browser's canvas limits (Safari caps the area at about 16.7 million pixels, phones cap each side at 8192 pixels), and a tree too large for any canvas shows a clear message suggesting a smaller root or a computer.

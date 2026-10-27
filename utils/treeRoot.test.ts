@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 
-import { pickDefaultRootId } from '@/utils/treeRoot'
+import { pickDefaultRootId, resolveRootId } from '@/utils/treeRoot'
 
 const person = (
   id: string,
@@ -63,5 +63,53 @@ describe('pickDefaultRootId', () => {
 
   it('returns undefined for no people', () => {
     expect(pickDefaultRootId([], [])).toBeUndefined()
+  })
+})
+
+describe('resolveRootId', () => {
+  const map = new Map([
+    ['a', {}],
+    ['b', {}]
+  ])
+
+  it('keeps a chosen id that still exists', () => {
+    expect(resolveRootId('b', map, 'a')).toBe('b')
+  })
+
+  it('falls back to the default for an unknown id', () => {
+    expect(resolveRootId('gone', map, 'a')).toBe('a')
+  })
+
+  it('uses the default when nothing is chosen', () => {
+    expect(resolveRootId(null, map, 'a')).toBe('a')
+    expect(resolveRootId(undefined, map, 'a')).toBe('a')
+  })
+
+  it('returns null for an empty map', () => {
+    expect(resolveRootId('a', new Map(), 'a')).toBeNull()
+  })
+})
+
+describe('resolveRootId', () => {
+  const map = new Map([
+    ['a', {}],
+    ['b', {}]
+  ])
+
+  it('keeps a chosen id that still exists', () => {
+    expect(resolveRootId('b', map, 'a')).toBe('b')
+  })
+
+  it('falls back to the default for an unknown id', () => {
+    expect(resolveRootId('gone', map, 'a')).toBe('a')
+  })
+
+  it('uses the default when nothing is chosen', () => {
+    expect(resolveRootId(null, map, 'a')).toBe('a')
+    expect(resolveRootId(undefined, map, 'a')).toBe('a')
+  })
+
+  it('returns null for an empty map', () => {
+    expect(resolveRootId('a', new Map(), 'a')).toBeNull()
   })
 })
