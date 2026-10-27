@@ -25,7 +25,7 @@ export interface DataCheckResult {
 }
 
 /**
- * Checks the whole tree for impossible dates and repeated relationships.
+ * Checks the whole tree for impossible dates, repeated relationships and missing basics.
  * Read-only (two selects, nothing is written); admins only.
  */
 export async function checkTreeData(): Promise<

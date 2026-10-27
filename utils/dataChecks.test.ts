@@ -17,6 +17,7 @@ function person(
     id,
     full_name: `Person ${id}`,
     gender: null,
+    is_deceased: false,
     birth_year: null,
     birth_month: null,
     birth_day: null,
@@ -35,7 +36,10 @@ const child = (parent: string, kid: string): DataCheckRelationship => ({
 const kinds = (
   persons: DataCheckPerson[],
   relationships: DataCheckRelationship[] = []
-) => runDataChecks(persons, relationships, TODAY).map((f) => f.kind)
+) =>
+  runDataChecks(persons, relationships, TODAY)
+    .map((f) => f.kind)
+    .filter((k) => !k.startsWith('missing'))
 
 describe('runDataChecks', () => {
   test('a clean tree reports nothing', () => {
@@ -109,7 +113,7 @@ describe('runDataChecks', () => {
         child('p', 'nobirth')
       ],
       new Date(2100, 0, 1)
-    )
+    ).filter((f) => !f.kind.startsWith('missing'))
     expect(found.map((f) => f.kind)).toEqual(['parentTooYoung', 'parentTooOld'])
     expect(found[0].params.age).toBe(11)
     expect(found[1].params.age).toBe(71)
@@ -167,11 +171,52 @@ describe('runDataChecks', () => {
       person('d', { birth_year: 1950, death_year: 1940 })
     ]
     expect(
-      runDataChecks(persons, [], TODAY).map((f) => [f.kind, f.people[0].name])
+      runDataChecks(persons, [], TODAY)
+        .filter((f) => !f.kind.startsWith('missing'))
+        .map((f) => [f.kind, f.people[0].name])
     ).toEqual([
       ['deathBeforeBirth', 'Person d'],
       ['futureDate', 'Abe'],
       ['futureDate', 'Zed']
+    ])
+  })
+})
+
+describe('missing information', () => {
+  test('reports a missing birth year, death year and gender, not a complete person', () => {
+    const persons = [
+      person('a', { full_name: 'A', gender: 'male' }),
+      person('b', {
+        full_name: 'B',
+        gender: 'female',
+        birth_year: 1900,
+        is_deceased: true
+      }),
+      person('c', { full_name: 'C', gender: null, birth_year: 1950 }),
+      person('d', {
+        full_name: 'D',
+        gender: 'male',
+        birth_year: 1950,
+        is_deceased: true,
+        death_year: 2010
+      })
+    ]
+    expect(
+      runDataChecks(persons, [], TODAY).map((f) => [f.kind, f.people[0].id])
+    ).toEqual([
+      ['missingBirthYear', 'a'],
+      ['missingDeathYear', 'b'],
+      ['missingGender', 'c']
+    ])
+  })
+
+  test('gender other than male or female counts as unknown; living without death year is fine', () => {
+    const persons = [
+      person('x', { gender: 'other', birth_year: 1950 }),
+      person('y', { gender: 'male', birth_year: 1950, is_deceased: false })
+    ]
+    expect(runDataChecks(persons, [], TODAY).map((f) => f.kind)).toEqual([
+      'missingGender'
     ])
   })
 })

@@ -4,12 +4,13 @@ import { checkParentDeath } from '@/utils/relationshipValidation'
 
 /** Columns the whole-tree data check reads. */
 export const DATA_CHECK_PERSON_COLUMNS =
-  'id, full_name, gender, birth_year, birth_month, birth_day, death_year, death_month, death_day'
+  'id, full_name, gender, is_deceased, birth_year, birth_month, birth_day, death_year, death_month, death_day'
 
 export interface DataCheckPerson {
   id: string
   full_name: string
   gender: string | null
+  is_deceased: boolean | null
   birth_year: number | null
   birth_month: number | null
   birth_day: number | null
@@ -31,7 +32,10 @@ export const DATA_CHECK_KINDS = [
   'parentTooYoung',
   'parentTooOld',
   'futureDate',
-  'duplicateRelationship'
+  'duplicateRelationship',
+  'missingBirthYear',
+  'missingDeathYear',
+  'missingGender'
 ] as const
 
 export type DataCheckKind = (typeof DATA_CHECK_KINDS)[number]
@@ -68,8 +72,9 @@ const deathOf = (p: DataCheckPerson) =>
 const ref = (p: DataCheckPerson) => ({ id: p.id, name: p.full_name })
 
 /**
- * Looks for impossible dates and repeated links in the whole tree. Pure: reads
- * nothing, writes nothing. A date or year that is missing is never reported,
+ * Looks for impossible dates, repeated links and missing basics (birth year,
+ * death year of the deceased, gender) in the whole tree. Pure: reads nothing,
+ * writes nothing. A date or year that is missing is never part of a date check,
  * and adopted children are left out of the parent checks (as in the member
  * form). People that cannot be reached from the root are not reported here
  * (the Lineage page lists them). Findings are sorted by kind, then name.
@@ -120,6 +125,27 @@ export function runDataChecks(
           params: { name: p.full_name, birth: birthOf(p), death: deathOf(p) }
         })
       }
+    }
+    if (p.birth_year == null) {
+      findings.push({
+        kind: 'missingBirthYear',
+        people: [ref(p)],
+        params: { name: p.full_name }
+      })
+    }
+    if (p.is_deceased && p.death_year == null) {
+      findings.push({
+        kind: 'missingDeathYear',
+        people: [ref(p)],
+        params: { name: p.full_name }
+      })
+    }
+    if (p.gender !== 'male' && p.gender !== 'female') {
+      findings.push({
+        kind: 'missingGender',
+        people: [ref(p)],
+        params: { name: p.full_name }
+      })
     }
     if (isFuture(p.birth_year, p.birth_month, p.birth_day)) {
       findings.push({

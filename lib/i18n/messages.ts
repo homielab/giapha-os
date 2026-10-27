@@ -735,7 +735,7 @@ export const messages = {
     lunarRecomputeFailed: 'Không thể tính lại ngày giỗ. Vui lòng thử lại.',
     dataCheckTitle: 'Kiểm tra dữ liệu',
     dataCheckDescription:
-      'Rà cả cây tìm mốc ngày vô lý, thường gặp ở dữ liệu nhập từ GEDCOM hoặc CSV: mất trước khi sinh, con sinh sau khi mẹ mất, cha/mẹ hơn con dưới 12 hoặc trên 70 tuổi (chỉ xét khi có đủ năm sinh; bỏ qua con nuôi), ngày sinh/mất trong tương lai, quan hệ bị lặp. Chỉ để xem; không có gì bị sửa. Mở từng hồ sơ để sửa.',
+      'Rà cả cây tìm mốc ngày vô lý, thường gặp ở dữ liệu nhập từ GEDCOM hoặc CSV: mất trước khi sinh, con sinh sau khi mẹ mất, cha/mẹ hơn con dưới 12 hoặc trên 70 tuổi (chỉ xét khi có đủ năm sinh; bỏ qua con nuôi), ngày sinh/mất trong tương lai, quan hệ bị lặp; và nhóm thiếu thông tin: chưa có năm sinh, đã mất nhưng thiếu năm mất, chưa rõ giới tính. Chỉ để xem; không có gì bị sửa. Mở từng hồ sơ để sửa.',
     dataCheckRun: 'Kiểm tra dữ liệu',
     dataCheckRunning: 'Đang kiểm tra...',
     dataCheckNone: 'Không phát hiện gì.',
@@ -749,6 +749,11 @@ export const messages = {
     dataCheckKindParentTooOld: 'Cha/mẹ hơn con trên 70 tuổi',
     dataCheckKindFutureDate: 'Ngày trong tương lai',
     dataCheckKindDuplicateRelationship: 'Quan hệ bị lặp',
+    dataCheckKindMissingBirthYear: 'Thiếu thông tin: chưa có năm sinh',
+    dataCheckKindMissingDeathYear:
+      'Thiếu thông tin: đã mất nhưng thiếu năm mất',
+    dataCheckKindMissingGender: 'Thiếu thông tin: chưa rõ giới tính',
+    dataCheckMissingPerson: '{name}',
     dataCheckDeathBeforeBirth: '{name}: sinh {birth}, mất {death}.',
     dataCheckBornAfterMotherDeath:
       '{child} sinh {birth}, sau khi mẹ {mother} mất ({death}).',
@@ -1878,7 +1883,7 @@ export const messages = {
     lunarRecomputeFailed: 'Could not recompute the dates. Please try again.',
     dataCheckTitle: 'Data check',
     dataCheckDescription:
-      'Looks through the whole tree for impossible dates, common in data imported from GEDCOM or CSV: death before birth, a child born after the mother died, a parent less than 12 or more than 70 years older than the child (only when both birth years are known; adopted children are skipped), birth or death dates in the future, repeated relationships. View only; nothing is changed. Open each profile to fix it.',
+      'Looks through the whole tree for impossible dates, common in data imported from GEDCOM or CSV: death before birth, a child born after the mother died, a parent less than 12 or more than 70 years older than the child (only when both birth years are known; adopted children are skipped), birth or death dates in the future, repeated relationships; and a group of missing information: no birth year, deceased but no death year, gender unknown. View only; nothing is changed. Open each profile to fix it.',
     dataCheckRun: 'Check the data',
     dataCheckRunning: 'Checking...',
     dataCheckNone: 'Nothing found.',
@@ -1892,6 +1897,10 @@ export const messages = {
     dataCheckKindParentTooOld: 'Parent more than 70 years older than child',
     dataCheckKindFutureDate: 'Date in the future',
     dataCheckKindDuplicateRelationship: 'Repeated relationship',
+    dataCheckKindMissingBirthYear: 'Missing info: no birth year',
+    dataCheckKindMissingDeathYear: 'Missing info: deceased but no death year',
+    dataCheckKindMissingGender: 'Missing info: gender unknown',
+    dataCheckMissingPerson: '{name}',
     dataCheckDeathBeforeBirth: '{name}: born {birth}, died {death}.',
     dataCheckBornAfterMotherDeath:
       '{child} was born {birth}, after the mother {mother} died ({death}).',
