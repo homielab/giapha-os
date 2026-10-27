@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Importing a backup, CSV or GEDCOM file now refuses impossible dates (month 13, 31 February, lunar day 31), non-numeric years and negative generation or birth order, naming the member and field, instead of silently saving them and shifting anniversaries and birthdays.
 - The family tree now opens on the earliest ancestor of generation 1 instead of whichever married-in spouse or person happened to be born first.
 - The calendar file (.ics) escapes semicolons in event names, descriptions and locations as RFC 5545 requires, so a name such as "Giỗ cụ; họp họ" is no longer cut short or misread by Google, Apple or Outlook calendars.
 - The ⌘K / Ctrl+K search no longer keeps showing the member list from the first time it was opened: it reloads in the background when the list is older than a minute and right after a member is added, edited, deleted or merged, or a backup is restored (a deleted member no longer opens a 404, a new one is found).

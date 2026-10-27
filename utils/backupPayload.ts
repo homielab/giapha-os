@@ -1,4 +1,5 @@
 import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
+import { isValidSolarDate } from '@/utils/lunarCalendar'
 import {
   findRelationshipIssues,
   type RelationshipLink
@@ -134,6 +135,47 @@ function isShortText(value: unknown, maxLength: number) {
   )
 }
 
+const INTEGER_FIELDS = [
+  'birth_year',
+  'birth_month',
+  'birth_day',
+  'death_year',
+  'death_month',
+  'death_day',
+  'death_lunar_year',
+  'death_lunar_month',
+  'death_lunar_day',
+  'generation',
+  'birth_order'
+] as const
+
+/** Name of the first date/number field of a person record that is invalid. */
+function findInvalidNumberField(row: Record<string, unknown>) {
+  for (const field of INTEGER_FIELDS) {
+    const value = row[field]
+    if (value === null || value === undefined) continue
+    if (typeof value !== 'number' || !Number.isInteger(value)) return field
+    if ((field === 'generation' || field === 'birth_order') && value < 0)
+      return field
+    if (field.endsWith('_month') && (value < 1 || value > 12)) return field
+    if (field.endsWith('_day') && (value < 1 || value > 31)) return field
+    if (field === 'death_lunar_day' && value > 30) return field
+  }
+  for (const prefix of ['birth', 'death']) {
+    const year = row[`${prefix}_year`]
+    const month = row[`${prefix}_month`]
+    const day = row[`${prefix}_day`]
+    if (
+      typeof year === 'number' &&
+      typeof month === 'number' &&
+      typeof day === 'number' &&
+      !isValidSolarDate(year, month, day)
+    )
+      return `${prefix}_day`
+  }
+  return null
+}
+
 export type Translator = (
   key: TranslationKey,
   values?: TranslationValues
@@ -186,6 +228,13 @@ export function validateImportPayload(
     for (const field of ['other_names', 'avatar_url', 'note']) {
       if (!isShortText(row[field], 2000)) return t('fieldTooLong', { field })
     }
+    const badField = findInvalidNumberField(row)
+    if (badField)
+      return t('invalidPersonDate', {
+        name: row.full_name.trim(),
+        id: row.id,
+        field: badField
+      })
   }
 
   for (const relationship of relationships) {

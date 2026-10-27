@@ -379,3 +379,41 @@ describe('validateImportPayload relationship checks', () => {
     expect(validateImportPayload(payload, t)).toBeNull()
   })
 })
+
+describe('validateImportPayload person numbers and dates', () => {
+  const check = (overrides: Record<string, unknown>) =>
+    validateImportPayload(
+      { persons: [person(A, overrides)], relationships: [] },
+      t
+    )
+
+  test.each([
+    [{ birth_month: 13 }, 'birth_month'],
+    [{ birth_year: 1990, birth_month: 2, birth_day: 31 }, 'birth_day'],
+    [{ birth_day: 32 }, 'birth_day'],
+    [{ death_lunar_day: 31 }, 'death_lunar_day'],
+    [{ death_lunar_month: 0 }, 'death_lunar_month'],
+    [{ generation: -1 }, 'generation'],
+    [{ birth_order: -2 }, 'birth_order'],
+    [{ birth_year: 'abc' }, 'birth_year'],
+    [{ death_year: 1990.5 }, 'death_year']
+  ])('rejects %j', (overrides, field) => {
+    const result = check(overrides)
+    expect(result).toContain('invalidPersonDate')
+    expect(result).toContain('Nguyễn Văn An')
+    expect(result).toContain(field)
+  })
+
+  test('accepts valid and null values', () => {
+    expect(
+      check({
+        birth_year: 2000,
+        birth_month: 2,
+        birth_day: 29,
+        death_lunar_day: 30,
+        generation: 0,
+        birth_order: null
+      })
+    ).toBeNull()
+  })
+})

@@ -96,6 +96,8 @@ export const messages = {
     invalidPersonName: 'Tên thành viên không hợp lệ.',
     invalidGender: 'Giới tính không hợp lệ.',
     fieldTooLong: 'Trường {field} quá dài.',
+    invalidPersonDate:
+      'Thành viên "{name}" ({id}) có giá trị không hợp lệ ở trường {field} (ngày/tháng/năm, đời hoặc thứ tự sinh).',
     invalidRelationship: 'Có quan hệ không hợp lệ.',
     invalidRelationshipData: 'Quan hệ chứa dữ liệu không hợp lệ.',
     relationshipNoteTooLong: 'Ghi chú quan hệ quá dài.',
@@ -1257,6 +1259,8 @@ export const messages = {
     invalidPersonName: 'Invalid member name.',
     invalidGender: 'Invalid gender.',
     fieldTooLong: 'The {field} field is too long.',
+    invalidPersonDate:
+      'Member "{name}" ({id}) has an invalid value in the {field} field (date, generation or birth order).',
     invalidRelationship: 'An invalid relationship was found.',
     invalidRelationshipData: 'The relationship contains invalid data.',
     relationshipNoteTooLong: 'The relationship note is too long.',
