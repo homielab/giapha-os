@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Members list: the filter now also offers "Living", "Missing birth year" and one "Generation N" entry per generation in the data, next to the existing ones. Changing the filter returns to the first batch.
 - SEO: the home page carries `WebSite` and the about page `SoftwareApplication` structured data (JSON-LD) so search engines recognise the app as open source family-tree software. Site-level only: no member data, and none on dashboard pages.
 - Contributor and security docs: `CONTRIBUTING.md`, `SECURITY.md` (private vulnerability reporting, never share the service-role key), bug and feature issue forms and a pull request template, linked from both READMEs.
 - Dashboard → Lineage: a "Family book" renders the whole tree as a printable book, generation by generation. A cover shows the most common surname, the print date and a table of contents; each generation starts on its own page and numbers its members. Every member lists other names, solar birth and death dates, the lunar death date, parents, spouses (in-law marked), children in birth order with links to their entries and the note; members without a generation get their own section at the end. Printing is black on white without the app header or footer, like the member profile.

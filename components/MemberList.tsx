@@ -14,6 +14,7 @@ import {
   nextVisibleCount,
   takeBatch
 } from '@/utils/batchedList'
+import { listGenerations, matchesPersonFilter } from '@/utils/memberFilters'
 import { sortPersonsByGeneration, sortPersonsFlat } from '@/utils/memberSorting'
 import { normalizeSearchText } from '@/utils/search'
 
@@ -70,35 +71,14 @@ export default function MemberList({
       const text = searchIndex.get(person.id)
       const matchesSearch = !query || (text?.indexOf(query) ?? -1) !== -1
 
-      let matchesFilter = true
-      switch (filterOption) {
-        case 'male':
-          matchesFilter = person.gender === 'male'
-          break
-        case 'female':
-          matchesFilter = person.gender === 'female'
-          break
-        case 'in_law_female':
-          matchesFilter = person.gender === 'female' && person.is_in_law
-          break
-        case 'in_law_male':
-          matchesFilter = person.gender === 'male' && person.is_in_law
-          break
-        case 'deceased':
-          matchesFilter = person.is_deceased
-          break
-        case 'first_child':
-          matchesFilter = person.birth_order === 1
-          break
-        case 'all':
-        default:
-          matchesFilter = true
-          break
-      }
-
-      return matchesSearch && matchesFilter
+      return matchesSearch && matchesPersonFilter(person, filterOption)
     })
   }, [initialPersons, searchIndex, deferredSearchTerm, deferredFilterOption])
+
+  const generations = useMemo(
+    () => listGenerations(initialPersons),
+    [initialPersons]
+  )
 
   const { parentsOf, spousesOf } = useMemo(() => {
     const pOf = new Map<string, string[]>()
@@ -154,6 +134,7 @@ export default function MemberList({
         searchTerm={searchTerm}
         onSearchTermChange={setSearchTerm}
         filterOption={filterOption}
+        generations={generations}
         onFilterOptionChange={setFilterOption}
         sortOption={sortOption}
         onSortOptionChange={setSortOption}
