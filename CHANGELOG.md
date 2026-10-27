@@ -7,35 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- Family tree, mind map and bubble views now show children linked only to a spouse (for example added from an in-law's page or with the other parent "unknown"); they no longer disappear from every tree.
-- Accessibility: error messages and notices (sign-in, import/export, admin toasts, gallery upload, events, lineage, setup) are now announced by screen readers; a second admin notification is no longer dismissed early by the first one's timer.
-
-### Changed
-
-- Internal: the death-date input logic of the member form (solar/lunar sync and the leap-month flag) is now plain functions in `utils/deathDates.ts` with tests; behaviour is unchanged.
-
-### Fixed
-
-- Importing a backup, CSV or GEDCOM file now refuses impossible dates (month 13, 31 February, lunar day 31), non-numeric years and negative generation or birth order, naming the member and field, instead of silently saving them and shifting anniversaries and birthdays.
-- The family tree now opens on the earliest ancestor of generation 1 instead of whichever married-in spouse or person happened to be born first.
-- The calendar file (.ics) escapes semicolons in event names, descriptions and locations as RFC 5545 requires, so a name such as "Giỗ cụ; họp họ" is no longer cut short or misread by Google, Apple or Outlook calendars.
-- The ⌘K / Ctrl+K search no longer keeps showing the member list from the first time it was opened: it reloads in the background when the list is older than a minute and right after a member is added, edited, deleted or merged, or a backup is restored (a deleted member no longer opens a 404, a new one is found).
-- Member details: clicking one member and then another before the first has loaded (for example on a slow connection) no longer shows the first member in the window, and Edit / View now always act on the member that was clicked last. The relationship list of a member ignores late answers for a previously shown member the same way.
-- An unknown `?view=` value on the members page (for example a mistyped or old link) now opens the list instead of an empty page.
-- The Users page shows an error with a retry button when the user list cannot be loaded (for example before the migrations are applied) instead of an empty list that looks like there are no users.
-- Event cards show the age and the "anniversary no. N" of the occurrence being listed, not of the current year: a birthday on 5 January seen in December shows the age the person turns, and a death anniversary in the 12th lunar month or after the lunar new year counts the right lunar year.
-- Dashboard "Upcoming events" no longer lists birthdays of deceased family members, and on the Events page the "today" / "this week" banner counts only the events actually listed (deceased birthdays are counted only when shown). The .ics export is unchanged.
-- Restoring from a CSV ZIP no longer goes ahead when a file has a row with too few or too many cells or a broken double quote (for example after editing it in Excel): the file is rejected as soon as it is chosen, naming the file and line, before any data is replaced. Blank lines, including rows of only commas, are still skipped.
-- Accessibility: the "Recompute lunar dates" confirmation dialog now closes with Esc (not while changes are being saved), keeps Tab inside and returns focus to the button that opened it. Default avatars and the header logo no longer announce a fixed English "Male"/"Female"/"Logo" next to the person's name, and the photo preview uses the translated label. The sign-in page now has a heading level 1, and dashboard pages have exactly one (the site name in the header is no longer a heading).
-
-### Changed
-
-- Backup and restore: the export card and documentation now explain that JSON, CSV, and GEDCOM backups do not include photos or the `gallery_items` table, and that Supabase Storage buckets `avatars` and `gallery` must be copied separately when moving to a new install.
-- Data page: if the member list for choosing an export root fails to load, an error is shown instead of a silently incomplete list.
-- CI: every push and pull request now also runs `bun run build` and a Docker image build (not pushed), so a broken build no longer slips through.
-
 ### Added
 
 - GEDCOM export now writes generation, birth order and the in-law flag as custom `_GEN`, `_ORDER` and `_INLAW` tags (only when set) and import reads them back, so moving a tree between two installs no longer loses the order of children or the in-law flag. Other programs ignore the tags; files without them import as before.
@@ -70,11 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Internal: the death-date input logic of the member form (solar/lunar sync and the leap-month flag) is now plain functions in `utils/deathDates.ts` with tests; behaviour is unchanged.
+- Backup and restore: the export card and documentation now explain that JSON, CSV, and GEDCOM backups do not include photos or the `gallery_items` table, and that Supabase Storage buckets `avatars` and `gallery` must be copied separately when moving to a new install.
+- Data page: if the member list for choosing an export root fails to load, an error is shown instead of a silently incomplete list.
+- CI: every push and pull request now also runs `bun run build` and a Docker image build (not pushed), so a broken build no longer slips through.
 - Pages no longer download both languages: the server passes only the current language's strings to the browser, removing a 110 KB (34 KB gzip) script from every page; all client scripts together go from 2,777 KB to 2,668 KB (821 KB to 790 KB gzip) in `bun run build`. Switching between Vietnamese and English works as before.
 - Events page and dashboard: only members who have a birthday or a death date (solar or lunar day and month) are loaded, and without their photo link, so large trees send far less data. The events shown are the same.
 - Lint now fails on any warning (`--max-warnings 0`, also in CI); unused imports and variables across the components were removed, no behaviour change.
 - Internal: relationship mutation logic in `utils/relationshipMutations.ts` is split into `utils/relationships/` (`add`, `bulkChildren`, `spouse`, `shared`; each file under 200 lines) with a barrel re-export. Imports and tests are unchanged.
-
 - Internal: GEDCOM import/export in `utils/gedcom.ts` is split into `utils/gedcom/` (`types`, `dates`, `names`, `export`, `import`; each file under 250 lines). Imports from `@/utils/gedcom` and the exported files are unchanged.
 - Internal: the relationship (kinship) logic in `utils/kinshipHelpers.ts` is split into `utils/kinship/` (`types`, `terms`, `graph`, `blood`, `resolve`), with the in-law terms in lookup tables instead of text checks. The terms shown are unchanged; the common-ancestor, deep-generation and in-law cases have more tests.
 - Kinship page: the note about ambiguous terms is now decided by the calculation itself instead of searching the text of the answer, so it also appears for the generic "Họ hàng" result.
@@ -89,6 +63,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Today's lunar date on the dashboard and the lunar death-anniversary label in event lists now say "leap" (nhuận) during a leap lunar month instead of showing the plain month number.
+- Family tree, mind map and bubble views now show children linked only to a spouse (for example added from an in-law's page or with the other parent "unknown"); they no longer disappear from every tree.
+- Accessibility: error messages and notices (sign-in, import/export, admin toasts, gallery upload, events, lineage, setup) are now announced by screen readers; a second admin notification is no longer dismissed early by the first one's timer.
+- Importing a backup, CSV or GEDCOM file now refuses impossible dates (month 13, 31 February, lunar day 31), non-numeric years and negative generation or birth order, naming the member and field, instead of silently saving them and shifting anniversaries and birthdays.
+- The family tree now opens on the earliest ancestor of generation 1 instead of whichever married-in spouse or person happened to be born first.
+- The calendar file (.ics) escapes semicolons in event names, descriptions and locations as RFC 5545 requires, so a name such as "Giỗ cụ; họp họ" is no longer cut short or misread by Google, Apple or Outlook calendars.
+- The ⌘K / Ctrl+K search no longer keeps showing the member list from the first time it was opened: it reloads in the background when the list is older than a minute and right after a member is added, edited, deleted or merged, or a backup is restored (a deleted member no longer opens a 404, a new one is found).
+- Member details: clicking one member and then another before the first has loaded (for example on a slow connection) no longer shows the first member in the window, and Edit / View now always act on the member that was clicked last. The relationship list of a member ignores late answers for a previously shown member the same way.
+- An unknown `?view=` value on the members page (for example a mistyped or old link) now opens the list instead of an empty page.
+- The Users page shows an error with a retry button when the user list cannot be loaded (for example before the migrations are applied) instead of an empty list that looks like there are no users.
+- Event cards show the age and the "anniversary no. N" of the occurrence being listed, not of the current year: a birthday on 5 January seen in December shows the age the person turns, and a death anniversary in the 12th lunar month or after the lunar new year counts the right lunar year.
+- Dashboard "Upcoming events" no longer lists birthdays of deceased family members, and on the Events page the "today" / "this week" banner counts only the events actually listed (deceased birthdays are counted only when shown). The .ics export is unchanged.
+- Restoring from a CSV ZIP no longer goes ahead when a file has a row with too few or too many cells or a broken double quote (for example after editing it in Excel): the file is rejected as soon as it is chosen, naming the file and line, before any data is replaced. Blank lines, including rows of only commas, are still skipped.
+- Accessibility: the "Recompute lunar dates" confirmation dialog now closes with Esc (not while changes are being saved), keeps Tab inside and returns focus to the button that opened it. Default avatars and the header logo no longer announce a fixed English "Male"/"Female"/"Logo" next to the person's name, and the photo preview uses the translated label. The sign-in page now has a heading level 1, and dashboard pages have exactly one (the site name in the header is no longer a heading).
 - Text with the same placeholder twice now fills in both, and a name containing `$&` or `$1` shows exactly as typed instead of being mangled.
 - Phones and tablets: "Add to Home Screen" showed an empty app name because the manifest had no name and no page linked it. The manifest is now generated with the site name, a short name (`SITE_NAME`/`SHORT_NAME`), the dashboard as the start page, the app language and the design's theme colour, with the existing icons; every page links it, and the iOS home-screen icon is declared too. No service worker.
 - Dialogs: Tab and Shift+Tab now stay inside an open dialog instead of reaching the page behind it.
@@ -99,7 +87,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CSV export: cells that start with `=`, `+`, `-` or `@` (a name, note or phone number such as `+84…`) are written with a leading apostrophe so Excel and LibreOffice no longer run them as formulas; importing the CSV removes that apostrophe again, so values come back unchanged.
 - Member form: saving an edit no longer silently overwrites a change someone else saved to the same person in the meantime. The save is refused with "someone else just edited this person" and a Reload button; nothing is written.
 - Member form: when an edit saved the person but a later step (photo upload, private details) failed, saving again no longer reports "someone else changed this person"; the form keeps the new modification time, and a real concurrent edit is still reported.
-
 - Member form: if a new member is saved but the photo or private details then fail to save, the form now switches to editing that member with a clear message, so saving again retries instead of creating the same person twice.
 - Adding a spouse: if the database creates no person (for example the session expired or the account may no longer add members), the form now says so in Vietnamese or English instead of showing an empty error.
 - The upgrade page's version comparison (prerelease and build suffixes, `1.10.0` vs `1.9.0`, invalid strings) now has tests; behaviour is unchanged.
@@ -146,7 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Known issues
 
 - Lunar death dates saved before this change were computed with the Chinese calendar and are not recomputed automatically; in the years where the calendars differ they can be a day or a month off. Admins can review and fix them with the "Recompute lunar death dates" tool. A lunar date typed in by hand (with the solar date derived from it) cannot be told apart, so leave those rows unselected.
-- GEDCOM has no date with a day but no month, or without a year: export keeps only the year, or leaves such a date out. Lunar death dates, in-law flags, birth order, generation and other names are not exported to GEDCOM.
+- GEDCOM has no date with a day but no month, or without a year: export keeps only the year, or leaves such a date out. Lunar dates stay in the file only as a custom `_LUNAR` tag, which other genealogy programs ignore.
 
 ## [2.4.0] - 2026-10-18
 

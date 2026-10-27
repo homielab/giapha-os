@@ -87,7 +87,7 @@ describe('computeEvents: death anniversaries (giỗ)', () => {
     const person = deceased({ death_year: 2025, death_month: 7, death_day: 25 })
     const [event] = deathEvents(person, day(2025, 7, 1))
     expect(event.nextOccurrence).toEqual(day(2025, 7, 25))
-    expect(event.eventDateLabel).toBe('01/06 ÂL')
+    expect(event.eventDateLabel).toBe('01/06 ÂL nhuận')
   })
 
   test('a regular-month death ignores that year’s leap month', () => {

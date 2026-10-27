@@ -207,12 +207,8 @@ export function vnToday(now: Date = new Date()): Date {
 /**
  * Get today's solar and lunar date info for display.
  */
-export function getTodayLunar(t: Translate) {
-  const now = new Date()
-  const vnTimeStr = now.toLocaleString('en-US', {
-    timeZone: 'Asia/Ho_Chi_Minh'
-  })
-  const vnDate = new Date(vnTimeStr)
+export function getTodayLunar(t: Translate, now: Date = new Date()) {
+  const vnDate = vnToday(now)
 
   const lunar = solarToLunar(
     vnDate.getFullYear(),
@@ -230,6 +226,8 @@ export function getTodayLunar(t: Translate) {
     lunarDay: lunar.day,
     lunarMonth: lunar.month,
     lunarYear: lunarYearName(lunar.year),
-    lunarDayStr: t('lunarDayMonth', { day: lunar.day, month: lunar.month })
+    lunarDayStr:
+      t('lunarDayMonth', { day: lunar.day, month: lunar.month }) +
+      (lunar.leap ? t('leapMonth') : '')
   }
 }

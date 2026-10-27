@@ -170,4 +170,20 @@ describe('getTodayLunar', () => {
     expect(enResult.solarStr).not.toMatch(/ngày|tháng|năm/)
     expect(enResult.lunarDayStr).not.toMatch(/ngày|tháng|năm/)
   })
+
+  test('adds the leap-month suffix during a leap month', () => {
+    // 2025-08-01 12:00 in Vietnam falls in leap lunar month 6.
+    const now = new Date('2025-08-01T05:00:00Z')
+    expect(getTodayLunar(vi, now).lunarDayStr).toEndWith(' nhuận')
+    expect(getTodayLunar(en, now).lunarDayStr).toEndWith(' leap')
+    expect(
+      getTodayLunar(vi, new Date('2025-05-01T05:00:00Z')).lunarDayStr
+    ).not.toContain('nhuận')
+  })
+
+  test('uses the Vietnam date near midnight UTC', () => {
+    // 2025-07-24T18:00Z is already 25 July (01:00) in Vietnam.
+    const result = getTodayLunar(vi, new Date('2025-07-24T18:00:00Z'))
+    expect(result.solarStr).toContain('25')
+  })
 })

@@ -197,7 +197,7 @@ export function computeEvents(
         type: 'death_anniversary',
         nextOccurrence: next,
         daysUntil,
-        eventDateLabel: `${lDay.toString().padStart(2, '0')}/${lMonth.toString().padStart(2, '0')} ÂL`,
+        eventDateLabel: `${lDay.toString().padStart(2, '0')}/${lMonth.toString().padStart(2, '0')} ÂL${leap ? ' nhuận' : ''}`,
         originYear: (p.death_lunar_year ?? p.death_year) || null,
         originMonth: p.death_lunar_month ?? p.death_month,
         originDay: p.death_lunar_day ?? p.death_day,
