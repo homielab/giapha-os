@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Exporting a large tree as PNG or PDF no longer fails with a generic error: wide or tall trees are now rendered at a lower resolution that fits the browser's canvas limits (Safari caps the area at about 16.7 million pixels, phones cap each side at 8192 pixels), and a tree too large for any canvas shows a clear message suggesting a smaller root or a computer.
 - Sign-in no longer drops out at random: when the session was refreshed on a request that redirects (opening the dashboard while signed out, the login page while signed in, or the setup redirect), the new session cookies were lost, which could sign the user out again or loop between pages. Redirects now keep them.
 - Adding a parent or child link that already exists, or a third biological parent (or a second mother or father) to a child, now shows a clear message instead of a raw database error, also when adding children in bulk. Dashboard → Backup & Restore → "Data check" lists children who already have more than two biological parents (or two of the same gender) in imported data. Adopted links are not counted.
 - Root selector (tree root and export root): typing "nguyen" now finds "Nguyễn" and results are ranked like the other pickers, also by birth year; the list works with the keyboard (arrow keys, Enter, Esc) and is announced to screen readers.

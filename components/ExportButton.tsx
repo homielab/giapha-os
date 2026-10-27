@@ -13,6 +13,11 @@ import { useEffect, useRef, useState } from 'react'
 
 import { useI18n } from '@/lib/i18n/useI18n'
 import {
+  canvasLimitsFor,
+  ExportTooLargeError,
+  safePixelRatio
+} from '@/utils/exportScale'
+import {
   chooseTileScale,
   PDF_OVERLAP_PT,
   PDF_PAGE_SIZES_PT,
@@ -73,12 +78,16 @@ export default function ExportButton() {
     return { height, width }
   }
 
-  // Browsers cap canvas dimensions (Safari iOS ~4096-8192px, desktop ~16384px).
-  // Scale pixelRatio down for large trees so html-to-image doesn't throw.
-  const getSafePixelRatio = (width: number, height: number) => {
-    const MAX_CANVAS_DIMENSION = 8192
-    const longestSide = Math.max(width, height, 1)
-    return Math.max(1, Math.min(2, MAX_CANVAS_DIMENSION / longestSide))
+  // Browsers cap canvas size (Safari ~16.7M px area, mobile sides ~8192px),
+  // so large trees are rasterized below 1x instead of failing in html-to-image.
+  const getPixelRatio = (width: number, height: number) => {
+    const { ratio, tooLarge } = safePixelRatio(
+      width,
+      height,
+      canvasLimitsFor(navigator.userAgent, navigator.maxTouchPoints)
+    )
+    if (tooLarge) throw new ExportTooLargeError()
+    return ratio
   }
 
   const downloadDataUrl = (url: string, filename: string) => {
@@ -100,13 +109,14 @@ export default function ExportButton() {
 
   const handleExportPng = async (element: HTMLElement) => {
     const { height, width } = getExportSize(element)
+    const pixelRatio = getPixelRatio(width, height)
     // Loaded on click so the tree views don't ship the export libraries.
     const { toPng } = await import('html-to-image')
     const url = await toPng(element, {
       backgroundColor: '#f5f5f4',
       cacheBust: true,
       height,
-      pixelRatio: getSafePixelRatio(width, height),
+      pixelRatio,
       style: {
         height: `${height}px`,
         transform: 'none',
@@ -126,7 +136,7 @@ export default function ExportButton() {
     format: PdfPageFormat
   ) => {
     const { height: cssHeight, width: cssWidth } = getExportSize(element)
-    const pixelRatio = getSafePixelRatio(cssWidth, cssHeight)
+    const pixelRatio = getPixelRatio(cssWidth, cssHeight)
     const [{ toPng }, { jsPDF }] = await Promise.all([
       import('html-to-image'),
       import('jspdf')
@@ -272,7 +282,9 @@ export default function ExportButton() {
       }
     } catch (err) {
       console.error('Export error:', err)
-      setError(t('exportError'))
+      setError(
+        t(err instanceof ExportTooLargeError ? 'exportTooLarge' : 'exportError')
+      )
       if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current)
       errorTimeoutRef.current = setTimeout(() => setError(null), 5000)
     } finally {

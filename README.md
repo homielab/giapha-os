@@ -31,7 +31,7 @@ Phù hợp với người Việt Nam.
 ## Các tính năng chính
 
 - **Sơ đồ trực quan**: Xem gia phả dạng Cây (Tree), Sơ đồ tư duy (Mindmap) và Bong bóng (Bubble). Trên cây: kéo, Ctrl/⌘ + cuộn chuột hoặc chụm hai ngón (pinch) để phóng to/thu nhỏ. Dùng được bằng bàn phím: Tab vào khung cây rồi bấm `+`/`-` để phóng to/thu nhỏ, `0` để về mặc định, phím mũi tên để cuộn; ở Bong bóng, Tab qua từng gia đình và bấm Enter hoặc Space để chọn.
-- **Xuất ảnh và PDF**: Xuất cây ra ảnh, PDF một trang hoặc PDF nhiều trang A4/A3 ngang (có lề chồng để dán ghép và nhãn "hàng,cột" trên từng tờ).
+- **Xuất ảnh và PDF**: Xuất cây ra ảnh, PDF một trang hoặc PDF nhiều trang A4/A3 ngang (có lề chồng để dán ghép và nhãn "hàng,cột" trên từng tờ). Cây lớn được vẽ ở độ phân giải thấp hơn cho vừa giới hạn canvas của trình duyệt; cây quá lớn sẽ báo chọn gốc nhỏ hơn.
 - **Tìm danh xưng**: Tự động xác định cách gọi tên (Bác, Chú, Cô, Dì...) chính xác.
 - **Quản lý thành viên**: Lưu trữ thông tin, avatar và sắp xếp thứ tự nhánh dòng họ; tìm không dấu (cả ô chọn người ở trang Quan hệ), chọn bằng bàn phím (mũi tên, Enter, Esc); ⌘/Ctrl + K ở mọi trang Dashboard để tìm nhanh một thành viên.
 - **Quản lý quan hệ**: Quản lý các mối quan hệ trong gia phả (hỗ trợ các trường hợp đặc biệt như đa thê, đa phu,...).

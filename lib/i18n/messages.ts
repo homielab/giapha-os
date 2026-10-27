@@ -511,6 +511,8 @@ export const messages = {
     saveAsPdfA3: 'PDF nhiều trang A3 ngang',
     pdfPageLabel: 'Trang',
     exportError: 'Đã xảy ra lỗi khi xuất file. Vui lòng thử lại.',
+    exportTooLarge:
+      'Cây quá lớn để xuất trên thiết bị này. Hãy chọn gốc nhỏ hơn (xuất từng nhánh) hoặc xuất trên máy tính.',
     hidePhoto: 'Ẩn ảnh',
     showPhoto: 'Hiện ảnh',
     searchMembers: 'Tìm kiếm thành viên...',
@@ -1701,6 +1703,8 @@ export const messages = {
     saveAsPdfA3: 'PDF, multi-page A3 landscape',
     pdfPageLabel: 'Page',
     exportError: 'An error occurred while exporting. Please try again.',
+    exportTooLarge:
+      'The tree is too large to export on this device. Pick a smaller root (export one branch at a time) or export on a computer.',
     hidePhoto: 'Hide photo',
     showPhoto: 'Show photo',
     searchMembers: 'Search members...',
