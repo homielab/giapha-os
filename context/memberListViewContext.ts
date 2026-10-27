@@ -2,7 +2,7 @@
 
 import { createContext } from 'react'
 
-import { ViewMode } from '@/components/ViewToggle'
+import type { ViewMode } from '@/utils/viewMode'
 
 export interface MemberListViewState {
   memberModalId: string | null

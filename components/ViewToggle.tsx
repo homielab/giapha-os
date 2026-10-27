@@ -5,8 +5,7 @@ import { Circle, List, ListTree, Network } from 'lucide-react'
 
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
-
-export type ViewMode = 'list' | 'tree' | 'mindmap' | 'bubble'
+import type { ViewMode } from '@/utils/viewMode'
 
 export default function ViewToggle() {
   const { t } = useI18n()

@@ -330,6 +330,8 @@ export const messages = {
     galleryDescriptionShort: 'Lưu giữ và chia sẻ hình ảnh, kỷ niệm dòng họ',
     aboutDescriptionShort: 'Thông tin về ứng dụng và đội ngũ phát triển',
     manageUsersDescription: 'Phê duyệt tài khoản và phân quyền',
+    manageUsersLoadError:
+      'Không tải được danh sách người dùng. Nếu vừa cập nhật mã nguồn, hãy chạy migration ở trang Nâng cấp hệ thống (/dashboard/upgrade) rồi thử lại.',
     lineageDescription: 'Sắp xếp và xem cấu trúc hệ thống',
     backupDescriptionShort: 'Xuất/Nhập dữ liệu toàn hệ thống',
     upgradeDescriptionShort: 'Kiểm tra và đồng bộ source code, database',
@@ -1493,6 +1495,8 @@ export const messages = {
     galleryDescriptionShort: 'Preserve and share family photos and memories',
     aboutDescriptionShort: 'Information about the app and development team',
     manageUsersDescription: 'Approve accounts and manage permissions',
+    manageUsersLoadError:
+      "Couldn't load the user list. If you just updated the code, run the migrations on the System upgrade page (/dashboard/upgrade), then try again.",
     lineageDescription: 'Arrange and view the system structure',
     backupDescriptionShort: 'Export/import all system data',
     upgradeDescriptionShort: 'Check and synchronize source code and database',

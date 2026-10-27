@@ -3,7 +3,7 @@ import { Suspense } from 'react'
 
 import MembersViews from '@/components/MembersViews'
 import MemberDetailModal from '@/components/modal/MemberDetailModal'
-import ViewToggle, { ViewMode } from '@/components/ViewToggle'
+import ViewToggle from '@/components/ViewToggle'
 import { AvatarUrlProvider } from '@/context/AvatarUrlContext'
 import { MemberListProvider } from '@/context/MemberListContext'
 import { getServerTranslations } from '@/lib/i18n/server'
@@ -16,6 +16,7 @@ import {
 } from '@/utils/personColumns'
 import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
+import { parseViewMode } from '@/utils/viewMode'
 
 interface PageProps {
   searchParams: Promise<{ view?: string; rootId?: string; avatar?: string }>
@@ -28,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function FamilyTreePage({ searchParams }: PageProps) {
   const { view, rootId, avatar } = await searchParams
-  const initialView = view as ViewMode | undefined
+  const initialView = view === undefined ? undefined : parseViewMode(view)
   const initialShowAvatar = avatar !== 'hide'
 
   const profile = await getProfile()

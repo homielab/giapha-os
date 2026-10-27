@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- An unknown `?view=` value on the members page (for example a mistyped or old link) now opens the list instead of an empty page.
+- The Users page shows an error with a retry button when the user list cannot be loaded (for example before the migrations are applied) instead of an empty list that looks like there are no users.
 - Event cards show the age and the "anniversary no. N" of the occurrence being listed, not of the current year: a birthday on 5 January seen in December shows the age the person turns, and a death anniversary in the 12th lunar month or after the lunar new year counts the right lunar year.
 - Dashboard "Upcoming events" no longer lists birthdays of deceased family members, and on the Events page the "today" / "this week" banner counts only the events actually listed (deceased birthdays are counted only when shown). The .ics export is unchanged.
 - Restoring from a CSV ZIP no longer goes ahead when a file has a row with too few or too many cells or a broken double quote (for example after editing it in Excel): the file is rejected as soon as it is chosen, naming the file and line, before any data is replaced. Blank lines, including rows of only commas, are still skipped.

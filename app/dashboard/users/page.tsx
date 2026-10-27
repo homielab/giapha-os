@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 import AdminUserList from '@/components/AdminUserList'
@@ -28,11 +29,13 @@ export default async function AdminUsersPage() {
   // Fetch users via RPC
   const { data: users, error } = await supabase.rpc('get_admin_users')
 
+  // An empty list would look like "no users" (e.g. migration not applied yet),
+  // so show the error with a retry instead.
   if (error) {
     console.error('Error fetching users:', error)
   }
 
-  const typedUsers = (users as AdminUserData[]) || []
+  const typedUsers = (users ?? []) as AdminUserData[]
 
   return (
     <main className='relative flex w-full flex-1 flex-col overflow-auto bg-stone-50/50 pt-8'>
@@ -49,7 +52,18 @@ export default async function AdminUsersPage() {
             </p>
           </div>
         </div>
-        <AdminUserList initialUsers={typedUsers} currentUserId={profile.id} />
+        {error ? (
+          <div
+            role='alert'
+            className='flex flex-col gap-3 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600 sm:flex-row sm:items-center sm:justify-between'>
+            <span>{t('manageUsersLoadError')}</span>
+            <Link href='/dashboard/users' className='btn shrink-0'>
+              {t('tryAgain')}
+            </Link>
+          </div>
+        ) : (
+          <AdminUserList initialUsers={typedUsers} currentUserId={profile.id} />
+        )}
       </div>
     </main>
   )

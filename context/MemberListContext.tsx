@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { ViewMode } from '@/components/ViewToggle'
+import { parseViewMode, type ViewMode } from '@/utils/viewMode'
 
 import { MemberListContext } from './memberListViewContext'
 
@@ -40,7 +40,7 @@ export function MemberListProvider({
     () => initialShowAvatar ?? searchParams.get('avatar') !== 'hide'
   )
   const [view, setViewState] = useState<ViewMode>(
-    () => initialView ?? (searchParams.get('view') as ViewMode | null) ?? 'list'
+    () => initialView ?? parseViewMode(searchParams.get('view'))
   )
   const [rootId, setRootIdState] = useState<string | null>(
     () => initialRootId ?? searchParams.get('rootId') ?? null
@@ -56,8 +56,8 @@ export function MemberListProvider({
       const avatarParam = sp.get('avatar')
       setShowAvatar(avatarParam !== 'hide')
 
-      const viewParam = sp.get('view') as ViewMode
-      if (viewParam) setViewState(viewParam)
+      const viewParam = sp.get('view')
+      if (viewParam) setViewState(parseViewMode(viewParam))
 
       const rootIdParam = sp.get('rootId')
       setRootIdState(rootIdParam)
