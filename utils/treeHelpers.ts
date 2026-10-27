@@ -19,6 +19,15 @@ export interface TreeFilterOptions {
   hideFemales: boolean
 }
 
+function compareSiblings(a: Person, b: Person): number {
+  const aOrder = a.birth_order ?? Infinity
+  const bOrder = b.birth_order ?? Infinity
+  if (aOrder !== bOrder) return aOrder - bOrder
+  const aYear = a.birth_year ?? Infinity
+  const bYear = b.birth_year ?? Infinity
+  return aYear - bYear
+}
+
 /**
  * Xây dựng danh sách kề (adjacency lists) cho vợ/chồng và con cái từ dữ liệu thô.
  * Giúp tối ưu truy vấn từ O(N) xuống O(1).
@@ -49,17 +58,51 @@ export function buildAdjacencyLists(
 
   // Sắp xếp con cái theo thứ tự sinh hoặc năm sinh
   children.forEach((childArray) => {
-    childArray.sort((a, b) => {
-      const aOrder = a.birth_order ?? Infinity
-      const bOrder = b.birth_order ?? Infinity
-      if (aOrder !== bOrder) return aOrder - bOrder
-      const aYear = a.birth_year ?? Infinity
-      const bYear = b.birth_year ?? Infinity
-      return aYear - bYear
-    })
+    childArray.sort(compareSiblings)
   })
 
   return { spousesByPersonId: spouses, childrenByPersonId: children }
+}
+
+/**
+ * Children shown under a tree node: the person's own children plus the
+ * children linked only to one of the given spouses (the spouse is drawn as a
+ * card inside the node, so their children would otherwise never be reached).
+ * Deduplicated by id; sorted by birth order, then birth year.
+ */
+export function getNodeChildren(
+  personId: string,
+  adj: AdjacencyLists,
+  spouses: SpouseData[]
+): Person[] {
+  const own = adj.childrenByPersonId.get(personId) || []
+  const seen = new Set(own.map((c) => c.id))
+  const extra: Person[] = []
+  spouses.forEach((s) => {
+    ;(adj.childrenByPersonId.get(s.person.id) || []).forEach((c) => {
+      if (seen.has(c.id) || c.id === personId) return
+      seen.add(c.id)
+      extra.push(c)
+    })
+  })
+  if (extra.length === 0) return own
+  return [...own, ...extra].sort(compareSiblings)
+}
+
+/** Children per person including the children linked only to a spouse. */
+export function buildNodeChildrenMap(
+  adj: AdjacencyLists
+): Map<string, Person[]> {
+  const map = new Map<string, Person[]>()
+  const ids = new Set([
+    ...adj.childrenByPersonId.keys(),
+    ...adj.spousesByPersonId.keys()
+  ])
+  ids.forEach((id) => {
+    const list = getNodeChildren(id, adj, adj.spousesByPersonId.get(id) || [])
+    if (list.length > 0) map.set(id, list)
+  })
+  return map
 }
 
 /**
@@ -89,7 +132,7 @@ export function getFilteredTreeData(
     return true
   })
 
-  let childrenList = adj.childrenByPersonId.get(personId) || []
+  let childrenList = getNodeChildren(personId, adj, spousesList)
   childrenList = childrenList.filter((c) => {
     if (hideDaughters && c.gender === 'female') return false
     if (hideSons && c.gender === 'male') return false

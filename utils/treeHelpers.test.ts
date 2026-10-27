@@ -4,6 +4,7 @@ import { Person, Relationship } from '@/types'
 
 import {
   buildAdjacencyLists,
+  buildNodeChildrenMap,
   computeAutoCollapsed,
   getFilteredTreeData,
   TreeFilterOptions
@@ -117,6 +118,60 @@ describe('getFilteredTreeData', () => {
     const data = getFilteredTreeData('late', personsMap, adj, noFilters)
     expect(data.spouses).toEqual([])
     expect(data.children).toEqual([])
+  })
+})
+
+describe('children linked only to a spouse', () => {
+  const people = [
+    person('p', 'male'),
+    person('s', 'female'),
+    person('both', 'male', { birth_order: 1 }),
+    person('onlyS', 'female', { birth_order: 2 }),
+    person('onlyP', 'male', { birth_order: 3 })
+  ]
+  const map = new Map(people.map((x) => [x.id, x]))
+  const adj = buildAdjacencyLists(
+    [
+      rel('marriage', 'p', 's'),
+      rel('biological_child', 'p', 'both'),
+      rel('biological_child', 's', 'both'),
+      rel('biological_child', 's', 'onlyS'),
+      rel('biological_child', 'p', 'onlyP')
+    ],
+    map
+  )
+
+  test('are listed under the node, once, in birth order', () => {
+    const data = getFilteredTreeData('p', map, adj, noFilters)
+    expect(data.children.map((c) => c.id)).toEqual(['both', 'onlyS', 'onlyP'])
+  })
+
+  test('hide filters still apply', () => {
+    const data = getFilteredTreeData('p', map, adj, {
+      ...noFilters,
+      hideDaughters: true
+    })
+    expect(data.children.map((c) => c.id)).toEqual(['both', 'onlyP'])
+  })
+
+  test('are dropped with a hidden spouse', () => {
+    const data = getFilteredTreeData('p', map, adj, {
+      ...noFilters,
+      hideDaughtersInLaw: true
+    })
+    expect(data.children.map((c) => c.id)).toEqual(['both', 'onlyP'])
+  })
+
+  test('buildNodeChildrenMap merges spouse children for auto-collapse', () => {
+    const merged = buildNodeChildrenMap(adj)
+    expect(merged.get('p')?.map((c) => c.id)).toEqual([
+      'both',
+      'onlyS',
+      'onlyP'
+    ])
+    expect([...computeAutoCollapsed([{ id: 'p' }], merged, 1)].sort()).toEqual(
+      []
+    )
   })
 })
 

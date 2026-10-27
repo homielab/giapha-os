@@ -17,6 +17,7 @@ import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
 import {
   buildAdjacencyLists,
+  buildNodeChildrenMap,
   computeAutoCollapsed,
   equalizeNodeHeights,
   getFilteredTreeData
@@ -129,7 +130,7 @@ export default function FamilyTree({
   // tree before collapsing it.
   const autoCollapsed = useMemo(
     () =>
-      computeAutoCollapsed(roots, adj.childrenByPersonId, autoCollapseLevel),
+      computeAutoCollapsed(roots, buildNodeChildrenMap(adj), autoCollapseLevel),
     [roots, adj, autoCollapseLevel]
   )
 

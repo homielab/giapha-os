@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Family tree, mind map and bubble views now show children linked only to a spouse (for example added from an in-law's page or with the other parent "unknown"); they no longer disappear from every tree.
 - Accessibility: error messages and notices (sign-in, import/export, admin toasts, gallery upload, events, lineage, setup) are now announced by screen readers; a second admin notification is no longer dismissed early by the first one's timer.
 
 ### Changed
