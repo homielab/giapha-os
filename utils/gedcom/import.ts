@@ -71,6 +71,9 @@ export function parseGedcom(gedcom: string): {
     let note = ''
     let deathLunar: { day: number; month: number; year: number } | null = null
     let deathLunarLeap = false
+    let generation: number | null = null
+    let birthOrder: number | null = null
+    let isInLaw = false
     const otherNames: string[] = []
     const rangeNotes: string[] = []
 
@@ -107,6 +110,12 @@ export function parseGedcom(gedcom: string): {
           is_deceased = val.trim().length === 0 || val === 'Y'
         } else if (tag === 'NOTE') {
           note = val
+        } else if (tag === '_GEN' || tag === '_ORDER') {
+          const n = /^\d+$/.test(val) ? parseInt(val) : null
+          if (tag === '_GEN') generation = n
+          else birthOrder = n
+        } else if (tag === '_INLAW') {
+          isInLaw = val.toUpperCase() === 'Y'
         }
       } else if (level === 2) {
         if (currentTag === 'NAME' && tag === 'SURN') {
@@ -168,9 +177,9 @@ export function parseGedcom(gedcom: string): {
       death_lunar_year: deathLunar?.year ?? null,
       ...(deathLunar && deathLunarLeap ? { death_lunar_leap: true } : {}),
       other_names: otherNames.length > 0 ? otherNames.join(', ') : null,
-      is_in_law: false,
-      birth_order: null,
-      generation: null,
+      is_in_law: isInLaw,
+      birth_order: birthOrder,
+      generation,
       avatar_url: null,
       note: note.length > 0 ? note : null
     })

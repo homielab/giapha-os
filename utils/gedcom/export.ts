@@ -188,6 +188,12 @@ export function exportToGedcom(data: {
       }
     }
 
+    // Custom tags (valid in GEDCOM 5.5.1 and 7.0, other programs ignore them):
+    // generation, birth order and the in-law flag, only when set.
+    if (person.generation != null) gedcom += `1 _GEN ${person.generation}\n`
+    if (person.birth_order != null) gedcom += `1 _ORDER ${person.birth_order}\n`
+    if (person.is_in_law) gedcom += '1 _INLAW Y\n'
+
     // Other names
     for (const other of splitOtherNames(person.other_names)) {
       gedcom += `1 NAME ${other}\n2 TYPE aka\n`

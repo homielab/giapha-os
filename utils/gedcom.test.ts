@@ -643,4 +643,63 @@ describe('GEDCOM other names and lunar death date', () => {
     expect(lunar('40 6 1999').death_lunar_day).toBeNull()
     expect(lunar('abc').death_lunar_month).toBeNull()
   })
+
+  test('round-trips generation, birth order and the in-law flag', () => {
+    const ged = exportToGedcom({
+      persons: [
+        person('a', 'male', {
+          full_name: 'Lê Văn An',
+          generation: 3,
+          birth_order: 2,
+          is_in_law: true
+        }),
+        person('b', 'female', {
+          full_name: 'Lê Thị Bé',
+          generation: 0,
+          birth_order: 0
+        }),
+        person('c', 'male', { full_name: 'Lê Văn Cả' })
+      ],
+      relationships: []
+    })
+    expect(ged).toContain('1 _GEN 3\n1 _ORDER 2\n1 _INLAW Y\n')
+    expect(ged.match(/_INLAW/g)).toHaveLength(1)
+    expect(ged.match(/_GEN/g)).toHaveLength(2)
+    const { persons } = parseGedcom(ged)
+    expect(persons[0]).toMatchObject({
+      generation: 3,
+      birth_order: 2,
+      is_in_law: true
+    })
+    expect(persons[1]).toMatchObject({
+      generation: 0,
+      birth_order: 0,
+      is_in_law: false
+    })
+    expect(persons[2]).toMatchObject({
+      generation: null,
+      birth_order: null,
+      is_in_law: false
+    })
+  })
+
+  test('files without the custom tags import as before; bad values are ignored', () => {
+    const [plain, bad] = parseGedcom(
+      [
+        '0 @I1@ INDI',
+        '1 NAME An',
+        '1 _MYTAG foo',
+        '0 @I2@ INDI',
+        '1 NAME Bé',
+        '1 _GEN x',
+        '1 _ORDER -1',
+        '1 _INLAW N'
+      ].join('\n')
+    ).persons
+    for (const p of [plain, bad]) {
+      expect(p.generation).toBeNull()
+      expect(p.birth_order).toBeNull()
+      expect(p.is_in_law).toBe(false)
+    }
+  })
 })

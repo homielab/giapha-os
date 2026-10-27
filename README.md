@@ -79,7 +79,8 @@ Xuất/nhập GEDCOM (7.0) để mở gia phả trong Gramps, MyHeritage… ho�
 - **Tên khác**: mỗi tên trong `other_names` (cách nhau dấu phẩy hoặc chấm phẩy) xuất thành một `1 NAME` kèm `2 TYPE aka`; khi nhập, các `NAME` từ thứ hai trở đi nối lại thành tên khác.
 - **Ngày giỗ âm lịch**: GEDCOM không có âm lịch nên ngày mất âm lịch ghi bằng tag riêng `2 _LUNAR <ngày> <tháng> <năm> [LEAP]` dưới `1 DEAT`, và được đọc lại khi nhập. Chương trình khác bỏ qua tag này. Cờ `LEAP` chỉ có trong file GEDCOM (CSDL không lưu tháng nhuận).
 - **Ghi chú dài và ngày khoảng**: nhập đọc cả `CONC` (nối liền, không xuống dòng) lẫn `CONT`, nên ghi chú dài từ MyHeritage, Ancestry không bị cắt. `BET a AND b`, `FROM a TO b` lấy ngày đầu và ghi nguyên văn vào cuối ghi chú (`BIRT: BET 1850 AND 1855`); `@#DJULIAN@` và các tiền tố ABT/EST/AFT/BEF/CAL bị bỏ qua.
-- Không xuất: dâu/rể (`is_in_law`), thứ tự sinh, đời, ảnh đại diện.
+- **Đời, thứ tự sinh, dâu/rể**: ghi bằng tag riêng `1 _GEN <số>`, `1 _ORDER <số>`, `1 _INLAW Y` dưới mỗi người, chỉ khi có giá trị, và được đọc lại khi nhập (chuyển gia phả giữa hai bản cài không mất thứ tự con và cờ dâu/rể). Chương trình khác bỏ qua các tag này; file không có tag nhập như trước.
+- Không xuất: ảnh đại diện.
 
 ### Kiểm tra dữ liệu
 

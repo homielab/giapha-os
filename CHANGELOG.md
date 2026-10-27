@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- GEDCOM export now writes generation, birth order and the in-law flag as custom `_GEN`, `_ORDER` and `_INLAW` tags (only when set) and import reads them back, so moving a tree between two installs no longer loses the order of children or the in-law flag. Other programs ignore the tags; files without them import as before.
 - Members list: the filter now also offers "Living", "Missing birth year" and one "Generation N" entry per generation in the data, next to the existing ones. Changing the filter returns to the first batch.
 - SEO: the home page carries `WebSite` and the about page `SoftwareApplication` structured data (JSON-LD) so search engines recognise the app as open source family-tree software. Site-level only: no member data, and none on dashboard pages.
 - Contributor and security docs: `CONTRIBUTING.md`, `SECURITY.md` (private vulnerability reporting, never share the service-role key), bug and feature issue forms and a pull request template, linked from both READMEs.

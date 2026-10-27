@@ -79,7 +79,8 @@ Export and import GEDCOM (7.0) to open the family tree in Gramps, MyHeritage… 
 - **Other names**: each name in `other_names` (separated by commas or semicolons) is written as its own `1 NAME` with `2 TYPE aka`; on import, the second and later `NAME` records are joined back into other names.
 - **Lunar death anniversary**: GEDCOM has no lunar calendar, so the lunar date of death is written with the custom tag `2 _LUNAR <day> <month> <year> [LEAP]` under `1 DEAT` and read back on import. Other programs ignore it. The `LEAP` flag exists only in GEDCOM files (the database does not store leap months).
 - **Long notes and date ranges**: import reads both `CONC` (joined without a line break) and `CONT`, so long notes from MyHeritage or Ancestry are no longer cut. `BET a AND b` and `FROM a TO b` keep the first date and append the original text to the note (`BIRT: BET 1850 AND 1855`); `@#DJULIAN@` escapes and ABT/EST/AFT/BEF/CAL prefixes are ignored.
-- Not exported: in-law flag (`is_in_law`), birth order, generation, profile photo.
+- **Generation, birth order, in-law flag**: written with the custom tags `1 _GEN <number>`, `1 _ORDER <number>`, `1 _INLAW Y` under each person, only when set, and read back on import (moving a tree between two installs keeps the order of children and the in-law flag). Other programs ignore these tags; files without them import as before.
+- Not exported: profile photo.
 
 ### Data checks
 
