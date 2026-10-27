@@ -331,15 +331,28 @@ describe('mergePersons', () => {
   })
 
   test('asks for an upgrade when the function is missing', async () => {
-    respond = () => ({ error: { message: 'none', code: 'PGRST202' } })
+    respond = (call) =>
+      call.op === 'rpc'
+        ? { error: { message: 'none', code: 'PGRST202' } }
+        : { data: { avatar_url: null } }
     expect(await mergePersons(A, B)).toEqual({ error: vi.mergeUpgradeDatabase })
     expect(revalidatePath).not.toHaveBeenCalled()
   })
 
   test('reports a failed merge without refreshing the pages', async () => {
-    respond = () => ({ error: { message: 'boom', code: 'XX000' } })
+    respond = (call) =>
+      call.op === 'rpc'
+        ? { error: { message: 'boom', code: 'XX000' } }
+        : { data: { avatar_url: 'a.jpg' } }
     expect(await mergePersons(A, B)).toEqual({ error: vi.mergeFailed })
     expect(revalidatePath).not.toHaveBeenCalled()
+    expect(calls.map((c) => c.op)).toEqual(['select', 'rpc'])
+  })
+
+  test('does not merge when the dropped member cannot be read', async () => {
+    respond = () => ({ error: { message: 'boom' } })
+    expect(await mergePersons(A, B)).toEqual({ error: vi.mergeFailed })
+    expect(calls.map((c) => c.op)).toEqual(['select'])
   })
 
   test('merges through the merge_persons function', async () => {
@@ -349,10 +362,12 @@ describe('mergePersons', () => {
       details_fields_filled: 0,
       person_fields_filled: 2
     }
-    respond = () => ({ data: summary })
+    respond = (call) =>
+      call.op === 'rpc' ? { data: summary } : { data: { avatar_url: null } }
     expect(await mergePersons(A, B)).toEqual({ summary })
-    expect(calls).toHaveLength(1)
-    expect(calls[0].payload).toEqual({ keep_id: A, drop_id: B })
+    expect(calls.map((c) => c.op)).toEqual(['select', 'rpc'])
+    expect(calls[0].filters).toEqual([['eq', 'id', B]])
+    expect(calls[1].payload).toEqual({ keep_id: A, drop_id: B })
     expect(revalidatePath).toHaveBeenCalledWith('/dashboard/members')
   })
 
@@ -419,5 +434,98 @@ describe('runPendingMigrations', () => {
     expect(result).toMatchObject({ success: true })
     expect((result as { applied: string[] }).applied[0]).toBe('docs/schema.sql')
     expect(databaseEnd).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('mergePersons avatar cleanup', () => {
+  const summary = {
+    relationships_moved: 1,
+    relationships_dropped: 0,
+    details_fields_filled: 0,
+    person_fields_filled: 0
+  }
+  const originalError = console.error
+  let logged: unknown[][] = []
+
+  /** Answers the dropped-row read, the RPC and the reference check. */
+  function scenario(options: {
+    dropAvatar: string | null
+    stillReferenced?: boolean
+    lookupError?: boolean
+    removeError?: boolean
+  }) {
+    respond = (call) => {
+      if (call.op === 'rpc') return { data: summary }
+      if (call.op === 'remove')
+        return options.removeError ? { error: { message: 'storage down' } } : {}
+      if (call.filters.some(([op]) => op === 'like'))
+        return options.lookupError
+          ? { error: { message: 'timeout' } }
+          : { data: options.stillReferenced ? [{ id: A }] : [] }
+      return { data: { avatar_url: options.dropAvatar } }
+    }
+  }
+  const removals = () => calls.filter((c) => c.op === 'remove')
+
+  beforeEach(() => {
+    isAdmin = true
+    logged = []
+    console.error = (...args: unknown[]) => {
+      logged.push(args)
+    }
+  })
+  afterEach(() => {
+    console.error = originalError
+  })
+
+  test('removes the dropped avatar when no member references it', async () => {
+    scenario({ dropAvatar: `${B}_photo.jpg` })
+    expect(await mergePersons(A, B)).toEqual({ summary })
+    const lookup = calls.find((c) => c.filters.some(([op]) => op === 'like'))
+    expect(lookup?.filters).toEqual([
+      ['like', 'avatar_url', `%${B}_photo.jpg%`]
+    ])
+    expect(removals()).toHaveLength(1)
+    expect(removals()[0].table).toBe('storage:avatars')
+    expect(removals()[0].payload).toEqual([[`${B}_photo.jpg`]])
+  })
+
+  test('normalises a legacy public URL to its storage path', async () => {
+    scenario({
+      dropAvatar:
+        'https://x.supabase.co/storage/v1/object/public/avatars/old/a.png'
+    })
+    await mergePersons(A, B)
+    expect(removals()[0].payload).toEqual([['old/a.png']])
+  })
+
+  test('keeps a file the kept member took over or shares', async () => {
+    scenario({ dropAvatar: 'shared.jpg', stillReferenced: true })
+    expect(await mergePersons(A, B)).toEqual({ summary })
+    expect(removals()).toHaveLength(0)
+  })
+
+  test('no avatar or one outside the avatars bucket removes nothing', async () => {
+    scenario({ dropAvatar: null })
+    await mergePersons(A, B)
+    expect(removals()).toHaveLength(0)
+
+    scenario({ dropAvatar: 'https://example.com/photo.jpg' })
+    await mergePersons(A, B)
+    expect(removals()).toHaveLength(0)
+  })
+
+  test('a failed removal is logged and the merge still succeeds', async () => {
+    scenario({ dropAvatar: 'a.jpg', removeError: true })
+    expect(await mergePersons(A, B)).toEqual({ summary })
+    expect(revalidatePath).toHaveBeenCalledWith('/dashboard/members')
+    expect(logged).toHaveLength(1)
+  })
+
+  test('a failed reference check keeps the file', async () => {
+    scenario({ dropAvatar: 'a.jpg', lookupError: true })
+    expect(await mergePersons(A, B)).toEqual({ summary })
+    expect(removals()).toHaveLength(0)
+    expect(logged).toHaveLength(1)
   })
 })

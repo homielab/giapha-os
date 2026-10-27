@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 
 import { getServerTranslations } from '@/lib/i18n/server'
+import { removeMergedAvatar } from '@/utils/mergeAvatarCleanup'
 import {
   MERGE_PERSON_COLUMNS,
   previewMerge,
@@ -123,6 +124,16 @@ export async function mergePersons(
     return { error: t('mergeSameMember') }
 
   const supabase = await getSupabase()
+  // The dropped row is gone after the RPC; read its avatar first so the file
+  // can be cleaned up once the merge has committed.
+  const { data: dropRow, error: loadError } = await supabase
+    .from('persons')
+    .select('avatar_url')
+    .eq('id', dropId)
+    .maybeSingle()
+  if (loadError)
+    return { error: t('mergeFailed', { error: loadError.message }) }
+
   const { data, error } = await supabase.rpc('merge_persons', {
     keep_id: keepId,
     drop_id: dropId
@@ -132,6 +143,11 @@ export async function mergePersons(
       return { error: t('mergeUpgradeDatabase') }
     return { error: t('mergeFailed', { error: error.message }) }
   }
+
+  await removeMergedAvatar(
+    supabase,
+    (dropRow as { avatar_url?: string | null } | null)?.avatar_url
+  )
 
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/members')

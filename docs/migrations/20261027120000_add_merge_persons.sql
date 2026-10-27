@@ -14,9 +14,10 @@
 --     different names are added to other_names, notes are appended,
 --   * the dropped member is deleted; nothing else references it.
 -- custom_events and gallery_items are per-user tables, not per-person, so
--- there is nothing to move for them. The avatar FILE of the dropped member
--- is not removed when the kept member already had a different one (the row
--- reference is what merges; the file stays in the avatars bucket unused).
+-- there is nothing to move for them. Only the avatar reference merges here;
+-- when the kept member already had a different photo, the app removes the
+-- dropped member's file from the avatars bucket after this function commits
+-- (app/actions/mergePersons.ts, utils/mergeAvatarCleanup.ts).
 --
 -- There is no undo: the confirmation in the app asks for a backup first.
 -- Returns a JSON summary:
