@@ -677,6 +677,8 @@ export const messages = {
     backupData: 'Sao lưu dữ liệu',
     backupDataDescription:
       'Tải xuống định dạng file JSON, GEDCOM hoặc CSV (Zip). Chọn một điểm gốc bên dưới để chỉ sao lưu nhánh gia đình đó, hoặc chọn "Toàn bộ" để xuất toàn bộ cây.',
+    backupPhotosNote:
+      'Ảnh (avatars, gallery) không nằm trong JSON/CSV/GEDCOM; sao chép bucket Supabase Storage avatars và gallery riêng.',
     exportRoot: 'Điểm gốc (Root) để xuất dữ liệu',
     exportPersonsLoadError:
       'Không tải được danh sách thành viên để chọn điểm gốc: {error}. Tải lại trang để thử lại; có thể vẫn xuất toàn bộ dữ liệu.',
@@ -1840,6 +1842,8 @@ export const messages = {
     backupData: 'Back up data',
     backupDataDescription:
       'Download JSON, GEDCOM, or CSV (Zip) files. Choose a root below to back up only that family branch, or choose "All data" to export the entire tree.',
+    backupPhotosNote:
+      'Photos (avatars, gallery) are not included in JSON/CSV/GEDCOM; copy Supabase Storage buckets avatars and gallery separately.',
     exportRoot: 'Root for data export',
     exportPersonsLoadError:
       'Could not load the member list for choosing a root: {error}. Reload the page to retry; you can still export all data.',

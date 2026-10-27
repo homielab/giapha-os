@@ -234,7 +234,14 @@ export default function DataImportExport() {
         <DataCard
           icon={<Download className='size-6' />}
           title={t('backupData')}
-          description={t('backupDataDescription')}
+          description={
+            <>
+              {t('backupDataDescription')}
+              <span className='mt-1 block text-xs text-stone-500'>
+                {t('backupPhotosNote')}
+              </span>
+            </>
+          }
           accent='amber'>
           <div className='mb-4'>
             {personsError ? (

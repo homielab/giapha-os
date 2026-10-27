@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Backup and restore: the export card and documentation now explain that JSON, CSV, and GEDCOM backups do not include photos or the `gallery_items` table, and that Supabase Storage buckets `avatars` and `gallery` must be copied separately when moving to a new install.
 - Data page: if the member list for choosing an export root fails to load, an error is shown instead of a silently incomplete list.
 - CI: every push and pull request now also runs `bun run build` and a Docker image build (not pushed), so a broken build no longer slips through.
 

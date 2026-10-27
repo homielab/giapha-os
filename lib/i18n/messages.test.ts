@@ -32,6 +32,10 @@ describe('messages', () => {
       )
     }
   })
+
+  test('english backupPhotosNote contains photo', () => {
+    expect(messages.en.backupPhotosNote.toLowerCase()).toContain('photo')
+  })
 })
 
 describe('interpolate', () => {
