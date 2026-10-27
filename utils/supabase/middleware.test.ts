@@ -1,0 +1,142 @@
+import { afterAll, beforeEach, describe, expect, mock, test } from 'bun:test'
+
+import { NextRequest, type NextResponse } from 'next/server'
+
+type CookieToSet = {
+  name: string
+  value: string
+  options?: Record<string, unknown>
+}
+type CookieMethods = { setAll: (cookies: CookieToSet[]) => void }
+
+let user: { id: string } | null = null
+let profileErrorCode: string | null = null
+let refreshedCookies: CookieToSet[] = []
+
+mock.module('@supabase/ssr', () => ({
+  createServerClient: (
+    _url: string,
+    _key: string,
+    { cookies }: { cookies: CookieMethods }
+  ) => ({
+    auth: {
+      getUser: async () => {
+        // Like @supabase/ssr when the access token was refreshed.
+        if (refreshedCookies.length) cookies.setAll(refreshedCookies)
+        return { data: { user } }
+      }
+    },
+    from: () => ({
+      select: () => ({
+        limit: async () => ({
+          error: profileErrorCode ? { code: profileErrorCode } : null
+        })
+      })
+    })
+  })
+}))
+
+const { updateSession } = await import('./middleware')
+
+const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const originalKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+
+const request = (path: string) =>
+  new NextRequest(new URL(path, 'http://localhost:3000'))
+
+const SESSION_COOKIES: CookieToSet[] = [
+  {
+    name: 'sb-test-auth-token',
+    value: 'new-session',
+    options: { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 3600 }
+  },
+  {
+    name: 'sb-test-auth-token.1',
+    value: 'second-chunk',
+    options: { path: '/' }
+  }
+]
+
+function expectSessionCookies(res: NextResponse) {
+  const first = res.cookies.get('sb-test-auth-token')
+  expect(first?.value).toBe('new-session')
+  expect(first?.httpOnly).toBe(true)
+  expect(first?.maxAge).toBe(3600)
+  expect(res.cookies.get('sb-test-auth-token.1')?.value).toBe('second-chunk')
+}
+
+beforeEach(() => {
+  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co'
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY = 'dummy'
+  user = null
+  profileErrorCode = null
+  refreshedCookies = []
+})
+
+afterAll(() => {
+  process.env.NEXT_PUBLIC_SUPABASE_URL = originalUrl
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY = originalKey
+})
+
+describe('updateSession', () => {
+  test('redirects to /missing-db-config when env vars are missing', async () => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL
+    const response = await updateSession(request('/dashboard'))
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe(
+      'http://localhost:3000/missing-db-config'
+    )
+  })
+
+  test('lets /missing-db-config through when env vars are missing', async () => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+    const response = await updateSession(request('/missing-db-config'))
+    expect(response.headers.get('location')).toBeNull()
+  })
+
+  for (const code of ['PGRST205', '42P01']) {
+    test(`redirects to /setup when profiles table is missing (${code})`, async () => {
+      profileErrorCode = code
+      refreshedCookies = SESSION_COOKIES
+      const response = await updateSession(request('/dashboard/members'))
+      expect(response.headers.get('location')).toBe(
+        'http://localhost:3000/setup'
+      )
+      expectSessionCookies(response)
+    })
+  }
+
+  test('redirects a signed-out visitor from /dashboard to /login', async () => {
+    refreshedCookies = SESSION_COOKIES
+    const response = await updateSession(request('/dashboard'))
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe('http://localhost:3000/login')
+    expectSessionCookies(response)
+  })
+
+  test('redirects a signed-in user from /login to /dashboard', async () => {
+    user = { id: 'user-1' }
+    refreshedCookies = SESSION_COOKIES
+    const response = await updateSession(request('/login'))
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe(
+      'http://localhost:3000/dashboard'
+    )
+    expectSessionCookies(response)
+  })
+
+  test('keeps refreshed cookies when no redirect is needed', async () => {
+    user = { id: 'user-1' }
+    refreshedCookies = SESSION_COOKIES
+    const response = await updateSession(request('/dashboard'))
+    expect(response.headers.get('location')).toBeNull()
+    expectSessionCookies(response)
+  })
+
+  test('other profile errors do not redirect to /setup', async () => {
+    user = { id: 'user-1' }
+    profileErrorCode = '42501'
+    const response = await updateSession(request('/dashboard'))
+    expect(response.headers.get('location')).toBeNull()
+  })
+})

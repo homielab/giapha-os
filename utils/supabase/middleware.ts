@@ -1,10 +1,21 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+// A redirect is a new response: carry over the session cookies that
+// supabase.auth.getUser() may have just refreshed on supabaseResponse,
+// otherwise the browser keeps the old (already rotated) refresh token.
+function redirectWithCookies(url: URL, supabaseResponse: NextResponse) {
+  const response = NextResponse.redirect(url)
+  supabaseResponse.cookies
+    .getAll()
+    .forEach((cookie) => response.cookies.set(cookie))
+  return response
+}
 
 export async function updateSession(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+
   // If env vars are missing, we cannot create a supabase client
   if (!supabaseUrl || !supabaseKey) {
     if (request.nextUrl.pathname !== '/missing-db-config') {
@@ -68,7 +79,7 @@ export async function updateSession(request: NextRequest) {
     ) {
       const url = request.nextUrl.clone()
       url.pathname = '/setup'
-      return NextResponse.redirect(url)
+      return redirectWithCookies(url, supabaseResponse)
     }
   }
 
@@ -76,14 +87,14 @@ export async function updateSession(request: NextRequest) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectWithCookies(url, supabaseResponse)
   }
 
   // Redirect users who are already logged in away from the login page
   if (isLoginPage && user) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    return redirectWithCookies(url, supabaseResponse)
   }
 
   return supabaseResponse
