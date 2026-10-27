@@ -49,7 +49,7 @@ export default async function LineagePage() {
   ])
 
   // Identify "roots" - people with no parents
-  // PERSON_LIST_COLUMNS leaves out note/created_at/updated_at; no view reads them.
+  // PERSON_LIST_COLUMNS leaves out note/created_at; no view reads them.
   const persons = (personsData || []) as Person[]
   // RELATIONSHIP_COLUMNS leaves out note/created_at/updated_at; no view reads them.
   const relationships = (relsData || []) as Relationship[]

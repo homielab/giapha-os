@@ -62,7 +62,7 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
     )
   ])
 
-  // PERSON_LIST_COLUMNS leaves out note/created_at/updated_at; no view reads them.
+  // PERSON_LIST_COLUMNS leaves out note/created_at; no view reads them.
   const persons = (personsRes.data || []) as Person[]
   // RELATIONSHIP_COLUMNS leaves out note/created_at/updated_at; no view reads them.
   const relationships = (relsRes.data || []) as Relationship[]
