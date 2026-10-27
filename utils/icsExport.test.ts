@@ -270,3 +270,35 @@ describe('buildIcs', () => {
     expect(evs[0]).toContain('DESCRIPTION:Ngày âm lịch: 10/03\\nĂn cỗ')
   })
 })
+
+describe('leap-month anniversary description', () => {
+  const leapPerson = person({
+    id: 'p3',
+    full_name: 'Cụ Bà',
+    is_deceased: true,
+    death_year: 2025,
+    death_month: 7,
+    death_day: 25
+  })
+  const describeIn = (locale: 'vi' | 'en') =>
+    buildIcs({
+      persons: [leapPerson],
+      t: (key, values) =>
+        (messages[locale][key] as string).replace(/\{(\w+)\}/g, (_, k) =>
+          String(values?.[k] ?? '')
+        ),
+      siteUrl: 'https://giapha.example.com/',
+      today,
+      now
+    })
+
+  test('english calendar has no Vietnamese leap word', () => {
+    const ics = describeIn('en')
+    expect(ics).toContain('Lunar date of the anniversary: 01/06 leap')
+    expect(ics).not.toContain('nhuận')
+  })
+
+  test('vietnamese calendar says nhuận', () => {
+    expect(describeIn('vi')).toContain('Ngày giỗ theo âm lịch: 01/06 nhuận')
+  })
+})

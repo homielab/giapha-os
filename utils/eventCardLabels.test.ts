@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test'
 
-import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
+import {
+  messages,
+  type TranslationKey,
+  type TranslationValues
+} from '@/lib/i18n/messages'
 
 import {
   daysUntilLabel,
@@ -75,7 +79,8 @@ describe('formatEventDateLabel', () => {
       event({
         type: 'custom_event',
         recurrence: 'yearly_lunar',
-        eventDateLabel: '10/03 ÂL'
+        eventDateLabel: '10/03',
+        lunarLabel: { day: 10, month: 3, leap: false }
       }),
       t
     )
@@ -91,7 +96,11 @@ describe('formatEventDateLabel', () => {
 
   test('death anniversary appends the lunar date without its suffix', () => {
     const label = formatEventDateLabel(
-      event({ type: 'death_anniversary', eventDateLabel: '12/02 ÂL' }),
+      event({
+        type: 'death_anniversary',
+        eventDateLabel: '12/02',
+        lunarLabel: { day: 12, month: 2, leap: false }
+      }),
       t
     )
     expect(label).toStartWith('calendarDate:')
@@ -193,12 +202,36 @@ describe('getEventYearsInfo', () => {
   })
 })
 
+describe('formatEventDateLabel: leap month', () => {
+  test('keeps the leap word of the interface language, no marker', () => {
+    const leap = event({
+      type: 'death_anniversary',
+      eventDateLabel: '01/06',
+      lunarLabel: { day: 1, month: 6, leap: true }
+    })
+    expect(formatEventDateLabel(leap, t)).toContain(
+      'lunarDateSuffix:{"date":"01/06leapMonth"}'
+    )
+    for (const [locale, word] of [
+      ['vi', 'nhuận'],
+      ['en', 'leap']
+    ] as const) {
+      const tr = (key: TranslationKey, values?: TranslationValues) =>
+        (messages[locale][key] as string).replace(/\{(\w+)\}/g, (_, k) =>
+          String(values?.[k as keyof typeof values] ?? '')
+        )
+      expect(formatEventDateLabel(leap, tr)).toContain(`01/06 ${word})`)
+    }
+  })
+})
+
 describe('formatEventDateLabel: estimates', () => {
   test('marks an estimated date', () => {
     const label = formatEventDateLabel(
       event({
         type: 'death_anniversary',
-        eventDateLabel: '09/02 ÂL',
+        eventDateLabel: '09/02',
+        lunarLabel: { day: 9, month: 2, leap: false },
         approximate: true
       }),
       t

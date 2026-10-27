@@ -2,6 +2,7 @@ import { vnToday, type Translate } from '@/utils/dateHelpers'
 import {
   computeEvents,
   filterVisibleEvents,
+  formatLunarDateLabel,
   type CustomEventRecord,
   type FamilyEvent
 } from '@/utils/eventHelpers'
@@ -80,10 +81,6 @@ function uidDomain(siteUrl?: string): string {
     }
   }
   return 'giapha-os'
-}
-
-function lunarLabel(event: FamilyEvent): string {
-  return event.eventDateLabel.replace(' ÂL', '').replace(' L', '')
 }
 
 interface VEvent {
@@ -187,7 +184,9 @@ export function buildIcs({
         yearly: true
       })
     } else if (event.type === 'death_anniversary') {
-      const description = [t('icsLunarDate', { date: lunarLabel(event) })]
+      const description = [
+        t('icsLunarDate', { date: formatLunarDateLabel(event, t, false) })
+      ]
       if (event.approximate) description.push(t('icsApproximate'))
       events.push({
         uid: `giapha-${event.personId}-death-${icsDate(event.nextOccurrence)}@${domain}`,
@@ -196,7 +195,9 @@ export function buildIcs({
         description
       })
     } else if (event.recurrence === 'yearly_lunar') {
-      const description = [t('icsCustomLunarDate', { date: lunarLabel(event) })]
+      const description = [
+        t('icsCustomLunarDate', { date: formatLunarDateLabel(event, t, false) })
+      ]
       if (event.content) description.push(event.content)
       events.push({
         uid: `giapha-${event.personId}-custom-${icsDate(event.nextOccurrence)}@${domain}`,

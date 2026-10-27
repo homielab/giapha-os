@@ -1,4 +1,4 @@
-import { vnToday } from '@/utils/dateHelpers'
+import { vnToday, type Translate } from '@/utils/dateHelpers'
 import { lunarAnniversaryInYear, solarToLunar } from '@/utils/lunarCalendar'
 
 export type EventType = 'birthday' | 'death_anniversary' | 'custom_event'
@@ -11,8 +11,10 @@ export interface FamilyEvent {
   nextOccurrence: Date
   /** Days until the next occurrence (negative = already passed this year, shown for context) */
   daysUntil: number
-  /** Display label for the date of the event (e.g., "12/03" solar or "05/02 ÂL") */
+  /** Plain label for the date of the event ("12/03" solar, "05/02" lunar day/month). */
   eventDateLabel: string
+  /** Lunar day, month and leap flag when the event is on a lunar date. */
+  lunarLabel?: { day: number; month: number; leap: boolean }
   /** The actual year of original event (birth year or death year) */
   originYear?: number | null
   originMonth?: number | null
@@ -226,7 +228,8 @@ export function computeEvents(
         type: 'death_anniversary',
         nextOccurrence: next,
         daysUntil,
-        eventDateLabel: `${lDay.toString().padStart(2, '0')}/${lMonth.toString().padStart(2, '0')} ÂL${leap ? ' nhuận' : ''}`,
+        eventDateLabel: `${pad2(lDay)}/${pad2(lMonth)}`,
+        lunarLabel: { day: lDay, month: lMonth, leap },
         originYear: (p.death_lunar_year ?? p.death_year) || null,
         originMonth: p.death_lunar_month ?? p.death_month,
         originDay: p.death_lunar_day ?? p.death_day,
@@ -265,7 +268,15 @@ export function computeEvents(
       content: ce.content,
       recurrence
     }
+    // The lunar day and month (and leap flag) of the first occurrence.
+    const lunar = recurrence === 'yearly_lunar' ? solarToLunar(y, m, d) : null
+    if (recurrence === 'yearly_lunar' && !lunar) continue
     const occurrence = (date: Date, eventDateLabel: string): FamilyEvent => ({
+      ...(lunar
+        ? {
+            lunarLabel: { day: lunar.day, month: lunar.month, leap: lunar.leap }
+          }
+        : {}),
       ...base,
       nextOccurrence: date,
       daysUntil: Math.round(
@@ -273,11 +284,8 @@ export function computeEvents(
       ),
       eventDateLabel
     })
-    // The lunar day and month (and leap flag) of the first occurrence.
-    const lunar = recurrence === 'yearly_lunar' ? solarToLunar(y, m, d) : null
-    if (recurrence === 'yearly_lunar' && !lunar) continue
     const label = lunar
-      ? `${pad2(lunar.day)}/${pad2(lunar.month)} ÂL${lunar.leap ? ' nhuận' : ''}`
+      ? `${pad2(lunar.day)}/${pad2(lunar.month)}`
       : recurrence === 'yearly_solar'
         ? `${pad2(d)}/${pad2(m)}`
         : `${pad2(d)}/${pad2(m)}/${y}`
@@ -336,4 +344,24 @@ export function filterVisibleEvents<
 >(events: T[], options: { showDeceasedBirthdays?: boolean } = {}): T[] {
   if (options.showDeceasedBirthdays) return events
   return events.filter((e) => !(e.type === 'birthday' && e.isDeceased))
+}
+
+/**
+ * Date label of an event in the interface language. Lunar dates carry the
+ * lunar marker and the leap-month word ("10/04 ÂL nhuận" / "10/04 L leap");
+ * with `withMarker` false only the leap word is kept, for text that already
+ * says the date is lunar.
+ */
+export function formatLunarDateLabel(
+  event: Pick<FamilyEvent, 'eventDateLabel' | 'lunarLabel'>,
+  t: Translate,
+  withMarker = true
+): string {
+  const lunar = event.lunarLabel
+  if (!lunar) return event.eventDateLabel
+  return (
+    `${pad2(lunar.day)}/${pad2(lunar.month)}` +
+    (withMarker ? t('lunarSuffix') : '') +
+    (lunar.leap ? t('leapMonth') : '')
+  )
 }

@@ -18,7 +18,11 @@ import Link from 'next/link'
 
 import { getServerTranslations } from '@/lib/i18n/server'
 import { getTodayLunar, vnToday } from '@/utils/dateHelpers'
-import { computeEvents, filterVisibleEvents } from '@/utils/eventHelpers'
+import {
+  computeEvents,
+  filterVisibleEvents,
+  formatLunarDateLabel
+} from '@/utils/eventHelpers'
 import { EVENT_PERSON_COLUMNS, EVENT_PERSON_FILTER } from '@/utils/eventPersons'
 import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getIsAdmin, getSupabase } from '@/utils/supabase/queries'
@@ -223,7 +227,7 @@ export default async function DashboardLaunchpad() {
                     const Icon = cfg.icon
                     return (
                       <div
-                        key={`${evt.type}-${evt.personId}-${evt.eventDateLabel}`}
+                        key={`${evt.type}-${evt.personId}-${evt.nextOccurrence.getTime()}`}
                         className='flex cursor-pointer items-center gap-3.5 rounded-2xl border border-transparent bg-stone-50/50 p-3 transition-colors duration-300 hover:border-stone-100 hover:bg-stone-50'>
                         <div
                           className={`size-10 rounded-xl ${cfg.bg} flex shrink-0 items-center justify-center border border-white`}>
@@ -241,7 +245,7 @@ export default async function DashboardLaunchpad() {
                                 : t('daysFromNow', {
                                     count: evt.daysUntil
                                   })}{' '}
-                            · {evt.eventDateLabel}
+                            · {formatLunarDateLabel(evt, t)}
                           </span>
                         </div>
                       </div>

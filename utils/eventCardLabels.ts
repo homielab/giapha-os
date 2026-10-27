@@ -1,5 +1,5 @@
 import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
-import { FamilyEvent } from '@/utils/eventHelpers'
+import { FamilyEvent, formatLunarDateLabel } from '@/utils/eventHelpers'
 import { solarToLunar } from '@/utils/lunarCalendar'
 
 const SPECIAL_DAY_OFFSETS = new Set([-1, 0, 1])
@@ -49,7 +49,7 @@ export function formatEventDateLabel(event: FamilyEvent, t: Translate): string {
     (event.type === 'custom_event' && event.recurrence === 'yearly_lunar')
   ) {
     label += t('lunarDateSuffix', {
-      date: event.eventDateLabel.replace(' ÂL', '').replace(' L', '')
+      date: formatLunarDateLabel(event, t, false)
     })
   }
   if (event.approximate) label += t('approximateDateSuffix')

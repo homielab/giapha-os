@@ -1,12 +1,24 @@
 import { describe, expect, test } from 'bun:test'
 
+import { messages } from '@/lib/i18n/messages'
+
 import { vnToday } from './dateHelpers'
 import {
   computeEvents,
   filterVisibleEvents,
+  formatLunarDateLabel,
   toRecurrence,
   type CustomEventRecord
 } from './eventHelpers'
+
+const tFor =
+  (locale: 'vi' | 'en') =>
+  (key: keyof typeof messages.vi, values?: Record<string, unknown>) =>
+    (messages[locale][key] as string).replace(/\{(\w+)\}/g, (_, k) =>
+      String(values?.[k] ?? '')
+    )
+const tVi = tFor('vi')
+const tEn = tFor('en')
 
 type PersonInput = Parameters<typeof computeEvents>[0][number]
 
@@ -45,7 +57,7 @@ describe('computeEvents: death anniversaries (giỗ)', () => {
     ).find((e) => e.daysUntil >= 0)!
     expect(event.nextOccurrence).toEqual(day(2007, 2, 17))
     expect(event.daysUntil).toBe(47)
-    expect(event.eventDateLabel).toBe('01/01 ÂL')
+    expect(event.eventDateLabel).toBe('01/01')
   })
 
   test('day 30 in a 29-day month is kept on the last day of the month', () => {
@@ -92,7 +104,10 @@ describe('computeEvents: death anniversaries (giỗ)', () => {
     const person = deceased({ death_year: 2025, death_month: 7, death_day: 25 })
     const [event] = deathEvents(person, day(2025, 7, 1))
     expect(event.nextOccurrence).toEqual(day(2025, 7, 25))
-    expect(event.eventDateLabel).toBe('01/06 ÂL nhuận')
+    expect(event.eventDateLabel).toBe('01/06')
+    expect(event.lunarLabel).toEqual({ day: 1, month: 6, leap: true })
+    expect(formatLunarDateLabel(event, tVi)).toBe('01/06 ÂL nhuận')
+    expect(formatLunarDateLabel(event, tEn)).toBe('01/06 L leap')
   })
 
   test('a regular-month death ignores that year’s leap month', () => {
@@ -336,7 +351,7 @@ describe('computeEvents: repeating custom events', () => {
     const [past, in2026] = customEvents(event, day(2026, 1, 1))
     expect(past.nextOccurrence).toEqual(day(2025, 4, 7))
     expect(in2026.nextOccurrence).toEqual(day(2026, 4, 26))
-    expect(in2026.eventDateLabel).toBe('10/03 ÂL')
+    expect(in2026.eventDateLabel).toBe('10/03')
     expect(in2026.recurrence).toBe('yearly_lunar')
     expect(
       upcoming(event, day(2026, 5, 1)).map((e) => e.nextOccurrence)
@@ -362,7 +377,10 @@ describe('computeEvents: repeating custom events', () => {
       expect(repeat.nextOccurrence).toEqual(anniversary.nextOccurrence)
     }
     const [first] = upcoming(event, day(2021, 1, 1))
-    expect(first.eventDateLabel).toBe('10/04 ÂL nhuận')
+    expect(first.eventDateLabel).toBe('10/04')
+    expect(formatLunarDateLabel(first, tVi)).toBe('10/04 ÂL nhuận')
+    expect(formatLunarDateLabel(first, tEn)).toBe('10/04 L leap')
+    expect(formatLunarDateLabel(first, tEn, false)).toBe('10/04 leap')
   })
 
   test('a repeating event is shown once before its first date', () => {

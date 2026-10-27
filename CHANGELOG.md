@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- English interface and calendar (.ics) no longer show the Vietnamese "nhuận" for leap-month anniversaries and lunar events: the upcoming-events card, the event cards and the calendar description use the interface language ("10/04 L leap").
 - A member link with a cut-off or mistyped id (for example one shortened when shared in a chat) now opens the "not found" page instead of the generic error page.
 - Exporting a large tree as PNG or PDF no longer fails with a generic error: wide or tall trees are now rendered at a lower resolution that fits the browser's canvas limits (Safari caps the area at about 16.7 million pixels, phones cap each side at 8192 pixels), and a tree too large for any canvas shows a clear message suggesting a smaller root or a computer.
 - Sign-in no longer drops out at random: when the session was refreshed on a request that redirects (opening the dashboard while signed out, the login page while signed in, or the setup redirect), the new session cookies were lost, which could sign the user out again or loop between pages. Redirects now keep them.
