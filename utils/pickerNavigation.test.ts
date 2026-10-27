@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test'
 
-import { filterPickerPersons, pickerKeyNavigation } from './pickerNavigation'
+import {
+  filterPickerPersons,
+  filterRootPersons,
+  pickerKeyNavigation
+} from './pickerNavigation'
 
 const people = [
   { id: '1', full_name: 'Nguyễn Văn An' },
@@ -71,5 +75,41 @@ describe('pickerKeyNavigation', () => {
 
   test('other keys are not handled', () => {
     expect(pickerKeyNavigation('a', 0, 3).handled).toBe(false)
+  })
+})
+
+describe('filterRootPersons', () => {
+  const roots = [
+    { id: '1', full_name: 'Trần Văn Ba', birth_year: 1950 },
+    { id: '2', full_name: 'Nguyễn Văn A', birth_year: 1950 },
+    { id: '3', full_name: 'Lê Thị Nguyên', birth_year: null },
+    { id: '4', full_name: 'Nguyễn Văn B', birth_year: 1975 }
+  ]
+
+  test('"nguyen" finds Nguyễn without accents, name start first', () => {
+    expect(filterRootPersons(roots, 'nguyen').map((p) => p.id)).toEqual([
+      '2',
+      '4',
+      '3'
+    ])
+  })
+
+  test('matches the birth year together with the name', () => {
+    expect(filterRootPersons(roots, 'van a 1950').map((p) => p.id)).toEqual([
+      '2'
+    ])
+    expect(filterRootPersons(roots, '1975').map((p) => p.id)).toEqual(['4'])
+  })
+
+  test('empty text lists people in given order, capped by the limit', () => {
+    const many = Array.from({ length: 30 }, (_, i) => ({
+      id: String(i),
+      full_name: `Người ${i}`,
+      birth_year: null
+    }))
+    expect(filterRootPersons(many, '')).toHaveLength(20)
+    expect(filterRootPersons(many, '  ')[0].id).toBe('0')
+    expect(filterRootPersons(many, 'nguoi', 5)).toHaveLength(5)
+    expect(filterRootPersons(many, 'nguoi')).toHaveLength(20)
   })
 })

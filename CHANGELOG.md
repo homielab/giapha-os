@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Root selector (tree root and export root): typing "nguyen" now finds "Nguyễn" and results are ranked like the other pickers, also by birth year; the list works with the keyboard (arrow keys, Enter, Esc) and is announced to screen readers.
 - Today's lunar date on the dashboard and the lunar death-anniversary label in event lists now say "leap" (nhuận) during a leap lunar month instead of showing the plain month number.
 - Family tree, mind map and bubble views now show children linked only to a spouse (for example added from an in-law's page or with the other parent "unknown"); they no longer disappear from every tree.
 - Accessibility: error messages and notices (sign-in, import/export, admin toasts, gallery upload, events, lineage, setup) are now announced by screen readers; a second admin notification is no longer dismissed early by the first one's timer.
