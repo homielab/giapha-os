@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Internal: the death-date input logic of the member form (solar/lunar sync and the leap-month flag) is now plain functions in `utils/deathDates.ts` with tests; behaviour is unchanged.
+
 ### Fixed
 
 - The ⌘K / Ctrl+K search no longer keeps showing the member list from the first time it was opened: it reloads in the background when the list is older than a minute and right after a member is added, edited, deleted or merged, or a backup is restored (a deleted member no longer opens a 404, a new one is found).
