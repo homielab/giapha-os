@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import JSZip from 'jszip'
 
 import { exportToCsvZip, parseCsvZip } from './csv'
-import { CsvZipInvalidError } from './csvErrors'
+import { CsvParseError, CsvZipInvalidError } from './csvErrors'
 
 const persons = [
   {
@@ -267,5 +267,109 @@ describe('formula escaping', () => {
     expect(parsed.persons[0].birth_year).toBe(1950)
     expect(parsed.persons[0].is_deceased).toBe(true)
     expect(parsed.persons[1].note).toBeNull()
+  })
+})
+
+describe('parseCsvZip rejects broken CSV files', () => {
+  const header = 'id,full_name,gender,birth_year'
+  const goodRelationships = 'id,type,person_a,person_b\nr1,marriage,p1,p2\n'
+
+  async function parseError(files: Record<string, string>) {
+    try {
+      await parseCsvZip(await zipWith(files))
+    } catch (error) {
+      return error
+    }
+    throw new Error('expected parseCsvZip to throw')
+  }
+
+  test('a row with too few cells names the file and line', async () => {
+    const error = await parseError({
+      'persons.csv': `${header}\np1,An,male,1950\np2,Bình,female\n`,
+      'relationships.csv': goodRelationships
+    })
+    expect(error).toBeInstanceOf(CsvParseError)
+    expect(error).toMatchObject({
+      file: 'persons.csv',
+      line: 3,
+      problem: 'tooFewFields'
+    })
+  })
+
+  test('a row with too many cells names the file and line', async () => {
+    const error = await parseError({
+      'persons.csv': `${header}\np1,An,male,1950\n`,
+      'relationships.csv':
+        'id,type,person_a,person_b\r\nr1,marriage,p1,p2\r\n\r\nr2,marriage,p1,p2,extra\r\n'
+    })
+    expect(error).toMatchObject({
+      file: 'relationships.csv',
+      line: 4,
+      problem: 'tooManyFields'
+    })
+  })
+
+  test('an unclosed quote names the line where it opens', async () => {
+    const error = await parseError({
+      'persons.csv': `${header}\np1,An,male,1950\np2,"Bình,female,1952\np3,Chi,female,1980\n`,
+      'relationships.csv': goodRelationships
+    })
+    expect(error).toMatchObject({
+      file: 'persons.csv',
+      line: 3,
+      problem: 'brokenQuotes'
+    })
+  })
+
+  test('a malformed quote is rejected', async () => {
+    const error = await parseError({
+      'persons.csv': `${header}\np1,"An"x,male,1950\n`,
+      'relationships.csv': goodRelationships
+    })
+    expect(error).toMatchObject({
+      file: 'persons.csv',
+      problem: 'brokenQuotes'
+    })
+  })
+
+  test('the line counts lines inside quoted cells', async () => {
+    const error = await parseError({
+      'persons.csv': `${header},note\np1,An,male,1950,"dòng 1\ndòng 2"\np2,Bình\n`,
+      'relationships.csv': goodRelationships
+    })
+    expect(error).toMatchObject({ line: 4, problem: 'tooFewFields' })
+  })
+
+  test('optional files are checked too', async () => {
+    const error = await parseError({
+      'persons.csv': `${header}\np1,An,male,1950\n`,
+      'relationships.csv': goodRelationships,
+      'custom_events.csv': 'id,name,event_date\ne1,Giỗ tổ\n'
+    })
+    expect(error).toMatchObject({
+      file: 'custom_events.csv',
+      line: 2,
+      problem: 'tooFewFields'
+    })
+  })
+
+  test('blank lines, blank rows of commas and a missing last newline are fine', async () => {
+    const result = await parseCsvZip(
+      await zipWith({
+        'persons.csv': `\uFEFF${header}\r\np1,An,male,1950\r\n\r\n,,,\r\np2,Bình,female,1952\r\n\r\n\r\n`,
+        'relationships.csv': 'id,type,person_a,person_b\nr1,marriage,p1,p2'
+      })
+    )
+    expect(result.persons.map((p) => p.id)).toEqual(['p1', 'p2'])
+    expect(result.persons[1].birth_year).toBe(1952)
+    expect(result.relationships).toHaveLength(1)
+  })
+
+  test('an export with no relationships still imports', async () => {
+    const result = await parseCsvZip(
+      await exportToCsvZip({ persons, relationships: [] })
+    )
+    expect(result.persons).toHaveLength(2)
+    expect(result.relationships).toEqual([])
   })
 })

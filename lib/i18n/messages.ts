@@ -242,6 +242,11 @@ export const messages = {
       'người này không còn tồn tại hoặc bạn không còn quyền sửa',
     csvZipInvalid:
       'File ZIP không hợp lệ: thiếu persons.csv hoặc relationships.csv.',
+    csvParseError:
+      '{file} dòng {line}: {problem} Chưa phục hồi gì; hãy sửa file rồi chọn lại.',
+    csvTooFewFields: 'dòng này có ít ô hơn dòng tiêu đề.',
+    csvTooManyFields: 'dòng này có nhiều ô hơn dòng tiêu đề.',
+    csvBrokenQuotes: 'dấu nháy kép (") không được đóng hoặc đặt sai chỗ.',
     logoutFailed: 'Không đăng xuất được, hãy thử lại.',
     usageGuide: 'Hướng dẫn sử dụng',
     kinshipReference: 'Bảng danh xưng',
@@ -1399,6 +1404,11 @@ export const messages = {
       'this person no longer exists or you may no longer edit them',
     csvZipInvalid:
       'Invalid ZIP file: persons.csv or relationships.csv is missing.',
+    csvParseError:
+      '{file} line {line}: {problem} Nothing was restored; fix the file and choose it again.',
+    csvTooFewFields: 'this row has fewer cells than the header row.',
+    csvTooManyFields: 'this row has more cells than the header row.',
+    csvBrokenQuotes: 'a double quote (") is not closed or is misplaced.',
     logoutFailed: 'Could not log out, please try again.',
     usageGuide: 'How to use',
     kinshipReference: 'Kinship reference',

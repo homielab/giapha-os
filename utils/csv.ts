@@ -2,7 +2,11 @@ import JSZip from 'jszip'
 import Papa from 'papaparse'
 
 import { Person, Relationship } from '@/types'
-import { CsvZipInvalidError } from '@/utils/csvErrors'
+import {
+  CsvParseError,
+  CsvParseProblem,
+  CsvZipInvalidError
+} from '@/utils/csvErrors'
 
 const UTF8_BOM = '\uFEFF'
 
@@ -39,23 +43,69 @@ function stripBom(text: string): string {
   return text.startsWith(UTF8_BOM) ? text.slice(1) : text
 }
 
+// PapaParse errors that mean the columns of a row cannot be trusted. Other
+// reports (e.g. "UndetectableDelimiter" for an empty or one-column file, where
+// PapaParse falls back to a comma) are harmless and ignored.
+const BLOCKING_ERRORS: Record<string, CsvParseProblem> = {
+  TooFewFields: 'tooFewFields',
+  TooManyFields: 'tooManyFields',
+  MissingQuotes: 'brokenQuotes',
+  InvalidQuotes: 'brokenQuotes'
+}
+
+/** 1-based line number of the character at `offset`. */
+function lineAt(text: string, offset: number): number {
+  let line = 1
+  for (let i = 0; i < offset && i < text.length; i++) {
+    if (text[i] === '\n') line++
+  }
+  return line
+}
+
+/** 1-based line on which a row ending at `cursor` (after its newline) ends. */
+function lastLineBefore(text: string, cursor: number): number {
+  let end = Math.min(cursor, text.length)
+  while (end > 0 && (text[end - 1] === '\n' || text[end - 1] === '\r')) end--
+  return lineAt(text, Math.max(end - 1, 0))
+}
+
+/**
+ * Parses one CSV file of the ZIP. A row with too few or too many cells, or a
+ * broken quote, throws CsvParseError with the file name and line, so a file
+ * edited by hand never reaches the restore. Blank lines are skipped.
+ */
 function parseCsv<T>(
   csv: string,
   fileName: string,
   typedFields: Set<string> = new Set()
 ): T[] {
-  const parsed = Papa.parse<Record<string, unknown>>(stripBom(csv), {
+  const text = stripBom(csv)
+  const rows: Record<string, unknown>[] = []
+  let failure: CsvParseError | null = null
+
+  Papa.parse<Record<string, unknown>>(text, {
     header: true,
-    skipEmptyLines: true,
-    dynamicTyping: (field) => typedFields.has(String(field))
+    skipEmptyLines: 'greedy',
+    dynamicTyping: (field) => typedFields.has(String(field)),
+    step: (result, parser) => {
+      const error = result.errors.find((e) => e.code in BLOCKING_ERRORS)
+      if (error) {
+        const line =
+          error.type === 'Quotes' && typeof error.index === 'number'
+            ? lineAt(text, error.index)
+            : lastLineBefore(text, result.meta.cursor)
+        failure = new CsvParseError(fileName, line, BLOCKING_ERRORS[error.code])
+        parser.abort()
+        return
+      }
+      rows.push(result.data)
+    }
   })
 
-  if (parsed.errors.length > 0) {
-    console.error(`Lỗi parse ${fileName}:`, parsed.errors)
-  }
+  if (failure) throw failure
 
   // Empty cells become null, as in the exported data.
-  return parsed.data.map((row) => {
+  return rows.map((row) => {
     const out: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(row)) {
       out[key] =

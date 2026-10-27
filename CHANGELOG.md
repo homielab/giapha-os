@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Restoring from a CSV ZIP no longer goes ahead when a file has a row with too few or too many cells or a broken double quote (for example after editing it in Excel): the file is rejected as soon as it is chosen, naming the file and line, before any data is replaced. Blank lines, including rows of only commas, are still skipped.
 - Accessibility: the "Recompute lunar dates" confirmation dialog now closes with Esc (not while changes are being saved), keeps Tab inside and returns focus to the button that opened it. Default avatars and the header logo no longer announce a fixed English "Male"/"Female"/"Logo" next to the person's name, and the photo preview uses the translated label. The sign-in page now has a heading level 1, and dashboard pages have exactly one (the site name in the header is no longer a heading).
 
 ### Changed

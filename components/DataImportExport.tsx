@@ -21,9 +21,15 @@ import {
   summarizeBackup,
   type BackupSummary
 } from '@/utils/backupSummary'
-import { CsvZipInvalidError } from '@/utils/csvErrors'
+import { CsvParseError, CsvZipInvalidError } from '@/utils/csvErrors'
 
 import PersonSelector from './PersonSelector'
+
+const CSV_PROBLEM_MESSAGES = {
+  tooFewFields: 'csvTooFewFields',
+  tooManyFields: 'csvTooManyFields',
+  brokenQuotes: 'csvBrokenQuotes'
+} as const
 
 export default function DataImportExport() {
   const { t, locale } = useI18n()
@@ -154,9 +160,15 @@ export default function DataImportExport() {
           ? t('restoreFileUnreadable')
           : error instanceof CsvZipInvalidError
             ? t('csvZipInvalid')
-            : error instanceof Error && error.message
-              ? error.message
-              : t('restoreFailed')
+            : error instanceof CsvParseError
+              ? t('csvParseError', {
+                  file: error.file,
+                  line: error.line,
+                  problem: t(CSV_PROBLEM_MESSAGES[error.problem])
+                })
+              : error instanceof Error && error.message
+                ? error.message
+                : t('restoreFailed')
       )
     } finally {
       setIsReadingFile(false)
