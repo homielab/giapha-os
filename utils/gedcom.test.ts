@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import {
+  decodeGedcom,
   exportToGedcom,
   GedcomPerson,
   GedcomRelationship,
@@ -701,5 +702,63 @@ describe('GEDCOM other names and lunar death date', () => {
       expect(p.birth_order).toBeNull()
       expect(p.is_in_law).toBe(false)
     }
+  })
+})
+
+describe('decodeGedcom', () => {
+  const text = '0 HEAD\n1 CHAR UNICODE\n0 @I1@ INDI\n1 NAME An /Nguyễn/\n0 TRLR'
+  const utf16 = (bom: number[], swap: boolean) => {
+    const out = [...bom]
+    for (const unit of text) {
+      const c = unit.charCodeAt(0)
+      out.push(...(swap ? [c >> 8, c & 255] : [c & 255, c >> 8]))
+    }
+    return Uint8Array.from(out).buffer as ArrayBuffer
+  }
+
+  test('UTF-16LE with BOM', () => {
+    const r = decodeGedcom(utf16([0xff, 0xfe], false))
+    expect(r.text).toBe(text)
+    expect(r.encoding).toBe('utf-16le')
+    expect(r.warning).toBeUndefined()
+  })
+
+  test('UTF-16BE with BOM', () => {
+    expect(decodeGedcom(utf16([0xfe, 0xff], true)).text).toBe(text)
+  })
+
+  test('UTF-8 with BOM drops the BOM', () => {
+    const bytes = Uint8Array.from([
+      0xef,
+      0xbb,
+      0xbf,
+      ...new TextEncoder().encode(text)
+    ])
+    const r = decodeGedcom(bytes.buffer as ArrayBuffer)
+    expect(r.text).toBe(text)
+    expect(r.warning).toBeUndefined()
+  })
+
+  test('CHAR ANSI reads windows-1252', () => {
+    const src = '0 HEAD\n1 CHAR ANSI\n1 NAME José /Müller/ €'
+    const bytes = Uint8Array.from(Buffer.from(src.replace('€', ''), 'latin1'))
+    expect(decodeGedcom(bytes.buffer as ArrayBuffer).text).toContain(
+      'José /Müller/'
+    )
+  })
+
+  test('CHAR ANSEL warns', () => {
+    const bytes = new TextEncoder().encode('0 HEAD\n1 CHAR ANSEL\n')
+    expect(decodeGedcom(bytes.buffer as ArrayBuffer).warning).toBe('ansel')
+  })
+
+  test('invalid UTF-8 warns about replacement characters', () => {
+    const r = decodeGedcom(Uint8Array.from([0x30, 0x20, 0xe1, 0x0a]).buffer)
+    expect(r.warning).toBe('replacement')
+  })
+
+  test('parseGedcom ignores a leading BOM', () => {
+    const r = parseGedcom('﻿0 HEAD\n0 @I1@ INDI\n1 NAME An /Lê/\n0 TRLR')
+    expect(r.persons).toHaveLength(1)
   })
 })

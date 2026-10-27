@@ -1,4 +1,5 @@
 import type { ImportPayload } from '@/utils/backupPayload'
+import type { GedcomEncodingWarning } from '@/utils/gedcom/encoding'
 
 export interface BackupSummary {
   persons: number
@@ -30,25 +31,52 @@ export function summarizeBackup(payload: unknown): BackupSummary | null {
   }
 }
 
-/** Parses a restore file (.json, .ged or .zip of CSV files) into a payload. */
-export async function parseRestoreFile(file: {
+/** Why a .ged file's text may be wrong; shown in the restore confirmation. */
+export type RestoreWarning = GedcomEncodingWarning
+
+export interface RestoreFile {
   name: string
   text: () => Promise<string>
-}): Promise<ImportPayload> {
+  arrayBuffer: () => Promise<ArrayBuffer>
+}
+
+/**
+ * Reads a restore file (.json, .ged or .zip of CSV files) into a payload,
+ * plus an encoding warning for a GEDCOM that could not be decoded cleanly.
+ */
+export async function readRestoreFile(
+  file: Pick<RestoreFile, 'name'> & Partial<RestoreFile>
+): Promise<{ payload: ImportPayload; warning?: RestoreWarning }> {
   const name = file.name.toLowerCase()
   if (name.endsWith('.ged')) {
-    const { parseGedcom } = await import('@/utils/gedcom')
-    return parseGedcom(await file.text()) as unknown as ImportPayload
+    const [{ parseGedcom, decodeGedcom }, buffer] = await Promise.all([
+      import('@/utils/gedcom'),
+      file.arrayBuffer!()
+    ])
+    const { text, warning } = decodeGedcom(buffer)
+    return {
+      payload: parseGedcom(text) as unknown as ImportPayload,
+      warning
+    }
   }
   if (name.endsWith('.zip')) {
     const { parseCsvZip } = await import('@/utils/csv')
-    return (await parseCsvZip(
-      file as unknown as Blob
-    )) as unknown as ImportPayload
+    return {
+      payload: (await parseCsvZip(
+        file as unknown as Blob
+      )) as unknown as ImportPayload
+    }
   }
   try {
-    return JSON.parse(await file.text()) as ImportPayload
+    return { payload: JSON.parse(await file.text!()) as ImportPayload }
   } catch {
     throw new BackupParseError('Invalid JSON')
   }
+}
+
+/** Like `readRestoreFile`, payload only. */
+export async function parseRestoreFile(
+  file: Pick<RestoreFile, 'name'> & Partial<RestoreFile>
+): Promise<ImportPayload> {
+  return (await readRestoreFile(file)).payload
 }

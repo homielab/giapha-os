@@ -7,11 +7,12 @@ import { useId } from 'react'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import type { Locale } from '@/lib/i18n/messages'
 import { useI18n } from '@/lib/i18n/useI18n'
-import type { BackupSummary } from '@/utils/backupSummary'
+import type { BackupSummary, RestoreWarning } from '@/utils/backupSummary'
 
 interface ImportConfirmModalProps {
   fileName: string
   summary: BackupSummary
+  warning?: RestoreWarning
   locale: Locale
   isImporting: boolean
   isDownloading: boolean
@@ -24,6 +25,7 @@ interface ImportConfirmModalProps {
 export default function ImportConfirmModal({
   fileName,
   summary,
+  warning,
   locale,
   isImporting,
   isDownloading,
@@ -76,6 +78,17 @@ export default function ImportConfirmModal({
                   events: summary.events
                 })}
               </p>
+              {warning && (
+                <p
+                  role='alert'
+                  className='mt-3 rounded-lg bg-amber-50 p-2 text-sm text-amber-800'>
+                  {t(
+                    warning === 'ansel'
+                      ? 'restoreEncodingAnsel'
+                      : 'restoreEncodingReplaced'
+                  )}
+                </p>
+              )}
               {summary.exportedAt && (
                 <p className='mt-1 text-xs text-stone-500'>
                   {t('restoreFileExportedAt', {

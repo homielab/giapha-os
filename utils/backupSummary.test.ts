@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   BackupParseError,
   parseRestoreFile,
+  readRestoreFile,
   summarizeBackup
 } from './backupSummary'
 
@@ -59,12 +60,57 @@ describe('parseRestoreFile', () => {
   })
 
   test('reads GEDCOM', async () => {
-    const payload = await parseRestoreFile(
-      file(
-        'b.ged',
-        '0 HEAD\n0 @I1@ INDI\n1 NAME /Nguyễn/ Văn An\n1 SEX M\n0 TRLR'
-      )
-    )
+    const payload = await parseRestoreFile({
+      name: 'b.ged',
+      arrayBuffer: async () =>
+        new TextEncoder().encode(
+          '0 HEAD\n0 @I1@ INDI\n1 NAME /Nguyễn/ Văn An\n1 SEX M\n0 TRLR'
+        ).buffer as ArrayBuffer
+    })
     expect(payload.persons).toHaveLength(1)
+  })
+
+  const bytesFile = (name: string, bytes: Uint8Array) => ({
+    name,
+    arrayBuffer: async () => bytes.buffer as ArrayBuffer
+  })
+  const ged = (name: string) =>
+    `0 HEAD\n1 CHAR ANSI\n0 @I1@ INDI\n1 NAME ${name}\n1 SEX M\n0 TRLR`
+
+  test('ANSI GEDCOM keeps accents and gives no warning', async () => {
+    const bytes = Uint8Array.from(Buffer.from(ged('José /Müller/'), 'latin1'))
+    const { payload, warning } = await readRestoreFile(
+      bytesFile('a.ged', bytes)
+    )
+    expect(payload.persons[0].full_name).toBe('José Müller')
+    expect(warning).toBeUndefined()
+  })
+
+  test('UTF-8 GEDCOM gives no warning', async () => {
+    const bytes = new TextEncoder().encode(
+      '0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME An /Nguyễn/\n0 TRLR'
+    )
+    const { payload, warning } = await readRestoreFile(
+      bytesFile('a.ged', bytes)
+    )
+    expect(payload.persons[0].full_name).toBe('An Nguyễn')
+    expect(warning).toBeUndefined()
+  })
+
+  test('ANSEL GEDCOM warns', async () => {
+    const bytes = Uint8Array.from(
+      Buffer.from(ged('An /Nguyen/').replace('ANSI', 'ANSEL'), 'latin1')
+    )
+    expect((await readRestoreFile(bytesFile('a.ged', bytes))).warning).toBe(
+      'ansel'
+    )
+  })
+
+  test('broken UTF-8 GEDCOM warns about replaced characters', async () => {
+    const head = new TextEncoder().encode('0 HEAD\n0 @I1@ INDI\n1 NAME An /Ng')
+    const bytes = Uint8Array.from([...head, 0xe1, 0x0a, ...head.slice(0, 0)])
+    expect((await readRestoreFile(bytesFile('a.ged', bytes))).warning).toBe(
+      'replacement'
+    )
   })
 })

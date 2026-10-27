@@ -14,7 +14,10 @@ export function parseGedcom(gedcom: string): {
   persons: GedcomPerson[]
   relationships: GedcomRelationship[]
 } {
-  const lines = gedcom.split(/\r?\n/).filter((line) => line.trim().length > 0)
+  const lines = gedcom
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0)
 
   const persons: GedcomPerson[] = []
   const relationships: GedcomRelationship[] = []

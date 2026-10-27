@@ -701,6 +701,10 @@ export const messages = {
       'File này chứa {persons} thành viên, {relationships} quan hệ, {events} sự kiện.',
     restoreFileExportedAt: 'Xuất ngày {date}.',
     restoreDownloadCurrent: 'Tải bản sao lưu hiện tại trước',
+    restoreEncodingAnsel:
+      'File GEDCOM dùng bảng mã ANSEL, chưa được hỗ trợ đầy đủ: hãy kiểm tra tên có dấu trước khi tiếp tục.',
+    restoreEncodingReplaced:
+      'Một số ký tự trong file không đọc được (hiện thành �): tên có dấu có thể bị sai. Nên lưu lại file GEDCOM ở dạng UTF-8 rồi nhập lại.',
     restoreFileUnreadable:
       'Không đọc được file: nội dung không phải JSON hợp lệ.',
     notFoundTitle: 'Không tìm thấy trang',
@@ -1875,6 +1879,10 @@ export const messages = {
       'This file contains {persons} members, {relationships} relationships, {events} events.',
     restoreFileExportedAt: 'Exported on {date}.',
     restoreDownloadCurrent: 'Download the current backup first',
+    restoreEncodingAnsel:
+      'This GEDCOM uses the ANSEL character set, which is not fully supported: check names with accents before continuing.',
+    restoreEncodingReplaced:
+      'Some characters in the file could not be read (shown as �): accented names may be wrong. Re-save the GEDCOM as UTF-8 and import it again.',
     restoreFileUnreadable: 'Could not read the file: it is not valid JSON.',
     notFoundTitle: 'Page not found',
     notFoundDescription:

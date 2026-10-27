@@ -17,9 +17,10 @@ import {
 } from '@/utils/backupPayload'
 import {
   BackupParseError,
-  parseRestoreFile,
+  readRestoreFile,
   summarizeBackup,
-  type BackupSummary
+  type BackupSummary,
+  type RestoreWarning
 } from '@/utils/backupSummary'
 import { CsvParseError, CsvZipInvalidError } from '@/utils/csvErrors'
 import { memberSearchCache } from '@/utils/memberSearchCache'
@@ -46,6 +47,7 @@ export default function DataImportExport() {
   const [parsedBackup, setParsedBackup] = useState<{
     payload: ImportPayload
     summary: BackupSummary
+    warning?: RestoreWarning
   } | null>(null)
   const [isReadingFile, setIsReadingFile] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
@@ -147,13 +149,13 @@ export default function DataImportExport() {
     setImportStatus(null)
     setIsReadingFile(true)
     try {
-      const payload = await parseRestoreFile(file)
+      const { payload, warning } = await readRestoreFile(file)
       const summary = summarizeBackup(payload)
       if (!summary) return fail(t('invalidBackupFile'))
       const invalid = validateImportPayload(payload, t)
       if (invalid) return fail(invalid)
       setSelectedFile(file)
-      setParsedBackup({ payload, summary })
+      setParsedBackup({ payload, summary, warning })
       setShowConfirm(true)
     } catch (error: unknown) {
       fail(
@@ -324,6 +326,7 @@ export default function DataImportExport() {
         <ImportConfirmModal
           fileName={selectedFile?.name || ''}
           summary={parsedBackup.summary}
+          warning={parsedBackup.warning}
           locale={locale}
           isImporting={isImporting}
           isDownloading={isExporting}
