@@ -247,3 +247,14 @@ export function computeEvents(
   events.sort((a, b) => a.daysUntil - b.daysUntil)
   return events
 }
+
+/**
+ * Hides the birthdays of deceased people unless `showDeceasedBirthdays` is
+ * set. Death anniversaries and custom events are never affected.
+ */
+export function filterVisibleEvents<
+  T extends Pick<FamilyEvent, 'type' | 'isDeceased'>
+>(events: T[], options: { showDeceasedBirthdays?: boolean } = {}): T[] {
+  if (options.showDeceasedBirthdays) return events
+  return events.filter((e) => !(e.type === 'birthday' && e.isDeceased))
+}

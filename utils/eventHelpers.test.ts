@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import { vnToday } from './dateHelpers'
-import { computeEvents } from './eventHelpers'
+import { computeEvents, filterVisibleEvents } from './eventHelpers'
 
 type PersonInput = Parameters<typeof computeEvents>[0][number]
 
@@ -210,5 +210,53 @@ describe('computeEvents: Vietnam day, estimates and 29/2', () => {
       (e) => e.daysUntil >= 0
     )!
     expect(after.nextOccurrence).toEqual(day(2028, 2, 29))
+  })
+})
+
+describe('filterVisibleEvents', () => {
+  const now = day(2026, 3, 10)
+  const persons = [
+    deceased({
+      id: 'gone',
+      birth_month: 3,
+      birth_day: 12,
+      death_year: 2000,
+      death_lunar_month: 3,
+      death_lunar_day: 14
+    }),
+    deceased({
+      id: 'alive',
+      is_deceased: false,
+      birth_month: 3,
+      birth_day: 11
+    })
+  ]
+  const events = computeEvents(persons, [], now)
+
+  test('hides birthdays of deceased people by default, keeps the rest', () => {
+    const visible = filterVisibleEvents(events)
+    expect(
+      visible.some((e) => e.type === 'birthday' && e.personId === 'gone')
+    ).toBe(false)
+    expect(
+      visible.some((e) => e.type === 'birthday' && e.personId === 'alive')
+    ).toBe(true)
+    expect(visible.some((e) => e.type === 'death_anniversary')).toBe(true)
+  })
+
+  test('shows them when asked', () => {
+    const visible = filterVisibleEvents(events, { showDeceasedBirthdays: true })
+    expect(visible).toEqual(events)
+    expect(
+      visible.some((e) => e.type === 'birthday' && e.personId === 'gone')
+    ).toBe(true)
+  })
+
+  test('counts taken from the filtered list match what is shown', () => {
+    const soon = (list: typeof events) =>
+      list.filter((e) => e.daysUntil > 0 && e.daysUntil <= 7).length
+    expect(soon(filterVisibleEvents(events))).toBe(
+      soon(events) - 1 // the deceased birthday on 12/03
+    )
   })
 })

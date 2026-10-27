@@ -13,7 +13,8 @@ import { vnToday } from '@/utils/dateHelpers'
 import {
   computeEvents,
   CustomEventRecord,
-  FamilyEvent
+  FamilyEvent,
+  filterVisibleEvents
 } from '@/utils/eventHelpers'
 import { buildIcs } from '@/utils/icsExport'
 import { solarToLunar } from '@/utils/lunarCalendar'
@@ -139,8 +140,13 @@ export default function EventsList({
     [persons, customEvents]
   )
 
+  const visibleEvents = useMemo(
+    () => filterVisibleEvents(allEvents, { showDeceasedBirthdays }),
+    [allEvents, showDeceasedBirthdays]
+  )
+
   const filtered = useMemo(() => {
-    let result = allEvents
+    let result = visibleEvents
     if (filter === 'past') {
       // Past tab: all event types from the past year
       return result
@@ -150,17 +156,14 @@ export default function EventsList({
     if (filter !== 'all') {
       result = result.filter((e) => e.type === filter)
     }
-    if (!showDeceasedBirthdays) {
-      result = result.filter((e) => !(e.type === 'birthday' && e.isDeceased))
-    }
     // Only show upcoming events (daysUntil >= 0) for non-past tabs
     return result.filter((e) => e.daysUntil >= 0 && e.daysUntil <= 365)
-  }, [allEvents, filter, showDeceasedBirthdays])
+  }, [visibleEvents, filter])
 
   const visible = filtered.slice(0, showCount)
 
-  const todayCount = allEvents.filter((e) => e.daysUntil === 0).length
-  const soonCount = allEvents.filter(
+  const todayCount = visibleEvents.filter((e) => e.daysUntil === 0).length
+  const soonCount = visibleEvents.filter(
     (e) => e.daysUntil > 0 && e.daysUntil <= 7
   ).length
 

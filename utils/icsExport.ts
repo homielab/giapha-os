@@ -1,6 +1,7 @@
 import { vnToday, type Translate } from '@/utils/dateHelpers'
 import {
   computeEvents,
+  filterVisibleEvents,
   type CustomEventRecord,
   type FamilyEvent
 } from '@/utils/eventHelpers'
@@ -157,9 +158,9 @@ export function buildIcs({
   )
 
   const birthdaySeen = new Set<string>()
-  for (const event of occurrences) {
+  for (const event of filterVisibleEvents(occurrences)) {
     if (event.type === 'birthday') {
-      if (event.isDeceased || birthdaySeen.has(event.personId ?? '')) continue
+      if (birthdaySeen.has(event.personId ?? '')) continue
       birthdaySeen.add(event.personId ?? '')
       const description: string[] = []
       if (event.originYear) {
