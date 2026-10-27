@@ -7,6 +7,7 @@ import MemberForm from '@/components/MemberForm'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { fetchPrivateDetails } from '@/utils/privateDetails'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
+import { isUuid } from '@/utils/uuid'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -24,6 +25,9 @@ export default async function EditMemberPage({ params }: PageProps) {
     params,
     getProfile()
   ])
+  // A shortened or mistyped link is a 404, not a database error.
+  if (!isUuid(id)) notFound()
+
   const isAdmin = profile?.role === 'admin' && profile.is_active
   const isEditor = profile?.role === 'editor' && profile.is_active
   if (!isAdmin && !isEditor) {

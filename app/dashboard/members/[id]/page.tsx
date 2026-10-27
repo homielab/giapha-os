@@ -10,6 +10,7 @@ import { getServerTranslations } from '@/lib/i18n/server'
 import { memberPrintTitle } from '@/utils/memberPrint'
 import { fetchPrivateDetails } from '@/utils/privateDetails'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
+import { isUuid } from '@/utils/uuid'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -18,11 +19,10 @@ interface PageProps {
 export async function generateMetadata({
   params
 }: PageProps): Promise<Metadata> {
-  const [{ t }, { id }, supabase] = await Promise.all([
-    getServerTranslations(),
-    params,
-    getSupabase()
-  ])
+  const [{ t }, { id }] = await Promise.all([getServerTranslations(), params])
+  if (!isUuid(id)) return { title: t('familyTree') }
+
+  const supabase = await getSupabase()
   const { data } = await supabase
     .from('persons')
     .select('full_name')
@@ -38,6 +38,8 @@ export default async function MemberDetailPage({ params }: PageProps) {
     params,
     getProfile()
   ])
+  // A shortened or mistyped link is a 404, not a database error.
+  if (!isUuid(id)) notFound()
 
   const isAdmin = profile?.role === 'admin' && profile.is_active
   const canEdit =

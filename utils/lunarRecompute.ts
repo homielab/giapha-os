@@ -1,4 +1,5 @@
 import { solarToLunar, type LunarDate } from './lunarCalendar'
+import { isUuid } from './uuid'
 
 /**
  * Recomputing saved lunar death dates.
@@ -44,9 +45,6 @@ export const LUNAR_RECOMPUTE_COLUMNS =
 
 /** Most rows one apply request accepts (same as the restore limit). */
 export const MAX_RECOMPUTE_IDS = 10000
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 function isWholeNumber(n: unknown): n is number {
   return typeof n === 'number' && Number.isInteger(n)
@@ -124,7 +122,7 @@ export function parseRecomputeIds(input: unknown): string[] | null {
   if (input.length > MAX_RECOMPUTE_IDS) return null
   const ids = new Set<string>()
   for (const id of input) {
-    if (typeof id !== 'string' || !UUID_PATTERN.test(id)) return null
+    if (typeof id !== 'string' || !isUuid(id)) return null
     ids.add(id.toLowerCase())
   }
   return [...ids]

@@ -6,6 +6,7 @@ import {
   type RelationshipLink
 } from '@/utils/relationshipValidation'
 import { isMissingDatabaseFunction } from '@/utils/supabase/missingFunction'
+import { isUuid } from '@/utils/uuid'
 
 /**
  * Payload shape cho file backup JSON.
@@ -124,8 +125,6 @@ export const RESTORE_PAYLOAD_VERSION = 1
  */
 export const BACKUP_VERSION = 4
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 // Keep in sync with private.restore_backup in docs/migrations.
 export const MAX_PERSONS = 10000
 export const MAX_RELATIONSHIPS = 30000
@@ -219,7 +218,7 @@ export function validateImportPayload(
   for (const person of persons) {
     if (!person || typeof person !== 'object') return t('invalidPersonRecord')
     const row = person as Record<string, unknown>
-    if (typeof row.id !== 'string' || !UUID_PATTERN.test(row.id))
+    if (typeof row.id !== 'string' || !isUuid(row.id))
       return t('invalidPersonId')
     if (personIds.has(row.id)) return t('duplicatePersonId')
     personIds.add(row.id)
@@ -293,7 +292,7 @@ export function validateImportPayload(
     for (const event of customEvents) {
       if (!event || typeof event !== 'object') return t('invalidEvent')
       const row = event as Record<string, unknown>
-      if (typeof row.id !== 'string' || !UUID_PATTERN.test(row.id))
+      if (typeof row.id !== 'string' || !isUuid(row.id))
         return t('invalidEventId')
       if (
         typeof row.name !== 'string' ||

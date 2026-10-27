@@ -11,10 +11,8 @@ import {
 } from '@/utils/generationUpdates'
 import { fetchAllRows, fetchInChunks } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase, getUser } from '@/utils/supabase/queries'
+import { isUuid } from '@/utils/uuid'
 import { PersonNotDeletedError } from '@/utils/writeErrors'
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export async function deleteMemberProfile(memberId: string) {
   const [user, { t }] = await Promise.all([getUser(), getServerTranslations()])
@@ -23,7 +21,7 @@ export async function deleteMemberProfile(memberId: string) {
     return { error: t('memberDeleteAccessDenied') }
   }
 
-  if (!UUID_PATTERN.test(memberId)) {
+  if (!isUuid(memberId)) {
     return { error: t('invalidProfile') }
   }
 
@@ -82,7 +80,7 @@ export async function updateDescendantGenerationsAction(
     return { error: t('memberEditAccessDenied') }
   }
 
-  if (!UUID_PATTERN.test(personId)) {
+  if (!isUuid(personId)) {
     return { error: t('invalidProfile') }
   }
 
