@@ -4,6 +4,7 @@ import EventsList from '@/components/EventsList'
 import MemberDetailModal from '@/components/modal/MemberDetailModal'
 import { MemberListProvider } from '@/context/MemberListContext'
 import { getServerTranslations } from '@/lib/i18n/server'
+import { EVENT_PERSON_COLUMNS, EVENT_PERSON_FILTER } from '@/utils/eventPersons'
 import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getIsAdmin, getSupabase, getUser } from '@/utils/supabase/queries'
 
@@ -24,9 +25,8 @@ export default async function EventsPage() {
     fetchAllRowsOrThrow((from, to) =>
       supabase
         .from('persons')
-        .select(
-          'id, full_name, birth_year, birth_month, birth_day, death_year, death_month, death_day, death_lunar_year, death_lunar_month, death_lunar_day, is_deceased, avatar_url'
-        )
+        .select(EVENT_PERSON_COLUMNS)
+        .or(EVENT_PERSON_FILTER)
         .order('id')
         .range(from, to)
     ),

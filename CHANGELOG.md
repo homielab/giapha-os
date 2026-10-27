@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Events page and dashboard: only members who have a birthday or a death date (solar or lunar day and month) are loaded, and without their photo link, so large trees send far less data. The events shown are the same.
 - Lint now fails on any warning (`--max-warnings 0`, also in CI); unused imports and variables across the components were removed, no behaviour change.
 - Internal: relationship mutation logic in `utils/relationshipMutations.ts` is split into `utils/relationships/` (`add`, `bulkChildren`, `spouse`, `shared`; each file under 200 lines) with a barrel re-export. Imports and tests are unchanged.
 
