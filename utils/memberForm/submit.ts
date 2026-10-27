@@ -9,6 +9,7 @@ import {
   normalizeDeathDates,
   validateMemberForm
 } from '@/utils/memberFormHelpers'
+import { memberSearchCache } from '@/utils/memberSearchCache'
 import {
   findBirthDateConflict,
   findParentDeathIssues,
@@ -192,6 +193,7 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
       updateDescendantGenerations: ctx.updateDescendantGenerations
     })
 
+    memberSearchCache.clear()
     if (!currentPersonId) throw new Error(t('saveIdError'))
     // The member exists now: edit it from here on, never insert it again.
     if (createdPerson && (savedWarnings.length > 0 || generationUpdateError))

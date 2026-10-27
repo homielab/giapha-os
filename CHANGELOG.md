@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The ⌘K / Ctrl+K search no longer keeps showing the member list from the first time it was opened: it reloads in the background when the list is older than a minute and right after a member is added, edited, deleted or merged, or a backup is restored (a deleted member no longer opens a 404, a new one is found).
 - Member details: clicking one member and then another before the first has loaded (for example on a slow connection) no longer shows the first member in the window, and Edit / View now always act on the member that was clicked last. The relationship list of a member ignores late answers for a previously shown member the same way.
 - An unknown `?view=` value on the members page (for example a mistyped or old link) now opens the list instead of an empty page.
 - The Users page shows an error with a retry button when the user list cannot be loaded (for example before the migrations are applied) instead of an empty list that looks like there are no users.

@@ -13,6 +13,7 @@ import ImportStatusMessage from '@/components/ImportStatusMessage'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import type { DuplicateGroupMember } from '@/utils/duplicatePeople'
+import { memberSearchCache } from '@/utils/memberSearchCache'
 import type { MergePreview } from '@/utils/mergePersons'
 
 interface MergePersonsModalProps {
@@ -92,6 +93,7 @@ export default function MergePersonsModal({
         setError(res.error)
         return
       }
+      memberSearchCache.clear()
       onMerged([keepId, dropId], res.summary)
     } catch {
       setError(t('mergeFailed', { error: '' }))

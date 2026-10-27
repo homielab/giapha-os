@@ -11,11 +11,9 @@ import {
   rankMembers,
   type SearchableMember
 } from '@/utils/memberSearch'
+import { memberSearchCache } from '@/utils/memberSearchCache'
 import { createClient } from '@/utils/supabase/client'
 import { fetchAllRows } from '@/utils/supabase/fetchAll'
-
-// The list is cached for the browser session: it loads on first open only.
-let cachedMembers: SearchableMember[] | null = null
 
 export default function GlobalMemberSearch() {
   const { t } = useI18n()
@@ -24,7 +22,7 @@ export default function GlobalMemberSearch() {
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const [members, setMembers] = useState<SearchableMember[] | null>(
-    cachedMembers
+    memberSearchCache.get()
   )
   const [loadError, setLoadError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
@@ -51,7 +49,10 @@ export default function GlobalMemberSearch() {
   useEffect(() => {
     if (!open) return
     inputRef.current?.focus()
-    if (members) return
+    // Stale-while-revalidate: the list already on screen stays while it is
+    // reloaded in the background when older than the TTL (or cleared by an edit).
+    const cached = memberSearchCache.get()
+    if (cached && memberSearchCache.isFresh()) return
     let cancelled = false
     const supabase = createClient()
     fetchAllRows<SearchableMember>((from, to) =>
@@ -64,16 +65,18 @@ export default function GlobalMemberSearch() {
     ).then(({ data, error }) => {
       if (cancelled) return
       if (error) {
-        setLoadError(error.message)
+        // A failed background reload keeps the old list on screen.
+        if (!members) setLoadError(error.message)
         return
       }
-      cachedMembers = data
+      memberSearchCache.set(data)
       setMembers(data)
     })
     return () => {
       cancelled = true
     }
-  }, [open, members, reloadKey])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- members only matters when an open starts
+  }, [open, reloadKey])
 
   const results = useMemo(
     () => (members && query.trim() ? rankMembers(query, members) : []),

@@ -22,6 +22,7 @@ import {
   type BackupSummary
 } from '@/utils/backupSummary'
 import { CsvParseError, CsvZipInvalidError } from '@/utils/csvErrors'
+import { memberSearchCache } from '@/utils/memberSearchCache'
 
 import PersonSelector from './PersonSelector'
 
@@ -201,6 +202,7 @@ export default function DataImportExport() {
         return
       }
 
+      memberSearchCache.clear()
       setImportStatus({
         type: 'success',
         message: [

@@ -6,6 +6,7 @@ import { useState } from 'react'
 
 import { deleteMemberProfile } from '@/app/actions/member'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { memberSearchCache } from '@/utils/memberSearchCache'
 
 interface DeleteMemberButtonProps {
   memberId: string
@@ -36,6 +37,7 @@ export default function DeleteMemberButton({
       // Note: the server action will redirect on success
     } catch (err) {
       if (isRedirectError(err)) {
+        memberSearchCache.clear()
         throw err
       }
       console.error('Delete failed:', err)
