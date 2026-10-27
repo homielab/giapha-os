@@ -129,6 +129,11 @@ CREATE TABLE IF NOT EXISTS public.custom_events (
   content TEXT,
   event_date DATE NOT NULL,
   location TEXT,
+  -- 'none' = once; yearly_solar / yearly_lunar = every year on the solar or
+  -- lunar day and month of event_date.
+  recurrence TEXT NOT NULL DEFAULT 'none'
+    CONSTRAINT custom_events_recurrence_check
+    CHECK (recurrence IN ('none', 'yearly_solar', 'yearly_lunar')),
   created_by UUID REFERENCES public.profiles(id) DEFAULT auth.uid(),
   
   created_at TIMESTAMPTZ DEFAULT NOW(),

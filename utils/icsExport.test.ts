@@ -203,4 +203,70 @@ describe('buildIcs', () => {
       buildIcs({ persons: [person({ birth_month: 1, birth_day: 1 })], t })
     ).toContain('UID:giapha-p1-birthday@giapha-os')
   })
+
+  test('yearly_solar custom event repeats with an RRULE from its first date', () => {
+    const ics = build(
+      [],
+      [
+        {
+          id: 'e3',
+          name: 'Họp họ',
+          content: null,
+          event_date: '2020-04-02',
+          location: null,
+          created_by: null,
+          recurrence: 'yearly_solar'
+        }
+      ]
+    )
+    const evs = events(ics)
+    expect(evs).toHaveLength(1)
+    expect(evs[0]).toContain('UID:giapha-e3-custom@giapha.example.com')
+    expect(evs[0]).toContain('DTSTART;VALUE=DATE:20200402')
+    expect(evs[0]).toContain('RRULE:FREQ=YEARLY\r\n')
+  })
+
+  test('a yearly event on 29/2 repeats on the last day of February', () => {
+    const ics = build(
+      [],
+      [
+        {
+          id: 'e4',
+          name: 'Kỷ niệm',
+          content: null,
+          event_date: '2024-02-29',
+          location: null,
+          created_by: null,
+          recurrence: 'yearly_solar'
+        }
+      ]
+    )
+    expect(ics).toContain('RRULE:FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=-1')
+  })
+
+  test('yearly_lunar custom event: one event per occurrence, no RRULE', () => {
+    // 2/4/2020 = 10/3 âm lịch → 26/4/2026 and 16/4/2027.
+    const ics = build(
+      [],
+      [
+        {
+          id: 'e5',
+          name: 'Giỗ tổ',
+          content: 'Ăn cỗ',
+          event_date: '2020-04-02',
+          location: null,
+          created_by: null,
+          recurrence: 'yearly_lunar'
+        }
+      ]
+    )
+    const evs = events(ics)
+    expect(ics).not.toContain('RRULE')
+    expect(evs.map((e) => e.match(/DTSTART;VALUE=DATE:(\d+)/)?.[1])).toEqual([
+      '20260426',
+      '20270416'
+    ])
+    expect(evs[0]).toContain('UID:giapha-e5-custom-20260426@giapha.example.com')
+    expect(evs[0]).toContain('DESCRIPTION:Ngày âm lịch: 10/03\\nĂn cỗ')
+  })
 })

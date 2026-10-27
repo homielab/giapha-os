@@ -298,7 +298,7 @@ export default function EventsList({
         <div className='space-y-2.5'>
           {visible.map((event, i) => (
             <EventCard
-              key={`${event.personId}-${event.type}-${event.eventDateLabel}`}
+              key={`${event.personId}-${event.type}-${event.nextOccurrence.getTime()}`}
               event={event}
               index={i}
               canEdit={

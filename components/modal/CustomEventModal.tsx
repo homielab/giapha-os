@@ -8,6 +8,7 @@ import EventErrorBanner from '@/components/modal/EventErrorBanner'
 import EventHeaderActions from '@/components/modal/EventHeaderActions'
 import EventModalFooter from '@/components/modal/EventModalFooter'
 import EventNameField from '@/components/modal/EventNameField'
+import EventRecurrenceField from '@/components/modal/EventRecurrenceField'
 import EventTextFields from '@/components/modal/EventTextFields'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
@@ -16,7 +17,11 @@ import {
   deleteCustomEvent,
   saveCustomEvent
 } from '@/utils/customEventMutations'
-import { CustomEventRecord } from '@/utils/eventHelpers'
+import {
+  CustomEventRecord,
+  CustomEventRecurrence,
+  toRecurrence
+} from '@/utils/eventHelpers'
 import { lunarToSolar } from '@/utils/lunarCalendar'
 import { createClient } from '@/utils/supabase/client'
 
@@ -43,6 +48,9 @@ export default function CustomEventModal({
   const [eventDate, setEventDate] = useState(eventToEdit?.event_date || '')
   const [location, setLocation] = useState(eventToEdit?.location || '')
   const [content, setContent] = useState(eventToEdit?.content || '')
+  const [recurrence, setRecurrence] = useState<CustomEventRecurrence>(
+    toRecurrence(eventToEdit?.recurrence)
+  )
 
   // Lunar date mode
   const [dateMode, setDateMode] = useState<'solar' | 'lunar'>('solar')
@@ -61,6 +69,7 @@ export default function CustomEventModal({
         setEventDate(eventToEdit.event_date)
         setLocation(eventToEdit.location || '')
         setContent(eventToEdit.content || '')
+        setRecurrence(toRecurrence(eventToEdit.recurrence))
       } else {
         setName('')
         // Default to today
@@ -71,6 +80,7 @@ export default function CustomEventModal({
         setEventDate(`${y}-${m}-${d}`)
         setLocation('')
         setContent('')
+        setRecurrence('none')
       }
       setError(null)
       setDateMode('solar')
@@ -122,7 +132,12 @@ export default function CustomEventModal({
         name,
         event_date: eventDate,
         location: location || null,
-        content: content || null
+        content: content || null,
+        // Sent only when needed, so a database without the recurrence
+        // column (migration not run yet) still saves one-off events.
+        ...(recurrence !== 'none' || eventToEdit?.recurrence != null
+          ? { recurrence }
+          : {})
       }
 
       await saveCustomEvent(supabase, payload, eventToEdit?.id)
@@ -241,6 +256,11 @@ export default function CustomEventModal({
                     onLunarMonthChange={setLunarMonth}
                     onLunarYearChange={setLunarYear}
                     lunarConvertError={lunarConvertError}
+                  />
+
+                  <EventRecurrenceField
+                    recurrence={recurrence}
+                    onRecurrenceChange={setRecurrence}
                   />
 
                   <EventTextFields

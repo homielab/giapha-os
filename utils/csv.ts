@@ -133,6 +133,8 @@ interface CustomEventRow {
   event_date: string
   location: string | null
   created_by: string | null
+  /** Missing in files exported before events could repeat (= 'none'). */
+  recurrence?: string | null
 }
 
 export async function exportToCsvZip(data: {

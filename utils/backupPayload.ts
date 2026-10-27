@@ -1,4 +1,5 @@
 import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
+import { toRecurrence, type CustomEventRecurrence } from '@/utils/eventHelpers'
 import { isValidSolarDate } from '@/utils/lunarCalendar'
 import {
   findRelationshipIssues,
@@ -60,6 +61,8 @@ export interface CustomEventExport {
   event_date: string
   location: string | null
   created_by: string | null
+  /** Missing in backups made before events could repeat (= 'none'). */
+  recurrence?: CustomEventRecurrence | null
 }
 
 export interface BackupPayload {
@@ -85,7 +88,10 @@ export type SanitizedRelationship = Omit<
   RelationshipExport,
   'id' | 'created_at' | 'updated_at'
 >
-export type SanitizedCustomEvent = Omit<CustomEventExport, 'created_by'>
+export type SanitizedCustomEvent = Omit<
+  CustomEventExport,
+  'created_by' | 'recurrence'
+> & { recurrence: CustomEventRecurrence }
 
 export interface RestoreCounts {
   persons: number
@@ -112,10 +118,11 @@ export const RESTORE_PAYLOAD_VERSION = 1
 
 /**
  * Version written into JSON backups. v2 added birth order and generation, v3
- * lunar death dates, private details, relationship notes and custom events. Raise it when
- * the backup format changes; files with a higher version are refused.
+ * lunar death dates, private details, relationship notes and custom events, v4
+ * the recurrence of custom events. Raise it when the backup format changes;
+ * files with a higher version are refused.
  */
-export const BACKUP_VERSION = 3
+export const BACKUP_VERSION = 4
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -297,6 +304,13 @@ export function validateImportPayload(
       for (const field of ['content', 'location']) {
         if (!isShortText(row[field], 2000)) return t('fieldTooLong', { field })
       }
+      if (
+        row.recurrence !== undefined &&
+        row.recurrence !== null &&
+        row.recurrence !== '' &&
+        toRecurrence(row.recurrence) !== row.recurrence
+      )
+        return t('invalidEventRecurrence')
     }
   }
 
@@ -394,8 +408,38 @@ export function sanitizeCustomEvent(
     name: e.name,
     content: e.content ?? null,
     event_date: e.event_date,
-    location: e.location ?? null
+    location: e.location ?? null,
+    recurrence: toRecurrence(e.recurrence)
   }
+}
+
+/** The exported fields of a custom_events row; no recurrence = 'none'. */
+export function toCustomEventExport(e: CustomEventExport): CustomEventExport {
+  return {
+    id: e.id,
+    name: e.name,
+    content: e.content ?? null,
+    event_date: e.event_date,
+    location: e.location ?? null,
+    created_by: e.created_by ?? null,
+    recurrence: toRecurrence(e.recurrence)
+  }
+}
+
+/**
+ * Custom event rows for the old chunked restore. A database that old may not
+ * have the recurrence column: leave it out while no event repeats (inserts
+ * then use the column default).
+ */
+export function legacyCustomEventRows(
+  events: SanitizedCustomEvent[]
+): object[] {
+  if (events.some((e) => e.recurrence !== 'none')) return events
+  return events.map((event) => {
+    const row: Partial<SanitizedCustomEvent> = { ...event }
+    delete row.recurrence
+    return row
+  })
 }
 
 /** Builds the `restore_backup` payload from an already validated import. */

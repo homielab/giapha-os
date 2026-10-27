@@ -173,6 +173,22 @@ describe('parseCsvZip', () => {
     expect(result.custom_events).toEqual([event])
   })
 
+  test('keeps the recurrence of custom events', async () => {
+    const event = {
+      id: 'e2',
+      name: 'Họp họ',
+      content: null,
+      event_date: '2020-04-02',
+      location: null,
+      created_by: null,
+      recurrence: 'yearly_lunar'
+    }
+    const result = await parseCsvZip(
+      await exportToCsvZip({ persons, relationships, custom_events: [event] })
+    )
+    expect(result.custom_events?.[0].recurrence).toBe('yearly_lunar')
+  })
+
   test('accepts files without a BOM', async () => {
     const result = await parseCsvZip(
       await zipWith({

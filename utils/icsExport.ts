@@ -93,6 +93,8 @@ interface VEvent {
   description: string[]
   location?: string | null
   yearly?: boolean
+  /** Yearly on the last day of February (an event on 29/2). */
+  lastDayOfFebruary?: boolean
 }
 
 function renderEvent(e: VEvent, stamp: string): string[] {
@@ -103,7 +105,11 @@ function renderEvent(e: VEvent, stamp: string): string[] {
     `DTSTART;VALUE=DATE:${icsDate(e.start)}`,
     `DTEND;VALUE=DATE:${icsDate(addDays(e.start, 1))}`
   ]
-  if (e.yearly) lines.push('RRULE:FREQ=YEARLY')
+  if (e.lastDayOfFebruary) {
+    lines.push('RRULE:FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=-1')
+  } else if (e.yearly) {
+    lines.push('RRULE:FREQ=YEARLY')
+  }
   lines.push(`SUMMARY:${escapeIcsText(e.summary)}`)
   if (e.description.length > 0) {
     lines.push(`DESCRIPTION:${escapeIcsText(e.description.join('\n'))}`)
@@ -118,7 +124,10 @@ function renderEvent(e: VEvent, stamp: string): string[] {
  * - living members' birthdays: one yearly repeating event each;
  * - death anniversaries: the lunar date has no RRULE, so one event per
  *   occurrence falling in this and next calendar year;
- * - custom events: once, on their own date.
+ * - custom events: once, on their own date; yearly_solar ones repeat every
+ *   year from it (29/2 → last day of February, as on the page); yearly_lunar
+ *   ones, like death anniversaries, one event per occurrence in this and
+ *   next calendar year.
  * Dates are the same ones the Events page shows (computeEvents).
  */
 export function buildIcs({
@@ -146,7 +155,9 @@ export function buildIcs({
     for (const event of computeEvents(persons, customEvents, sample)) {
       const date = event.nextOccurrence
       const inRange = date >= samples[0] && date < rangeEnd
-      if (event.type !== 'custom_event' && !inRange) continue
+      const once =
+        event.type === 'custom_event' && event.recurrence !== 'yearly_lunar'
+      if (!once && !inRange) continue
       const key = `${event.type}|${event.personId}|${icsDate(date)}`
       if (seen.has(key)) continue
       seen.add(key)
@@ -157,7 +168,9 @@ export function buildIcs({
     (a, b) => a.nextOccurrence.getTime() - b.nextOccurrence.getTime()
   )
 
+  const customDates = new Map(customEvents.map((e) => [e.id, e.event_date]))
   const birthdaySeen = new Set<string>()
+  const yearlySeen = new Set<string>()
   for (const event of filterVisibleEvents(occurrences)) {
     if (event.type === 'birthday') {
       if (birthdaySeen.has(event.personId ?? '')) continue
@@ -181,6 +194,31 @@ export function buildIcs({
         start: event.nextOccurrence,
         summary: t('icsDeathSummary', { name: event.personName }),
         description
+      })
+    } else if (event.recurrence === 'yearly_lunar') {
+      const description = [t('icsCustomLunarDate', { date: lunarLabel(event) })]
+      if (event.content) description.push(event.content)
+      events.push({
+        uid: `giapha-${event.personId}-custom-${icsDate(event.nextOccurrence)}@${domain}`,
+        start: event.nextOccurrence,
+        summary: event.personName,
+        description,
+        location: event.location
+      })
+    } else if (event.recurrence === 'yearly_solar') {
+      const id = event.personId ?? ''
+      if (yearlySeen.has(id)) continue
+      yearlySeen.add(id)
+      const [y, m, d] = (customDates.get(id) ?? '').split('-').map(Number)
+      const start = y && m && d ? new Date(y, m - 1, d) : event.nextOccurrence
+      events.push({
+        uid: `giapha-${id}-custom@${domain}`,
+        start,
+        summary: event.personName,
+        description: event.content ? [event.content] : [],
+        location: event.location,
+        yearly: true,
+        lastDayOfFebruary: m === 2 && d === 29
       })
     } else {
       events.push({

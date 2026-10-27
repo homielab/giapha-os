@@ -4,10 +4,12 @@ import {
   BACKUP_VERSION,
   buildRestorePayload,
   isMissingRestoreFunction,
+  legacyCustomEventRows,
   MAX_PERSONS,
   MAX_RELATIONSHIPS,
   MAX_REPORTED_ISSUES,
   RESTORE_PAYLOAD_VERSION,
+  toCustomEventExport,
   validateImportPayload,
   type ImportPayload,
   type Translator
@@ -415,5 +417,88 @@ describe('validateImportPayload person numbers and dates', () => {
         birth_order: null
       })
     ).toBeNull()
+  })
+})
+
+describe('custom event recurrence in backups', () => {
+  const withRecurrence = (recurrence: unknown) =>
+    withChange((p) => {
+      ;(p.custom_events[0] as Record<string, unknown>).recurrence = recurrence
+    }) as unknown as ImportPayload
+
+  test('export → import keeps the recurrence', () => {
+    const row = {
+      id: E,
+      name: 'Tảo mộ',
+      content: null,
+      event_date: '2020-01-19',
+      location: null,
+      created_by: A,
+      recurrence: 'yearly_lunar' as const
+    }
+    const exported = JSON.parse(
+      JSON.stringify({
+        ...validPayload(),
+        version: BACKUP_VERSION,
+        custom_events: [toCustomEventExport(row)]
+      })
+    ) as ImportPayload
+    expect(validateImportPayload(exported, t)).toBeNull()
+    expect(buildRestorePayload(exported).custom_events).toEqual([
+      {
+        id: E,
+        name: 'Tảo mộ',
+        content: null,
+        event_date: '2020-01-19',
+        location: null,
+        recurrence: 'yearly_lunar'
+      }
+    ])
+  })
+
+  test('exports rows without the column as none', () => {
+    const exported = toCustomEventExport({
+      id: E,
+      name: 'Họp họ',
+      content: null,
+      event_date: '2026-02-01',
+      location: null,
+      created_by: null
+    })
+    expect(exported.recurrence).toBe('none')
+  })
+
+  test('older backups without recurrence restore as none', () => {
+    const payload = buildRestorePayload(validPayload())
+    expect(payload.custom_events[0].recurrence).toBe('none')
+    expect(
+      buildRestorePayload(withRecurrence('')).custom_events[0].recurrence
+    ).toBe('none')
+  })
+
+  test('accepts the three values, empty and missing', () => {
+    for (const value of ['none', 'yearly_solar', 'yearly_lunar', '', null]) {
+      expect(validateImportPayload(withRecurrence(value), t)).toBeNull()
+    }
+  })
+
+  test('rejects an unknown recurrence', () => {
+    for (const value of ['monthly', 1, true]) {
+      expect(validateImportPayload(withRecurrence(value), t)).toBe(
+        'invalidEventRecurrence'
+      )
+    }
+  })
+
+  test('the old chunked restore leaves the column out while nothing repeats', () => {
+    const once = buildRestorePayload(validPayload()).custom_events
+    expect(legacyCustomEventRows(once)[0]).not.toHaveProperty('recurrence')
+    const yearly = buildRestorePayload(
+      withRecurrence('yearly_solar')
+    ).custom_events
+    expect(legacyCustomEventRows(yearly)[0]).toHaveProperty(
+      'recurrence',
+      'yearly_solar'
+    )
   })
 })

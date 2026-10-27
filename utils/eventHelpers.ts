@@ -28,6 +28,26 @@ export interface FamilyEvent {
   location?: string | null
   /** Optional content/description for the event */
   content?: string | null
+  /** How a custom event repeats (custom events only; missing = once). */
+  recurrence?: CustomEventRecurrence
+}
+
+/**
+ * How a custom event repeats: once on its date, every year on the same solar
+ * day and month, or every year on the lunar day and month of its date.
+ */
+export const CUSTOM_EVENT_RECURRENCES = [
+  'none',
+  'yearly_solar',
+  'yearly_lunar'
+] as const
+export type CustomEventRecurrence = (typeof CUSTOM_EVENT_RECURRENCES)[number]
+
+/** A stored or imported value as a recurrence; anything else is 'none'. */
+export function toRecurrence(value: unknown): CustomEventRecurrence {
+  return CUSTOM_EVENT_RECURRENCES.includes(value as CustomEventRecurrence)
+    ? (value as CustomEventRecurrence)
+    : 'none'
 }
 
 export interface CustomEventRecord {
@@ -37,6 +57,8 @@ export interface CustomEventRecord {
   event_date: string
   location: string | null
   created_by: string | null
+  /** Missing on databases without the recurrence column (= 'none'). */
+  recurrence?: CustomEventRecurrence | null
 }
 
 /**
@@ -46,6 +68,10 @@ export interface CustomEventRecord {
 function solarDate(year: number, month: number, day: number): Date {
   const lastDay = new Date(year, month, 0).getDate()
   return new Date(year, month - 1, Math.min(day, lastDay))
+}
+
+function pad2(n: number): string {
+  return n.toString().padStart(2, '0')
 }
 
 /** Local Date (midnight) on which a lunar anniversary falls in a lunar year. */
@@ -63,6 +89,9 @@ function anniversaryDate(
  * Computes upcoming FamilyEvents from a list of persons.
  * - Birthdays use the solar birth_month / birth_day.
  * - Death anniversaries (ngày giỗ) are observed on the *lunar* date of death.
+ * - Custom events fall on their date, or repeat every year from it on the
+ *   same solar day/month (yearly_solar) or lunar day/month (yearly_lunar,
+ *   leap month kept, like a giỗ).
  */
 export function computeEvents(
   persons: {
@@ -218,29 +247,79 @@ export function computeEvents(
     }
   }
 
-  // ── Custom Events (solar) ───────────────────────────────────────
+  // ── Custom Events ───────────────────────────────────────────────
   for (const ce of customEvents) {
     if (!ce.event_date) continue
     const [y, m, d] = ce.event_date.split('-').map(Number)
     if (!y || !m || !d) continue
 
-    const next = new Date(y, m - 1, d)
-    const daysUntil = Math.round(
-      (next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-    )
-
-    events.push({
+    const start = new Date(y, m - 1, d)
+    const recurrence = toRecurrence(ce.recurrence)
+    const base = {
       personId: ce.id, // using event id here
       personName: ce.name, // mapping custom event name to personName
-      type: 'custom_event',
-      nextOccurrence: next,
-      daysUntil,
-      eventDateLabel: `${d.toString().padStart(2, '0')}/${m.toString().padStart(2, '0')}/${y}`,
+      type: 'custom_event' as const,
       originYear: y,
       isDeceased: false,
       location: ce.location,
-      content: ce.content
+      content: ce.content,
+      recurrence
+    }
+    const occurrence = (date: Date, eventDateLabel: string): FamilyEvent => ({
+      ...base,
+      nextOccurrence: date,
+      daysUntil: Math.round(
+        (date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      ),
+      eventDateLabel
     })
+    // The lunar day and month (and leap flag) of the first occurrence.
+    const lunar = recurrence === 'yearly_lunar' ? solarToLunar(y, m, d) : null
+    if (recurrence === 'yearly_lunar' && !lunar) continue
+    const label = lunar
+      ? `${pad2(lunar.day)}/${pad2(lunar.month)} ÂL${lunar.leap ? ' nhuận' : ''}`
+      : recurrence === 'yearly_solar'
+        ? `${pad2(d)}/${pad2(m)}`
+        : `${pad2(d)}/${pad2(m)}/${y}`
+
+    // A repeating event starts on its own date: before that it is shown once.
+    if (recurrence === 'none' || start >= today) {
+      events.push(occurrence(start, label))
+      continue
+    }
+
+    let thisYear: Date | null
+    let nextYear: Date | null
+    if (lunar) {
+      const currentLunarYear = solarToLunar(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        today.getDate()
+      )?.year
+      if (!currentLunarYear) continue
+      thisYear = anniversaryDate(
+        currentLunarYear,
+        lunar.month,
+        lunar.day,
+        lunar.leap
+      )
+      nextYear = anniversaryDate(
+        currentLunarYear + 1,
+        lunar.month,
+        lunar.day,
+        lunar.leap
+      )
+    } else {
+      const year = today.getFullYear()
+      thisYear = solarDate(year, m, d)
+      nextYear = solarDate(year + 1, m, d)
+    }
+
+    const next = thisYear && thisYear >= today ? thisYear : nextYear
+    if (next) events.push(occurrence(next, label))
+    if (thisYear && thisYear < today && thisYear >= start) {
+      events.push(occurrence(thisYear, label))
+    }
   }
 
   // Sort: soonest first

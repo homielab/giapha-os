@@ -64,6 +64,31 @@ describe('formatEventDateLabel', () => {
     ).toStartWith('calendarDateWithYear:')
   })
 
+  test('repeating custom events say so; lunar ones add the lunar date', () => {
+    const solar = formatEventDateLabel(
+      event({ type: 'custom_event', recurrence: 'yearly_solar' }),
+      t
+    )
+    expect(solar).toEndWith('recurringYearlySuffix')
+    expect(solar).not.toContain('lunarDateSuffix')
+    const lunar = formatEventDateLabel(
+      event({
+        type: 'custom_event',
+        recurrence: 'yearly_lunar',
+        eventDateLabel: '10/03 ÂL'
+      }),
+      t
+    )
+    expect(lunar).toContain('lunarDateSuffix:{"date":"10/03"}')
+    expect(lunar).toEndWith('recurringYearlySuffix')
+    expect(
+      formatEventDateLabel(
+        event({ type: 'custom_event', recurrence: 'none' }),
+        t
+      )
+    ).not.toContain('recurringYearlySuffix')
+  })
+
   test('death anniversary appends the lunar date without its suffix', () => {
     const label = formatEventDateLabel(
       event({ type: 'death_anniversary', eventDateLabel: '12/02 ÂL' }),

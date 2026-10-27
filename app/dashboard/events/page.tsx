@@ -33,7 +33,8 @@ export default async function EventsPage() {
     fetchAllRowsOrThrow((from, to) =>
       supabase
         .from('custom_events')
-        .select('id, name, content, event_date, location, created_by')
+        // '*' includes recurrence once the database has the column.
+        .select('*')
         .order('id')
         .range(from, to)
     )

@@ -44,12 +44,18 @@ export function formatEventDateLabel(event: FamilyEvent, t: Translate): string {
     event.type === 'custom_event' ? 'calendarDateWithYear' : 'calendarDate',
     { weekday: dayOfWeek, day, month, year }
   )
-  if (event.type === 'death_anniversary') {
+  if (
+    event.type === 'death_anniversary' ||
+    (event.type === 'custom_event' && event.recurrence === 'yearly_lunar')
+  ) {
     label += t('lunarDateSuffix', {
       date: event.eventDateLabel.replace(' ÂL', '').replace(' L', '')
     })
   }
   if (event.approximate) label += t('approximateDateSuffix')
+  if (event.recurrence && event.recurrence !== 'none') {
+    label += t('recurringYearlySuffix')
+  }
   return label
 }
 

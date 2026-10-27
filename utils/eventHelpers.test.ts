@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'bun:test'
 
 import { vnToday } from './dateHelpers'
-import { computeEvents, filterVisibleEvents } from './eventHelpers'
+import {
+  computeEvents,
+  filterVisibleEvents,
+  toRecurrence,
+  type CustomEventRecord
+} from './eventHelpers'
 
 type PersonInput = Parameters<typeof computeEvents>[0][number]
 
@@ -258,5 +263,122 @@ describe('filterVisibleEvents', () => {
     expect(soon(filterVisibleEvents(events))).toBe(
       soon(events) - 1 // the deceased birthday on 12/03
     )
+  })
+})
+
+describe('computeEvents: repeating custom events', () => {
+  const custom = (
+    event_date: string,
+    recurrence?: CustomEventRecord['recurrence']
+  ): CustomEventRecord => ({
+    id: 'e1',
+    name: 'Họp họ',
+    content: null,
+    event_date,
+    location: null,
+    created_by: null,
+    recurrence
+  })
+  const customEvents = (event: CustomEventRecord, now: Date) =>
+    computeEvents([], [event], now)
+  const upcoming = (event: CustomEventRecord, now: Date) =>
+    customEvents(event, now).filter((e) => e.daysUntil >= 0)
+
+  test('none (and a missing column) stays on its stored date', () => {
+    for (const recurrence of ['none', undefined, null] as const) {
+      const events = customEvents(
+        custom('2020-04-02', recurrence),
+        day(2026, 4, 1)
+      )
+      expect(events).toHaveLength(1)
+      expect(events[0].nextOccurrence).toEqual(day(2020, 4, 2))
+      expect(events[0].daysUntil).toBeLessThan(0)
+      expect(events[0].eventDateLabel).toBe('02/04/2020')
+      expect(events[0].recurrence).toBe('none')
+    }
+  })
+
+  test('yearly_solar comes back on the same day and month', () => {
+    const [next] = customEvents(
+      custom('2020-04-02', 'yearly_solar'),
+      day(2026, 3, 1)
+    )
+    expect(next.nextOccurrence).toEqual(day(2026, 4, 2))
+    expect(next.daysUntil).toBe(32)
+    expect(next.eventDateLabel).toBe('02/04')
+    expect(next.recurrence).toBe('yearly_solar')
+  })
+
+  test("yearly_solar after this year's date: next year, and this year as past", () => {
+    const events = customEvents(
+      custom('2020-04-02', 'yearly_solar'),
+      day(2026, 5, 1)
+    )
+    expect(events.map((e) => e.nextOccurrence)).toEqual([
+      day(2026, 4, 2),
+      day(2027, 4, 2)
+    ])
+    expect(events[0].daysUntil).toBeLessThan(0)
+  })
+
+  test('yearly_solar on 29/2 falls on 28/2 in a common year', () => {
+    const [next] = customEvents(
+      custom('2024-02-29', 'yearly_solar'),
+      day(2026, 1, 1)
+    )
+    expect(next.nextOccurrence).toEqual(day(2026, 2, 28))
+  })
+
+  test('yearly_lunar from 2020 falls on the right solar dates in 2026 and 2027', () => {
+    // 2/4/2020 = 10/3 âm lịch; 10/3 âm = 26/4/2026 and 16/4/2027.
+    const event = custom('2020-04-02', 'yearly_lunar')
+    // 1/1/2026 is still in lunar year 2025: its 10/3 (7/4/2025) is past.
+    const [past, in2026] = customEvents(event, day(2026, 1, 1))
+    expect(past.nextOccurrence).toEqual(day(2025, 4, 7))
+    expect(in2026.nextOccurrence).toEqual(day(2026, 4, 26))
+    expect(in2026.eventDateLabel).toBe('10/03 ÂL')
+    expect(in2026.recurrence).toBe('yearly_lunar')
+    expect(
+      upcoming(event, day(2026, 5, 1)).map((e) => e.nextOccurrence)
+    ).toEqual([day(2027, 4, 16)])
+  })
+
+  test('yearly_lunar keeps the leap month like a death anniversary', () => {
+    // 1/6/2020 is in leap month 4 of 2020.
+    const event = custom('2020-06-01', 'yearly_lunar')
+    const person = deceased({
+      death_year: 2020,
+      death_month: 6,
+      death_day: 1,
+      death_lunar_year: 2020,
+      death_lunar_month: 4,
+      death_lunar_day: 10
+    })
+    for (const now of [day(2026, 1, 1), day(2028, 1, 1)]) {
+      const [repeat] = upcoming(event, now)
+      const [anniversary] = deathEvents(person, now).filter(
+        (e) => e.daysUntil >= 0
+      )
+      expect(repeat.nextOccurrence).toEqual(anniversary.nextOccurrence)
+    }
+    const [first] = upcoming(event, day(2021, 1, 1))
+    expect(first.eventDateLabel).toBe('10/04 ÂL nhuận')
+  })
+
+  test('a repeating event is shown once before its first date', () => {
+    for (const recurrence of ['yearly_solar', 'yearly_lunar'] as const) {
+      const events = customEvents(
+        custom('2027-03-15', recurrence),
+        day(2026, 4, 1)
+      )
+      expect(events).toHaveLength(1)
+      expect(events[0].nextOccurrence).toEqual(day(2027, 3, 15))
+    }
+  })
+
+  test('unknown recurrence values count as none', () => {
+    expect(toRecurrence('yearly_lunar')).toBe('yearly_lunar')
+    expect(toRecurrence('monthly')).toBe('none')
+    expect(toRecurrence(undefined)).toBe('none')
   })
 })

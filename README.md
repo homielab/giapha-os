@@ -64,7 +64,7 @@ Phù hợp với người Việt Nam.
 
 - **Sinh nhật** của người còn sống: một sự kiện cả ngày lặp hằng năm (sinh nhật 29/2 rơi vào 28/2 ở năm thường).
 - **Ngày giỗ**: âm lịch không lặp hằng năm theo dương lịch được, nên mỗi năm là một sự kiện riêng — file có ngày giỗ của năm nay và năm sau (ngày dương đúng như trang Sự kiện, ghi chú "ước tính" nếu thiếu năm mất). Tải lại file khi sang năm.
-- **Sự kiện tuỳ chỉnh**: đúng ngày, địa điểm và ghi chú đã nhập.
+- **Sự kiện tuỳ chỉnh**: đúng ngày, địa điểm và ghi chú đã nhập. Sự kiện "Hằng năm theo dương lịch" là một sự kiện lặp hằng năm từ ngày đầu tiên (29/2 rơi vào ngày cuối tháng 2); sự kiện "Hằng năm theo âm lịch" giống ngày giỗ: mỗi lần là một sự kiện riêng của năm nay và năm sau.
 
 Mỗi sự kiện có mã (UID) ổn định theo thành viên, nên nhập lại file vào cùng lịch sẽ cập nhật thay vì tạo trùng. File được tạo ngay trên trình duyệt, không cần máy chủ hay email; nhắc nhở do ứng dụng lịch của bạn đảm nhiệm.
 
@@ -289,6 +289,8 @@ Admin có thể mở mục **Nâng cấp hệ thống** trong menu quản trị 
 **Cập nhật thế hệ cần migration `20261026120000_add_update_generations.sql`.** Nút "Áp dụng" ở trang Phả hệ và tuỳ chọn cập nhật thế hệ con cháu khi sửa thành viên lưu tất cả thành viên bằng một lần gọi hàm `update_generations` của database, trong một transaction: một dòng lỗi (thành viên vừa bị xoá, không có quyền sửa) thì không dòng nào bị đổi và ứng dụng báo lỗi. Hàm chạy với quyền của người gọi (SECURITY INVOKER) nên RLS của bảng `persons` vẫn áp dụng. Khi chưa chạy migration, ứng dụng cập nhật từng người như trước và nhắc nâng cấp database.
 
 **Gộp hồ sơ trùng cần migration `20261027120000_add_merge_persons.sql`.** Công cụ "Người có thể trùng" (Dashboard → Sao lưu & phục hồi) có nút gộp hai hồ sơ thành một qua hàm `merge_persons` của database, trong một transaction: quan hệ của hồ sơ bị gộp được chuyển sang hồ sơ giữ (quan hệ trùng và quan hệ giữa hai hồ sơ bị bỏ), chi tiết riêng tư điền vào trường trống của hồ sơ giữ, các trường trống (ngày sinh/mất, đời, thứ tự con, ảnh đại diện) lấy giá trị của hồ sơ bị gộp, tên khác được nhớ lại và ghi chú được nối thêm, rồi hồ sơ bị gộp bị xoá. Ứng dụng hiện xem trước nội dung sẽ chuyển, khuyến nghị tải bản sao lưu trước và phải gõ đúng tên hồ sơ bị xoá mới cho chạy. Gộp không thể hoàn tác; một lỗi giữa chừng thì không gì bị đổi. Chỉ admin dùng được. Khi chưa chạy migration, nút gộp nhắc nâng cấp database.
+
+**Sự kiện lặp hằng năm cần migration `20261027180000_custom_events_recurrence.sql`.** Migration thêm cột `recurrence` vào bảng `custom_events` (`none` = một lần, `yearly_solar` = hằng năm theo ngày/tháng dương lịch, `yearly_lunar` = hằng năm theo ngày/tháng âm lịch của ngày diễn ra, giữ tháng nhuận như ngày giỗ) với mặc định `none`: sự kiện cũ giữ nguyên, không mất dữ liệu, và cập nhật hàm `restore_backup` để phục hồi giữ kiểu lặp. Trang **Nâng cấp hệ thống** tự liệt kê migration này. Khi chưa chạy migration, sự kiện một lần vẫn thêm/sửa bình thường; chọn kiểu lặp hằng năm sẽ báo lỗi database cho tới khi nâng cấp.
 
 ### Hướng dẫn cập nhật source code
 

@@ -8,6 +8,8 @@ import {
   BACKUP_VERSION,
   buildRestorePayload,
   isMissingRestoreFunction,
+  legacyCustomEventRows,
+  toCustomEventExport,
   validateImportPayload,
   type BackupPayload,
   type CustomEventExport,
@@ -83,11 +85,10 @@ export async function exportData(
       'person_id',
       'person_id'
     )
-    allCustomEvents = await fetchAll<CustomEventExport>(
-      'custom_events',
-      'id, name, content, event_date, location, created_by',
-      'event_date'
-    )
+    // '*' also works on databases without the recurrence column yet.
+    allCustomEvents = (
+      await fetchAll<CustomEventExport>('custom_events', '*', 'event_date')
+    ).map(toCustomEventExport)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
     return { error: t('loadDataError', { error: message }) }
@@ -246,7 +247,11 @@ async function legacyImport(
       payload.person_details_private,
       'importPrivateDetailsError'
     ],
-    ['custom_events', payload.custom_events, 'importEventsError']
+    [
+      'custom_events',
+      legacyCustomEventRows(payload.custom_events),
+      'importEventsError'
+    ]
   ]
   for (const [table, rows, errorKey] of insertions) {
     for (let i = 0; i < rows.length; i += CHUNK) {

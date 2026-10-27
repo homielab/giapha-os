@@ -1,6 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-import type { CustomEventRecord } from '@/utils/eventHelpers'
+import type {
+  CustomEventRecord,
+  CustomEventRecurrence
+} from '@/utils/eventHelpers'
 
 /** The row-level policy lets only the creator or an admin change an event. */
 export function canEditCustomEvent(
@@ -25,6 +28,7 @@ export interface CustomEventPayload {
   event_date: string
   location: string | null
   content: string | null
+  recurrence?: CustomEventRecurrence
 }
 
 /**
