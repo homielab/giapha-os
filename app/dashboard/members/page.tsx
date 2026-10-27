@@ -16,6 +16,7 @@ import {
 } from '@/utils/personColumns'
 import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase } from '@/utils/supabase/queries'
+import { pickDefaultRootId } from '@/utils/treeRoot'
 import { parseViewMode } from '@/utils/viewMode'
 
 interface PageProps {
@@ -80,24 +81,11 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
   const personsMap = new Map()
   persons.forEach((p) => personsMap.set(p.id, p))
 
-  const childIds = new Set(
-    relationships
-      .filter(
-        (r) => r.type === 'biological_child' || r.type === 'adopted_child'
-      )
-      .map((r) => r.person_b)
-  )
-
   let finalRootId = rootId
 
-  // If no rootId is provided, fallback to the earliest created person
+  // If no rootId is provided, open on the earliest ancestor
   if (!finalRootId || !personsMap.has(finalRootId)) {
-    const rootsFallback = persons.filter((p) => !childIds.has(p.id))
-    if (rootsFallback.length > 0) {
-      finalRootId = rootsFallback[0].id
-    } else if (persons.length > 0) {
-      finalRootId = persons[0].id // ultimate fallback
-    }
+    finalRootId = pickDefaultRootId(persons, relationships)
   }
 
   return (

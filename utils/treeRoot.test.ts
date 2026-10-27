@@ -1,0 +1,67 @@
+import { describe, expect, it } from 'bun:test'
+
+import { pickDefaultRootId } from '@/utils/treeRoot'
+
+const person = (
+  id: string,
+  extra: Partial<{
+    generation: number | null
+    is_in_law: boolean
+    birth_year: number | null
+  }> = {}
+) => ({
+  id,
+  generation: null,
+  is_in_law: false,
+  birth_year: null,
+  ...extra
+})
+
+const child = (a: string, b: string) => ({
+  type: 'biological_child' as const,
+  person_b: b,
+  person_a: a
+})
+
+describe('pickDefaultRootId', () => {
+  it('prefers the ancestor over an in-law born earlier', () => {
+    const persons = [
+      person('bride', { is_in_law: true, birth_year: 1900 }),
+      person('root', { generation: 1, birth_year: 1920 }),
+      person('kid', { generation: 2, birth_year: 1950 })
+    ]
+    expect(pickDefaultRootId(persons, [child('root', 'kid')])).toBe('root')
+  })
+
+  it('keeps generation 1 without a birth year ahead of older non-gen-1', () => {
+    const persons = [
+      person('old', { birth_year: 1800 }),
+      person('g1', { generation: 1 })
+    ]
+    expect(pickDefaultRootId(persons, [])).toBe('g1')
+  })
+
+  it('falls back to the earliest born blood root when no generation 1', () => {
+    const persons = [
+      person('a', { birth_year: 1950 }),
+      person('b', { birth_year: 1930 }),
+      person('c', { is_in_law: true, birth_year: 1900 })
+    ]
+    expect(pickDefaultRootId(persons, [])).toBe('b')
+  })
+
+  it('uses an in-law root only when nobody else is a root', () => {
+    const persons = [person('in', { is_in_law: true }), person('kid')]
+    expect(pickDefaultRootId(persons, [child('in', 'kid')])).toBe('in')
+  })
+
+  it('returns the first person when the graph is all cycles', () => {
+    const persons = [person('a'), person('b')]
+    const rels = [child('a', 'b'), child('b', 'a')]
+    expect(pickDefaultRootId(persons, rels)).toBe('a')
+  })
+
+  it('returns undefined for no people', () => {
+    expect(pickDefaultRootId([], [])).toBeUndefined()
+  })
+})

@@ -9,6 +9,7 @@ import RootSelector from '@/components/RootSelector'
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
+import { pickDefaultRootId } from '@/utils/treeRoot'
 
 const FamilyTree = dynamic(() => import('@/components/FamilyTree'))
 const MindmapTree = dynamic(() => import('@/components/MindmapTree'))
@@ -51,35 +52,11 @@ export default function MembersViews({
     const pMap = new Map<string, Person>()
     persons.forEach((p) => pMap.set(p.id, p))
 
-    const childIds = new Set(
-      relationships
-        .filter(
-          (r) => r.type === 'biological_child' || r.type === 'adopted_child'
-        )
-        .map((r) => r.person_b)
-    )
-
     let finalRootId = rootId
 
-    // If no rootId is provided, fallback to generation 1 or earliest birth year
+    // If no rootId is provided, open on the earliest ancestor
     if (!finalRootId || !pMap.has(finalRootId)) {
-      const rootsFallback = persons.filter((p) => !childIds.has(p.id))
-      if (rootsFallback.length > 0) {
-        const gen1 = rootsFallback.filter((p) => p.generation === 1)
-        const sortByBirthYear = (a: Person, b: Person) => {
-          const ya = a.birth_year ?? Infinity
-          const yb = b.birth_year ?? Infinity
-          return ya - yb
-        }
-
-        if (gen1.length > 0) {
-          finalRootId = gen1.sort(sortByBirthYear)[0].id
-        } else {
-          finalRootId = rootsFallback.sort(sortByBirthYear)[0].id
-        }
-      } else if (persons.length > 0) {
-        finalRootId = persons[0].id // ultimate fallback
-      }
+      finalRootId = pickDefaultRootId(persons, relationships) ?? null
     }
 
     let calculatedRoots: Person[] = []
