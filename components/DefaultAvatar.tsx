@@ -16,7 +16,7 @@ export default function DefaultAvatar({
       <Image
         unoptimized
         src={`/avatar/${AVATAR_VERSION}/male.svg`}
-        alt='Male'
+        alt=''
         className={`h-full w-full object-cover ${getAvatarBg(gender)}`}
         width={size}
         height={size}
@@ -28,7 +28,7 @@ export default function DefaultAvatar({
     <Image
       unoptimized
       src={`/avatar/${AVATAR_VERSION}/female.svg`}
-      alt='Female'
+      alt=''
       className='h-full w-full object-cover'
       width={size}
       height={size}

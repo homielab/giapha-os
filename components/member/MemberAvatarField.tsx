@@ -76,7 +76,7 @@ export default function MemberAvatarField({
                   ? avatarPreview
                   : avatarUrl(avatarPreview) || undefined
               }
-              alt='Avatar preview'
+              alt={t('avatar')}
               className='h-full w-full object-cover'
             />
           ) : (

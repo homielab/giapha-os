@@ -197,9 +197,9 @@ export default function LoginPage() {
               className='mb-5 inline-flex items-center justify-center rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-stone-100 transition duration-300 hover:scale-105 hover:shadow-md'>
               <Shield className='size-8 text-amber-600' />
             </Link>
-            <h2 className='font-serif text-3xl font-semibold text-stone-900 sm:text-4xl'>
+            <h1 className='font-serif text-3xl font-semibold text-stone-900 sm:text-4xl'>
               {isLogin ? t('login') : t('signUp')}
-            </h2>
+            </h1>
             <p className='mt-3 text-sm font-medium text-stone-500'>
               {isLogin ? t('loginDescription') : t('signUpDescription')}
             </p>

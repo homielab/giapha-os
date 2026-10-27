@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Accessibility: the "Recompute lunar dates" confirmation dialog now closes with Esc (not while changes are being saved), keeps Tab inside and returns focus to the button that opened it. Default avatars and the header logo no longer announce a fixed English "Male"/"Female"/"Logo" next to the person's name, and the photo preview uses the translated label. The sign-in page now has a heading level 1, and dashboard pages have exactly one (the site name in the header is no longer a heading).
+
 ### Changed
 
 - Data page: if the member list for choosing an export root fails to load, an error is shown instead of a silently incomplete list.

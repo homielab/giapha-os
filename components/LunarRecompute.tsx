@@ -11,6 +11,7 @@ import {
 import DataCard from '@/components/DataCard'
 import ImportStatusMessage from '@/components/ImportStatusMessage'
 import LunarRecomputeTable from '@/components/LunarRecomputeTable'
+import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import type { LunarRecomputeRow } from '@/utils/lunarRecompute'
 
@@ -25,6 +26,11 @@ export default function LunarRecompute() {
   const [isApplying, setIsApplying] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [status, setStatus] = useState<Status | null>(null)
+
+  // Esc closes the confirmation unless the changes are being written.
+  const dialogRef = useModalA11y(() => {
+    if (!isApplying) setShowConfirm(false)
+  }, showConfirm)
 
   const loadPreview = async (): Promise<boolean> => {
     const result = await previewLunarRecompute()
@@ -164,7 +170,9 @@ export default function LunarRecompute() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              ref={dialogRef}
               role='dialog'
+              tabIndex={-1}
               aria-modal='true'
               aria-labelledby='lunar-recompute-confirm-title'
               className='relative z-10 w-full max-w-md rounded-2xl border border-stone-200/60 bg-white p-6'>

@@ -17,15 +17,15 @@ export default function DashboardHeader() {
             <div className='relative size-10 shrink-0 overflow-hidden rounded-xl transition-colors'>
               <Image
                 src='/icon.png'
-                alt='Logo'
+                alt=''
                 fill
                 className='object-contain'
                 sizes='40px'
               />
             </div>
-            <h1 className='font-serif text-xl font-semibold text-stone-800 transition-colors group-hover:text-amber-700 sm:text-2xl'>
+            <span className='font-serif text-xl font-semibold text-stone-800 transition-colors group-hover:text-amber-700 sm:text-2xl'>
               {config.siteName}
-            </h1>
+            </span>
           </Link>
         </div>
         <div className='flex items-center gap-4'>
