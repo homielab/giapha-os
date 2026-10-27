@@ -80,15 +80,21 @@ describe('formatEventDateLabel', () => {
 })
 
 describe('getEventYearsInfo', () => {
-  const year = new Date().getFullYear()
+  // Fixed dates: the result depends only on the event, not on today.
+  const year = 2026
+  const thisYear = { nextOccurrence: new Date(2026, 5, 15) }
 
   test('birthday gives the age, death anniversary the years since', () => {
-    expect(getEventYearsInfo(event({ originYear: year - 30 }), true, t)).toBe(
-      'yearsOld:{"count":30}'
-    )
+    expect(
+      getEventYearsInfo(event({ ...thisYear, originYear: year - 30 }), true, t)
+    ).toBe('yearsOld:{"count":30}')
     expect(
       getEventYearsInfo(
-        event({ type: 'death_anniversary', originYear: year - 5 }),
+        event({
+          ...thisYear,
+          type: 'death_anniversary',
+          originYear: year - 5
+        }),
         false,
         t
       )
@@ -97,20 +103,68 @@ describe('getEventYearsInfo', () => {
 
   test('is null without a year, for this year or the future', () => {
     expect(getEventYearsInfo(event(), true, t)).toBeNull()
-    expect(getEventYearsInfo(event({ originYear: year }), true, t)).toBeNull()
     expect(
-      getEventYearsInfo(event({ originYear: year + 1 }), true, t)
+      getEventYearsInfo(event({ ...thisYear, originYear: year }), true, t)
+    ).toBeNull()
+    expect(
+      getEventYearsInfo(event({ ...thisYear, originYear: year + 1 }), true, t)
     ).toBeNull()
   })
 
   test('is null for custom events', () => {
     expect(
       getEventYearsInfo(
-        event({ type: 'custom_event', originYear: year - 3 }),
+        event({ ...thisYear, type: 'custom_event', originYear: year - 3 }),
         false,
         t
       )
     ).toBeNull()
+  })
+
+  test('a birthday in early January counts the next year', () => {
+    // Born 1990; seen on 20/12/2026, the birthday is 05/01/2027 -> 37.
+    expect(
+      getEventYearsInfo(
+        event({ nextOccurrence: new Date(2027, 0, 5), originYear: 1990 }),
+        true,
+        t
+      )
+    ).toBe('yearsOld:{"count":37}')
+    // A birthday already passed this year keeps this year's age.
+    expect(
+      getEventYearsInfo(
+        event({ nextOccurrence: new Date(2026, 11, 1), originYear: 1990 }),
+        true,
+        t
+      )
+    ).toBe('yearsOld:{"count":36}')
+  })
+
+  test('an anniversary counts lunar years, across the solar new year', () => {
+    // 05/01/2027 is 27/11 lunar 2026 (Bính Ngọ): died lunar 2021 -> 5th.
+    expect(
+      getEventYearsInfo(
+        event({
+          type: 'death_anniversary',
+          nextOccurrence: new Date(2027, 0, 5),
+          originYear: 2021
+        }),
+        false,
+        t
+      )
+    ).toBe('yearsSince:{"count":5}')
+    // 20/02/2027 is 14/01 lunar 2027 (Tết 2027 = 06/02): died 2021 -> 6th.
+    expect(
+      getEventYearsInfo(
+        event({
+          type: 'death_anniversary',
+          nextOccurrence: new Date(2027, 1, 20),
+          originYear: 2021
+        }),
+        false,
+        t
+      )
+    ).toBe('yearsSince:{"count":6}')
   })
 })
 
