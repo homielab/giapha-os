@@ -1,11 +1,11 @@
 import { cookies } from 'next/headers'
 
+import { interpolate, type TranslationValues } from './interpolate'
 import {
   getLocale,
   getMessages,
-  Locale,
-  TranslationKey,
-  TranslationValues
+  type Locale,
+  type TranslationKey
 } from './messages'
 
 export async function getServerLocale(): Promise<Locale> {
@@ -20,14 +20,7 @@ export async function getServerTranslations() {
   return {
     locale,
     dictionary,
-    t: (key: TranslationKey, values?: TranslationValues) => {
-      let value: string = dictionary[key]
-      if (values) {
-        Object.entries(values).forEach(([name, replacement]) => {
-          value = value.replace(`{${name}}`, String(replacement))
-        })
-      }
-      return value
-    }
+    t: (key: TranslationKey, values?: TranslationValues) =>
+      interpolate(dictionary[key], values)
   }
 }

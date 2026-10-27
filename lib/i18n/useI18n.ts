@@ -2,11 +2,13 @@
 
 import { createContext, useContext } from 'react'
 
-import { Locale, messages, TranslationKey, TranslationValues } from './messages'
+import type { TranslationValues } from './interpolate'
+import type { Locale } from './locales'
+import type { Messages, TranslationKey } from './messages'
 
 export interface I18nContextValue {
   locale: Locale
-  messages: (typeof messages)[Locale]
+  messages: Messages
   setLocale: (locale: Locale) => void
   t: (key: TranslationKey, values?: TranslationValues) => string
 }

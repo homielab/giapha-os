@@ -2,7 +2,8 @@
 
 import { useEffect } from 'react'
 
-import { getLocale, getMessages } from '@/lib/i18n/messages'
+import { globalErrorMessages } from '@/lib/i18n/globalErrorMessages'
+import { getLocale } from '@/lib/i18n/locales'
 
 // Replaces the root layout when it fails, so it brings its own <html>, reads
 // the locale from the cookie itself and uses plain styles (no provider, no
@@ -18,7 +19,7 @@ export default function GlobalError({
     typeof document === 'undefined' ? '' : document.cookie
   )
   const locale = getLocale(cookie ? decodeURIComponent(cookie[1]) : undefined)
-  const messages = getMessages(locale)
+  const messages = globalErrorMessages[locale]
 
   useEffect(() => {
     console.error('Global error:', error)

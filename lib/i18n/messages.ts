@@ -1,9 +1,13 @@
-export const locales = ['vi', 'en'] as const
+import { globalErrorMessages } from './globalErrorMessages'
+import { interpolate, type TranslationValues } from './interpolate'
+import { getLocale, locales, type Locale } from './locales'
 
-export type Locale = (typeof locales)[number]
+export { getLocale, interpolate, locales }
+export type { Locale, TranslationValues }
 
 export const messages = {
   vi: {
+    ...globalErrorMessages.vi,
     language: 'Ngôn ngữ',
     vietnamese: 'Tiếng Việt',
     english: 'English',
@@ -407,7 +411,6 @@ export const messages = {
     logout: 'Đăng xuất',
     processing: 'Đang xử lý...',
     back: 'Quay lại',
-    home: 'Trang chủ',
     footerDisclaimer:
       'Nội dung có thể thiếu sót. Vui lòng đóng góp để gia phả chính xác hơn.',
     pendingTitle: 'Tài khoản chờ duyệt',
@@ -686,9 +689,6 @@ export const messages = {
     notFoundTitle: 'Không tìm thấy trang',
     notFoundDescription:
       'Trang bạn tìm không tồn tại hoặc thành viên này đã bị xoá.',
-    globalErrorTitle: 'Đã xảy ra lỗi',
-    globalErrorDescription:
-      'Ứng dụng gặp sự cố không mong muốn. Hãy thử lại hoặc quay về trang chủ.',
     restoreCancel: 'Huỷ bỏ',
     restoreContinue: 'Vẫn tiếp tục',
     restoring: 'Đang phục hồi...',
@@ -919,7 +919,6 @@ export const messages = {
     systemError: 'Đã xảy ra lỗi hệ thống.',
     pageErrorTitle: 'Không thể tải trang',
     pageErrorDescription: 'Đã có lỗi khi tải dữ liệu. Vui lòng thử lại.',
-    tryAgain: 'Thử lại',
     choosePerson: 'Chọn người...',
     displayRoot: 'Gốc hiển thị',
     generationLabel: 'Đời thứ {generation}',
@@ -1149,6 +1148,7 @@ export const messages = {
     sonInLawOf: 'Con rể (chồng của {name})'
   },
   en: {
+    ...globalErrorMessages.en,
     language: 'Language',
     vietnamese: 'Tiếng Việt',
     english: 'English',
@@ -1559,7 +1559,6 @@ export const messages = {
     logout: 'Log out',
     processing: 'Processing...',
     back: 'Back',
-    home: 'Home',
     footerDisclaimer:
       'Content may contain omissions. Please contribute to make the family tree more accurate.',
     pendingTitle: 'Account pending approval',
@@ -1834,9 +1833,6 @@ export const messages = {
     notFoundTitle: 'Page not found',
     notFoundDescription:
       'The page you are looking for does not exist or this member was deleted.',
-    globalErrorTitle: 'Something went wrong',
-    globalErrorDescription:
-      'The app hit an unexpected problem. Try again or go back to the home page.',
     restoreCancel: 'Cancel',
     restoreContinue: 'Continue',
     restoring: 'Restoring...',
@@ -2069,7 +2065,6 @@ export const messages = {
     pageErrorTitle: 'This page could not load',
     pageErrorDescription:
       'Something went wrong while loading the data. Please try again.',
-    tryAgain: 'Try again',
     choosePerson: 'Choose a person...',
     displayRoot: 'Display root',
     generationLabel: 'Generation {generation}',
@@ -2304,13 +2299,9 @@ export const messages = {
 } as const
 
 export type TranslationKey = keyof (typeof messages)['vi']
-export type TranslationValues = Record<string, string | number>
+export type Messages = (typeof messages)[Locale]
 
-export function getLocale(value?: string | null): Locale {
-  return value === 'en' ? 'en' : 'vi'
-}
-
-export function getMessages(locale: Locale) {
+export function getMessages(locale: Locale): Messages {
   return messages[locale]
 }
 
@@ -2319,13 +2310,5 @@ export function translate(
   key: TranslationKey,
   values?: TranslationValues
 ) {
-  let value: string = messages[locale][key]
-
-  if (values) {
-    Object.entries(values).forEach(([name, replacement]) => {
-      value = value.replace(`{${name}}`, String(replacement))
-    })
-  }
-
-  return value
+  return interpolate(messages[locale][key], values)
 }

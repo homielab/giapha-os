@@ -39,6 +39,8 @@ bun run test          # bun test
 
 The interface is Vietnamese and English. Every user-visible string lives in `lib/i18n/messages.ts` and must exist in both `vi` and `en` (`lib/i18n/messages.test.ts` checks that the keys match). Don't hard-code text in components.
 
+Client components read strings through `useI18n()`: the root layout passes only the current language's dictionary to `I18nProvider`, so import from `lib/i18n/messages.ts` with `import type` only in client code (values such as `locales` come from `lib/i18n/locales.ts`). Placeholders like `{name}` are filled by `interpolate()` in `lib/i18n/interpolate.ts`. `app/global-error.tsx` cannot get the dictionary from the layout and uses `lib/i18n/globalErrorMessages.ts`, which `messages.ts` includes.
+
 ## Commits and pull requests
 
 - Use [Conventional Commits](https://www.conventionalcommits.org): `<type>(<scope>): <summary>`, for example `fix(kinship): handle a missing parent`. Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`.

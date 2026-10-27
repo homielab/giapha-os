@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from 'next/font/google'
 
 import MotionProvider from '@/components/MotionProvider'
 import { I18nProvider } from '@/lib/i18n/I18nProvider'
+import { getMessages } from '@/lib/i18n/messages'
 import { getServerLocale, getServerTranslations } from '@/lib/i18n/server'
 import { MANIFEST_THEME_COLOR } from '@/lib/manifest'
 import { rootMetadata } from '@/lib/metadata'
@@ -43,7 +44,9 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${playfair.variable} relative font-sans antialiased`}>
         <MotionProvider>
-          <I18nProvider initialLocale={locale}>{children}</I18nProvider>
+          <I18nProvider initialLocale={locale} messages={getMessages(locale)}>
+            {children}
+          </I18nProvider>
         </MotionProvider>
       </body>
     </html>

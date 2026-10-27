@@ -2,15 +2,21 @@
 
 import { ReactNode, useMemo, useState } from 'react'
 
-import { getMessages, Locale } from './messages'
+import { interpolate } from './interpolate'
+import type { Locale } from './locales'
+import type { Messages } from './messages'
 import { I18nContext, I18nContextValue } from './useI18n'
 
+// Receives the dictionary of the current locale from the server layout, so the
+// client bundle does not ship both languages.
 export function I18nProvider({
   children,
-  initialLocale
+  initialLocale,
+  messages
 }: {
   children: ReactNode
   initialLocale: Locale
+  messages: Messages
 }) {
   const [locale, setLocaleState] = useState(initialLocale)
 
@@ -24,19 +30,11 @@ export function I18nProvider({
   const value = useMemo<I18nContextValue>(
     () => ({
       locale,
-      messages: getMessages(locale),
+      messages,
       setLocale,
-      t: (key, values) => {
-        let value: string = getMessages(locale)[key]
-        if (values) {
-          Object.entries(values).forEach(([name, replacement]) => {
-            value = value.replace(`{${name}}`, String(replacement))
-          })
-        }
-        return value
-      }
+      t: (key, values) => interpolate(messages[key], values)
     }),
-    [locale]
+    [locale, messages]
   )
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>

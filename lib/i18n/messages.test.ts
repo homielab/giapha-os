@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
-import { messages } from './messages'
+import { globalErrorMessages } from './globalErrorMessages'
+import { interpolate, messages, translate } from './messages'
 
 describe('messages', () => {
   test('vi and en define the same keys', () => {
@@ -29,6 +30,44 @@ describe('messages', () => {
       expect(messages.en[key]).not.toMatch(
         /[ăâđêôơưàáạảãèéẹẻẽìíịỉĩòóọỏõùúụủũỳýỵỷỹ]/i
       )
+    }
+  })
+})
+
+describe('interpolate', () => {
+  test('replaces every occurrence of a placeholder', () => {
+    expect(interpolate('{name} và {name}', { name: 'An' })).toBe('An và An')
+  })
+
+  test('keeps $ patterns in values literal', () => {
+    expect(interpolate('Vợ của {name}', { name: 'A$&B $1 $$' })).toBe(
+      'Vợ của A$&B $1 $$'
+    )
+  })
+
+  test('does not interpolate placeholders inside values', () => {
+    expect(interpolate('{a} - {b}', { a: '{b}', b: 'Bình' })).toBe('{b} - Bình')
+  })
+
+  test('leaves unknown placeholders and templates without values as is', () => {
+    expect(interpolate('{count} người', { name: 'An' })).toBe('{count} người')
+    expect(interpolate('{count} người')).toBe('{count} người')
+    expect(interpolate('{count} người', { count: 0 })).toBe('0 người')
+  })
+
+  test('translate uses the same interpolation', () => {
+    expect(translate('en', 'spouseOf', { name: 'Tom $& Jerry' })).toBe(
+      'Spouse of Tom $& Jerry'
+    )
+  })
+})
+
+describe('globalErrorMessages', () => {
+  test('match the main dictionary', () => {
+    for (const locale of ['vi', 'en'] as const) {
+      for (const [key, value] of Object.entries(globalErrorMessages[locale])) {
+        expect(messages[locale][key as keyof typeof messages.vi]).toBe(value)
+      }
     }
   })
 })

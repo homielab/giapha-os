@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Pages no longer download both languages: the server passes only the current language's strings to the browser, removing a 110 KB (34 KB gzip) script from every page; all client scripts together go from 2,777 KB to 2,668 KB (821 KB to 790 KB gzip) in `bun run build`. Switching between Vietnamese and English works as before.
 - Events page and dashboard: only members who have a birthday or a death date (solar or lunar day and month) are loaded, and without their photo link, so large trees send far less data. The events shown are the same.
 - Lint now fails on any warning (`--max-warnings 0`, also in CI); unused imports and variables across the components were removed, no behaviour change.
 - Internal: relationship mutation logic in `utils/relationshipMutations.ts` is split into `utils/relationships/` (`add`, `bulkChildren`, `spouse`, `shared`; each file under 200 lines) with a barrel re-export. Imports and tests are unchanged.
@@ -57,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Text with the same placeholder twice now fills in both, and a name containing `$&` or `$1` shows exactly as typed instead of being mangled.
 - Phones and tablets: "Add to Home Screen" showed an empty app name because the manifest had no name and no page linked it. The manifest is now generated with the site name, a short name (`SITE_NAME`/`SHORT_NAME`), the dashboard as the start page, the app language and the design's theme colour, with the existing icons; every page links it, and the iOS home-screen icon is declared too. No service worker.
 - Dialogs: Tab and Shift+Tab now stay inside an open dialog instead of reaching the page behind it.
 - Relationship finder: when nobody knows who is older (neither birth order nor birth year on one side or both), the result no longer silently picks one. Siblings, cousins and a father's brothers show both terms ("Anh/Em trai", "Bác/Chú", "Anh/Em họ") with a note linking to the two people whose birth year or order would settle it. Results with enough data are unchanged.
