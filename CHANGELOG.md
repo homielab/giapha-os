@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- CI: every push and pull request now also runs `bun run build` and a Docker image build (not pushed), so a broken build no longer slips through.
+
 ### Added
 
 - SEO: the home page carries `WebSite` and the about page `SoftwareApplication` structured data (JSON-LD) so search engines recognise the app as open source family-tree software. Site-level only: no member data, and none on dashboard pages.
