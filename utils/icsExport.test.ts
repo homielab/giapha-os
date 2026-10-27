@@ -51,7 +51,11 @@ const events = (ics: string) => ics.split('BEGIN:VEVENT').slice(1)
 
 describe('escapeIcsText / foldIcsLine', () => {
   test('escapes backslash, semicolon, comma and newlines', () => {
-    expect(escapeIcsText('a,b;c\\d\ne')).toBe('a\\,b\;c\\\\d\\ne')
+    expect(escapeIcsText('a,b;c\\d\ne')).toBe('a\\,b\\;c\\\\d\\ne')
+  })
+
+  test('escapes a semicolon as \\; (not a bare semicolon)', () => {
+    expect(escapeIcsText('Giỗ cụ; họp họ')).toBe('Giỗ cụ\\; họp họ')
   })
 
   test('folds long lines at 75 octets without splitting characters', () => {
@@ -168,9 +172,29 @@ describe('buildIcs', () => {
     const [ev] = events(ics)
     expect(ev).toContain('DTSTART;VALUE=DATE:20270115')
     expect(ev).toContain('UID:giapha-e1-custom@giapha.example.com')
-    expect(ev).toContain('SUMMARY:Họp họ\; cả nhà')
+    expect(ev).toContain('SUMMARY:Họp họ\\; cả nhà')
     expect(ev).toContain('DESCRIPTION:Mang theo\\nảnh')
     expect(ev).toContain('LOCATION:Nhà thờ họ\\, Huế')
+  })
+
+  test('semicolons in summary, description and location are escaped', () => {
+    const ics = build(
+      [],
+      [
+        {
+          id: 'e2',
+          name: 'Giỗ cụ; họp họ',
+          content: 'Chuẩn bị: hoa; nhang',
+          event_date: '2027-02-01',
+          location: 'Nhà thờ họ; Huế',
+          created_by: null
+        }
+      ]
+    )
+    const [ev] = events(ics)
+    expect(ev).toContain('SUMMARY:Giỗ cụ\\; họp họ')
+    expect(ev).toContain('DESCRIPTION:Chuẩn bị: hoa\\; nhang')
+    expect(ev).toContain('LOCATION:Nhà thờ họ\\; Huế')
   })
 
   test('uses the current Vietnam day by default', () => {
