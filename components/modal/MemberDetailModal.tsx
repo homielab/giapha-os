@@ -24,6 +24,7 @@ import { useMemberListView } from '@/context/useMemberListView'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
+import { createLatestGuard } from '@/utils/latestOnly'
 import { shouldCloseMemberModalOnEscape } from '@/utils/memberModalEscape'
 import { fetchPrivateDetails } from '@/utils/privateDetails'
 
@@ -173,6 +174,13 @@ export default function MemberDetailModal() {
   // locks those fields and never deletes the stored row.
   const [privateLoaded, setPrivateLoaded] = useState(true)
   const isOpen = Boolean(memberId || showCreateMember)
+  // Only the latest member fetch may update the modal: opening A then B
+  // quickly must not let a slow response for A replace B.
+  const [fetchGuard] = useState(createLatestGuard)
+  // The loaded person, only while it is the member the modal is open for, so
+  // View/Edit never act on the previous member while the next one loads
+  // (kept while closing so the exit animation still shows it).
+  const shownPerson = !memberId || person?.id === memberId ? person : null
 
   const closeModal = useCallback(() => {
     setMemberModalId(null)
@@ -189,10 +197,11 @@ export default function MemberDetailModal() {
   let dialogLabel = t('memberDetails')
   if (showCreateMember) dialogLabel = t('addMember')
   else if (isEditing) dialogLabel = t('editMember')
-  else if (person) dialogLabel = person.full_name
+  else if (shownPerson) dialogLabel = shownPerson.full_name
 
   const fetchData = useCallback(
     async (id: string) => {
+      const token = fetchGuard.begin()
       setLoading(true)
       setError(null)
       try {
@@ -210,6 +219,7 @@ export default function MemberDetailModal() {
             : Promise.resolve(null)
         ])
 
+        if (!fetchGuard.isCurrent(token)) return
         if (personRes.error || !personRes.data) {
           throw new Error(t('memberLoadError'))
         }
@@ -217,20 +227,23 @@ export default function MemberDetailModal() {
         setPrivateData(isAdmin ? (privateRes?.data ?? {}) : null)
         setPrivateLoaded(!privateRes?.failed)
       } catch (err) {
+        if (!fetchGuard.isCurrent(token)) return
         console.error('Error fetching member details:', err)
         setError(
           err instanceof Error && err.message ? err.message : t('systemError')
         )
       } finally {
-        setLoading(false)
+        if (fetchGuard.isCurrent(token)) setLoading(false)
       }
     },
-    [isAdmin, supabase, t]
+    [fetchGuard, isAdmin, supabase, t]
   )
 
   // Sync state with URL parameter or create mode
   const syncModalState = useEffectEvent((memberId: string | null) => {
     let timeoutId: NodeJS.Timeout | null = null
+    // The member changed or the modal closed: drop any fetch still running
+    fetchGuard.invalidate()
 
     if (memberId) {
       timeoutId = setTimeout(() => {
@@ -298,8 +311,8 @@ export default function MemberDetailModal() {
   }
 
   // initialData for MemberForm — merge public + private
-  const formInitialData = person
-    ? { ...person, ...(privateData ?? {}) }
+  const formInitialData = shownPerson
+    ? { ...shownPerson, ...(privateData ?? {}) }
     : undefined
 
   return (
@@ -338,7 +351,7 @@ export default function MemberDetailModal() {
             <ModalHeaderActions
               isEditing={isEditing}
               canEdit={canEdit}
-              person={person}
+              person={shownPerson}
               onBack={() => setIsEditing(false)}
               onStartEdit={() => setIsEditing(true)}
               onClose={closeModal}
@@ -349,7 +362,7 @@ export default function MemberDetailModal() {
               error={error}
               isEditing={isEditing}
               showCreateMember={showCreateMember}
-              person={person}
+              person={shownPerson}
               privateData={privateData}
               privateLoaded={privateLoaded}
               formInitialData={formInitialData}

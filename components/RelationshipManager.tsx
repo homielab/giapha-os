@@ -7,6 +7,7 @@ import { MemberListContext } from '@/context/memberListViewContext'
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
+import { createLatestGuard } from '@/utils/latestOnly'
 import { fetchRelationshipData } from '@/utils/relationshipFetch'
 import { deleteRelationship } from '@/utils/relationshipMutations'
 import { createClient } from '@/utils/supabase/client'
@@ -66,30 +67,41 @@ export default function RelationshipManager({
   const [isAddingSpouse, setIsAddingSpouse] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
+  // Only the latest fetch may update the list: when the person changes, a
+  // slow response for the previous one is dropped.
+  const [fetchGuard] = useState(createLatestGuard)
+
   // Fetch relationships
   const fetchRelationships = useCallback(async () => {
+    const token = fetchGuard.begin()
     try {
       const { relationships, stats } = await fetchRelationshipData(
         supabase,
         personId,
         t
       )
+      if (!fetchGuard.isCurrent(token)) return
       setRelationships(relationships)
       setLoadError(null)
       onStatsLoaded?.(stats)
     } catch (err) {
+      if (!fetchGuard.isCurrent(token)) return
       console.error('Error fetching relationships:', err)
       const message = (err as Error)?.message || String(err)
       setLoadError(t('relationshipsLoadError', { error: message }))
     } finally {
-      setLoading(false)
+      if (fetchGuard.isCurrent(token)) setLoading(false)
     }
-  }, [personId, supabase, onStatsLoaded, t])
+  }, [fetchGuard, personId, supabase, onStatsLoaded, t])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(fetchRelationships, 0)
-    return () => window.clearTimeout(timeoutId)
-  }, [fetchRelationships])
+    return () => {
+      window.clearTimeout(timeoutId)
+      // Person changed or unmounted: ignore the fetch still running
+      fetchGuard.invalidate()
+    }
+  }, [fetchGuard, fetchRelationships])
 
   const handleSaved = (warning?: string) => {
     setSaveWarning(warning ?? null)

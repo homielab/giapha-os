@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Member details: clicking one member and then another before the first has loaded (for example on a slow connection) no longer shows the first member in the window, and Edit / View now always act on the member that was clicked last. The relationship list of a member ignores late answers for a previously shown member the same way.
 - An unknown `?view=` value on the members page (for example a mistyped or old link) now opens the list instead of an empty page.
 - The Users page shows an error with a retry button when the user list cannot be loaded (for example before the migrations are applied) instead of an empty list that looks like there are no users.
 - Event cards show the age and the "anniversary no. N" of the occurrence being listed, not of the current year: a birthday on 5 January seen in December shows the age the person turns, and a death anniversary in the 12th lunar month or after the lunar new year counts the right lunar year.
