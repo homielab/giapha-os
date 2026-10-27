@@ -3,6 +3,8 @@ import type { TranslationKey } from '@/lib/i18n/messages'
 export type RelationshipValidationCode =
   | 'selfLink'
   | 'duplicateSpouse'
+  | 'duplicateParent'
+  | 'tooManyParents'
   | 'cycle'
   | 'childOlderThanParent'
   | 'motherDiedBeforeBirth'
@@ -135,6 +137,38 @@ export function isDescendant(
 }
 
 /**
+ * True when `parentId` cannot become one more biological parent of `childId`:
+ * the child already has two, or the one it has is known to be of the same
+ * gender. `relationships` needs the child's existing parent links; a parent
+ * missing from `persons` or without a male/female gender is not compared.
+ */
+function hasTooManyParents(
+  persons: DatedPerson[],
+  relationships: RelationshipLink[],
+  parentId: string,
+  childId: string
+) {
+  const others = new Set<string>()
+  for (const r of relationships) {
+    if (
+      r.type === 'biological_child' &&
+      r.person_b === childId &&
+      r.person_a !== parentId
+    )
+      others.add(r.person_a)
+  }
+  if (others.size >= 2) return true
+  if (others.size === 0) return false
+
+  const gender = (id: string) => persons.find((p) => p.id === id)?.gender
+  const existing = gender([...others][0])
+  return (
+    (existing === 'male' || existing === 'female') &&
+    existing === gender(parentId)
+  )
+}
+
+/**
  * Checks a relationship before it is saved. `persons` needs at least the two
  * people of the candidate (a missing one skips the date check);
  * `relationships` needs the existing marriages between them and the parent
@@ -159,6 +193,20 @@ export function validateRelationship(
   }
 
   if (!isParentChildType(type)) return null
+
+  // The same pair can hold only one parent link, whatever its type.
+  if (
+    relationships.some(
+      (r) => isParentChildType(r.type) && r.person_a === a && r.person_b === b
+    )
+  )
+    return 'duplicateParent'
+
+  if (
+    type === 'biological_child' &&
+    hasTooManyParents(persons, relationships, a, b)
+  )
+    return 'tooManyParents'
 
   // a becomes the parent of b: a loop when a already descends from b.
   if (isDescendant(relationships, b, a)) return 'cycle'
@@ -208,13 +256,16 @@ export function validateNewChildren(
       id: `new-child-${index}`,
       birth_year: children[index].birthYear
     }
+    const links: RelationshipLink[] = []
     for (const parent of parents) {
-      const code = validateRelationship([parent, child], [], {
+      const link = {
         person_a: parent.id,
         person_b: child.id,
         type: 'biological_child'
-      })
+      }
+      const code = validateRelationship([...parents, child], links, link)
       if (code) return { index, code }
+      links.push(link)
     }
   }
   return null
@@ -339,7 +390,9 @@ const ERROR_KEYS: Record<RelationshipValidationCode, TranslationKey> = {
   duplicateSpouse: 'relationshipDuplicateSpouse',
   cycle: 'relationshipCycle',
   childOlderThanParent: 'relationshipChildOlderThanParent',
-  motherDiedBeforeBirth: 'relationshipMotherDiedBeforeBirth'
+  motherDiedBeforeBirth: 'relationshipMotherDiedBeforeBirth',
+  duplicateParent: 'relationshipDuplicateParent',
+  tooManyParents: 'relationshipTooManyParents'
 }
 
 /** Translation key of the message shown for a validation code. */

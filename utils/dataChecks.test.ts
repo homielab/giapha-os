@@ -41,6 +41,44 @@ const kinds = (
     .map((f) => f.kind)
     .filter((k) => !k.startsWith('missing'))
 
+describe('runDataChecks: parents of one child', () => {
+  const people = [
+    person('f', { gender: 'male' }),
+    person('m', { gender: 'female' }),
+    person('x', { gender: 'male' }),
+    person('m2', { gender: 'female' }),
+    person('k')
+  ]
+
+  test('lists a child with three biological parents', () => {
+    const found = runDataChecks(
+      people,
+      [child('f', 'k'), child('m', 'k'), child('x', 'k')],
+      TODAY
+    ).filter((f) => f.kind === 'tooManyParents')
+    expect(found).toHaveLength(1)
+    expect(found[0].people[0].id).toBe('k')
+    expect(found[0].params.count).toBe(3)
+  })
+
+  test('lists a child with two mothers', () => {
+    expect(kinds(people, [child('m', 'k'), child('m2', 'k')])).toEqual([
+      'tooManyParents'
+    ])
+  })
+
+  test('accepts a father and a mother, and adopted parents', () => {
+    const adopted = {
+      type: 'adopted_child',
+      person_a: 'x',
+      person_b: 'k'
+    }
+    expect(kinds(people, [child('f', 'k'), child('m', 'k'), adopted])).toEqual(
+      []
+    )
+  })
+})
+
 describe('runDataChecks', () => {
   test('a clean tree reports nothing', () => {
     const persons = [

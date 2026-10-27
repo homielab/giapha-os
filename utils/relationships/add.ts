@@ -97,7 +97,8 @@ async function loadRelationshipContext(
 ): Promise<{ persons: DatedPerson[]; relationships: RelationshipLink[] }> {
   const pair = [candidate.person_a, candidate.person_b]
 
-  const [personsResult, betweenResult] = await Promise.all([
+  const isParentLink = candidate.type !== 'marriage'
+  const [personsResult, betweenResult, parentsResult] = await Promise.all([
     supabase
       .from('persons')
       .select(
@@ -108,12 +109,37 @@ async function loadRelationshipContext(
       .from('relationships')
       .select('person_a, person_b, type')
       .in('person_a', pair)
-      .in('person_b', pair)
+      .in('person_b', pair),
+    // Existing biological parents of the child, for the two-parent check.
+    isParentLink
+      ? supabase
+          .from('relationships')
+          .select('person_a, person_b, type')
+          .eq('person_b', candidate.person_b)
+          .eq('type', 'biological_child')
+      : Promise.resolve({ data: [], error: null })
   ])
   if (personsResult.error) throw personsResult.error
   if (betweenResult.error) throw betweenResult.error
+  if (parentsResult.error) throw parentsResult.error
 
   const relationships: RelationshipLink[] = [...(betweenResult.data ?? [])]
+  const persons: DatedPerson[] = [...(personsResult.data ?? [])]
+
+  // Other parents of the child: their gender decides a second same-gender one.
+  const otherParents: string[] = []
+  for (const row of parentsResult.data ?? []) {
+    relationships.push(row)
+    if (!pair.includes(row.person_a)) otherParents.push(row.person_a)
+  }
+  if (candidate.type === 'biological_child' && otherParents.length === 1) {
+    const { data, error } = await supabase
+      .from('persons')
+      .select('id, gender, birth_year')
+      .in('id', otherParents)
+    if (error) throw error
+    persons.push(...(data ?? []))
+  }
 
   if (candidate.type !== 'marriage') {
     const seen = new Set<string>([candidate.person_b])
@@ -139,7 +165,7 @@ async function loadRelationshipContext(
     }
   }
 
-  return { persons: personsResult.data ?? [], relationships }
+  return { persons, relationships }
 }
 
 // Auto-update target person generation and is_in_law if currently missing.

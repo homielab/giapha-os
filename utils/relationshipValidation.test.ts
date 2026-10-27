@@ -172,7 +172,83 @@ describe('isDescendant', () => {
   })
 })
 
+describe('parent links', () => {
+  const sex = (id: string, gender: string): DatedPerson => ({
+    ...person(id, null),
+    gender
+  })
+  const people = [
+    sex('dad', 'male'),
+    sex('mum', 'female'),
+    sex('uncle', 'male'),
+    sex('aunt', 'female'),
+    person('kid', null)
+  ]
+  const link = (a: string, type = 'biological_child') => ({
+    person_a: a,
+    person_b: 'kid',
+    type
+  })
+  const check = (existing: RelationshipLink[], candidate: RelationshipLink) =>
+    validateRelationship(people, existing, candidate)
+
+  test('rejects the same pair again, of either type', () => {
+    expect(check([link('dad')], link('dad'))).toBe('duplicateParent')
+    expect(check([link('dad')], link('dad', 'adopted_child'))).toBe(
+      'duplicateParent'
+    )
+    expect(check([link('dad', 'adopted_child')], link('dad'))).toBe(
+      'duplicateParent'
+    )
+  })
+
+  test('rejects a third biological parent', () => {
+    expect(check([link('dad'), link('mum')], link('uncle'))).toBe(
+      'tooManyParents'
+    )
+  })
+
+  test('rejects a second mother or a second father', () => {
+    expect(check([link('mum')], link('aunt'))).toBe('tooManyParents')
+    expect(check([link('dad')], link('uncle'))).toBe('tooManyParents')
+  })
+
+  test('accepts a father and a mother', () => {
+    expect(check([link('dad')], link('mum'))).toBeNull()
+    expect(check([], link('dad'))).toBeNull()
+  })
+
+  test('does not compare a parent of unknown gender', () => {
+    expect(check([link('mum')], link('ghost'))).toBeNull()
+  })
+
+  test('adopted parents do not count', () => {
+    const adopted = [link('dad'), link('mum'), link('aunt', 'adopted_child')]
+    expect(check(adopted, link('uncle', 'adopted_child'))).toBeNull()
+    expect(check([link('dad', 'adopted_child')], link('uncle'))).toBeNull()
+  })
+})
+
 describe('validateNewChildren', () => {
+  test('rejects two new parents of the same gender', () => {
+    const parents = [
+      { ...person('a', 1950), gender: 'male' },
+      { ...person('b', 1952), gender: 'male' }
+    ]
+    expect(validateNewChildren(parents, [{ birthYear: null }])).toEqual({
+      index: 0,
+      code: 'tooManyParents'
+    })
+  })
+
+  test('accepts a father and a mother', () => {
+    const parents = [
+      { ...person('a', 1950), gender: 'male' },
+      { ...person('b', 1952), gender: 'female' }
+    ]
+    expect(validateNewChildren(parents, [{ birthYear: null }])).toBeNull()
+  })
+
   test('reports the first child born before one of the parents', () => {
     const parents = [person('father', 1950), person('mother', 1970)]
     expect(
@@ -192,6 +268,12 @@ describe('validateNewChildren', () => {
 })
 
 test('every code has a message key', () => {
+  expect(relationshipErrorKey('duplicateParent')).toBe(
+    'relationshipDuplicateParent'
+  )
+  expect(relationshipErrorKey('tooManyParents')).toBe(
+    'relationshipTooManyParents'
+  )
   expect(relationshipErrorKey('cycle')).toBe('relationshipCycle')
   expect(relationshipErrorKey('duplicateSpouse')).toBe(
     'relationshipDuplicateSpouse'

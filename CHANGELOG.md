@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Adding a parent or child link that already exists, or a third biological parent (or a second mother or father) to a child, now shows a clear message instead of a raw database error, also when adding children in bulk. Dashboard → Backup & Restore → "Data check" lists children who already have more than two biological parents (or two of the same gender) in imported data. Adopted links are not counted.
 - Root selector (tree root and export root): typing "nguyen" now finds "Nguyễn" and results are ranked like the other pickers, also by birth year; the list works with the keyboard (arrow keys, Enter, Esc) and is announced to screen readers.
 - Today's lunar date on the dashboard and the lunar death-anniversary label in event lists now say "leap" (nhuận) during a leap lunar month instead of showing the plain month number.
 - Family tree, mind map and bubble views now show children linked only to a spouse (for example added from an in-law's page or with the other parent "unknown"); they no longer disappear from every tree.

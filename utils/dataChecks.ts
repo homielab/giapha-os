@@ -33,6 +33,7 @@ export const DATA_CHECK_KINDS = [
   'parentTooOld',
   'futureDate',
   'duplicateRelationship',
+  'tooManyParents',
   'missingBirthYear',
   'missingDeathYear',
   'missingGender'
@@ -223,6 +224,34 @@ export function runDataChecks(
       })
     }
     seenLinks.add(key)
+  }
+
+  // A child has at most one father and one mother; adopted links don't count.
+  const parentsOf = new Map<string, Set<string>>()
+  for (const r of relationships) {
+    if (r.type !== 'biological_child') continue
+    const set = parentsOf.get(r.person_b)
+    if (set) set.add(r.person_a)
+    else parentsOf.set(r.person_b, new Set([r.person_a]))
+  }
+  for (const [childId, ids] of parentsOf) {
+    const child = byId.get(childId)
+    const parents = [...ids].flatMap((id) => byId.get(id) ?? [])
+    const gender = (g: string) => parents.filter((p) => p.gender === g).length
+    if (
+      !child ||
+      !(parents.length > 2 || gender('male') > 1 || gender('female') > 1)
+    )
+      continue
+    findings.push({
+      kind: 'tooManyParents',
+      people: [ref(child), ...parents.map(ref)],
+      params: {
+        child: child.full_name,
+        count: parents.length,
+        parents: parents.map((p) => p.full_name).join(', ')
+      }
+    })
   }
 
   const order = (k: DataCheckKind) => DATA_CHECK_KINDS.indexOf(k)

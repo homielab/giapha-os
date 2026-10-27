@@ -766,6 +766,7 @@ export const messages = {
     dataCheckKindParentTooOld: 'Cha/mẹ hơn con trên 70 tuổi',
     dataCheckKindFutureDate: 'Ngày trong tương lai',
     dataCheckKindDuplicateRelationship: 'Quan hệ bị lặp',
+    dataCheckKindTooManyParents: 'Con có quá nhiều cha mẹ ruột',
     dataCheckKindMissingBirthYear: 'Thiếu thông tin: chưa có năm sinh',
     dataCheckKindMissingDeathYear:
       'Thiếu thông tin: đã mất nhưng thiếu năm mất',
@@ -780,6 +781,8 @@ export const messages = {
     dataCheckFutureDeath: '{name}: ngày mất {date} chưa tới.',
     dataCheckDuplicateMarriage: '{a} và {b} có hai quan hệ hôn nhân.',
     dataCheckDuplicateChild: '{a} và {b} có hai quan hệ cha/mẹ – con.',
+    dataCheckTooManyParents:
+      '{child} có {count} cha mẹ ruột (tối đa một cha và một mẹ): {parents}.',
     duplicateScanTitle: 'Người có thể trùng',
     duplicateScanDescription:
       'Quét cả cây tìm thành viên có thể là một người nhập hai lần: cùng tên (không phân biệt dấu) và cùng năm sinh, hoặc cùng tên và cùng cha/mẹ. Chỉ để xem; không có gì bị sửa hay xoá. Hãy mở từng hồ sơ và tự sửa hoặc xoá bằng công cụ sẵn có.',
@@ -1125,6 +1128,10 @@ export const messages = {
       'Không tải được danh sách thành viên để tìm: {error}. Bấm đóng (×) để thử lại.',
     relationshipSelfLink: 'Không thể tạo quan hệ của một người với chính mình.',
     relationshipDuplicateSpouse: 'Hai người này đã là vợ chồng.',
+    relationshipDuplicateParent:
+      'Không thể thêm: hai người này đã có quan hệ cha/mẹ – con.',
+    relationshipTooManyParents:
+      'Không thể thêm: người con đã có đủ cha mẹ ruột (một cha và một mẹ).',
     relationshipCycle:
       'Không thể thêm: người cha/mẹ này đang là con cháu của người con, quan hệ sẽ tạo vòng.',
     relationshipChildOlderThanParent:
@@ -1931,6 +1938,7 @@ export const messages = {
     dataCheckKindParentTooOld: 'Parent more than 70 years older than child',
     dataCheckKindFutureDate: 'Date in the future',
     dataCheckKindDuplicateRelationship: 'Repeated relationship',
+    dataCheckKindTooManyParents: 'Child with too many biological parents',
     dataCheckKindMissingBirthYear: 'Missing info: no birth year',
     dataCheckKindMissingDeathYear: 'Missing info: deceased but no death year',
     dataCheckKindMissingGender: 'Missing info: gender unknown',
@@ -1944,6 +1952,8 @@ export const messages = {
     dataCheckFutureDeath: '{name}: death date {date} has not come yet.',
     dataCheckDuplicateMarriage: '{a} and {b} have two marriage links.',
     dataCheckDuplicateChild: '{a} and {b} have two parent–child links.',
+    dataCheckTooManyParents:
+      '{child} has {count} biological parents: {parents}.',
     duplicateScanTitle: 'Possible duplicates',
     duplicateScanDescription:
       'Scans the whole tree for members who may have been entered twice: the same name (ignoring accents) and birth year, or the same name and a shared parent. View only; nothing is changed or deleted. Open each profile and fix or delete it with the usual tools.',
@@ -2294,6 +2304,10 @@ export const messages = {
       'Could not load the member list for search: {error}. Dismiss (×) to retry.',
     relationshipSelfLink: 'A person cannot be related to themselves.',
     relationshipDuplicateSpouse: 'These two people are already married.',
+    relationshipDuplicateParent:
+      'Cannot add: these two people already have a parent–child link.',
+    relationshipTooManyParents:
+      'Cannot add: the child already has both biological parents (one father and one mother).',
     relationshipCycle:
       'Cannot add: this parent is already a descendant of the child, which would create a loop.',
     relationshipChildOlderThanParent:
