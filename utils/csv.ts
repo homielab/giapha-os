@@ -86,8 +86,8 @@ interface CustomEventRow {
 }
 
 export async function exportToCsvZip(data: {
-  persons: Partial<Person>[]
-  relationships: Partial<Relationship>[]
+  persons: object[]
+  relationships: object[]
   person_details_private?: PersonDetailsPrivateRow[]
   custom_events?: CustomEventRow[]
 }): Promise<Blob> {

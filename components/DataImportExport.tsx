@@ -63,7 +63,6 @@ export default function DataImportExport() {
 
       if (format === 'csv') {
         const { exportToCsvZip } = await import('@/utils/csv')
-        // @ts-expect-error: BackupPayload relationships type mismatch with Partial<Relationship>
         const zipBlob = await exportToCsvZip(data)
         const url = URL.createObjectURL(zipBlob)
         const a = document.createElement('a')

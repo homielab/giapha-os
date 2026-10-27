@@ -218,8 +218,9 @@ export default function MemberDetailModal() {
         setPrivateLoaded(!privateRes?.failed)
       } catch (err) {
         console.error('Error fetching member details:', err)
-        // @ts-expect-error - err is caught as unknown, but we check for message
-        setError(err?.message || t('systemError'))
+        setError(
+          err instanceof Error && err.message ? err.message : t('systemError')
+        )
       } finally {
         setLoading(false)
       }

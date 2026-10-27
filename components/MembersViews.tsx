@@ -115,8 +115,7 @@ export default function MembersViews({
     }
 
     hasRestored.current = true
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [rootId, searchParams, setRootId])
 
   // Lưu lựa chọn vào localStorage
   useEffect(() => {
