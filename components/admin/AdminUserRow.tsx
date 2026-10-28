@@ -80,6 +80,7 @@ function StatusToggle({
       : t('adminClickToApprove')
   return (
     <button
+      type='button'
       disabled={disabled}
       onClick={() => onStatusChange(user.id, !user.is_active)}
       className={`inline-flex items-center rounded-md px-2 py-1 text-sm font-medium transition-colors ${
@@ -115,11 +116,13 @@ function RowActions({
   return (
     <div className='flex items-center justify-end gap-2'>
       <button
+        type='button'
+        aria-label={t('adminDeleteUser')}
         title={t('adminDeleteUser')}
         disabled={disabled}
         onClick={onDelete}
         className='rounded-md p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50'>
-        <Trash className='size-4' />
+        <Trash className='size-4' aria-hidden='true' />
       </button>
     </div>
   )

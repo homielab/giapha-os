@@ -120,10 +120,15 @@ export default function KinshipFinder({ persons, relationships }: Props) {
             disabledId={personB?.id}
           />
           <button
+            type='button'
             onClick={swap}
+            aria-label={t('swapMembers')}
             title={t('swapMembers')}
             className='flex size-10 shrink-0 items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-500 transition-colors hover:bg-amber-100 hover:text-amber-600 sm:mb-0.5'>
-            <ArrowLeftRight className='size-4 rotate-90 sm:rotate-0' />
+            <ArrowLeftRight
+              className='size-4 rotate-90 sm:rotate-0'
+              aria-hidden='true'
+            />
           </button>
           <KinshipPersonSelector
             label={t('memberB')}
