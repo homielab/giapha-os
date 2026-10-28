@@ -35,6 +35,13 @@ describe('messages', () => {
     }
   })
 
+  test('mergeFailedGeneric is a full sentence without a placeholder', () => {
+    for (const locale of ['vi', 'en'] as const) {
+      expect(messages[locale].mergeFailedGeneric).toBeTruthy()
+      expect(messages[locale].mergeFailedGeneric).not.toContain('{')
+    }
+  })
+
   test('english backupPhotosNote contains photo', () => {
     expect(messages.en.backupPhotosNote.toLowerCase()).toContain('photo')
   })

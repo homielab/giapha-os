@@ -18,6 +18,7 @@ import {
 import {
   PersonNotCreatedError,
   PersonNotUpdatedError,
+  PersonOrphanedError,
   RelationshipNotDeletedError
 } from '@/utils/writeErrors'
 
@@ -324,6 +325,40 @@ describe('createSpouseWithMarriage', () => {
       denied
     )
   })
+
+  test('a failed marriage insert removes the new person and rethrows', async () => {
+    const { client, calls } = fakeSupabase((call) => {
+      if (call.table === 'relationships') return { error: denied }
+      if (call.op === 'delete') return { data: [{ id: 's1' }] }
+      return { data: { id: 's1' } }
+    })
+    await expect(createSpouseWithMarriage(client, input)).rejects.toEqual(
+      denied
+    )
+    const removed = calls.find(
+      (c) => c.table === 'persons' && c.op === 'delete'
+    )
+    expect(removed?.filters).toContainEqual(['eq', 'id', 's1'])
+  })
+
+  test.each([
+    ['refused by RLS (no row removed)', { data: [] }],
+    ['failing', { error: { message: 'offline' } }]
+  ])(
+    'a person that could not be removed again (%s) is reported as orphaned',
+    async (_case, deleteResult) => {
+      const { client } = fakeSupabase((call) => {
+        if (call.table === 'relationships') return { error: denied }
+        if (call.op === 'delete') return deleteResult
+        return { data: { id: 's1' } }
+      })
+      const error = await createSpouseWithMarriage(client, input).catch(
+        (e) => e
+      )
+      expect(error).toBeInstanceOf(PersonOrphanedError)
+      expect(error).toMatchObject({ personId: 's1', reason: denied.message })
+    }
+  )
 
   test('a name over the backup limit is refused and nothing is saved', async () => {
     const { client, calls } = fakeSupabase(() => ({ data: { id: 's1' } }))

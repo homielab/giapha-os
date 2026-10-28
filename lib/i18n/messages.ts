@@ -873,6 +873,8 @@ export const messages = {
     mergeUpgradeDatabase:
       'Cơ sở dữ liệu chưa có hàm gộp hồ sơ. Hãy chạy nâng cấp cơ sở dữ liệu (Dashboard → Nâng cấp) rồi thử lại.',
     mergeFailed: 'Không thể gộp hồ sơ. {error}',
+    mergeFailedGeneric:
+      'Không thể gộp hồ sơ. Hãy kiểm tra kết nối rồi thử lại.',
     mergeSameMember: 'Hai hồ sơ cần gộp phải khác nhau.',
     mergeMemberMissing: 'Một trong hai hồ sơ không còn tồn tại. Hãy quét lại.',
     galleryTitle: 'Phòng trưng bày',
@@ -1206,6 +1208,8 @@ export const messages = {
     continueAction: 'Tiếp tục',
     spouseNameRequired: 'Vui lòng nhập tên Vợ/Chồng.',
     spouseAddError: 'Không thể thêm vợ/chồng: {error}',
+    spouseAddOrphaned:
+      'Đã tạo hồ sơ {name} nhưng chưa gắn được quan hệ vợ/chồng ({error}). Đừng thêm lại: hãy thêm quan hệ cho người này trong danh sách thành viên.',
     personNotCreated:
       'Không tạo được hồ sơ: bạn không còn quyền thêm thành viên hoặc phiên đã hết hạn. Hãy tải lại trang.',
     confirmDeleteRelationship: 'Bạn có chắc chắn muốn xóa mối quan hệ này?',
@@ -2083,6 +2087,8 @@ export const messages = {
     mergeUpgradeDatabase:
       'The database does not have the merge function yet. Run the database upgrade (Dashboard → Upgrade) and try again.',
     mergeFailed: 'Could not merge the profiles. {error}',
+    mergeFailedGeneric:
+      'Could not merge the profiles. Check your connection and try again.',
     mergeSameMember: 'The two profiles to merge must be different.',
     mergeMemberMissing:
       'One of the two profiles no longer exists. Please scan again.',
@@ -2420,6 +2426,8 @@ export const messages = {
     continueAction: 'Continue',
     spouseNameRequired: 'Please enter the spouse’s name.',
     spouseAddError: 'Could not add spouse: {error}',
+    spouseAddOrphaned:
+      'The profile {name} was created but the marriage was not saved ({error}). Do not add it again: add the relationship for this person from the members list.',
     personNotCreated:
       'The profile was not created: you can no longer add members, or your session expired. Reload the page.',
     confirmDeleteRelationship:

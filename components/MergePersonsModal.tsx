@@ -96,7 +96,7 @@ export default function MergePersonsModal({
       memberSearchCache.clear()
       onMerged([keepId, dropId], res.summary)
     } catch {
-      setError(t('mergeFailed', { error: '' }))
+      setError(t('mergeFailedGeneric'))
     } finally {
       setIsMerging(false)
     }

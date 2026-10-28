@@ -77,6 +77,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Quick-adding a spouse no longer leaves a stray profile when the marriage cannot be saved: the new person is removed again, and if that is refused too, a message names the profile left without the marriage so it is not added twice.
+- A failed merge of duplicate profiles (e.g. lost connection) now shows a full message instead of one ending in an empty space.
+
 - Mind map: "Expand all" no longer freezes the tab when the data has a parent-child loop (for example A recorded as a child of B and B as a child of A). A person already above a branch is not drawn again under it, like the tree view.
 - Quick add spouse refuses a birth year that is not a whole number from 1 to the current year (such as 2099, -5 or 1.5) with a message, like adding children, instead of saving it into the tree and backups.
 - Members list (by generation): siblings, cousins' families and a member's spouses born in the same year now follow the month and day of birth, like the family tree and the family book, instead of the order they were entered. A set birth order still comes first; members without a known date come last.

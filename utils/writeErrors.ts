@@ -45,6 +45,20 @@ export class PersonNotCreatedError extends Error {
 }
 
 /**
+ * A new person was created but linking it failed, and removing it again was
+ * refused or failed: the person is left without the intended relationship.
+ */
+export class PersonOrphanedError extends Error {
+  constructor(
+    readonly personId: string,
+    readonly reason: string
+  ) {
+    super(`Person ${personId} created but not linked: ${reason}`)
+    this.name = 'PersonOrphanedError'
+  }
+}
+
+/**
  * A person was changed by someone else since the form loaded it: the
  * conditional update on `updated_at` matched no row although the person is
  * still readable. Nothing was written.
