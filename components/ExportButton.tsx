@@ -11,7 +11,9 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import { usePopupMenu } from '@/hooks/usePopupMenu'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { noticeAria } from '@/utils/a11y'
 import { formatIsoDay } from '@/utils/dateHelpers'
 import {
   canvasLimitsFor,
@@ -45,22 +47,19 @@ function readSavedPdfFormat(): PdfPageFormat {
 
 export default function ExportButton() {
   const [isExporting, setIsExporting] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pdfFormat, setPdfFormat] = useState<PdfPageFormat>(readSavedPdfFormat)
   const { t } = useI18n()
-  const menuRef = useRef<HTMLDivElement>(null)
+  const {
+    isOpen: showMenu,
+    close: closeMenu,
+    toggle: toggleMenu,
+    containerRef,
+    buttonRef,
+    menuId,
+    buttonProps
+  } = usePopupMenu()
   const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   useEffect(
     () => () => {
@@ -256,7 +255,7 @@ export default function ExportButton() {
   const handleExport = async (format: 'png' | PdfPageFormat) => {
     try {
       setIsExporting(true)
-      setShowMenu(false)
+      closeMenu()
       setError(null)
       if (format !== 'png') {
         setPdfFormat(format)
@@ -291,9 +290,12 @@ export default function ExportButton() {
   }
 
   return (
-    <div className='relative' ref={menuRef}>
+    <div className='relative' ref={containerRef}>
       <button
-        onClick={() => setShowMenu(!showMenu)}
+        type='button'
+        ref={buttonRef}
+        {...buttonProps}
+        onClick={toggleMenu}
         disabled={isExporting}
         className={`flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-medium transition duration-300 disabled:cursor-not-allowed disabled:opacity-50 ${
           showMenu
@@ -313,12 +315,14 @@ export default function ExportButton() {
       <AnimatePresence>
         {showMenu && !isExporting && (
           <m.div
+            id={menuId}
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
             className='absolute top-full right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-stone-200/60 bg-white/90 py-2 backdrop-blur-xl sm:right-auto sm:left-0'>
             <button
+              type='button'
               onClick={() => handleExport('png')}
               className='flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-amber-50 hover:text-amber-700'>
               <FileImage className='size-4' />
@@ -326,6 +330,7 @@ export default function ExportButton() {
             </button>
             {PDF_FORMATS.map((format) => (
               <button
+                type='button'
                 key={format}
                 onClick={() => handleExport(format)}
                 className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-colors hover:bg-amber-50 hover:text-amber-700 ${
@@ -346,6 +351,7 @@ export default function ExportButton() {
       <AnimatePresence>
         {error && (
           <m.div
+            {...noticeAria('error')}
             initial={{ opacity: 0, scale: 0.95, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -358,6 +364,7 @@ export default function ExportButton() {
                 </span>
               </div>
               <button
+                type='button'
                 onClick={() => setError(null)}
                 aria-label={t('clearError')}
                 className='shrink-0 text-red-400 transition-colors hover:text-red-600'>

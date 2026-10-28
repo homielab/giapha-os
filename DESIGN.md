@@ -154,6 +154,7 @@ Use the existing rounded tokens. Main content cards use the established organic 
 - **Outline button:** Transparent surface with a border and secondary 14px text. It has no shadow.
 - **Family node card:** Semi-transparent white surface with the existing rounded shape and a clear, non-conflicting border or shadow treatment. Avatars are circular.
 - **Dialogs and modals:** Full-screen masks on mobile and centered rounded drawers on desktop. Use either a border or a shadow for the dialog surface, with clean dividers and consistent internal padding.
+- **Popup menus:** A button that opens a menu (account, export) uses `hooks/usePopupMenu.ts`: a press outside or Esc closes it, Esc puts focus back on the button, and the button carries `aria-haspopup` and `aria-expanded`. Dialogs use `hooks/useModalA11y.ts` instead.
 
 ## Do's and don'ts
 

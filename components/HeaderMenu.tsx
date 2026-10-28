@@ -14,8 +14,8 @@ import {
   Users
 } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
 
+import { usePopupMenu } from '@/hooks/usePopupMenu'
 import { useI18n } from '@/lib/i18n/useI18n'
 
 import LogoutButton from './LogoutButton'
@@ -25,19 +25,15 @@ export default function HeaderMenu() {
   const { user, isAdmin } = useUser()
   const { t } = useI18n()
   const userEmail = user?.email
-  const [isOpen, setIsOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  const {
+    isOpen,
+    close,
+    toggle,
+    containerRef,
+    buttonRef,
+    menuId,
+    buttonProps
+  } = usePopupMenu()
 
   const links = [
     {
@@ -100,12 +96,13 @@ export default function HeaderMenu() {
   ]
 
   return (
-    <div className='relative' ref={menuRef}>
+    <div className='relative' ref={containerRef}>
       <button
         type='button'
-        aria-expanded={isOpen}
+        ref={buttonRef}
+        {...buttonProps}
         aria-label={t('account')}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggle}
         className='flex items-center gap-2 rounded-full border border-transparent py-1.5 pr-4 pl-2 transition-colors duration-200 hover:border-stone-200 hover:bg-stone-100'>
         <div className='flex size-8 items-center justify-center rounded-full bg-linear-to-br from-amber-200 to-amber-100 font-medium text-amber-800 shadow-sm ring-1 ring-amber-300/50'>
           {userEmail ? (
@@ -122,6 +119,7 @@ export default function HeaderMenu() {
       <AnimatePresence>
         {isOpen && (
           <m.div
+            id={menuId}
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -140,7 +138,7 @@ export default function HeaderMenu() {
                 <Link
                   key={href}
                   href={href}
-                  onClick={() => setIsOpen(false)}
+                  onClick={close}
                   className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors ${hover}`}>
                   <Icon className='size-4' />
                   {label}
@@ -158,7 +156,7 @@ export default function HeaderMenu() {
                     <Link
                       key={href}
                       href={href}
-                      onClick={() => setIsOpen(false)}
+                      onClick={close}
                       className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors ${hover}`}>
                       <Icon className='size-4' />
                       {label}
@@ -170,7 +168,7 @@ export default function HeaderMenu() {
               <div className='mx-4 my-1 h-px bg-stone-100' />
               <Link
                 href='/about'
-                onClick={() => setIsOpen(false)}
+                onClick={close}
                 className='flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-rose-50 hover:text-rose-700'>
                 <Info className='size-4' />
                 {t('about')}
