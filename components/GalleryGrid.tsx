@@ -4,6 +4,10 @@ import dayjs from 'dayjs'
 import { CalendarDays, Clock, Maximize2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import {
+  revealOnInteract,
+  slideInOnInteract
+} from '@/components/galleryCardReveal'
 import GalleryImage from '@/components/GalleryImage'
 import GalleryLightbox from '@/components/GalleryLightbox'
 import { useI18n } from '@/lib/i18n/useI18n'
@@ -144,8 +148,10 @@ export default function GalleryGrid({
               />
 
               {/* Overlay */}
-              <div className='absolute inset-0 flex flex-col justify-end bg-linear-to-t from-stone-900/80 via-stone-900/20 to-transparent p-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100'>
-                <div className='translate-y-4 transform transition-transform duration-300 group-hover:translate-y-0'>
+              <div
+                className={`absolute inset-0 flex flex-col justify-end bg-linear-to-t from-stone-900/80 via-stone-900/20 to-transparent p-5 opacity-0 transition-opacity duration-300 ${revealOnInteract}`}>
+                <div
+                  className={`translate-y-4 transform transition-transform duration-300 ${slideInOnInteract}`}>
                   <h3 className='mb-1 line-clamp-2 text-lg leading-tight font-semibold text-white'>
                     {item.title}
                   </h3>
@@ -159,7 +165,8 @@ export default function GalleryGrid({
               </div>
 
               {/* Top Right Icon */}
-              <div className='absolute top-4 right-4 opacity-0 transition-opacity delay-100 duration-300 group-hover:opacity-100'>
+              <div
+                className={`absolute top-4 right-4 opacity-0 transition-opacity delay-100 duration-300 ${revealOnInteract}`}>
                 <div className='rounded-full bg-white/20 p-2 text-white backdrop-blur-md'>
                   <Maximize2 className='size-4' />
                 </div>
@@ -206,7 +213,8 @@ export default function GalleryGrid({
                           className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'
                           loading='lazy'
                         />
-                        <div className='absolute top-2 right-2 rounded-full bg-black/40 p-1.5 text-white opacity-0 backdrop-blur-md transition-opacity group-hover:opacity-100'>
+                        <div
+                          className={`absolute top-2 right-2 rounded-full bg-black/40 p-1.5 text-white opacity-0 backdrop-blur-md transition-opacity ${revealOnInteract}`}>
                           <Maximize2 className='size-3.5' />
                         </div>
                       </div>
