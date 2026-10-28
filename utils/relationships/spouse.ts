@@ -2,7 +2,10 @@ import { SupabaseClient } from '@supabase/supabase-js'
 
 import { Person } from '@/types'
 import { checkTextLength, MAX_NAME, MAX_NOTE } from '@/utils/limits'
+import { RelationshipValidationError } from '@/utils/relationshipValidation'
 import { PersonNotCreatedError } from '@/utils/writeErrors'
+
+import { parseBirthYear, validateChildRow } from './bulkChildren'
 
 export interface SpouseInput {
   person: Person
@@ -12,8 +15,10 @@ export interface SpouseInput {
 }
 
 // Creates a spouse person (default gender opposite to `person`) and links the
-// marriage. Returns the new spouse's ID; throws on failure (TextTooLongError
-// before anything is saved when the name or note is over the backup limits).
+// marriage. Returns the new spouse's ID; throws on failure. Nothing is saved
+// when the name or note is over the backup limits (TextTooLongError) or the
+// birth year is not a whole number from 1 to the current year
+// (RelationshipValidationError, same rules as adding children).
 export async function createSpouseWithMarriage(
   supabase: SupabaseClient,
   { person, name, birthYear, note }: SpouseInput
@@ -24,6 +29,9 @@ export async function createSpouseWithMarriage(
   const relationshipNote = note.trim()
   checkTextLength('fullName', fullName, MAX_NAME)
   checkTextLength('note', relationshipNote, MAX_NOTE)
+  const yearError = validateChildRow({ birthYear, birthOrder: '' })
+  if (yearError) throw new RelationshipValidationError(yearError)
+  const year = parseBirthYear(birthYear)
 
   const newSpouseGender =
     person.gender === 'male'
@@ -48,10 +56,7 @@ export async function createSpouseWithMarriage(
     personPayload.generation = person.generation
   }
 
-  if (birthYear.trim() !== '') {
-    const year = parseInt(birthYear)
-    if (!isNaN(year)) personPayload.birth_year = year
-  }
+  if (year != null) personPayload.birth_year = year
 
   // 1. Insert Person
   const { data: newPersonData, error: insertError } = await supabase

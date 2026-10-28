@@ -7,6 +7,10 @@ import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
 import { TextTooLongError } from '@/utils/limits'
 import { createSpouseWithMarriage } from '@/utils/relationshipMutations'
+import {
+  relationshipErrorKey,
+  RelationshipValidationError
+} from '@/utils/relationshipValidation'
 import { createClient } from '@/utils/supabase/client'
 import { PersonNotCreatedError } from '@/utils/writeErrors'
 
@@ -58,6 +62,8 @@ export default function QuickAddSpouseSection({
     } catch (err: unknown) {
       if (err instanceof TextTooLongError) {
         showError(t('textTooLong', { field: t(err.label), max: err.max }))
+      } else if (err instanceof RelationshipValidationError) {
+        showError(t(relationshipErrorKey(err.code)))
       } else if (err instanceof PersonNotCreatedError) {
         showError(t('personNotCreated'))
       } else {

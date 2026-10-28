@@ -345,4 +345,39 @@ describe('createSpouseWithMarriage', () => {
     expect(error).toMatchObject({ label: 'note', max: MAX_NOTE })
     expect(calls).toHaveLength(0)
   })
+
+  test.each([
+    ['2099', 'birthYearInFuture'],
+    ['-5', 'invalidBirthYear'],
+    ['12abc', 'invalidBirthYear'],
+    ['1.5', 'invalidBirthYear'],
+    ['1e3', 'invalidBirthYear'],
+    ['0', 'invalidBirthYear']
+  ])(
+    'birth year %p is refused with %p and nothing is saved',
+    async (birthYear, code) => {
+      const { client, calls } = fakeSupabase(() => ({ data: { id: 's1' } }))
+      const error = await createSpouseWithMarriage(client, {
+        ...input,
+        birthYear
+      }).catch((e) => e)
+      expect(error).toBeInstanceOf(RelationshipValidationError)
+      expect(error).toMatchObject({ code })
+      expect(calls).toHaveLength(0)
+    }
+  )
+
+  test.each([
+    ['', undefined],
+    ['1950', 1950],
+    [' 1950 ', 1950]
+  ])('birth year %p saves %p', async (birthYear, saved) => {
+    const { client, calls } = fakeSupabase(() => ({ data: { id: 's1' } }))
+    await expect(
+      createSpouseWithMarriage(client, { ...input, birthYear })
+    ).resolves.toBe('s1')
+    const insert = calls.find((c) => c.table === 'persons')
+    expect(insert?.payload).toMatchObject({ full_name: 'Lan' })
+    expect((insert?.payload as { birth_year?: number }).birth_year).toBe(saved)
+  })
 })
