@@ -70,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Screen readers now name the list/tree/mind map/bubble view buttons and the "Show" filter button on phones, where only their icons show, and announce which view or event filter is selected, whether the filter panel is open, and the new event count after changing the filter.
 - Siblings born in the same year are now ordered by birth month and day (then name) everywhere: the tree, "Recompute generations", the member list and the family book no longer disagree about who is the elder.
 - The SSO setup link on the login page opens the English README for English users, and the Vietnamese upgrade page no longer shows an English "Source code" label.
 - GEDCOM export writes the `LEAP` flag for a death in a leap lunar month (worked out from the solar date of death), and import fills a missing solar death date from a leap lunar date, so death anniversaries in leap months no longer move to the regular month after a move between installs.

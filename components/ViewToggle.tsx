@@ -5,6 +5,7 @@ import { Circle, List, ListTree, Network } from 'lucide-react'
 
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { toggleButtonProps } from '@/utils/a11y'
 import type { ViewMode } from '@/utils/viewMode'
 
 export default function ViewToggle() {
@@ -41,6 +42,8 @@ export default function ViewToggle() {
         return (
           <button
             key={tab.id}
+            type='button'
+            {...toggleButtonProps(tab.label, isActive)}
             onClick={() => setView(tab.id as ViewMode)}
             className={`relative z-10 flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-300 ease-in-out sm:px-6 sm:py-2.5 ${
               isActive
@@ -55,6 +58,7 @@ export default function ViewToggle() {
               />
             )}
             <span
+              aria-hidden='true'
               className={`transition-colors duration-300 ${isActive ? 'text-amber-700' : 'text-stone-400'}`}>
               {tab.icon}
             </span>

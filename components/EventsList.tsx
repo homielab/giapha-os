@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react'
 import EventCard from '@/components/events/EventCard'
 import CustomEventModal from '@/components/modal/CustomEventModal'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { toggleButtonProps } from '@/utils/a11y'
 import { canEditCustomEvent } from '@/utils/customEventMutations'
 import { vnToday } from '@/utils/dateHelpers'
 import {
@@ -251,6 +252,8 @@ export default function EventsList({
           ).map((tab) => (
             <button
               key={tab.key}
+              type='button'
+              {...toggleButtonProps(tab.label, filter === tab.key)}
               onClick={() => {
                 setFilter(tab.key)
                 setShowCount(20)
@@ -265,7 +268,10 @@ export default function EventsList({
               {tab.label}
             </button>
           ))}
-          <span className='ml-auto self-center text-sm text-stone-400'>
+          <span
+            role='status'
+            aria-live='polite'
+            className='ml-auto self-center text-sm text-stone-400'>
             {t('eventCount', { count: filtered.length })}
             {filter === 'past' ? t('eventPastYear') : ''}
           </span>
