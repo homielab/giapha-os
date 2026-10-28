@@ -163,6 +163,33 @@ describe('buildLineageBook', () => {
     expect(gen3).toEqual(['con2', 'con1', 'con3'])
   })
 
+  test('siblings born in the same year follow month and day', () => {
+    const b = buildLineageBook(
+      [
+        person({ id: 'p', generation: 1 }),
+        person({
+          id: 'an',
+          full_name: 'An',
+          generation: 2,
+          birth_year: 2000,
+          birth_month: 6
+        }),
+        person({
+          id: 'binh',
+          full_name: 'Bình',
+          generation: 2,
+          birth_year: 2000,
+          birth_month: 1
+        })
+      ],
+      [rel('biological_child', 'p', 'an'), rel('biological_child', 'p', 'binh')]
+    )
+    expect(b.generations[1].entries.map((e) => e.person.id)).toEqual([
+      'binh',
+      'an'
+    ])
+  })
+
   test('ordinals are 1-based inside each section', () => {
     expect(book.generations.map((g) => g.entries[0].ordinal)).toEqual([1, 1, 1])
     expect(book.generations[1].entries[1].ordinal).toBe(2)

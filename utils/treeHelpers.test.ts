@@ -79,6 +79,22 @@ describe('buildAdjacencyLists', () => {
     expect(ids).toEqual(['daughter', 'son', 'adopted', 'late'])
   })
 
+  test('same birth year: month and day order the siblings', () => {
+    const ps = [
+      person('p', 'male'),
+      person('An', 'male', { birth_year: 2000, birth_month: 6 }),
+      person('Bình', 'male', { birth_year: 2000, birth_month: 1 })
+    ]
+    const a = buildAdjacencyLists(
+      ['An', 'Bình'].map((c) => rel('biological_child', 'p', c)),
+      new Map(ps.map((x) => [x.id, x]))
+    )
+    expect(a.childrenByPersonId.get('p')!.map((c) => c.id)).toEqual([
+      'Bình',
+      'An'
+    ])
+  })
+
   test('counts adopted children and skips unknown people', () => {
     const ids = adj.childrenByPersonId.get('dad')!.map((c) => c.id)
     expect(ids).toContain('adopted')

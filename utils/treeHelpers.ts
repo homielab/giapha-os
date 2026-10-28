@@ -1,5 +1,7 @@
 import { Person, Relationship } from '@/types'
 
+import { compareBirth } from './compareBirth'
+
 export interface SpouseData {
   person: Person
   note?: string | null
@@ -17,15 +19,6 @@ export interface TreeFilterOptions {
   hideSons: boolean
   hideMales: boolean
   hideFemales: boolean
-}
-
-function compareSiblings(a: Person, b: Person): number {
-  const aOrder = a.birth_order ?? Infinity
-  const bOrder = b.birth_order ?? Infinity
-  if (aOrder !== bOrder) return aOrder - bOrder
-  const aYear = a.birth_year ?? Infinity
-  const bYear = b.birth_year ?? Infinity
-  return aYear - bYear
 }
 
 /**
@@ -58,7 +51,7 @@ export function buildAdjacencyLists(
 
   // Sắp xếp con cái theo thứ tự sinh hoặc năm sinh
   children.forEach((childArray) => {
-    childArray.sort(compareSiblings)
+    childArray.sort(compareBirth)
   })
 
   return { spousesByPersonId: spouses, childrenByPersonId: children }
@@ -86,7 +79,7 @@ export function getNodeChildren(
     })
   })
   if (extra.length === 0) return own
-  return [...own, ...extra].sort(compareSiblings)
+  return [...own, ...extra].sort(compareBirth)
 }
 
 /** Children per person including the children linked only to a spouse. */

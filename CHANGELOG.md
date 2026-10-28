@@ -70,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Siblings born in the same year are now ordered by birth month and day (then name) everywhere: the tree, "Recompute generations", the member list and the family book no longer disagree about who is the elder.
 - The SSO setup link on the login page opens the English README for English users, and the Vietnamese upgrade page no longer shows an English "Source code" label.
 - GEDCOM export writes the `LEAP` flag for a death in a leap lunar month (worked out from the solar date of death), and import fills a missing solar death date from a leap lunar date, so death anniversaries in leap months no longer move to the regular month after a move between installs.
 - GEDCOM import no longer produces the same couple twice when two family records list the husband and wife in opposite order, so the file can be restored instead of being refused for a couple saved twice.

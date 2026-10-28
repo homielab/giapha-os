@@ -1,5 +1,7 @@
 import { Person } from '@/types'
 
+import { compareBirth } from './compareBirth'
+
 type ParentsOf = Map<string, string[]>
 type SpousesOf = Map<string, string[]>
 
@@ -7,9 +9,9 @@ export function sortPersonsFlat(persons: Person[], sortOption: string) {
   return [...persons].sort((a, b) => {
     switch (sortOption) {
       case 'birth_asc':
-        return (a.birth_year || 9999) - (b.birth_year || 9999)
+        return compareBirth(a, b, { useOrder: false })
       case 'birth_desc':
-        return (b.birth_year || 0) - (a.birth_year || 0)
+        return compareBirth(a, b, { useOrder: false, direction: 'desc' })
       case 'name_asc':
         return a.full_name.localeCompare(b.full_name, 'vi')
       case 'name_desc':

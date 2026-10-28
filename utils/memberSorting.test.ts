@@ -108,6 +108,20 @@ describe('sortPersonsFlat', () => {
     ])
   })
 
+  test('birth sorts break year ties by month and day', () => {
+    const l = [
+      person('An', 'male', { birth_year: 2000, birth_month: 6 }),
+      person('Bình', 'male', { birth_year: 2000, birth_month: 1 }),
+      person('none', 'male')
+    ]
+    expect(ids(sortPersonsFlat(l, 'birth_asc'))).toEqual(['Bình', 'An', 'none'])
+    expect(ids(sortPersonsFlat(l, 'birth_desc'))).toEqual([
+      'An',
+      'Bình',
+      'none'
+    ])
+  })
+
   test('name_asc uses Vietnamese order and does not change the input', () => {
     expect(ids(sortPersonsFlat(list, 'name_asc'))).toEqual([
       'An',

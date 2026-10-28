@@ -1,5 +1,7 @@
 import { Person, Relationship } from '@/types'
 
+import { compareBirth } from './compareBirth'
+
 export interface ComputedUpdate {
   id: string
   full_name: string
@@ -220,15 +222,11 @@ export function computeBirthOrders(
   const orderMap = new Map<string, number>()
 
   for (const [, childIds] of parentChildren) {
-    // Sort children by birth_year (nulls last), then by name alphabetically
-    const sorted = Array.from(childIds).sort((a, b) => {
-      const pa = personsById.get(a)
-      const pb = personsById.get(b)
-      const aYear = pa?.birth_year ?? Infinity
-      const bYear = pb?.birth_year ?? Infinity
-      if (aYear !== bYear) return aYear - bYear
-      return (pa?.full_name ?? '').localeCompare(pb?.full_name ?? '', 'vi')
-    })
+    // Sort by birth date (the stored birth_order is what we recompute)
+    const sorted = Array.from(childIds)
+      .flatMap((id) => personsById.get(id) ?? [])
+      .sort((a, b) => compareBirth(a, b, { useOrder: false }))
+      .map((p) => p.id)
 
     // Only assign order to non-in-law children
     let order = 1

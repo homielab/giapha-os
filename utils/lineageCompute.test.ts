@@ -193,6 +193,28 @@ describe('computeBirthOrders', () => {
     expect(orders.get('Chưa rõ')).toBe(3)
   })
 
+  test('same birth year: the earlier month is the elder', () => {
+    const ps = [
+      person('p', 'male'),
+      person('An', 'male', { birth_year: 2000, birth_month: 6 }),
+      person('Bình', 'male', { birth_year: 2000, birth_month: 1 })
+    ]
+    const rs = ['An', 'Bình'].map((c) => rel('biological_child', 'p', c))
+    const orders = computeBirthOrders(ps, rs)
+    expect(orders.get('Bình')).toBe(1)
+    expect(orders.get('An')).toBe(2)
+  })
+
+  test('ignores the stored birth_order it is about to recompute', () => {
+    const ps = [
+      person('p', 'male'),
+      person('a', 'male', { birth_year: 1990, birth_order: 2 }),
+      person('b', 'male', { birth_year: 1995, birth_order: 1 })
+    ]
+    const rs = ['a', 'b'].map((c) => rel('biological_child', 'p', c))
+    expect(computeBirthOrders(ps, rs).get('a')).toBe(1)
+  })
+
   test('in-law children are skipped and do not take a number', () => {
     const ps = [
       person('p', 'male'),

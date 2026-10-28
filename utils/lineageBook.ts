@@ -1,5 +1,6 @@
 import { Gender } from '@/types'
 
+import { compareBirth } from './compareBirth'
 import { solarToLunar } from './lunarCalendar'
 
 /**
@@ -83,26 +84,8 @@ const parentLabel = (gender: Gender): ParentLabel =>
 const spouseLabel = (gender: Gender): SpouseLabel =>
   gender === 'female' ? 'wife' : gender === 'male' ? 'husband' : 'spouse'
 
-const within = (p: LineageBookPerson): number =>
-  p.birth_year ?? Number.MAX_SAFE_INTEGER
-
 /** Siblings: birth order first, then birth date, then the name, then the id. */
-const byBirth: (a: LineageBookPerson, b: LineageBookPerson) => number = (
-  a,
-  b
-) => {
-  const order =
-    (a.birth_order ?? Number.MAX_SAFE_INTEGER) -
-    (b.birth_order ?? Number.MAX_SAFE_INTEGER)
-  if (order !== 0) return order
-  return (
-    within(a) - within(b) ||
-    (a.birth_month ?? 99) - (b.birth_month ?? 99) ||
-    (a.birth_day ?? 99) - (b.birth_day ?? 99) ||
-    a.full_name.localeCompare(b.full_name, 'vi') ||
-    a.id.localeCompare(b.id)
-  )
-}
+const byBirth = compareBirth
 
 /**
  * The lunar death date shown in the book: the stored death_lunar_* wins;
