@@ -77,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Mind map: "Expand all" no longer freezes the tab when the data has a parent-child loop (for example A recorded as a child of B and B as a child of A). A person already above a branch is not drawn again under it, like the tree view.
 - Quick add spouse refuses a birth year that is not a whole number from 1 to the current year (such as 2099, -5 or 1.5) with a message, like adding children, instead of saving it into the tree and backups.
 - Members list (by generation): siblings, cousins' families and a member's spouses born in the same year now follow the month and day of birth, like the family tree and the family book, instead of the order they were entered. A set birth order still comes first; members without a known date come last.
 - Changing a member's generation no longer shifts that member a second time when old imported data has a parent-child loop back to them; only their descendants move.

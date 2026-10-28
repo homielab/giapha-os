@@ -82,6 +82,26 @@ export function getNodeChildren(
   return [...own, ...extra].sort(compareBirth)
 }
 
+/** The people on the path from a root down to `personId`, `personId` included. */
+export function extendPath(
+  path: ReadonlySet<string>,
+  personId: string
+): ReadonlySet<string> {
+  return new Set([...path, personId])
+}
+
+/**
+ * Children that are not already on the path above them. Cyclic data (A child
+ * of B and B child of A) would otherwise nest the same people forever.
+ */
+export function childrenOffPath(
+  children: Person[],
+  path: ReadonlySet<string>
+): Person[] {
+  if (!children.some((c) => path.has(c.id))) return children
+  return children.filter((c) => !path.has(c.id))
+}
+
 /** Children per person including the children linked only to a spouse. */
 export function buildNodeChildrenMap(
   adj: AdjacencyLists

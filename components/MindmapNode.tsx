@@ -3,13 +3,18 @@
 import { AnimatePresence, m } from 'framer-motion'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
-import { memo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 
 import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
 import { getAvatarBg } from '@/utils/styleHelpers'
-import { AdjacencyLists, getFilteredTreeData } from '@/utils/treeHelpers'
+import {
+  AdjacencyLists,
+  childrenOffPath,
+  extendPath,
+  getFilteredTreeData
+} from '@/utils/treeHelpers'
 
 import DefaultAvatar from './DefaultAvatar'
 
@@ -29,6 +34,8 @@ export interface MindmapContextData {
   expandSignal: { type: 'expand' | 'collapse'; ts: number } | null
   setMemberModalId: (id: string | null) => void
 }
+
+const NO_ANCESTORS: ReadonlySet<string> = new Set()
 
 const getTreeData = (personId: string, ctx: MindmapContextData) => {
   return getFilteredTreeData(personId, ctx.personsMap, ctx.adj, {
@@ -258,14 +265,22 @@ export const MindmapNode = memo(
     personId,
     level = 0,
     isLast = false,
+    ancestors = NO_ANCESTORS,
     ctx
   }: {
     personId: string
     level?: number
     isLast?: boolean
+    /** People above this node on its path; they are never drawn again below it. */
+    ancestors?: ReadonlySet<string>
     ctx: MindmapContextData
   }) => {
     const data = getTreeData(personId, ctx)
+    const path = useMemo(
+      () => extendPath(ancestors, personId),
+      [ancestors, personId]
+    )
+    const children = childrenOffPath(data.children, path)
     const [isExpanded, setIsExpanded] = useState(
       ctx.autoCollapseLevel > 0 ? level < ctx.autoCollapseLevel : level < 2
     )
@@ -290,7 +305,7 @@ export const MindmapNode = memo(
 
     if (!data.person) return null
 
-    const hasChildren = data.children.length > 0
+    const hasChildren = children.length > 0
 
     return (
       <div className={`relative py-1.5 ${level > 0 ? 'pl-6' : 'pl-0'}`}>
@@ -320,12 +335,13 @@ export const MindmapNode = memo(
               transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
               className='relative z-0 -mt-4 origin-top overflow-hidden pt-4'>
               <div className='pb-1'>
-                {data.children.map((child, index) => (
+                {children.map((child, index) => (
                   <MindmapNode
                     key={child.id}
                     personId={child.id}
                     level={level + 1}
-                    isLast={index === data.children.length - 1}
+                    isLast={index === children.length - 1}
+                    ancestors={path}
                     ctx={ctx}
                   />
                 ))}

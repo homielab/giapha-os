@@ -5,7 +5,9 @@ import { Person, Relationship } from '@/types'
 import {
   buildAdjacencyLists,
   buildNodeChildrenMap,
+  childrenOffPath,
   computeAutoCollapsed,
+  extendPath,
   getFilteredTreeData,
   TreeFilterOptions
 } from './treeHelpers'
@@ -216,5 +218,60 @@ describe('computeAutoCollapsed', () => {
       ['y', [{ id: 'x' }]]
     ])
     expect([...computeAutoCollapsed([{ id: 'x' }], cyclic, 1)]).toEqual(['y'])
+  })
+})
+
+describe('mind map path guard', () => {
+  const cyclePersons = [person('a', 'male'), person('b', 'female')]
+  const cycleMap = new Map(cyclePersons.map((p) => [p.id, p]))
+  const cycleAdj = buildAdjacencyLists(
+    [rel('biological_child', 'a', 'b'), rel('biological_child', 'b', 'a')],
+    cycleMap
+  )
+
+  // Expands every node like 'Expand all' and returns each drawn path.
+  function expandAll(
+    rootId: string,
+    personsById: Map<string, Person>,
+    adj: ReturnType<typeof buildAdjacencyLists>
+  ) {
+    const drawn: string[][] = []
+    const walk = (id: string, ancestors: ReadonlySet<string>) => {
+      if (drawn.length > 1000) throw new Error('no end')
+      const path = extendPath(ancestors, id)
+      drawn.push([...path])
+      const data = getFilteredTreeData(id, personsById, adj, noFilters)
+      childrenOffPath(data.children, path).forEach((c) => walk(c.id, path))
+    }
+    walk(rootId, new Set())
+    return drawn
+  }
+
+  test('a two-person cycle ends and shows each person once on the path', () => {
+    expect(expandAll('a', cycleMap, cycleAdj)).toEqual([['a'], ['a', 'b']])
+  })
+
+  test('a self-parent is not drawn under itself', () => {
+    const self = new Map([['s', person('s', 'male')]])
+    const adj = buildAdjacencyLists([rel('biological_child', 's', 's')], self)
+    expect(expandAll('s', self, adj)).toEqual([['s']])
+  })
+
+  test('a tree without cycles keeps every child', () => {
+    const adj = buildAdjacencyLists(relationships, personsMap)
+    const children = getFilteredTreeData(
+      'dad',
+      personsMap,
+      adj,
+      noFilters
+    ).children
+    expect(childrenOffPath(children, new Set(['dad']))).toBe(children)
+    expect(expandAll('dad', personsMap, adj)).toHaveLength(5)
+  })
+
+  test('extendPath leaves the parent path untouched', () => {
+    const parent = new Set(['a'])
+    expect([...extendPath(parent, 'b')]).toEqual(['a', 'b'])
+    expect([...parent]).toEqual(['a'])
   })
 })
