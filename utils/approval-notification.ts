@@ -1,4 +1,5 @@
 import { getLocale, Locale, translate } from '@/lib/i18n/messages'
+import { parseSiteOrigin } from '@/lib/siteUrl'
 import {
   APPROVAL_TOKEN_TTL_DAYS,
   createApprovalToken,
@@ -75,21 +76,8 @@ export async function notifyAdminOfPendingUser({
   const from = process.env.RESEND_FROM_EMAIL
   // Never derive an approval URL from the request Host header. APP_URL must be
   // an explicitly configured trusted origin to prevent poisoned email links.
-  const configuredAppUrl = process.env.APP_URL?.trim()
-  let appUrl: string | null = null
-  if (configuredAppUrl) {
-    try {
-      const parsedAppUrl = new URL(configuredAppUrl)
-      if (
-        parsedAppUrl.protocol === 'https:' ||
-        parsedAppUrl.protocol === 'http:'
-      ) {
-        appUrl = parsedAppUrl.origin
-      }
-    } catch {
-      appUrl = null
-    }
-  }
+  // A bare host gets https://; anything that is not http(s) is ignored.
+  const appUrl = parseSiteOrigin(process.env.APP_URL)
 
   if (!apiKey || !from || !appUrl) {
     console.warn(

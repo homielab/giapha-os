@@ -1,13 +1,4 @@
-// Public URL of this deployment, used for canonical/Open Graph links, the
-// sitemap and robots.txt. APP_URL wins; on Vercel the production domain is
-// used automatically.
-function getSiteUrl(): string {
-  const appUrl = process.env.APP_URL?.trim()
-  if (appUrl) return appUrl.replace(/\/+$/, '')
-  const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim()
-  if (vercelUrl) return `https://${vercelUrl}`
-  return 'http://localhost:3000'
-}
+import { getSiteUrl } from '@/lib/siteUrl'
 
 const config = {
   siteName: process.env.SITE_NAME || 'Gia Phả OS',

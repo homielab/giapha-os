@@ -240,6 +240,14 @@ describe('notifyAdminOfPendingUser request handling', () => {
     expect(sent[0].url).toBe('https://api.resend.com/emails')
   })
 
+  test('links https:// when APP_URL is a bare host', async () => {
+    process.env.APP_URL = 'tree.example.com'
+    await notifyAdminOfPendingUser(user)
+    expect(String(sent[0].body.text)).toContain(
+      'https://tree.example.com/api/admin/approve/'
+    )
+  })
+
   test('marks the request as notified after sending', async () => {
     await notifyAdminOfPendingUser(user)
     const update = calls.find((c) => c.op === 'update')
