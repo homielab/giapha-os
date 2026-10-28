@@ -48,6 +48,12 @@ function nullIfNaN(value: number | null): number | null {
   return Number.isNaN(value) ? null : value
 }
 
+// "Label: value" note lines, one per distinct non-empty value.
+function labelled(label: string, values: string[]): string[] {
+  const distinct = [...new Set(values.map((v) => v.trim()).filter(Boolean))]
+  return distinct.map((v) => `${label}: ${v}`)
+}
+
 // Reads one INDI record into a person with the given id.
 export function readPerson(
   record: ParseRecord,
@@ -71,6 +77,10 @@ export function readPerson(
   let isInLaw = false
   const otherNames: string[] = []
   const rangeNotes: string[] = []
+  // Places of birth/death and occupations have no column: kept as note lines.
+  const birthPlaces: string[] = []
+  const deathPlaces: string[] = []
+  const occupations: string[] = []
 
   let currentTag = ''
 
@@ -110,6 +120,8 @@ export function readPerson(
         else birthOrder = n
       } else if (tag === '_INLAW') {
         isInLaw = val.toUpperCase() === 'Y'
+      } else if (tag === 'OCCU') {
+        occupations.push(val)
       }
     } else if (level === 2) {
       if (currentTag === 'NAME' && tag === 'SURN') {
@@ -122,6 +134,16 @@ export function readPerson(
         }
       } else if (currentTag === 'NOTE') {
         noteReader.continue(tag, val)
+      } else if (currentTag === 'OCCU' && (tag === 'CONC' || tag === 'CONT')) {
+        const last = occupations.length - 1
+        occupations[last] += (tag === 'CONT' ? ' ' : '') + val
+      } else if (currentTag === 'BIRT' && tag === 'PLAC') {
+        if (val) birthPlaces.push(val)
+      } else if (currentTag === 'DEAT' && tag === 'PLAC') {
+        if (val) {
+          deathPlaces.push(val)
+          is_deceased = true
+        }
       } else if (currentTag === 'BIRT' && tag === 'DATE') {
         const date = parseGedcomDate(val)
         birth = { day: date.day, month: date.month, year: date.year }
@@ -157,8 +179,16 @@ export function readPerson(
     ...sourceNotes(record.lines, ctx.sourTexts)
   ]
   let note = notes.filter((n) => n.trim()).join('\n\n')
-  if (rangeNotes.length > 0) {
-    note = [note, ...rangeNotes].filter(Boolean).join('\n')
+  // A line the note already has (a file exported by this app and edited
+  // elsewhere) is not added twice.
+  const noteLines = new Set(note.split('\n'))
+  const factNotes = [
+    ...labelled('Nơi sinh', birthPlaces),
+    ...labelled('Nơi mất', deathPlaces),
+    ...labelled('Nghề nghiệp', occupations)
+  ].filter((line) => !noteLines.has(line))
+  if (rangeNotes.length > 0 || factNotes.length > 0) {
+    note = [note, ...rangeNotes, ...factNotes].filter(Boolean).join('\n')
   }
 
   death = leapDeathDate(death, deathLunar, deathLunarLeap)

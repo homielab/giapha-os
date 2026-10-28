@@ -881,7 +881,7 @@ describe('GEDCOM burial place', () => {
     expect(byName.get('Lê Văn Cả')?.burial_place).toBeNull()
   })
 
-  test('a BURI with a place marks the person deceased; other PLAC lines are ignored', () => {
+  test('a BURI with a place marks the person deceased; other PLAC lines are not burial places', () => {
     const [buried, born] = parseGedcom(
       [
         '0 @I1@ INDI',
@@ -902,6 +902,74 @@ describe('GEDCOM burial place', () => {
       burial_place: 'Nghĩa trang làng'
     })
     expect(born).toMatchObject({ is_deceased: false, burial_place: null })
+  })
+})
+
+describe('GEDCOM places of birth/death and occupation', () => {
+  const indi = (...lines: string[]) =>
+    ['0 HEAD', '0 @I1@ INDI', '1 NAME /Lê/ Văn Bình', ...lines, '0 TRLR'].join(
+      '\n'
+    )
+
+  test('keeps BIRT/PLAC and OCCU as labelled note lines', () => {
+    const { persons } = parseGedcom(
+      indi('1 BIRT', '2 DATE 1950', '2 PLAC Hà Nội', '1 OCCU Thợ mộc')
+    )
+    expect(persons[0].note).toBe('Nơi sinh: Hà Nội\nNghề nghiệp: Thợ mộc')
+    expect(persons[0].birth_year).toBe(1950)
+  })
+
+  test('appends after the existing note and range notes, in order', () => {
+    const { persons } = parseGedcom(
+      indi(
+        '1 OCCU Nông dân',
+        '1 NOTE Con trưởng',
+        '1 BIRT',
+        '2 DATE BET 1850 AND 1855',
+        '2 PLAC Huế',
+        '1 DEAT',
+        '2 PLAC Sài Gòn',
+        '1 OCCU Thợ mộc'
+      )
+    )
+    const p = persons[0]
+    expect(p.note).toBe(
+      [
+        'Con trưởng',
+        'BIRT: BET 1850 AND 1855',
+        'Nơi sinh: Huế',
+        'Nơi mất: Sài Gòn',
+        'Nghề nghiệp: Nông dân',
+        'Nghề nghiệp: Thợ mộc'
+      ].join('\n')
+    )
+    expect(p.is_deceased).toBe(true)
+    expect(p.burial_place).toBeNull()
+  })
+
+  test('joins CONC/CONT of an occupation and skips empty places', () => {
+    const { persons } = parseGedcom(
+      indi('1 OCCU Giáo', '2 CONC  viên', '2 CONT dạy toán', '1 BIRT', '2 PLAC')
+    )
+    expect(persons[0].note).toBe('Nghề nghiệp: Giáo viên dạy toán')
+    expect(persons[0].is_deceased).toBe(false)
+  })
+
+  test('export then import does not repeat the lines', () => {
+    const first = parseGedcom(
+      indi('1 NOTE Con trưởng', '1 BIRT', '2 PLAC Hà Nội', '1 OCCU Thợ mộc')
+    )
+    const ged = exportToGedcom(first)
+    expect(ged).not.toContain('PLAC Hà Nội')
+    expect(ged).not.toContain('OCCU')
+    const again = parseGedcom(ged).persons[0]
+    expect(again.note).toBe(first.persons[0].note)
+    // A program that kept the note and wrote the place again: no duplicate.
+    const edited = ged.replace(
+      '1 NAME',
+      '1 BIRT\n2 PLAC Hà Nội\n1 OCCU Thợ mộc\n1 NAME'
+    )
+    expect(parseGedcom(edited).persons[0].note).toBe(first.persons[0].note)
   })
 })
 

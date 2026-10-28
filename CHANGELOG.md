@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- GEDCOM import keeps the place of birth (`BIRT`/`PLAC`), the place of death (`DEAT`/`PLAC`) and occupations (`OCCU`) from Gramps, MyHeritage and other programs as "Nơi sinh: …", "Nơi mất: …" and "Nghề nghiệp: …" lines at the end of the person's note, instead of dropping them. Exporting and importing again does not repeat the lines.
 - GEDCOM import keeps cited sources: a `SOUR @S1@` citation of a person or a family becomes a "Nguồn: <title>" line in the person's or marriage's note. The restore confirmation now warns how many source/repository records the file has and how many note pointers lead to notes missing from the file, instead of dropping them silently.
 
 - The burial place can be entered for a deceased member (under the dates of death in the member form) and shows on the member page, the printed profile and the family book ("An táng tại …"). GEDCOM export writes it as `BURI`/`PLAC` and import reads it back.
