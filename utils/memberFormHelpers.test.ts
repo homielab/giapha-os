@@ -301,7 +301,8 @@ describe('buildPersonData', () => {
     birthOrder: '' as const,
     generation: 3,
     otherNames: '',
-    note: ''
+    note: '',
+    burialPlace: ''
   }
 
   test('turns empty fields into null', () => {
@@ -323,6 +324,22 @@ describe('buildPersonData', () => {
     expect(data.death_year).toBe(2020)
     expect(data.death_lunar_month).toBe(4)
     expect(data.avatar_url).toBe('a.png')
+  })
+
+  test('keeps a trimmed burial place only for a deceased person', () => {
+    const place = { ...fields, burialPlace: ' Nghĩa trang X, xã Y ' }
+    expect(
+      buildPersonData({ ...place, isDeceased: true }, null).burial_place
+    ).toBe('Nghĩa trang X, xã Y')
+    expect('burial_place' in buildPersonData(place, null)).toBe(false)
+    expect(buildPersonData(place, null, true).burial_place).toBeNull()
+  })
+
+  test('leaves burial_place out unless there is one to store or to clear', () => {
+    // A database not upgraded yet has no burial_place column.
+    const deceased = { ...fields, isDeceased: true, burialPlace: '  ' }
+    expect('burial_place' in buildPersonData(deceased, null)).toBe(false)
+    expect(buildPersonData(deceased, null, true).burial_place).toBeNull()
   })
 })
 
@@ -368,7 +385,8 @@ describe('member name', () => {
         birthOrder: '',
         generation: '',
         otherNames: '   ',
-        note: ''
+        note: '',
+        burialPlace: ''
       },
       null
     )

@@ -21,6 +21,8 @@ export interface GedcomPerson {
   generation?: number | null
   avatar_url?: string | null
   note?: string | null
+  /** Written as `1 BURI` / `2 PLAC <place>`. */
+  burial_place?: string | null
 }
 
 export interface GedcomRelationship {

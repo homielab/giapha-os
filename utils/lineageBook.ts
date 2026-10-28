@@ -29,6 +29,8 @@ export interface LineageBookPerson {
   generation: number | null
   other_names: string | null
   note: string | null
+  /** Missing on databases not upgraded yet. */
+  burial_place?: string | null
 }
 
 export interface BookRelationshipRow {
@@ -58,6 +60,8 @@ export interface BookEntry {
     year: number | null
     leap: boolean
   } | null
+  /** "An táng tại …": only for a deceased member with a burial place. */
+  burialPlace: string | null
 }
 
 export interface BookGeneration {
@@ -127,6 +131,12 @@ export function deathLunarDate(
   }
   if (solar) return { ...solar, leap }
   return null
+}
+
+/** The burial place shown in the book, trimmed; null for the living. */
+export function burialPlaceOf(person: LineageBookPerson): string | null {
+  if (!person.is_deceased) return null
+  return person.burial_place?.trim() || null
 }
 
 /**
@@ -224,7 +234,8 @@ export function buildLineageBook(
       )
       .sort((a, b) => byBirth(a.child, b.child))
       .map((x) => ({ person: x.child, adopted: x.row.adopted })),
-    deathLunar: deathLunarDate(person)
+    deathLunar: deathLunarDate(person),
+    burialPlace: burialPlaceOf(person)
   })
 
   const withGeneration = persons.filter((p) => p.generation != null)
@@ -285,9 +296,8 @@ export function formatSolarDate(
   return `${day}/${month}/${year}`
 }
 
-/** Columns the book page reads from `persons` (BOOK_PERSON_COLUMNS). */
-export const BOOK_PERSON_COLUMNS =
-  'id, full_name, gender, birth_year, birth_month, birth_day, death_year, ' +
-  'death_month, death_day, death_lunar_year, death_lunar_month, ' +
-  'death_lunar_day, is_deceased, is_in_law, birth_order, generation, ' +
-  'other_names, note'
+/**
+ * Columns the book page reads from `persons`: the whole row, so that a
+ * database without the burial_place column yet still prints the book.
+ */
+export const BOOK_PERSON_COLUMNS = '*'

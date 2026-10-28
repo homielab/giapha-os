@@ -21,6 +21,8 @@ interface MemberDeathFieldsProps {
   onLunarLeapChange: (leap: boolean) => void
   onSolarChange: (field: 'day' | 'month' | 'year', value: string) => void
   onLunarChange: (field: 'day' | 'month' | 'year', value: string) => void
+  burialPlace: string
+  onBurialPlaceChange: (value: string) => void
 }
 
 export default function MemberDeathFields({
@@ -35,7 +37,9 @@ export default function MemberDeathFields({
   deathLunarLeap,
   onLunarLeapChange,
   onSolarChange,
-  onLunarChange
+  onLunarChange,
+  burialPlace,
+  onBurialPlaceChange
 }: MemberDeathFieldsProps) {
   const { t } = useI18n()
   return (
@@ -160,6 +164,23 @@ export default function MemberDeathFields({
                     className={inputClasses}
                   />
                 </div>
+              </div>
+
+              {/* Burial place */}
+              <div>
+                <label
+                  htmlFor='member-burial-place'
+                  className='mb-2 block text-sm font-medium text-stone-700'>
+                  {t('burialPlace')}
+                </label>
+                <input
+                  id='member-burial-place'
+                  type='text'
+                  placeholder={t('burialPlacePlaceholder')}
+                  value={burialPlace}
+                  onChange={(e) => onBurialPlaceChange(e.target.value)}
+                  className={inputClasses}
+                />
               </div>
             </div>
           </m.div>

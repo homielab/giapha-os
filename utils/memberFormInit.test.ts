@@ -32,7 +32,8 @@ const person: Person = {
   is_in_law: true,
   birth_order: 2,
   generation: 3,
-  other_names: 'Tư'
+  other_names: 'Tư',
+  burial_place: 'Nghĩa trang X'
 }
 
 describe('getMemberFormInitialValues', () => {
@@ -51,6 +52,7 @@ describe('getMemberFormInitialValues', () => {
       deathLunarMonth: '',
       deathLunarDay: '',
       isDeceased: false,
+      burialPlace: '',
       isInLaw: false,
       birthOrder: '',
       generation: '',
@@ -77,6 +79,7 @@ describe('getMemberFormInitialValues', () => {
       deathLunarMonth: 9,
       deathLunarDay: 17,
       isDeceased: true,
+      burialPlace: 'Nghĩa trang X',
       isInLaw: true,
       birthOrder: 2,
       generation: 3,
@@ -103,7 +106,8 @@ describe('getMemberFormInitialValues', () => {
       is_in_law: false,
       phone_number: undefined,
       occupation: null,
-      current_residence: undefined
+      current_residence: undefined,
+      burial_place: null
     }
     const values = getMemberFormInitialValues(sparse)
     expect(values.birthYear).toBe('')
@@ -116,6 +120,7 @@ describe('getMemberFormInitialValues', () => {
     expect(values.occupation).toBe('')
     expect(values.currentResidence).toBe('')
     expect(values.isDeceased).toBe(false)
+    expect(values.burialPlace).toBe('')
   })
 })
 

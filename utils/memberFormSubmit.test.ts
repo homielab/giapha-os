@@ -54,7 +54,8 @@ const fields: MemberFormFields = {
   birthOrder: '',
   generation: 4,
   otherNames: '',
-  note: ''
+  note: '',
+  burialPlace: ''
 }
 
 const emptyDeath = {

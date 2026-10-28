@@ -59,7 +59,7 @@ export default async function LineageBookPage() {
     )
   ])
 
-  // BOOK_PERSON_COLUMNS is everything the book renders; no view reads more.
+  // BOOK_PERSON_COLUMNS ('*') covers everything the book renders.
   const persons = (personsData || []) as unknown as LineageBookPerson[]
   // RELATIONSHIP_COLUMNS leaves out note/created_at/updated_at; no view reads them.
   const relationships = (relsData || []) as unknown as Relationship[]
@@ -92,7 +92,8 @@ export default async function LineageBookPage() {
 
   const dates = (
     person: LineageBookPerson,
-    deathLunar: BookEntry['deathLunar']
+    deathLunar: BookEntry['deathLunar'],
+    burialPlace: string | null
   ) => {
     const born = formatSolarDate(
       person.birth_year,
@@ -110,7 +111,8 @@ export default async function LineageBookPage() {
     return [
       born ? t('lineageBookBorn', { date: born }) : null,
       died ? t('lineageBookDied', { date: died }) : null,
-      lunar ? t('lineageBookDeathLunar', { date: lunar }) : null
+      lunar ? t('lineageBookDeathLunar', { date: lunar }) : null,
+      burialPlace ? t('lineageBookBuried', { place: burialPlace }) : null
     ]
       .filter(Boolean)
       .join(' · ')
@@ -136,9 +138,9 @@ export default async function LineageBookPage() {
             {t('lineageBookOtherNames', { names: p.other_names })}
           </p>
         )}
-        {dates(p, e.deathLunar) && (
+        {dates(p, e.deathLunar, e.burialPlace) && (
           <p className='mt-1 text-sm text-stone-600'>
-            {dates(p, e.deathLunar)}
+            {dates(p, e.deathLunar, e.burialPlace)}
           </p>
         )}
         {e.parents.length > 0 && (

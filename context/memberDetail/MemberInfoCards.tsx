@@ -1,7 +1,7 @@
 'use client'
 
 import { m } from 'framer-motion'
-import { Leaf } from 'lucide-react'
+import { Leaf, MapPin } from 'lucide-react'
 
 import MemberDescendantsCard from '@/context/memberDetail/MemberDescendantsCard'
 import {
@@ -94,6 +94,7 @@ function BirthCard({ person }: { person: Person }) {
 
 function DeathCard({ person }: { person: Person }) {
   const { t } = useI18n()
+  const burialPlace = person.burial_place?.trim()
   return (
     <m.div
       variants={itemVariants}
@@ -143,6 +144,18 @@ function DeathCard({ person }: { person: Person }) {
                   person.death_day,
                   t
                 ) || t('unknownDate')}
+          </p>
+        )}
+        {burialPlace && (
+          <p className='flex items-start gap-1.5 text-sm font-medium text-stone-600'>
+            <MapPin
+              className='mt-0.5 size-3.5 shrink-0 text-stone-400'
+              aria-hidden='true'
+            />
+            <span>
+              <span className='text-stone-500'>{t('burialPlace')}:</span>{' '}
+              {burialPlace}
+            </span>
           </p>
         )}
       </div>

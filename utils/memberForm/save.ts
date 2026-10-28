@@ -97,7 +97,13 @@ export async function saveMember(
   if (!isEditing || !currentPersonId) {
     const { data: newPerson, error: createError } = await supabase
       .from('persons')
-      .insert(buildPersonData(fullFields, currentAvatarUrl || null))
+      .insert(
+        buildPersonData(
+          fullFields,
+          currentAvatarUrl || null,
+          Boolean(initialData?.burial_place)
+        )
+      )
       .select()
       .single()
     if (createError) throw createError
@@ -111,7 +117,13 @@ export async function saveMember(
     // RLS turns a refused update into "0 rows" without an error.
     let update = supabase
       .from('persons')
-      .update(buildPersonData(fullFields, currentAvatarUrl || null))
+      .update(
+        buildPersonData(
+          fullFields,
+          currentAvatarUrl || null,
+          Boolean(initialData?.burial_place)
+        )
+      )
       .eq('id', currentPersonId)
     if (initialData?.updated_at) {
       update = update.eq('updated_at', initialData.updated_at)

@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import {
   buildLineageBook,
+  burialPlaceOf,
   deathLunarDate,
   mostCommonSurname,
   type BookRelationshipRow,
@@ -268,5 +269,38 @@ describe('deathLunarDate', () => {
   test('a living member or a member without dates has none', () => {
     expect(deathLunarDate(person({}))).toBeNull()
     expect(deathLunarDate(person({ is_deceased: true }))).toBeNull()
+  })
+})
+
+describe('burialPlaceOf', () => {
+  test('a deceased member with a burial place, trimmed', () => {
+    expect(
+      burialPlaceOf(
+        person({ is_deceased: true, burial_place: '  Nghĩa trang X, xã Y ' })
+      )
+    ).toBe('Nghĩa trang X, xã Y')
+  })
+
+  test('none for the living, blank values or rows without the column', () => {
+    expect(burialPlaceOf(person({ burial_place: 'Nghĩa trang X' }))).toBeNull()
+    expect(
+      burialPlaceOf(person({ is_deceased: true, burial_place: '  ' }))
+    ).toBeNull()
+    expect(burialPlaceOf(person({ is_deceased: true }))).toBeNull()
+  })
+
+  test('the book entry carries it', () => {
+    const book = buildLineageBook(
+      [
+        person({
+          id: 'a',
+          generation: 1,
+          is_deceased: true,
+          burial_place: 'Nghĩa trang X'
+        })
+      ],
+      []
+    )
+    expect(book.generations[0].entries[0].burialPlace).toBe('Nghĩa trang X')
   })
 })

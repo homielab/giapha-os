@@ -188,6 +188,14 @@ export function exportToGedcom(data: {
       }
     }
 
+    // Burial place: one line (a GEDCOM value cannot hold a line break).
+    const burialPlace = person.burial_place
+      ?.split(/\s*[\r\n]+\s*/)
+      .filter(Boolean)
+      .join(', ')
+      .trim()
+    if (burialPlace) gedcom += `1 BURI\n2 PLAC ${burialPlace}\n`
+
     // Custom tags (valid in GEDCOM 5.5.1 and 7.0, other programs ignore them):
     // generation, birth order and the in-law flag, only when set.
     if (person.generation != null) gedcom += `1 _GEN ${person.generation}\n`

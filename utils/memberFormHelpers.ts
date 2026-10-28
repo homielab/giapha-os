@@ -247,12 +247,24 @@ export interface MemberFormFields {
   generation: number | ''
   otherNames: string
   note: string
+  /** Kept only for a deceased member, like the death dates. */
+  burialPlace: string
 }
 
 const toNumberOrNull = (v: number | '') => (v === '' ? null : Number(v))
 
-export function buildPersonData(fields: MemberFormFields, url: string | null) {
+/**
+ * The persons row of the member form. `burial_place` is only sent when there
+ * is one to store or `hadBurialPlace` (the stored one is cleared): a database
+ * not upgraded yet has no such column and refuses an unknown key.
+ */
+export function buildPersonData(
+  fields: MemberFormFields,
+  url: string | null,
+  hadBurialPlace = false
+) {
   const d = fields.isDeceased
+  const burialPlace = d ? fields.burialPlace.trim() || null : null
   return {
     full_name: fields.fullName.trim(),
     gender: fields.gender,
@@ -271,7 +283,10 @@ export function buildPersonData(fields: MemberFormFields, url: string | null) {
     generation: toNumberOrNull(fields.generation),
     other_names: fields.otherNames.trim() || null,
     avatar_url: url,
-    note: fields.note || null
+    note: fields.note || null,
+    ...(burialPlace !== null || hadBurialPlace
+      ? { burial_place: burialPlace }
+      : {})
   }
 }
 

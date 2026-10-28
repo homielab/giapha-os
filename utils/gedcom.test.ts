@@ -705,6 +705,70 @@ describe('GEDCOM other names and lunar death date', () => {
   })
 })
 
+describe('GEDCOM burial place', () => {
+  test('writes BURI/PLAC and reads the burial place back', () => {
+    const ged = exportToGedcom({
+      persons: [
+        person('a', 'male', {
+          full_name: 'Lê Văn An',
+          is_deceased: true,
+          death_year: 1990,
+          burial_place: 'Nghĩa trang Văn Điển, Hà Nội'
+        }),
+        person('b', 'female', {
+          full_name: 'Lê Thị Bé',
+          is_deceased: true,
+          burial_place: 'Lăng họ Lê\nxã Yên Sở'
+        }),
+        person('c', 'male', { full_name: 'Lê Văn Cả', burial_place: '  ' })
+      ],
+      relationships: []
+    })
+    expect(ged).toContain('1 BURI\n2 PLAC Nghĩa trang Văn Điển, Hà Nội\n')
+    expect(ged).toContain('2 PLAC Lăng họ Lê, xã Yên Sở\n')
+    expect(ged.match(/1 BURI/g)).toHaveLength(2)
+    const { byName } = roundTrip({
+      persons: [
+        person('a', 'male', {
+          full_name: 'Lê Văn An',
+          is_deceased: true,
+          burial_place: 'Nghĩa trang Văn Điển, Hà Nội'
+        }),
+        person('c', 'male', { full_name: 'Lê Văn Cả' })
+      ],
+      relationships: []
+    })
+    expect(byName.get('Lê Văn An')).toMatchObject({
+      is_deceased: true,
+      burial_place: 'Nghĩa trang Văn Điển, Hà Nội'
+    })
+    expect(byName.get('Lê Văn Cả')?.burial_place).toBeNull()
+  })
+
+  test('a BURI with a place marks the person deceased; other PLAC lines are ignored', () => {
+    const [buried, born] = parseGedcom(
+      [
+        '0 @I1@ INDI',
+        '1 NAME An',
+        '1 BURI',
+        '2 DATE 1 JAN 1990',
+        '2 PLAC Nghĩa trang làng',
+        '0 @I2@ INDI',
+        '1 NAME Bé',
+        '1 BIRT',
+        '2 PLAC Hà Nội',
+        '1 BURI',
+        '2 PLAC'
+      ].join('\n')
+    ).persons
+    expect(buried).toMatchObject({
+      is_deceased: true,
+      burial_place: 'Nghĩa trang làng'
+    })
+    expect(born).toMatchObject({ is_deceased: false, burial_place: null })
+  })
+})
+
 describe('decodeGedcom', () => {
   const text = '0 HEAD\n1 CHAR UNICODE\n0 @I1@ INDI\n1 NAME An /Nguyễn/\n0 TRLR'
   const utf16 = (bom: number[], swap: boolean) => {

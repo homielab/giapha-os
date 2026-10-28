@@ -14,6 +14,7 @@ export interface MemberFormInitialValues {
   deathLunarMonth: number | ''
   deathLunarDay: number | ''
   isDeceased: boolean
+  burialPlace: string
   isInLaw: boolean
   birthOrder: number | ''
   generation: number | ''
@@ -42,6 +43,7 @@ export function getMemberFormInitialValues(
     deathLunarMonth: initialData?.death_lunar_month || '',
     deathLunarDay: initialData?.death_lunar_day || '',
     isDeceased: initialData?.is_deceased || false,
+    burialPlace: initialData?.burial_place ?? '',
     isInLaw: initialData?.is_in_law || false,
     birthOrder: initialData?.birth_order || '',
     generation: initialData?.generation || '',

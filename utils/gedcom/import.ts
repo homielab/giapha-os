@@ -72,6 +72,7 @@ export function parseGedcom(gedcom: string): {
     let death_month = null
     let death_year = null
     let note = ''
+    let burialPlace: string | null = null
     let deathLunar: { day: number; month: number; year: number } | null = null
     let deathLunarLeap = false
     let generation: number | null = null
@@ -146,6 +147,12 @@ export function parseGedcom(gedcom: string): {
           death_month = date.month
           death_year = date.year
           if (date.rangeText) rangeNotes.push(`DEAT: ${date.rangeText}`)
+        } else if (currentTag === 'BURI' && tag === 'PLAC') {
+          // A burial means the person has died.
+          if (val) {
+            burialPlace = val
+            is_deceased = true
+          }
         } else if (currentTag === 'DEAT' && tag === '_LUNAR') {
           const [d, m, y, flag] = val.split(/\s+/)
           const day = parseInt(d)
@@ -184,7 +191,8 @@ export function parseGedcom(gedcom: string): {
       birth_order: birthOrder,
       generation,
       avatar_url: null,
-      note: note.length > 0 ? note : null
+      note: note.length > 0 ? note : null,
+      burial_place: burialPlace
     })
   }
 

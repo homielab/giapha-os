@@ -93,6 +93,7 @@ export default function MemberForm({
     lunarYear: init.deathLunarYear
   })
   const [isDeceased, setIsDeceased] = useState<boolean>(init.isDeceased)
+  const [burialPlace, setBurialPlace] = useState(init.burialPlace)
   const [isInLaw, setIsInLaw] = useState<boolean>(init.isInLaw)
 
   const [birthOrder, setBirthOrder] = useState<number | ''>(init.birthOrder)
@@ -160,7 +161,8 @@ export default function MemberForm({
         birthOrder,
         generation,
         otherNames,
-        note
+        note,
+        burialPlace
       },
       death,
       birthYear,
@@ -265,6 +267,8 @@ export default function MemberForm({
             onLunarChange={(field, value) =>
               death.setLunarField(field, toNumberOrEmpty(value))
             }
+            burialPlace={burialPlace}
+            onBurialPlaceChange={setBurialPlace}
           />
         </div>
       </m.div>
