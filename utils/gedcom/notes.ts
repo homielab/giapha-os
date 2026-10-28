@@ -42,3 +42,31 @@ export function noteLines(level: number, tag: string, text: string): string {
   })
   return out
 }
+
+// Collects the NOTE values of one INDI or FAM record: an inline `1 NOTE text`
+// continued by its `2 CONC`/`2 CONT` lines, or a `1 NOTE @N1@` pointer
+// resolved through `noteTexts`. A pointer to a missing record gives an empty
+// note and counts in `stats.missingNotes`.
+export function createNoteReader(
+  noteTexts: Map<string, string>,
+  stats: { missingNotes: number }
+) {
+  const notes: string[] = []
+  let inline = false
+  return {
+    notes,
+    // A level-1 NOTE line (its value with spaces kept).
+    start(value: string) {
+      inline = !isNotePointer(value)
+      const text = inline ? value : noteTexts.get(value.trim().slice(1, -1))
+      if (text === undefined) stats.missingNotes++
+      notes.push(text ?? '')
+    },
+    // A level-2 line under the last NOTE; only inline notes continue.
+    continue(tag: string, value: string) {
+      if (!inline) return
+      if (tag === 'CONT') notes[notes.length - 1] += '\n' + value
+      else if (tag === 'CONC') notes[notes.length - 1] += value
+    }
+  }
+}

@@ -1,9 +1,9 @@
-import { lunarToSolar } from '../lunarCalendar'
-import { parseGedcomDate } from './dates'
-import { readName } from './names'
-import { isNotePointer, readNoteRecord } from './notes'
+import { readFamilies } from './families'
+import { readNoteRecord } from './notes'
+import { readPerson, type PersonContext } from './persons'
 import { readRecords } from './records'
-import { readSourceRecord, sourceNotes } from './sources'
+import { dedupeRelationships } from './relationships'
+import { readSourceRecord } from './sources'
 import type {
   GedcomImportStats,
   GedcomPerson,
@@ -24,261 +24,46 @@ export function parseGedcom(gedcom: string): {
   stats: GedcomImportStats
 } {
   const lines = gedcom
-    .replace(/^\uFEFF/, '')
+    .replace(/^﻿/, '')
     .split(/\r\n|\r|\n/)
     .filter((line) => line.trim().length > 0)
-
-  const persons: GedcomPerson[] = []
-  const relationships: GedcomRelationship[] = []
-  const idMap = new Map<string, string>()
-  // `${indiXref} ${famXref}` of FAMC links marked PEDI ADOPTED
-  const adoptedLinks = new Set<string>()
-
   const records = readRecords(lines)
-  // Shared note records, resolved when an INDI points at them.
-  const noteTexts = new Map<string, string>()
-  // Source records, cited as "Nguồn: <title>" in notes.
-  const sourTexts = new Map<string, string>()
-  const stats: GedcomImportStats = { missingNotes: 0, sources: 0 }
+
+  const ctx: PersonContext = {
+    noteTexts: new Map(),
+    sourTexts: new Map(),
+    stats: { missingNotes: 0, sources: 0 },
+    adoptedLinks: new Set()
+  }
   for (const record of records) {
     if (record.type === 'NOTE') {
-      noteTexts.set(record.id, readNoteRecord(record.first, record.lines))
+      ctx.noteTexts.set(record.id, readNoteRecord(record.first, record.lines))
     } else if (record.type === 'SOUR' || record.type === 'REPO') {
-      stats.sources++
+      ctx.stats.sources++
       if (record.type === 'SOUR') {
-        sourTexts.set(record.id, readSourceRecord(record.lines))
+        ctx.sourTexts.set(record.id, readSourceRecord(record.lines))
       }
     }
   }
 
-  // Parse Individuals
+  // GEDCOM xref -> new person id, in file order.
+  const idMap = new Map<string, string>()
+  const persons: GedcomPerson[] = []
   for (const record of records.filter((r) => r.type === 'INDI')) {
-    const uuid = generateUUID()
-    idMap.set(record.id, uuid)
-
-    let nameValue: string | null = null
-    let surname: string | null = null
-    let givenName: string | null = null
-    let famc = ''
-    let gender: 'male' | 'female' | 'other' = 'other'
-    let is_deceased = false
-    let birth_day = null
-    let birth_month = null
-    let birth_year = null
-    let death_day = null
-    let death_month = null
-    let death_year = null
-    const notes: string[] = []
-    let inlineNote = false
-    let burialPlace: string | null = null
-    let deathLunar: { day: number; month: number; year: number } | null = null
-    let deathLunarLeap = false
-    let generation: number | null = null
-    let birthOrder: number | null = null
-    let isInLaw = false
-    const otherNames: string[] = []
-    const rangeNotes: string[] = []
-
-    let currentTag = ''
-
-    for (let i = 0; i < record.lines.length; i++) {
-      const line = record.lines[i]
-      const match = line.match(/^(\d+)\s+([A-Z0-9_]+)(?:\s(.*))?$/)
-      if (!match) continue
-
-      const level = parseInt(match[1])
-      const tag = match[2]
-      // NOTE/CONC/CONT values keep their spaces (the break may fall on a space).
-      const val =
-        tag === 'CONC' || tag === 'CONT' || tag === 'NOTE'
-          ? match[3] || ''
-          : (match[3] || '').trim()
-
-      if (level === 1) {
-        currentTag = tag
-        if (tag === 'NAME') {
-          // The first NAME is the primary name; later ones are other names.
-          if (nameValue !== null) {
-            currentTag = 'NAME_OTHER'
-            const other = readName(val, null, null)
-            if (other !== 'Unknown') otherNames.push(other)
-          } else nameValue = val
-        } else if (tag === 'FAMC') {
-          famc = val.match(/^@([^@]+)@/)?.[1] ?? ''
-        } else if (tag === 'SEX') {
-          if (val === 'M') gender = 'male'
-          else if (val === 'F') gender = 'female'
-        } else if (tag === 'DEAT') {
-          is_deceased = val.trim().length === 0 || val === 'Y'
-        } else if (tag === 'NOTE') {
-          // A pointer to a missing record gives no note, but is counted.
-          inlineNote = !isNotePointer(val)
-          const text = inlineNote ? val : noteTexts.get(val.trim().slice(1, -1))
-          if (text === undefined) stats.missingNotes++
-          notes.push(text ?? '')
-        } else if (tag === '_GEN' || tag === '_ORDER') {
-          const n = /^\d+$/.test(val) ? parseInt(val) : null
-          if (tag === '_GEN') generation = n
-          else birthOrder = n
-        } else if (tag === '_INLAW') {
-          isInLaw = val.toUpperCase() === 'Y'
-        }
-      } else if (level === 2) {
-        if (currentTag === 'NAME' && tag === 'SURN') {
-          surname = val.trim() || null
-        } else if (currentTag === 'NAME' && tag === 'GIVN') {
-          givenName = val.trim() || null
-        } else if (currentTag === 'FAMC' && tag === 'PEDI') {
-          if (famc && val.trim().toUpperCase() === 'ADOPTED') {
-            adoptedLinks.add(`${record.id} ${famc}`)
-          }
-        } else if (currentTag === 'NOTE' && tag === 'CONT' && inlineNote) {
-          notes[notes.length - 1] += '\n' + val
-        } else if (currentTag === 'NOTE' && tag === 'CONC' && inlineNote) {
-          notes[notes.length - 1] += val
-        } else if (currentTag === 'BIRT' && tag === 'DATE') {
-          const date = parseGedcomDate(val)
-          birth_day = date.day
-          birth_month = date.month
-          birth_year = date.year
-          if (date.rangeText) rangeNotes.push(`BIRT: ${date.rangeText}`)
-        } else if (currentTag === 'DEAT' && tag === 'DATE') {
-          is_deceased = true
-          const date = parseGedcomDate(val)
-          death_day = date.day
-          death_month = date.month
-          death_year = date.year
-          if (date.rangeText) rangeNotes.push(`DEAT: ${date.rangeText}`)
-        } else if (currentTag === 'BURI' && tag === 'PLAC') {
-          // A burial means the person has died.
-          if (val) {
-            burialPlace = val
-            is_deceased = true
-          }
-        } else if (currentTag === 'DEAT' && tag === '_LUNAR') {
-          const [d, m, y, flag] = val.split(/\s+/)
-          const day = parseInt(d)
-          const month = parseInt(m)
-          const year = parseInt(y)
-          if (day >= 1 && day <= 30 && month >= 1 && month <= 12 && year > 0) {
-            deathLunar = { day, month, year }
-            deathLunarLeap = flag?.toUpperCase() === 'LEAP'
-          }
-        }
-      }
-    }
-
-    // A range keeps only its first date and an impossible day is dropped:
-    // keep the original text in the note.
-    notes.push(...sourceNotes(record.lines, sourTexts))
-    let note = notes.filter((n) => n.trim()).join('\n\n')
-    if (rangeNotes.length > 0) {
-      note = [note, ...rangeNotes].filter(Boolean).join('\n')
-    }
-
-    // A leap-month death without a solar date: the LEAP flag is the only
-    // place the leap month survives, so derive the solar date from it.
-    if (
-      deathLunar &&
-      deathLunarLeap &&
-      (death_day === null || death_month === null || death_year === null)
-    ) {
-      const solar = lunarToSolar(
-        deathLunar.year,
-        deathLunar.month,
-        deathLunar.day,
-        true
-      )
-      if (solar) {
-        death_day = solar.day
-        death_month = solar.month
-        death_year = solar.year
-      }
-    }
-
-    persons.push({
-      id: uuid,
-      full_name: readName(nameValue, surname, givenName),
-      gender,
-      is_deceased,
-      birth_day: Number.isNaN(birth_day) ? null : birth_day,
-      birth_month,
-      birth_year: Number.isNaN(birth_year) ? null : birth_year,
-      death_day: Number.isNaN(death_day) ? null : death_day,
-      death_month,
-      death_year: Number.isNaN(death_year) ? null : death_year,
-      death_lunar_day: deathLunar?.day ?? null,
-      death_lunar_month: deathLunar?.month ?? null,
-      death_lunar_year: deathLunar?.year ?? null,
-      other_names: otherNames.length > 0 ? otherNames.join(', ') : null,
-      is_in_law: isInLaw,
-      birth_order: birthOrder,
-      generation,
-      avatar_url: null,
-      note: note.length > 0 ? note : null,
-      burial_place: burialPlace
-    })
+    const id = generateUUID()
+    idMap.set(record.id, id)
+    persons.push(readPerson(record, id, ctx))
   }
 
-  // Parse Families
-  for (const record of records.filter((r) => r.type === 'FAM')) {
-    let husb = null
-    let wife = null
-    const children: { uuid: string; xref: string }[] = []
-
-    for (const line of record.lines) {
-      const match = line.match(/^1\s+(HUSB|WIFE|CHIL)\s+@([^@]+)@/)
-      if (match) {
-        const tag = match[1]
-        const refId = match[2]
-        const uuid = idMap.get(refId)
-        if (!uuid) continue
-
-        if (tag === 'HUSB') husb = uuid
-        else if (tag === 'WIFE') wife = uuid
-        else if (tag === 'CHIL') children.push({ uuid, xref: refId })
-      }
-    }
-
-    if (husb && wife && husb !== wife) {
-      const note = sourceNotes(record.lines, sourTexts).join('\n\n')
-      relationships.push({
-        type: 'marriage',
-        person_a: husb,
-        person_b: wife,
-        ...(note ? { note } : {})
-      })
-    }
-
-    // Link each child to the parents this family actually has
-    for (const { uuid: childId, xref } of children) {
-      const type = adoptedLinks.has(`${xref} ${record.id}`)
-        ? 'adopted_child'
-        : 'biological_child'
-      for (const parent of [husb, wife]) {
-        if (parent && parent !== childId) {
-          relationships.push({ type, person_a: parent, person_b: childId })
-        }
-      }
-    }
+  const relationships = readFamilies(
+    records,
+    idMap,
+    ctx.adoptedLinks,
+    ctx.sourTexts
+  )
+  return {
+    persons,
+    relationships: dedupeRelationships(relationships),
+    stats: ctx.stats
   }
-
-  // Deduplicate relationships to prevent database unique constraint errors
-  const uniqueRelationships: GedcomRelationship[] = []
-  const seenKeys = new Set<string>()
-
-  for (const rel of relationships) {
-    // A marriage has no direction: A-B and B-A are the same couple
-    const pair =
-      rel.type === 'marriage'
-        ? [rel.person_a, rel.person_b].sort()
-        : [rel.person_a, rel.person_b]
-    const key = `${rel.type}_${pair[0]}_${pair[1]}`
-    if (!seenKeys.has(key)) {
-      seenKeys.add(key)
-      uniqueRelationships.push(rel)
-    }
-  }
-
-  return { persons, relationships: uniqueRelationships, stats }
 }
