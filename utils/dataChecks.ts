@@ -78,7 +78,8 @@ const ref = (p: DataCheckPerson) => ({ id: p.id, name: p.full_name })
  * writes nothing. A date or year that is missing is never part of a date check,
  * and adopted children are left out of the parent checks (as in the member
  * form). People that cannot be reached from the root are not reported here
- * (the Lineage page lists them). Findings are sorted by kind, then name.
+ * (the Lineage page lists them). Findings are sorted by kind, then name
+ * (Vietnamese order), then id.
  */
 export function runDataChecks(
   persons: DataCheckPerson[],
@@ -258,6 +259,7 @@ export function runDataChecks(
   return findings.sort(
     (x, y) =>
       order(x.kind) - order(y.kind) ||
-      x.people[0].name.localeCompare(y.people[0].name)
+      x.people[0].name.localeCompare(y.people[0].name, 'vi') ||
+      x.people[0].id.localeCompare(y.people[0].id)
   )
 }

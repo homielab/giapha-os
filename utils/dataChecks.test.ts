@@ -267,3 +267,27 @@ describe('formatPartialDate', () => {
     expect(formatPartialDate(null, 3, 7)).toBe('')
   })
 })
+
+describe('runDataChecks order', () => {
+  const missingBirth = (id: string, full_name: string) =>
+    person(id, { full_name, gender: 'male' })
+  const names = (persons: DataCheckPerson[]) =>
+    runDataChecks(persons, [], TODAY).map((f) => f.people[0])
+
+  test('sorts names with Vietnamese collation', () => {
+    const persons = ['Đào', 'Dũng', 'Ân', 'An'].map((n, i) =>
+      missingBirth(`p${i}`, n)
+    )
+    expect(names(persons).map((p) => p.name)).toEqual([
+      'An',
+      'Ân',
+      'Dũng',
+      'Đào'
+    ])
+  })
+
+  test('breaks ties between equal names by id', () => {
+    const persons = [missingBirth('b', 'Lan'), missingBirth('a', 'Lan')]
+    expect(names(persons).map((p) => p.id)).toEqual(['a', 'b'])
+  })
+})

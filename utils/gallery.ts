@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { GalleryItem } from '@/types'
+import { escapeLike } from '@/utils/supabase/escapeLike'
 import { getGalleryStoragePath } from '@/utils/supabase/storage-path'
 import { GalleryItemNotUpdatedError } from '@/utils/writeErrors'
 
@@ -229,7 +230,7 @@ export async function saveGalleryItem(
     const { data: stillUsed, error } = await supabase
       .from('gallery_items')
       .select('id')
-      .like('image_url', `%${oldPath}%`)
+      .like('image_url', `%${escapeLike(oldPath)}%`)
       .limit(1)
     if (error) throw error
     if (stillUsed && stillUsed.length > 0) return

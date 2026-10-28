@@ -483,7 +483,7 @@ describe('mergePersons avatar cleanup', () => {
     expect(await mergePersons(A, B)).toEqual({ summary })
     const lookup = calls.find((c) => c.filters.some(([op]) => op === 'like'))
     expect(lookup?.filters).toEqual([
-      ['like', 'avatar_url', `%${B}_photo.jpg%`]
+      ['like', 'avatar_url', `%${B}\\_photo.jpg%`]
     ])
     expect(removals()).toHaveLength(1)
     expect(removals()[0].table).toBe('storage:avatars')
