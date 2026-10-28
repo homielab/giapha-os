@@ -1,3 +1,4 @@
+import { lunarToSolar } from '../lunarCalendar'
 import { parseGedcomDate } from './dates'
 import { readName } from './names'
 import { isNotePointer, readNoteRecord } from './notes'
@@ -159,6 +160,26 @@ export function parseGedcom(gedcom: string): {
       note = [note, ...rangeNotes].filter(Boolean).join('\n')
     }
 
+    // A leap-month death without a solar date: the LEAP flag is the only
+    // place the leap month survives, so derive the solar date from it.
+    if (
+      deathLunar &&
+      deathLunarLeap &&
+      (death_day === null || death_month === null || death_year === null)
+    ) {
+      const solar = lunarToSolar(
+        deathLunar.year,
+        deathLunar.month,
+        deathLunar.day,
+        true
+      )
+      if (solar) {
+        death_day = solar.day
+        death_month = solar.month
+        death_year = solar.year
+      }
+    }
+
     persons.push({
       id: uuid,
       full_name: readName(nameValue, surname, givenName),
@@ -173,7 +194,6 @@ export function parseGedcom(gedcom: string): {
       death_lunar_day: deathLunar?.day ?? null,
       death_lunar_month: deathLunar?.month ?? null,
       death_lunar_year: deathLunar?.year ?? null,
-      ...(deathLunar && deathLunarLeap ? { death_lunar_leap: true } : {}),
       other_names: otherNames.length > 0 ? otherNames.join(', ') : null,
       is_in_law: isInLaw,
       birth_order: birthOrder,

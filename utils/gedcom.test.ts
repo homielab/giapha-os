@@ -8,6 +8,7 @@ import {
   GedcomRelationship,
   parseGedcom
 } from './gedcom'
+import { lunarToSolar } from './lunarCalendar'
 
 function person(
   id: string,
@@ -612,15 +613,14 @@ describe('GEDCOM other names and lunar death date', () => {
           death_day: 3,
           death_lunar_day: 8,
           death_lunar_month: 1,
-          death_lunar_year: 1990,
-          death_lunar_leap: true
+          death_lunar_year: 1990
         })
       ],
       relationships: []
     })
     expect(ged).toContain('1 NAME Ba Bình\n2 TYPE aka\n')
     expect(ged).toContain('1 NAME Cậu Tư\n2 TYPE aka\n')
-    expect(ged).toContain('2 DATE 03 FEB 1990\n2 _LUNAR 8 1 1990 LEAP\n')
+    expect(ged).toContain('2 DATE 03 FEB 1990\n2 _LUNAR 8 1 1990\n')
   })
 
   test('keeps other names and the lunar death date', () => {
@@ -647,21 +647,85 @@ describe('GEDCOM other names and lunar death date', () => {
     expect(persons[0].death_lunar_day).toBe(11)
     expect(persons[0].death_lunar_month).toBe(5)
     expect(persons[0].death_lunar_year).toBe(2001)
-    expect(persons[0].death_lunar_leap).toBeUndefined()
     expect(persons[1].other_names).toBeNull()
     expect(persons[1].death_lunar_day).toBeNull()
   })
 
-  test('keeps the leap flag and ignores an invalid _LUNAR', () => {
+  test('ignores an invalid _LUNAR', () => {
     const lunar = (v: string) =>
       parseGedcom(
         ['0 @I1@ INDI', '1 DEAT Y', '2 DATE 1 JAN 2000', `2 _LUNAR ${v}`].join(
           '\n'
         )
       ).persons[0]
-    expect(lunar('4 6 1999 LEAP').death_lunar_leap).toBe(true)
     expect(lunar('40 6 1999').death_lunar_day).toBeNull()
     expect(lunar('abc').death_lunar_month).toBeNull()
+  })
+
+  test('round-trips a death in a leap month (2023, leap month 2)', () => {
+    const solar = lunarToSolar(2023, 2, 10, true)!
+    expect(solar).not.toBeNull()
+    const base = {
+      full_name: 'Nguyễn Văn Nhuận',
+      is_deceased: true,
+      death_lunar_day: 10,
+      death_lunar_month: 2,
+      death_lunar_year: 2023
+    }
+    const ged = exportToGedcom({
+      persons: [
+        person('a', 'male', {
+          ...base,
+          death_year: solar.year,
+          death_month: solar.month,
+          death_day: solar.day
+        })
+      ],
+      relationships: []
+    })
+    expect(ged).toContain('2 _LUNAR 10 2 2023 LEAP\n')
+    const back = parseGedcom(ged).persons[0]
+    expect(back.death_year).toBe(solar.year)
+    expect(back.death_month).toBe(solar.month)
+    expect(back.death_day).toBe(solar.day)
+
+    // Same lunar numbers in the regular month 2: no LEAP, solar date differs.
+    const regular = lunarToSolar(2023, 2, 10, false)!
+    const plain = exportToGedcom({
+      persons: [
+        person('a', 'male', {
+          ...base,
+          death_year: regular.year,
+          death_month: regular.month,
+          death_day: regular.day
+        })
+      ],
+      relationships: []
+    })
+    expect(plain).toContain('2 _LUNAR 10 2 2023\n')
+    expect(plain).not.toContain('LEAP')
+  })
+
+  test('fills the solar death date from a LEAP lunar date without one', () => {
+    const solar = lunarToSolar(2023, 2, 10, true)!
+    const read = (lines: string[]) =>
+      parseGedcom(['0 @I1@ INDI', '1 DEAT Y', ...lines].join('\n')).persons[0]
+    const filled = read(['2 _LUNAR 10 2 2023 LEAP'])
+    expect([filled.death_year, filled.death_month, filled.death_day]).toEqual([
+      solar.year,
+      solar.month,
+      solar.day
+    ])
+    // A solar date in the file stays the source of truth.
+    const kept = read(['2 DATE 1 JAN 2024', '2 _LUNAR 10 2 2023 LEAP'])
+    expect([kept.death_year, kept.death_month, kept.death_day]).toEqual([
+      2024, 1, 1
+    ])
+    // Not a leap month: nothing is derived.
+    const plain = read(['2 _LUNAR 10 2 2023'])
+    expect(plain.death_year).toBeNull()
+    // A year without that leap month: nothing is derived.
+    expect(read(['2 _LUNAR 10 2 2022 LEAP']).death_year).toBeNull()
   })
 
   test('round-trips generation, birth order and the in-law flag', () => {

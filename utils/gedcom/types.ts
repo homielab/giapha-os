@@ -8,11 +8,10 @@ export interface GedcomPerson {
   death_year?: number | null
   death_month?: number | null
   death_day?: number | null
-  /** Lunar date of death; `death_lunar_leap` is only carried by GEDCOM files. */
+  /** Lunar date of death (the leap flag is derived from the solar date). */
   death_lunar_day?: number | null
   death_lunar_month?: number | null
   death_lunar_year?: number | null
-  death_lunar_leap?: boolean
   /** Other names, comma separated (written as extra NAME records). */
   other_names?: string | null
   is_deceased?: boolean

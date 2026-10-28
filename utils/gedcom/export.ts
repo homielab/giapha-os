@@ -1,7 +1,27 @@
+import { solarToLunar } from '../lunarCalendar'
 import { formatDate } from './dates'
 import { formatName, splitOtherNames } from './names'
 import { noteLines } from './notes'
 import type { GedcomPerson, GedcomRelationship } from './types'
+
+/** The database keeps no leap flag: read it off the solar date of death. */
+function isLeapDeath(person: GedcomPerson): boolean {
+  if (!person.death_year || !person.death_month || !person.death_day) {
+    return false
+  }
+  const lunar = solarToLunar(
+    person.death_year,
+    person.death_month,
+    person.death_day
+  )
+  return (
+    !!lunar &&
+    lunar.leap &&
+    lunar.day === person.death_lunar_day &&
+    lunar.month === person.death_lunar_month &&
+    lunar.year === person.death_lunar_year
+  )
+}
 
 export function exportToGedcom(data: {
   persons: GedcomPerson[]
@@ -184,7 +204,7 @@ export function exportToGedcom(data: {
         person.death_lunar_month &&
         person.death_lunar_year
       ) {
-        const leap = person.death_lunar_leap ? ' LEAP' : ''
+        const leap = isLeapDeath(person) ? ' LEAP' : ''
         gedcom += `2 _LUNAR ${person.death_lunar_day} ${person.death_lunar_month} ${person.death_lunar_year}${leap}\n`
       }
     }
