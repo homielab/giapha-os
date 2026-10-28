@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import type { Person } from '@/types'
 
+import { PERSON_LIST_COLUMNS } from './personColumns'
 import { fetchRelationshipData } from './relationshipFetch'
 import { fakeSupabase, type FakeCall } from './testing/fakeSupabase'
 
@@ -40,11 +41,16 @@ function setup(opts: {
         ? { error: { message: 'marriages failed' } }
         : { data: opts.marriages ?? [] }
     }
-    return opts.fail === 'grandchildren'
-      ? { error: { message: 'grandchildren failed' } }
-      : { data: opts.grandchildren ?? [] }
+    if (opts.fail === 'grandchildren')
+      return { error: { message: 'grandchildren failed' } }
+    // a head-only count query: answer with the number of matching links
+    const parents = filter(call, 'person_a')?.[2] as string[]
+    const rows = (opts.grandchildren ?? []) as { person_a: string }[]
+    return { count: rows.filter((g) => parents.includes(g.person_a)).length }
   })
 }
+
+const isCount = (call: FakeCall) => call.selectOptions?.head === true
 
 describe('fetchRelationshipData', () => {
   test('gives a person with no relationships empty stats and no extra queries', async () => {
@@ -237,5 +243,82 @@ describe('fetchRelationshipData', () => {
       paternalGrandchildren: 3,
       maternalGrandchildren: 1
     })
+  })
+
+  test('counts grandchildren without downloading the rows', async () => {
+    const { client, calls } = setup({
+      asA: [
+        {
+          id: 'r1',
+          type: 'biological_child',
+          target: person('son', 'male'),
+          note: null
+        }
+      ],
+      grandchildren: [{ id: 'g1', person_a: 'son' }]
+    })
+    const { stats } = await fetchRelationshipData(client, me, t)
+    expect(stats.paternalGrandchildren).toBe(1)
+    const counts = calls.filter(isCount)
+    // no daughters, so only the paternal side is queried
+    expect(counts).toHaveLength(1)
+    expect(counts[0].selectOptions).toEqual({ count: 'exact', head: true })
+    expect(filter(counts[0], 'person_a')?.[2]).toEqual(['son'])
+  })
+
+  test('sends the in-law and grandchildren queries before any of them answers', async () => {
+    let open = () => {}
+    const gate = new Promise<void>((resolve) => (open = resolve))
+    const { client, calls } = fakeSupabase(async (call) => {
+      if (filter(call, 'person_a')?.[0] === 'eq') {
+        return {
+          data: [
+            {
+              id: 'r1',
+              type: 'biological_child',
+              target: person('son', 'male'),
+              note: null
+            },
+            {
+              id: 'r2',
+              type: 'biological_child',
+              target: person('daughter', 'female'),
+              note: null
+            }
+          ]
+        }
+      }
+      if (filter(call, 'person_b')?.[0] === 'eq') return { data: [] }
+      await gate
+      return isCount(call) ? { count: 0 } : { data: [] }
+    })
+
+    const pending = fetchRelationshipData(client, me, t)
+    for (let i = 0; i < 10; i++) await Promise.resolve()
+    // 2 own-link queries + marriages + paternal and maternal counts
+    expect(calls).toHaveLength(5)
+    open()
+    await pending
+  })
+
+  test('selects named columns only, never the whole person row', async () => {
+    const kid = person('kid', 'male')
+    const { client, calls } = setup({
+      asA: [{ id: 'r1', type: 'biological_child', target: kid, note: null }]
+    })
+    await fetchRelationshipData(client, me, t)
+    expect(calls).toHaveLength(4)
+    for (const call of calls) {
+      expect(call.columns).toBeDefined()
+      expect(call.columns).not.toContain('*')
+    }
+    const embeds = calls
+      .flatMap((c) => c.columns?.match(/persons![a-z_]+\(([^)]*)\)/g) ?? [])
+      .map((e) => e.slice(e.indexOf('(') + 1, -1))
+    expect(embeds).toHaveLength(4)
+    for (const columns of embeds) {
+      expect(columns).toBe(PERSON_LIST_COLUMNS)
+      expect(columns).not.toContain('note')
+    }
   })
 })

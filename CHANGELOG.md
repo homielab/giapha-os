@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Opening a member's relationships is faster: the children's marriages and the grandchildren counts are fetched at the same time instead of one after the other, grandchildren are counted without downloading the rows, and relatives are loaded without their notes.
 - Dashboard and login pages make fewer Supabase queries: the check that the database is set up now runs only until it first succeeds (a fresh install still goes to `/setup`), and a dashboard page reads the signed-in user's profile once instead of twice.
 - Exporting a branch is now covered by tests and walks the tree without recursion, so very deep or cyclic data cannot overflow or hang it; the README states what a branch export includes (descendants incl. adopted, their spouses; custom events are always exported in full).
 - Gallery uploads are scaled down in the browser to at most 2048 px on the long side and stored as WebP (quality 0.85), so a 6 MB phone photo takes well under 1 MB and the gallery page loads much faster on mobile data. GIFs, animated WebP and images that are already small are uploaded unchanged; photos uploaded earlier are not touched. The 10 MB limit still applies to the file you pick.
