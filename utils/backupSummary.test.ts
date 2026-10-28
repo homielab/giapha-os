@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
+import { validateImportPayload } from './backupPayload'
 import {
   BackupParseError,
   parseRestoreFile,
@@ -112,5 +113,31 @@ describe('parseRestoreFile', () => {
     expect((await readRestoreFile(bytesFile('a.ged', bytes))).warning).toBe(
       'replacement'
     )
+  })
+})
+
+describe('readRestoreFile length limits', () => {
+  test('GEDCOM text over the limits is cut and counted', async () => {
+    const long = 'x'.repeat(2500)
+    const text = `0 HEAD\n0 @I1@ INDI\n1 NAME An /Nguyễn/\n1 SEX M\n1 NOTE ${long}\n0 TRLR`
+    const { payload, truncated } = await readRestoreFile({
+      name: 'a.ged',
+      arrayBuffer: async () =>
+        new TextEncoder().encode(text).buffer as ArrayBuffer
+    })
+    expect(payload.persons[0].note).toHaveLength(2000)
+    expect(truncated).toBe(1)
+    expect(validateImportPayload(payload, (key) => key)).toBeNull()
+  })
+
+  test('short GEDCOM text is not counted', async () => {
+    const { truncated } = await readRestoreFile({
+      name: 'a.ged',
+      arrayBuffer: async () =>
+        new TextEncoder().encode(
+          '0 HEAD\n0 @I1@ INDI\n1 NAME An /Nguyễn/\n0 TRLR'
+        ).buffer as ArrayBuffer
+    })
+    expect(truncated).toBe(0)
   })
 })

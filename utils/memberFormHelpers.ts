@@ -1,5 +1,6 @@
 import { Gender } from '@/types'
 import { vnToday } from '@/utils/dateHelpers'
+import { MAX_NAME, MAX_NOTE, MAX_PRIVATE } from '@/utils/limits'
 import {
   lunarToSolar as convertLunarToSolar,
   solarToLunar as convertSolarToLunar,
@@ -227,6 +228,48 @@ export function nextLeapFlag(
     prev.year === next.year &&
     hasLeapMonth(next.month, next.year)
   )
+}
+
+export interface TooLongText {
+  /** Translation key of the field's label. */
+  label:
+    | 'fullName'
+    | 'otherNames'
+    | 'note'
+    | 'burialPlace'
+    | 'phone'
+    | 'occupation'
+    | 'residence'
+  max: number
+}
+
+/**
+ * The first form text over the limits a backup is checked against (see
+ * utils/limits.ts), or null. Without this a long biography saves but the
+ * backup that holds it cannot be restored.
+ */
+export function findTooLongText(values: {
+  fullName: string
+  otherNames: string
+  note: string
+  burialPlace: string
+  phoneNumber: string
+  occupation: string
+  currentResidence: string
+}): TooLongText | null {
+  const checks: [TooLongText['label'], string, number][] = [
+    ['fullName', values.fullName, MAX_NAME],
+    ['otherNames', values.otherNames, MAX_NOTE],
+    ['note', values.note, MAX_NOTE],
+    ['burialPlace', values.burialPlace, MAX_NOTE],
+    ['phone', values.phoneNumber, MAX_PRIVATE],
+    ['occupation', values.occupation, MAX_PRIVATE],
+    ['residence', values.currentResidence, MAX_PRIVATE]
+  ]
+  for (const [label, value, max] of checks) {
+    if (value.length > max) return { label, max }
+  }
+  return null
 }
 
 export interface MemberFormFields {

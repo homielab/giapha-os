@@ -5,6 +5,7 @@ import { useId, useState } from 'react'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, RelationshipType } from '@/types'
 import { formatDisplayDate } from '@/utils/dateHelpers'
+import { MAX_NOTE } from '@/utils/limits'
 import { pickerKeyNavigation } from '@/utils/pickerNavigation'
 
 interface AddRelationshipFormProps {
@@ -102,6 +103,7 @@ export default function AddRelationshipForm({
             name='rel-note'
             type='text'
             placeholder={t('relationshipNotePlaceholder')}
+            maxLength={MAX_NOTE}
             value={newRelNote}
             onChange={(e) => onNoteChange(e.target.value)}
             className='mb-3 block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-amber-500 focus:ring-amber-500 sm:p-2.5'

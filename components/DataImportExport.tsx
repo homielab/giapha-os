@@ -48,6 +48,7 @@ export default function DataImportExport() {
     payload: ImportPayload
     summary: BackupSummary
     warning?: RestoreWarning
+    truncated?: number
   } | null>(null)
   const [isReadingFile, setIsReadingFile] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
@@ -149,13 +150,13 @@ export default function DataImportExport() {
     setImportStatus(null)
     setIsReadingFile(true)
     try {
-      const { payload, warning } = await readRestoreFile(file)
+      const { payload, warning, truncated } = await readRestoreFile(file)
       const summary = summarizeBackup(payload)
       if (!summary) return fail(t('invalidBackupFile'))
       const invalid = validateImportPayload(payload, t)
       if (invalid) return fail(invalid)
       setSelectedFile(file)
-      setParsedBackup({ payload, summary, warning })
+      setParsedBackup({ payload, summary, warning, truncated })
       setShowConfirm(true)
     } catch (error: unknown) {
       fail(
@@ -327,6 +328,7 @@ export default function DataImportExport() {
           fileName={selectedFile?.name || ''}
           summary={parsedBackup.summary}
           warning={parsedBackup.warning}
+          truncated={parsedBackup.truncated}
           locale={locale}
           isImporting={isImporting}
           isDownloading={isExporting}

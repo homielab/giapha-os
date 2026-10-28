@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   buildPersonData,
   comparePartialDates,
+  findTooLongText,
   hasLeapMonth,
   isValidDate,
   lunarToSolarSafe,
@@ -392,5 +393,35 @@ describe('member name', () => {
     )
     expect(data.full_name).toBe('Nguyễn  Văn An')
     expect(data.other_names).toBeNull()
+  })
+})
+
+describe('findTooLongText', () => {
+  const ok = {
+    fullName: 'Nguyễn Văn An',
+    otherNames: '',
+    note: 'a'.repeat(2000),
+    burialPlace: '',
+    phoneNumber: '',
+    occupation: 'b'.repeat(500),
+    currentResidence: ''
+  }
+
+  test('accepts text at the limits', () => {
+    expect(findTooLongText(ok)).toBeNull()
+  })
+
+  test('rejects a note of 2001 characters', () => {
+    expect(findTooLongText({ ...ok, note: 'a'.repeat(2001) })).toEqual({
+      label: 'note',
+      max: 2000
+    })
+  })
+
+  test('rejects a long name and long private details', () => {
+    expect(findTooLongText({ ...ok, fullName: 'a'.repeat(201) })?.max).toBe(200)
+    expect(
+      findTooLongText({ ...ok, currentResidence: 'a'.repeat(501) })
+    ).toEqual({ label: 'residence', max: 500 })
   })
 })

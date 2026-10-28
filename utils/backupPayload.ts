@@ -1,5 +1,6 @@
 import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
 import { toRecurrence, type CustomEventRecurrence } from '@/utils/eventHelpers'
+import { MAX_NAME, MAX_NOTE, MAX_PRIVATE } from '@/utils/limits'
 import { isValidSolarDate } from '@/utils/lunarCalendar'
 import {
   findRelationshipIssues,
@@ -230,14 +231,15 @@ export function validateImportPayload(
     if (
       typeof row.full_name !== 'string' ||
       row.full_name.trim().length === 0 ||
-      row.full_name.length > 200
+      row.full_name.length > MAX_NAME
     ) {
       return t('invalidPersonName')
     }
     if (!['male', 'female', 'other'].includes(String(row.gender)))
       return t('invalidGender')
     for (const field of ['other_names', 'avatar_url', 'note', 'burial_place']) {
-      if (!isShortText(row[field], 2000)) return t('fieldTooLong', { field })
+      if (!isShortText(row[field], MAX_NOTE))
+        return t('fieldTooLong', { field })
     }
     const badField = findInvalidNumberField(row)
     if (badField)
@@ -263,7 +265,7 @@ export function validateImportPayload(
       )
     )
       return t('invalidRelationshipData')
-    if (!isShortText(row.note, 2000)) return t('relationshipNoteTooLong')
+    if (!isShortText(row.note, MAX_NOTE)) return t('relationshipNoteTooLong')
   }
 
   const privateDetails = payload.person_details_private
@@ -281,7 +283,8 @@ export function validateImportPayload(
       if (typeof row.person_id !== 'string' || !personIds.has(row.person_id))
         return t('invalidPrivateDetailsPerson')
       for (const field of ['phone_number', 'occupation', 'current_residence']) {
-        if (!isShortText(row[field], 500)) return t('fieldTooLong', { field })
+        if (!isShortText(row[field], MAX_PRIVATE))
+          return t('fieldTooLong', { field })
       }
     }
   }
@@ -302,11 +305,12 @@ export function validateImportPayload(
       if (
         typeof row.name !== 'string' ||
         row.name.trim().length === 0 ||
-        row.name.length > 200
+        row.name.length > MAX_NAME
       )
         return t('invalidEventName')
       for (const field of ['content', 'location']) {
-        if (!isShortText(row[field], 2000)) return t('fieldTooLong', { field })
+        if (!isShortText(row[field], MAX_NOTE))
+          return t('fieldTooLong', { field })
       }
       if (
         row.recurrence !== undefined &&

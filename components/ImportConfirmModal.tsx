@@ -13,6 +13,8 @@ interface ImportConfirmModalProps {
   fileName: string
   summary: BackupSummary
   warning?: RestoreWarning
+  /** Values of the file cut to the length limits. */
+  truncated?: number
   locale: Locale
   isImporting: boolean
   isDownloading: boolean
@@ -26,6 +28,7 @@ export default function ImportConfirmModal({
   fileName,
   summary,
   warning,
+  truncated,
   locale,
   isImporting,
   isDownloading,
@@ -89,6 +92,13 @@ export default function ImportConfirmModal({
                   )}
                 </p>
               )}
+              {truncated ? (
+                <p
+                  role='alert'
+                  className='mt-3 rounded-lg bg-amber-50 p-2 text-sm text-amber-800'>
+                  {t('restoreTruncated', { count: truncated })}
+                </p>
+              ) : null}
               {summary.exportedAt && (
                 <p className='mt-1 text-xs text-stone-500'>
                   {t('restoreFileExportedAt', {

@@ -9,6 +9,7 @@ import {
   inputClasses
 } from '@/components/member/memberFormStyles'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { MAX_PRIVATE } from '@/utils/limits'
 
 interface MemberPrivateFieldsProps {
   isDeceased: boolean
@@ -69,6 +70,7 @@ export default function MemberPrivateFields({
           <input
             id='member-phone'
             type='tel'
+            maxLength={MAX_PRIVATE}
             value={phoneNumber}
             onChange={(e) => onPhoneNumberChange(e.target.value)}
             disabled={isDeceased || locked}
@@ -87,6 +89,7 @@ export default function MemberPrivateFields({
           <input
             id='member-occupation'
             type='text'
+            maxLength={MAX_PRIVATE}
             value={occupation}
             onChange={(e) => onOccupationChange(e.target.value)}
             disabled={locked}
@@ -104,6 +107,7 @@ export default function MemberPrivateFields({
           <input
             id='member-residence'
             type='text'
+            maxLength={MAX_PRIVATE}
             value={currentResidence}
             onChange={(e) => onCurrentResidenceChange(e.target.value)}
             disabled={locked}

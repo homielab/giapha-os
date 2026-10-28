@@ -6,6 +6,7 @@ import { Settings2 } from 'lucide-react'
 import { inputClasses } from '@/components/member/memberFormStyles'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Gender } from '@/types'
+import { MAX_NAME, MAX_NOTE } from '@/utils/limits'
 
 interface MemberGeneralFieldsProps {
   fullName: string
@@ -86,6 +87,7 @@ export default function MemberGeneralFields({
           id='member-full-name'
           type='text'
           required
+          maxLength={MAX_NAME}
           value={fullName}
           onChange={(e) => onFullNameChange(e.target.value)}
           className={inputClasses}
@@ -102,6 +104,7 @@ export default function MemberGeneralFields({
         <input
           id='member-other-names'
           type='text'
+          maxLength={MAX_NOTE}
           value={otherNames}
           onChange={(e) => onOtherNamesChange(e.target.value)}
           className={inputClasses}
@@ -282,11 +285,15 @@ export default function MemberGeneralFields({
         <textarea
           id='member-note'
           rows={3}
+          maxLength={MAX_NOTE}
           value={note}
           onChange={(e) => onNoteChange(e.target.value)}
           placeholder={t('notePlaceholder')}
           className={`${inputClasses} resize-none`}
         />
+        <p className='mt-1 text-right text-xs text-stone-500' aria-live='off'>
+          {note.length}/{MAX_NOTE}
+        </p>
       </div>
     </>
   )

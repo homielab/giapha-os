@@ -6,6 +6,7 @@ import { AlertCircle } from 'lucide-react'
 import { inputClasses } from '@/components/member/memberFormStyles'
 import { CheckboxIcon } from '@/components/member/MemberGeneralFields'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { MAX_NOTE } from '@/utils/limits'
 import { hasLeapMonth } from '@/utils/memberFormHelpers'
 
 interface MemberDeathFieldsProps {
@@ -177,6 +178,7 @@ export default function MemberDeathFields({
                   id='member-burial-place'
                   type='text'
                   placeholder={t('burialPlacePlaceholder')}
+                  maxLength={MAX_NOTE}
                   value={burialPlace}
                   onChange={(e) => onBurialPlaceChange(e.target.value)}
                   className={inputClasses}

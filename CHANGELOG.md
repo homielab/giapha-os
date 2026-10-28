@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A long biography no longer makes your own backup unrestorable: the member form now limits names to 200, notes, other names and burial place to 2,000 and phone, occupation and residence to 500 characters (with an "n/2000" counter under the note), and a GEDCOM or CSV file with longer text is restored with the excess cut, after a warning in the restore confirmation.
 - Gallery: replacing a photo now deletes the old file from storage, and a failed save no longer leaves the newly uploaded file behind, so edits stop using up the free storage quota.
 - Members list: sorting by "Recently updated" / "Least recently updated" now works; the list no longer loaded the update time, so the order never changed. The extra column adds about 60 KB for 2,000 members.
 - Members page: when the tree root saved in the browser or in a shared link no longer exists (for example after merging duplicates), the "Show from" selector now falls back to the default root and clears the stale value instead of showing an empty field. A temporary database error while loading the in-laws or grandchildren of a member now shows the usual error instead of silently showing no in-laws and 0 grandchildren.

@@ -1161,6 +1161,9 @@ export const messages = {
     memberBornAfterChild:
       'Ngày sinh không hợp lệ: muộn hơn ngày sinh của con {name}.',
     fullNameRequired: 'Vui lòng nhập họ và tên.',
+    textTooLong: '{field} quá dài: tối đa {max} ký tự.',
+    restoreTruncated:
+      '{count} giá trị trong file dài quá giới hạn sẽ bị cắt bớt khi khôi phục (tên 200, ghi chú 2.000, thông tin riêng 500 ký tự).',
     memberPossibleDuplicate:
       'Có {count} người trùng tên và năm sinh: {names}. Vẫn tạo thêm người mới?',
     memberMotherDiedBeforeBirth:
@@ -2357,6 +2360,9 @@ export const messages = {
     memberBornAfterChild:
       'Invalid birth date: later than the birth date of child {name}.',
     fullNameRequired: 'Please enter the full name.',
+    textTooLong: '{field} is too long: at most {max} characters.',
+    restoreTruncated:
+      '{count} values in the file are over the length limits and will be cut when restored (names 200, notes 2,000, private details 500 characters).',
     memberPossibleDuplicate:
       '{count} existing people have the same name and birth year: {names}. Create another one anyway?',
     memberMotherDiedBeforeBirth:

@@ -574,3 +574,22 @@ describe('burial place in backups', () => {
     expect(legacyPersonRows(some)[0]).toHaveProperty('burial_place', 'Quê nội')
   })
 })
+
+describe('text limits', () => {
+  test('a note the form accepts (2000 characters) restores', () => {
+    const payload = withChange((p) => {
+      p.persons[0] = person(A, {
+        note: 'x'.repeat(2000),
+        full_name: 'n'.repeat(200)
+      })
+    })
+    expect(validateImportPayload(payload, t)).toBeNull()
+  })
+
+  test('a note of 2001 characters is refused', () => {
+    const payload = withChange((p) => {
+      p.persons[0] = person(A, { note: 'x'.repeat(2001) })
+    })
+    expect(validateImportPayload(payload, t)).toContain('fieldTooLong')
+  })
+})

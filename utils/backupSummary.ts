@@ -1,5 +1,6 @@
 import type { ImportPayload } from '@/utils/backupPayload'
 import type { GedcomEncodingWarning } from '@/utils/gedcom/encoding'
+import { clipImportedText } from '@/utils/limits'
 
 export interface BackupSummary {
   persons: number
@@ -46,7 +47,12 @@ export interface RestoreFile {
  */
 export async function readRestoreFile(
   file: Pick<RestoreFile, 'name'> & Partial<RestoreFile>
-): Promise<{ payload: ImportPayload; warning?: RestoreWarning }> {
+): Promise<{
+  payload: ImportPayload
+  warning?: RestoreWarning
+  /** Values of a GEDCOM/CSV file that were cut to the length limits. */
+  truncated?: number
+}> {
   const name = file.name.toLowerCase()
   if (name.endsWith('.ged')) {
     const [{ parseGedcom, decodeGedcom }, buffer] = await Promise.all([
@@ -54,18 +60,15 @@ export async function readRestoreFile(
       file.arrayBuffer!()
     ])
     const { text, warning } = decodeGedcom(buffer)
-    return {
-      payload: parseGedcom(text) as unknown as ImportPayload,
-      warning
-    }
+    const payload = parseGedcom(text) as unknown as ImportPayload
+    return { payload, warning, truncated: clipImportedText(payload) }
   }
   if (name.endsWith('.zip')) {
     const { parseCsvZip } = await import('@/utils/csv')
-    return {
-      payload: (await parseCsvZip(
-        file as unknown as Blob
-      )) as unknown as ImportPayload
-    }
+    const payload = (await parseCsvZip(
+      file as unknown as Blob
+    )) as unknown as ImportPayload
+    return { payload, truncated: clipImportedText(payload) }
   }
   try {
     return { payload: JSON.parse(await file.text!()) as ImportPayload }

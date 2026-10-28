@@ -6,6 +6,7 @@ import { loadSavedRelatives } from '@/utils/memberForm/relatives'
 import { saveMember } from '@/utils/memberForm/save'
 import type { MemberFormSubmitContext } from '@/utils/memberForm/types'
 import {
+  findTooLongText,
   normalizeDeathDates,
   validateMemberForm
 } from '@/utils/memberFormHelpers'
@@ -83,6 +84,17 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
   )
   if (validationError) {
     setError(t(validationError))
+    setLoading(false)
+    return
+  }
+
+  const tooLong = findTooLongText({
+    ...ctx.fields,
+    ...ctx.privateFields,
+    burialPlace: ctx.isDeceased ? ctx.fields.burialPlace : ''
+  })
+  if (tooLong) {
+    setError(t('textTooLong', { field: t(tooLong.label), max: tooLong.max }))
     setLoading(false)
     return
   }
