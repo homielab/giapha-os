@@ -23,6 +23,7 @@ import {
   type RestorePayload,
   type Translator
 } from '@/utils/backupPayload'
+import { filterBranch } from '@/utils/branchExport'
 import { fetchAllRows } from '@/utils/supabase/fetchAll'
 import { getIsAdmin, getSupabase } from '@/utils/supabase/queries'
 
@@ -95,67 +96,21 @@ export async function exportData(
     return { error: t('loadDataError', { error: message }) }
   }
 
-  let exportPersons = allPersons
-  let exportRels = allRels
-  let exportPrivateDetails = allPrivateDetails
+  // A selected root limits the export to its branch (custom events have no
+  // person link, so they are always exported in full).
+  const {
+    persons: exportPersons,
+    relationships: exportRels,
+    details: exportPrivateDetails
+  } = filterBranch(
+    {
+      persons: allPersons,
+      relationships: allRels,
+      details: allPrivateDetails
+    },
+    exportRootId
+  )
   const exportCustomEvents = allCustomEvents
-
-  // If a root person is selected, filter the export to only their subtree
-  if (exportRootId && exportPersons.some((p) => p.id === exportRootId)) {
-    const includedPersonIds = new Set<string>([exportRootId])
-
-    // Pre-calculate adjacency lists for O(1) lookup to improve performance with large datasets
-    const childrenMap = new Map<string, string[]>()
-    const spouseMap = new Map<string, string[]>()
-
-    exportRels.forEach((r) => {
-      if (r.type === 'biological_child' || r.type === 'adopted_child') {
-        const children = childrenMap.get(r.person_a) ?? []
-        children.push(r.person_b)
-        childrenMap.set(r.person_a, children)
-      } else if (r.type === 'marriage') {
-        const spousesA = spouseMap.get(r.person_a) ?? []
-        spousesA.push(r.person_b)
-        spouseMap.set(r.person_a, spousesA)
-
-        const spousesB = spouseMap.get(r.person_b) ?? []
-        spousesB.push(r.person_a)
-        spouseMap.set(r.person_b, spousesB)
-      }
-    })
-
-    // 1. Traverse biological and adopted children recursively
-    const findDescendants = (parentId: string) => {
-      const children = childrenMap.get(parentId) || []
-      children.forEach((childId) => {
-        if (!includedPersonIds.has(childId)) {
-          includedPersonIds.add(childId)
-          findDescendants(childId)
-        }
-      })
-    }
-    findDescendants(exportRootId)
-
-    // 2. Add spouses for everyone in the tree so far
-    const descendantsArray = Array.from(includedPersonIds) // snapshot current members
-    descendantsArray.forEach((personId) => {
-      const spouses = spouseMap.get(personId) || []
-      spouses.forEach((spouseId) => {
-        includedPersonIds.add(spouseId)
-      })
-    })
-
-    // 3. Filter the payload
-    exportPersons = exportPersons.filter((p) => includedPersonIds.has(p.id))
-    exportRels = exportRels.filter(
-      (r) =>
-        includedPersonIds.has(r.person_a) && includedPersonIds.has(r.person_b)
-    )
-    exportPrivateDetails = exportPrivateDetails.filter((d) =>
-      includedPersonIds.has(d.person_id)
-    )
-    // custom_events are not person-scoped, so export all when subtree is selected
-  }
 
   return {
     version: BACKUP_VERSION,
