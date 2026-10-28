@@ -93,7 +93,7 @@ Export and import GEDCOM (7.0) to open the family tree in Gramps, MyHeritage… 
 
 ### Photo gallery
 
-- Accepts JPG, PNG, GIF and WEBP up to 10 MB, whether picked with the file button or dragged in. The app reads the start of the file to find the real image type (a text file renamed to `.jpg` is refused) and sets the extension in the `gallery` bucket from that type, not from the file name.
+- Accepts JPG, PNG, GIF and WEBP up to 10 MB, whether picked with the file button or dragged in. The app reads the start of the file to find the real image type (a text file renamed to `.jpg` is refused) and sets the extension in the `gallery` bucket from that type, not from the file name. Before uploading, the browser scales photos down to at most 2048 px on the long side and stores them as WebP (a 6 MB phone photo ends up under 1 MB); GIFs, animated WebP and images that are already small are kept as they are. Photos uploaded earlier are not changed.
 - Each page shows 24 images (`/dashboard/gallery?page=2`…); the signed links for the whole page are created in one Supabase Storage call, valid for 1 hour. A page past the end shows the last page.
 
 ### Profile photos

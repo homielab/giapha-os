@@ -11,6 +11,7 @@ import { useFilePreview } from '@/hooks/useFilePreview'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import type { GalleryItem } from '@/types'
+import { resizeGalleryImage } from '@/utils/image'
 import { validateImageFile } from '@/utils/imageUpload'
 import { createClient } from '@/utils/supabase/client'
 import { InvalidImageError, uploadGalleryImage } from '@/utils/supabase/storage'
@@ -94,7 +95,9 @@ export default function UploadModal({
 
       // 1. Upload to storage (only if new file selected)
       if (file) {
-        const { path, error: uploadError } = await uploadGalleryImage(file)
+        const { path, error: uploadError } = await uploadGalleryImage(
+          await resizeGalleryImage(file)
+        )
         if (uploadError instanceof InvalidImageError) {
           throw new Error(
             uploadError.reason === 'too-large'

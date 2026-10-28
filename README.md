@@ -94,7 +94,7 @@ Xuất/nhập GEDCOM (7.0) để mở gia phả trong Gramps, MyHeritage… ho�
 
 ### Phòng trưng bày ảnh
 
-- Nhận ảnh JPG, PNG, GIF, WEBP tối đa 10 MB, qua nút chọn file hay kéo thả đều như nhau. Ứng dụng đọc phần đầu file để biết đúng loại ảnh (file chữ đổi đuôi thành `.jpg` bị từ chối) và đặt phần mở rộng trong bucket `gallery` theo loại đó, không theo tên file.
+- Nhận ảnh JPG, PNG, GIF, WEBP tối đa 10 MB, qua nút chọn file hay kéo thả đều như nhau. Ứng dụng đọc phần đầu file để biết đúng loại ảnh (file chữ đổi đuôi thành `.jpg` bị từ chối) và đặt phần mở rộng trong bucket `gallery` theo loại đó, không theo tên file. Trước khi tải lên, trình duyệt thu nhỏ ảnh về cạnh dài tối đa 2048 px và lưu dạng WebP (ảnh 6 MB từ điện thoại còn dưới 1 MB); GIF, WebP động và ảnh đã nhỏ giữ nguyên. Ảnh đã tải lên trước đó không bị đổi.
 - Mỗi trang hiện 24 ảnh (`/dashboard/gallery?page=2`…); đường dẫn ký cho cả trang được tạo trong một lần gọi Supabase Storage, hiệu lực 1 giờ. Trang vượt quá trang cuối hiện trang cuối.
 
 ### Ảnh đại diện
