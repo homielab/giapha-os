@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { GalleryItem } from '@/types'
 import { getGalleryStoragePath } from '@/utils/supabase/storage-path'
+import { GalleryItemNotUpdatedError } from '@/utils/writeErrors'
 
 export const GALLERY_PAGE_SIZE = 24
 export const SIGNED_URL_TTL_SECONDS = 60 * 60
@@ -120,14 +121,99 @@ export async function deleteGalleryItem(
   const storagePath = item.storage_path || getGalleryStoragePath(item.image_url)
   if (!storagePath) return { fileRemoved: true }
 
+  return { fileRemoved: await removeGalleryFile(supabase, storagePath) }
+}
+
+/**
+ * Removes one file from the `gallery` bucket. Never throws: a failed removal
+ * only leaves an orphan file, so it is logged and reported as `false`.
+ */
+export async function removeGalleryFile(
+  supabase: SupabaseClient,
+  storagePath: string
+): Promise<boolean> {
   try {
-    const { error: fileError } = await supabase.storage
+    const { error } = await supabase.storage
       .from('gallery')
       .remove([storagePath])
-    if (fileError) throw fileError
-    return { fileRemoved: true }
+    if (error) throw error
+    return true
   } catch (err) {
     console.error('Gallery file was not removed', storagePath, err)
-    return { fileRemoved: false }
+    return false
   }
+}
+
+export interface GalleryItemFields {
+  title: string
+  description: string | null
+  event_date: string | null
+}
+
+/**
+ * Saves a gallery item (insert, or update when `initialData` is given) that
+ * points at `imagePath`. `uploadedPath` is the file uploaded just now for this
+ * save, if any.
+ *
+ * - The database write fails: the freshly uploaded file is removed so it does
+ *   not stay behind, then the error is rethrown.
+ * - An update succeeds and replaced the image: the old file is removed, unless
+ *   another row still points at it. A failed removal is only logged.
+ *
+ * Upload names are unique, so two rows normally never share a file; the lookup
+ * guards rows that were created or imported by other means.
+ */
+export async function saveGalleryItem(
+  supabase: SupabaseClient,
+  options: {
+    initialData?: Pick<GalleryItem, 'id' | 'image_url' | 'storage_path'> | null
+    fields: GalleryItemFields
+    imagePath: string
+    uploadedPath?: string | null
+    createdBy?: string | null
+  }
+): Promise<void> {
+  const { initialData, fields, imagePath, uploadedPath, createdBy } = options
+  const itemData = { ...fields, image_url: imagePath }
+
+  try {
+    if (initialData) {
+      const { data: updated, error } = await supabase
+        .from('gallery_items')
+        .update(itemData)
+        .eq('id', initialData.id)
+        .select('id')
+      if (error) throw error
+      if (!updated || updated.length === 0) {
+        throw new GalleryItemNotUpdatedError()
+      }
+    } else {
+      const { error } = await supabase
+        .from('gallery_items')
+        .insert([{ ...itemData, created_by: createdBy || null }])
+      if (error) throw error
+    }
+  } catch (err) {
+    if (uploadedPath) await removeGalleryFile(supabase, uploadedPath)
+    throw err
+  }
+
+  if (!initialData) return
+  const oldPath =
+    initialData.storage_path || getGalleryStoragePath(initialData.image_url)
+  if (!oldPath || oldPath === imagePath) return
+
+  try {
+    const { data: stillUsed, error } = await supabase
+      .from('gallery_items')
+      .select('id')
+      .like('image_url', `%${oldPath}%`)
+      .limit(1)
+    if (error) throw error
+    if (stillUsed && stillUsed.length > 0) return
+  } catch (err) {
+    console.error('Old gallery file was not removed', oldPath, err)
+    return
+  }
+  await removeGalleryFile(supabase, oldPath)
 }

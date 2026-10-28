@@ -3,7 +3,11 @@ import { describe, expect, test } from 'bun:test'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { GalleryItem } from '@/types'
-import { fakeSupabase as fakeClient } from '@/utils/testing/fakeSupabase'
+import {
+  fakeSupabase as fakeClient,
+  type FakeCall,
+  type FakeResult
+} from '@/utils/testing/fakeSupabase'
 
 import {
   deleteGalleryItem,
@@ -11,7 +15,8 @@ import {
   GalleryItemNotDeletedError,
   getGalleryPageCount,
   loadGalleryPage,
-  parseGalleryPage
+  parseGalleryPage,
+  saveGalleryItem
 } from './gallery'
 
 function makeItems(count: number): GalleryItem[] {
@@ -208,5 +213,121 @@ describe('deleteGalleryItem', () => {
     } finally {
       console.error = log
     }
+  })
+})
+
+describe('saveGalleryItem', () => {
+  const fields = { title: 'Giỗ tổ', description: null, event_date: null }
+  const initialData = {
+    id: 'g1',
+    image_url: 'old.jpg',
+    storage_path: 'old.jpg'
+  }
+
+  function run(
+    respond: (call: FakeCall) => FakeResult,
+    options: Parameters<typeof saveGalleryItem>[1]
+  ) {
+    const { client, calls } = fakeClient(respond)
+    const done = saveGalleryItem(client, options)
+    const removed = () =>
+      calls
+        .filter((c) => c.table === 'storage:gallery' && c.op === 'remove')
+        .map((c) => (c.payload as [string[]])[0])
+    return { done, removed, calls }
+  }
+
+  const ok = (call: FakeCall): FakeResult =>
+    call.op === 'update' ? { data: [{ id: 'g1' }] } : { data: [] }
+
+  test('removes the old file after the update succeeds', async () => {
+    const { done, removed } = run(ok, {
+      initialData,
+      fields,
+      imagePath: 'new.jpg',
+      uploadedPath: 'new.jpg'
+    })
+    await done
+    expect(removed()).toEqual([['old.jpg']])
+  })
+
+  test('keeps the old file while another row points at it', async () => {
+    const { done, removed } = run(
+      (call) =>
+        call.op === 'update'
+          ? { data: [{ id: 'g1' }] }
+          : { data: [{ id: 'g2' }] },
+      { initialData, fields, imagePath: 'new.jpg', uploadedPath: 'new.jpg' }
+    )
+    await done
+    expect(removed()).toEqual([])
+  })
+
+  test('removes nothing when the path stays the same', async () => {
+    const { done, removed } = run(ok, {
+      initialData,
+      fields,
+      imagePath: 'old.jpg'
+    })
+    await done
+    expect(removed()).toEqual([])
+  })
+
+  test('a failed removal of the old file does not fail the save', async () => {
+    const { done } = run(
+      (call) =>
+        call.op === 'remove' ? { error: { message: 'boom' } } : ok(call),
+      { initialData, fields, imagePath: 'new.jpg', uploadedPath: 'new.jpg' }
+    )
+    await expect(done).resolves.toBeUndefined()
+  })
+
+  test('removes the new file when the update fails', async () => {
+    const { done, removed } = run(
+      (call) => (call.op === 'update' ? { error: { message: 'db down' } } : {}),
+      { initialData, fields, imagePath: 'new.jpg', uploadedPath: 'new.jpg' }
+    )
+    await expect(done).rejects.toMatchObject({ message: 'db down' })
+    expect(removed()).toEqual([['new.jpg']])
+  })
+
+  test('removes the new file when the update touches no row', async () => {
+    const { done, removed } = run(() => ({ data: [] }), {
+      initialData,
+      fields,
+      imagePath: 'new.jpg',
+      uploadedPath: 'new.jpg'
+    })
+    await expect(done).rejects.toThrow('Gallery item not updated')
+    expect(removed()).toEqual([['new.jpg']])
+  })
+
+  test('removes the new file when the insert fails', async () => {
+    const { done, removed } = run(
+      (call) => (call.op === 'insert' ? { error: { message: 'nope' } } : {}),
+      { fields, imagePath: 'new.jpg', uploadedPath: 'new.jpg' }
+    )
+    await expect(done).rejects.toMatchObject({ message: 'nope' })
+    expect(removed()).toEqual([['new.jpg']])
+  })
+
+  test('a failed update without a new upload removes nothing', async () => {
+    const { done, removed } = run(
+      (call) => (call.op === 'update' ? { error: { message: 'x' } } : {}),
+      { initialData, fields, imagePath: 'old.jpg' }
+    )
+    await expect(done).rejects.toBeDefined()
+    expect(removed()).toEqual([])
+  })
+
+  test('a successful insert removes nothing', async () => {
+    const { done, removed } = run(() => ({}), {
+      fields,
+      imagePath: 'new.jpg',
+      uploadedPath: 'new.jpg',
+      createdBy: 'u1'
+    })
+    await done
+    expect(removed()).toEqual([])
   })
 })

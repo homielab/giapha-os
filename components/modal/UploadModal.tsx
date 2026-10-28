@@ -11,6 +11,7 @@ import { useFilePreview } from '@/hooks/useFilePreview'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import type { GalleryItem } from '@/types'
+import { saveGalleryItem } from '@/utils/gallery'
 import { resizeGalleryImage } from '@/utils/image'
 import { validateImageFile } from '@/utils/imageUpload'
 import { createClient } from '@/utils/supabase/client'
@@ -111,38 +112,22 @@ export default function UploadModal({
         finalPath = path
       }
 
-      // 2. Save to database
+      // 2. Save to database (removes the new file if this fails, and the
+      // replaced file once it succeeds)
       const supabase = createClient()
       const { data: userData } = await supabase.auth.getUser()
 
-      const itemData = {
-        title,
-        description: description || null,
-        image_url: finalPath,
-        event_date: eventDate || null
-      }
-
-      if (initialData) {
-        // Update
-        const { data: updated, error: dbError } = await supabase
-          .from('gallery_items')
-          .update(itemData)
-          .eq('id', initialData.id)
-          .select('id')
-        if (dbError) throw dbError
-        if (!updated || updated.length === 0) {
-          throw new GalleryItemNotUpdatedError()
-        }
-      } else {
-        // Insert
-        const { error: dbError } = await supabase.from('gallery_items').insert([
-          {
-            ...itemData,
-            created_by: userData?.user?.id || null
-          }
-        ])
-        if (dbError) throw dbError
-      }
+      await saveGalleryItem(supabase, {
+        initialData,
+        fields: {
+          title,
+          description: description || null,
+          event_date: eventDate || null
+        },
+        imagePath: finalPath,
+        uploadedPath: file ? finalPath : null,
+        createdBy: userData?.user?.id
+      })
 
       // Success
       resetForm()
