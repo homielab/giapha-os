@@ -181,7 +181,8 @@ export function buildIcs({
         start: event.nextOccurrence,
         summary: t('icsBirthdaySummary', { name: event.personName }),
         description,
-        yearly: true
+        yearly: true,
+        lastDayOfFebruary: event.originMonth === 2 && event.originDay === 29
       })
     } else if (event.type === 'death_anniversary') {
       const description = [

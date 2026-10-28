@@ -18,7 +18,7 @@ export function parseGedcom(gedcom: string): {
 } {
   const lines = gedcom
     .replace(/^\uFEFF/, '')
-    .split(/\r?\n/)
+    .split(/\r\n|\r|\n/)
     .filter((line) => line.trim().length > 0)
 
   const persons: GedcomPerson[] = []

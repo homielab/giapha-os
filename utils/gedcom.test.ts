@@ -134,6 +134,24 @@ describe('parseGedcom', () => {
     expect(p.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4/)
   })
 
+  test('reads files with CR-only, LF and CRLF line endings the same', () => {
+    const lines = [
+      '0 HEAD',
+      '0 @I1@ INDI',
+      '1 NAME An /Nguyễn/',
+      '0 @I2@ INDI',
+      '1 NAME Bình /Trần/',
+      '0 TRLR'
+    ]
+    for (const sep of ['\r', '\n', '\r\n']) {
+      const { persons } = parseGedcom(lines.join(sep))
+      expect(persons.map((p) => p.full_name)).toEqual([
+        'An Nguyễn',
+        'Bình Trần'
+      ])
+    }
+  })
+
   test('drops duplicate relationships', () => {
     const ged = [
       '0 @I1@ INDI',

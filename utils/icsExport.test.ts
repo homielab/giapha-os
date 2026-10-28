@@ -101,10 +101,11 @@ describe('buildIcs', () => {
     ).toHaveLength(0)
   })
 
-  test('29/2 birthday falls on 28/2 in a common year', () => {
+  test('29/2 birthday starts on 28/2 in a common year and repeats on the last day of February', () => {
     const [ev] = events(build([person({ birth_month: 2, birth_day: 29 })]))
     expect(ev).toContain('DTSTART;VALUE=DATE:20260228')
-    expect(ev).toContain('RRULE:FREQ=YEARLY')
+    expect(ev).toContain('RRULE:FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=-1')
+    expect(ev).not.toContain('RRULE:FREQ=YEARLY\r\n')
   })
 
   test('lunar death anniversary: one event for each of this and next year', () => {
