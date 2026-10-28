@@ -79,11 +79,15 @@ export default function MemberDeathFields({
               {/* Lunar Date */}
               <div>
                 <label
+                  id='member-lunar-death-date-label'
                   htmlFor='member-lunar-death-day'
                   className='mb-2 block text-sm font-medium text-stone-700'>
                   {t('lunarDeathDate')}
                 </label>
-                <div className='grid grid-cols-3 gap-3'>
+                <div
+                  role='group'
+                  aria-labelledby='member-lunar-death-date-label'
+                  className='grid grid-cols-3 gap-3'>
                   <input
                     id='member-lunar-death-day'
                     type='number'
@@ -130,11 +134,15 @@ export default function MemberDeathFields({
               {/* Solar Date */}
               <div>
                 <label
+                  id='member-death-date-label'
                   htmlFor='member-death-day'
                   className='mb-2 block text-sm font-medium text-stone-700'>
                   {t('solarDeathDate')}
                 </label>
-                <div className='grid grid-cols-3 gap-3'>
+                <div
+                  role='group'
+                  aria-labelledby='member-death-date-label'
+                  className='grid grid-cols-3 gap-3'>
                   <input
                     id='member-death-day'
                     type='number'

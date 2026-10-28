@@ -34,3 +34,22 @@ export function disclosureButtonProps(
     'aria-controls': controls
   }
 }
+
+/**
+ * Attributes that make a non-button element (a card) work like a button:
+ * reachable with Tab, opened with Enter or Space. Pass `null` when the
+ * element does nothing, so it stays out of the Tab order.
+ */
+export function clickableProps(onActivate: (() => void) | null) {
+  if (!onActivate) return {}
+  return {
+    role: 'button' as const,
+    tabIndex: 0,
+    onClick: onActivate,
+    onKeyDown: (e: { key: string; preventDefault: () => void }) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return
+      e.preventDefault()
+      onActivate()
+    }
+  }
+}

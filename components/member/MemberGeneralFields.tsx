@@ -233,11 +233,15 @@ export default function MemberGeneralFields({
 
       <div className='md:col-span-2'>
         <label
+          id='member-birth-date-label'
           htmlFor='member-birth-day'
           className='mb-1.5 block text-sm font-medium text-stone-700'>
           {t('solarBirthDate')}
         </label>
-        <div className='grid grid-cols-3 gap-3'>
+        <div
+          role='group'
+          aria-labelledby='member-birth-date-label'
+          className='grid grid-cols-3 gap-3'>
           <input
             id='member-birth-day'
             type='number'

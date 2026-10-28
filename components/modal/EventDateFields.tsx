@@ -41,7 +41,12 @@ export default function EventDateFields({
     <div>
       <div className='mb-1.5 flex items-center justify-between'>
         <label
-          htmlFor='custom-event-date'
+          id='custom-event-date-label'
+          htmlFor={
+            dateMode === 'solar'
+              ? 'custom-event-date'
+              : 'custom-event-lunar-day'
+          }
           className='block text-sm font-medium text-stone-700'>
           {t('eventDate')} <span className='text-red-500'>*</span>
         </label>
@@ -77,8 +82,12 @@ export default function EventDateFields({
         </div>
       ) : (
         <div className='space-y-3'>
-          <div className='grid grid-cols-3 gap-3'>
+          <div
+            role='group'
+            aria-labelledby='custom-event-date-label'
+            className='grid grid-cols-3 gap-3'>
             <input
+              id='custom-event-lunar-day'
               type='number'
               aria-label={t('day')}
               placeholder={t('day')}

@@ -107,6 +107,7 @@ export default function BulkAddChildrenForm({
                   id={`child-birth-order-${child.id}`}
                   name={`child-birth-order-${child.id}`}
                   type='number'
+                  aria-label={t('birthOrder')}
                   placeholder={t('birthOrderShort')}
                   min='1'
                   value={child.birthOrder}
@@ -145,6 +146,7 @@ export default function BulkAddChildrenForm({
                   id={`child-birth-year-${child.id}`}
                   name={`child-birth-year-${child.id}`}
                   type='number'
+                  aria-label={t('birthYear')}
                   placeholder={t('birthYear')}
                   value={child.birthYear}
                   onChange={(e) =>

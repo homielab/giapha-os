@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import {
+  clickableProps,
   disclosureButtonProps,
   noticeAria,
   noticeRole,
@@ -54,5 +55,53 @@ describe('disclosureButtonProps', () => {
     expect(disclosureButtonProps('Hiển thị', true, 'panel-1')).toMatchObject({
       'aria-expanded': true
     })
+  })
+})
+
+describe('clickableProps', () => {
+  const key = (k: string) => {
+    let prevented = false
+    return {
+      key: k,
+      preventDefault: () => {
+        prevented = true
+      },
+      get prevented() {
+        return prevented
+      }
+    }
+  }
+
+  test('nothing to do: no role and not in the Tab order', () => {
+    expect(clickableProps(null)).toEqual({})
+  })
+
+  test('a button in the Tab order that opens on click', () => {
+    let calls = 0
+    const props = clickableProps(() => calls++)
+    expect(props.role).toBe('button')
+    expect(props.tabIndex).toBe(0)
+    props.onClick?.()
+    expect(calls).toBe(1)
+  })
+
+  test('Enter and Space open it without scrolling the page', () => {
+    let calls = 0
+    const props = clickableProps(() => calls++)
+    for (const k of ['Enter', ' ']) {
+      const e = key(k)
+      props.onKeyDown?.(e)
+      expect(e.prevented).toBe(true)
+    }
+    expect(calls).toBe(2)
+  })
+
+  test('other keys do nothing', () => {
+    let calls = 0
+    const props = clickableProps(() => calls++)
+    const e = key('Tab')
+    props.onKeyDown?.(e)
+    expect(e.prevented).toBe(false)
+    expect(calls).toBe(0)
   })
 })

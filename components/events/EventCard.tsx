@@ -13,6 +13,7 @@ import {
 
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { clickableProps } from '@/utils/a11y'
 import { getZodiacSign } from '@/utils/dateHelpers'
 import {
   daysUntilLabel,
@@ -125,7 +126,7 @@ export default function EventCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.04 }}
-      onClick={isClickable ? handleClick : undefined}
+      {...clickableProps(isClickable ? handleClick : null)}
       className={`group flex w-full ${isClickable ? 'cursor-pointer active:scale-[0.98]' : ''} items-start gap-3 rounded-2xl border p-3.5 text-left transition sm:gap-4 sm:p-4 ${getCardTone(isToday, isPast, isBirthday, isCustom)}`}>
       {/* Icon */}
       <div
