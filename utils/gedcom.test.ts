@@ -416,6 +416,31 @@ describe('GEDCOM round trip', () => {
     ])
   })
 
+  test('turns a slash inside a name into a space', () => {
+    const data = {
+      persons: [
+        person('a', 'male', { full_name: 'Nguyễn Văn A/B' }),
+        person('b', 'female', { full_name: 'Hoa/Huệ' }),
+        person('c', 'male', { full_name: ' / ' })
+      ],
+      relationships: []
+    }
+    const ged = exportToGedcom(data)
+    const nameLine = ged.split('\n').find((l) => l.includes('Nguyễn'))
+    expect(nameLine).toBe('1 NAME /Nguyễn/ Văn A B')
+    expect(nameLine?.split('/')).toHaveLength(3)
+    expect(ged).toContain(
+      '1 NAME /Nguyễn/ Văn A B\n2 GIVN Văn A B\n2 SURN Nguyễn\n'
+    )
+    expect(ged).toContain('1 NAME /Hoa/ Huệ\n2 GIVN Huệ\n2 SURN Hoa\n')
+    expect(ged).toContain('1 NAME Unknown /Unknown/\n')
+    expect(
+      roundTrip(data)
+        .parsed.persons.map((p) => p.full_name)
+        .slice(0, 2)
+    ).toEqual(['Nguyễn Văn A B', 'Hoa Huệ'])
+  })
+
   test('drops a day without a month and keeps the year', () => {
     const data = {
       persons: [

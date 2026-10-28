@@ -5,8 +5,17 @@ export function splitOtherNames(value: string | null | undefined): string[] {
     .filter(Boolean)
 }
 
+/**
+ * GEDCOM NAME lines for a full name: the first word is the surname (between
+ * slashes), the rest the given name. A `/` inside the name would read as a
+ * surname delimiter elsewhere, so it becomes a space first.
+ */
 export function formatName(fullName: string | null | undefined): string {
-  const parts = (fullName ?? '').trim().split(/\s+/).filter(Boolean)
+  const parts = (fullName ?? '')
+    .replace(/\//g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
   if (parts.length === 0) return '1 NAME Unknown /Unknown/\n'
   if (parts.length === 1) return `1 NAME ${parts[0]}\n2 GIVN ${parts[0]}\n`
   const [surname, ...rest] = parts
