@@ -1243,3 +1243,81 @@ describe('roundtrip', () => {
     expect(again({ full_name: 'Tùng' }).full_name).toBe('Tùng')
   })
 })
+
+describe('GEDCOM marriage notes', () => {
+  const file = (...lines: string[]) => ['0 HEAD', ...lines, '0 TRLR'].join('\n')
+  const couple = [
+    '0 @I1@ INDI',
+    '1 NAME An /Lê/',
+    '0 @I2@ INDI',
+    '1 NAME Hoa /Trần/'
+  ]
+
+  test('export writes the marriage note on its FAM record', () => {
+    const ged = exportToGedcom({
+      persons: [person('a', 'male'), person('b', 'female')],
+      relationships: [
+        {
+          type: 'marriage',
+          person_a: 'a',
+          person_b: 'b',
+          note: 'Cưới năm 1950\nỞ làng Đông'
+        }
+      ]
+    })
+    expect(ged).toContain(
+      '0 @F1@ FAM\n1 HUSB @I1@\n1 WIFE @I2@\n1 NOTE Cưới năm 1950\n2 CONT Ở làng Đông\n'
+    )
+  })
+
+  test('a marriage note survives export and import', () => {
+    const note = 'Nguồn: Sổ hộ tịch\nTrang 3'
+    const ged = exportToGedcom({
+      persons: [person('a', 'female'), person('b', 'male')],
+      relationships: [{ type: 'marriage', person_a: 'a', person_b: 'b', note }]
+    })
+    const { relationships, stats } = parseGedcom(ged)
+    expect(relationships).toHaveLength(1)
+    expect(relationships[0].note).toBe(note)
+    expect(stats).toEqual({ missingNotes: 0, sources: 0 })
+  })
+
+  test('import reads inline FAM notes with CONC/CONT before cited sources', () => {
+    const { relationships } = parseGedcom(
+      file(
+        ...couple,
+        '0 @F1@ FAM',
+        '1 HUSB @I1@',
+        '1 WIFE @I2@',
+        '1 NOTE Cưới ',
+        '2 CONC năm 1950',
+        '2 CONT Ở làng Đông',
+        '1 CHIL @I3@',
+        '2 CONT không thuộc ghi chú',
+        '1 SOUR @S1@',
+        '0 @S1@ SOUR',
+        '1 TITL Gia phả họ Lê'
+      )
+    )
+    expect(relationships[0].note).toBe(
+      'Cưới năm 1950\nỞ làng Đông\n\nNguồn: Gia phả họ Lê'
+    )
+  })
+
+  test('import resolves FAM note pointers and counts missing ones', () => {
+    const { relationships, stats } = parseGedcom(
+      file(
+        ...couple,
+        '0 @F1@ FAM',
+        '1 HUSB @I1@',
+        '1 WIFE @I2@',
+        '1 NOTE @N1@',
+        '1 NOTE @N9@',
+        '0 @N1@ NOTE Hôn thú',
+        '1 CONT số 12'
+      )
+    )
+    expect(relationships[0].note).toBe('Hôn thú\nsố 12')
+    expect(stats).toEqual({ missingNotes: 1, sources: 0 })
+  })
+})

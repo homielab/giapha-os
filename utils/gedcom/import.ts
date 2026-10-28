@@ -55,12 +55,7 @@ export function parseGedcom(gedcom: string): {
     persons.push(readPerson(record, id, ctx))
   }
 
-  const relationships = readFamilies(
-    records,
-    idMap,
-    ctx.adoptedLinks,
-    ctx.sourTexts
-  )
+  const relationships = readFamilies(records, idMap, ctx)
   return {
     persons,
     relationships: dedupeRelationships(relationships),

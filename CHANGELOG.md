@@ -74,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- GEDCOM export no longer drops marriage notes (including the "Nguồn: …" lines kept from an import): they are written as `NOTE` on the family record, and import reads a family's `NOTE` (inline or pointer, a missing pointer counted in the restore warning) back into the marriage's note.
 - Data checks list people with the same Vietnamese alphabetical order as the other lists (Ân after An, Đ after D) whatever the server's locale, and people with the same name always in the same order.
 - Cleaning up the photo of a merged member or a replaced gallery image matches its file path literally, so a `_` or `%` in a file name can no longer make another file count as still in use.
 - GEDCOM import no longer rejects the whole file when one person has a day that does not exist (`31 APR 1850`, `29 FEB 1900`): the day is left empty, month and year are kept, and the original date is written in the person's note.

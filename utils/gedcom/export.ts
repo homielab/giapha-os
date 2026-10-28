@@ -60,6 +60,8 @@ export function exportToGedcom(data: {
     husb?: string
     wife?: string
     children: string[]
+    /** The marriage's note (FAM records of marriages only). */
+    note?: string
   }
   const families: ExportFamily[] = []
   // GEDCOM has no "spouse" role without a sex: a man (or a person of another
@@ -94,7 +96,8 @@ export function exportToGedcom(data: {
       id: `F${familyCounter++}`,
       husb: swap ? pB.id : pA.id,
       wife: swap ? pA.id : pB.id,
-      children: []
+      children: [],
+      ...(marriage.note ? { note: marriage.note } : {})
     }
     families.push(fam)
     marriageFamilies.push(fam)
@@ -254,6 +257,7 @@ export function exportToGedcom(data: {
     for (const childId of fam.children) {
       gedcom += `1 CHIL ${getIndiXref(childId)}\n`
     }
+    if (fam.note) gedcom += noteLines(1, 'NOTE', fam.note)
   }
 
   gedcom += '0 TRLR\n'

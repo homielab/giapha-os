@@ -28,7 +28,7 @@ export interface GedcomRelationship {
   type?: string
   person_a?: string
   person_b?: string
-  /** Read from GEDCOM only (source citations of a family); not exported. */
+  /** Note of a marriage: the FAM record's `NOTE` (and cited sources on import). */
   note?: string | null
 }
 
