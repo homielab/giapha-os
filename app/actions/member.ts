@@ -7,7 +7,8 @@ import { getServerTranslations } from '@/lib/i18n/server'
 import { deleteMember } from '@/utils/deleteMember'
 import {
   applyGenerationUpdates,
-  buildDescendantGenerationUpdates
+  buildDescendantGenerationUpdates,
+  collectDescendants
 } from '@/utils/generationUpdates'
 import { fetchAllRows, fetchInChunks } from '@/utils/supabase/fetchAll'
 import { getProfile, getSupabase, getUser } from '@/utils/supabase/queries'
@@ -124,30 +125,9 @@ export async function updateDescendantGenerationsAction(
     return { error: t('relationshipsFetchError') }
   }
 
-  // Build children map (person_a is parent, person_b is child)
-  const childrenMap = new Map<string, string[]>()
-  relationships.forEach((r) => {
-    const children = childrenMap.get(r.person_a) ?? []
-    children.push(r.person_b)
-    childrenMap.set(r.person_a, children)
-  })
-
-  // 2. Find all descendants using BFS
-  const descendants = new Set<string>()
-  const queue = [personId]
-  while (queue.length > 0) {
-    const current = queue.shift()!
-    const children = childrenMap.get(current) || []
-    for (const child of children) {
-      if (!descendants.has(child)) {
-        descendants.add(child)
-        queue.push(child)
-      }
-    }
-  }
-
-  if (descendants.size === 0) return { success: true }
-  const descendantIds = Array.from(descendants)
+  // 2. Find all descendants
+  const descendantIds = collectDescendants(relationships, personId)
+  if (descendantIds.length === 0) return { success: true }
 
   // 3. Fetch current generations of descendants
   const { data: persons, error: personsError } = await fetchInChunks<

@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Changing a member's generation no longer shifts that member a second time when old imported data has a parent-child loop back to them; only their descendants move.
 - Keyboard and screen reader: the cards on the Events page that open a profile or an event can be reached with Tab and opened with Enter or Space; cards that open nothing stay out of the Tab order. The day/month/year boxes of the birth date, the solar and lunar death dates and the lunar event date are now grouped under their label, so a screen reader says which date they belong to, and the birth order and birth year boxes of "add several children" have a name.
 
 - An `APP_URL` without `https://` (e.g. `giapha.example.com`) or with a path no longer breaks every page with "Invalid URL": the app adds `https://` and keeps only the origin for share links, `sitemap.xml`, `robots.txt`, JSON-LD and approval emails. A value that is not an http(s) address falls back to the Vercel domain.

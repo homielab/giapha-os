@@ -3,7 +3,8 @@ import { describe, expect, it } from 'bun:test'
 import {
   applyGenerationUpdates,
   buildDescendantGenerationUpdates,
-  buildLineageUpdates
+  buildLineageUpdates,
+  collectDescendants
 } from '@/utils/generationUpdates'
 import type { ComputedUpdate } from '@/utils/lineageCompute'
 import { isMissingDatabaseFunction } from '@/utils/supabase/missingFunction'
@@ -30,6 +31,62 @@ function lineageRow(
     ...extra
   }
 }
+
+const link = (parent: string, child: string, type = 'biological_child') => ({
+  person_a: parent,
+  person_b: child,
+  type
+})
+
+describe('collectDescendants', () => {
+  it('finds every descendant of a three-generation tree, nearest first', () => {
+    const relationships = [
+      link('root', 'son'),
+      link('root', 'daughter'),
+      link('son', 'grandson'),
+      link('daughter', 'granddaughter'),
+      link('other', 'stranger')
+    ]
+    expect(collectDescendants(relationships, 'root')).toEqual([
+      'son',
+      'daughter',
+      'grandson',
+      'granddaughter'
+    ])
+    expect(collectDescendants(relationships, 'grandson')).toEqual([])
+  })
+
+  it('follows adopted and biological children and lists a child of two parents once', () => {
+    const relationships = [
+      link('root', 'child'),
+      link('wife', 'child'),
+      link('root', 'adopted', 'adopted_child'),
+      link('child', 'grandchild'),
+      link('adopted', 'grandchild')
+    ]
+    expect(collectDescendants(relationships, 'root')).toEqual([
+      'child',
+      'adopted',
+      'grandchild'
+    ])
+    expect(collectDescendants(relationships, 'wife')).toEqual([
+      'child',
+      'grandchild'
+    ])
+  })
+
+  it('never includes the root when old data loops back to it', () => {
+    const relationships = [
+      link('root', 'child'),
+      link('child', 'grandchild'),
+      link('grandchild', 'root'),
+      link('root', 'root')
+    ]
+    const ids = collectDescendants(relationships, 'root')
+    expect(ids).toEqual(['child', 'grandchild'])
+    expect(ids).not.toContain('root')
+  })
+})
 
 describe('buildDescendantGenerationUpdates', () => {
   it('shifts generations, never below 1, and skips members without one', () => {
