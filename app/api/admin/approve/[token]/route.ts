@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import config from '@/app/config'
 import {
   getLocale,
   getMessages,
@@ -66,7 +67,7 @@ function htmlResponse(content: string, status = 200, locale: Locale = 'vi') {
         <head>
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>Gia Phả OS - ${title}</title>
+          <title>${escapeHtml(config.siteName)} - ${title}</title>
         </head>
         <body style="margin:0;background:#fafaf9;font-family:Arial,sans-serif;color:#292524">
           <main style="box-sizing:border-box;max-width:560px;margin:0 auto;padding:48px 20px">

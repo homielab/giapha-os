@@ -77,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The account approval page title and the About page now use `SITE_NAME` instead of a hard-coded "Gia Phả OS".
 - Screen readers now name the icon-only buttons of the tree (zoom in/out, centre), the mind map (expand/collapse all, also on small screens where the text is hidden), the kinship swap button and the admin delete-user button instead of reading an empty "button". These buttons and the admin status toggle no longer submit a surrounding form on Enter.
 - Quick-adding a spouse no longer leaves a stray profile when the marriage cannot be saved: the new person is removed again, and if that is refused too, a message names the profile left without the marriage so it is not added twice.
 - A failed merge of duplicate profiles (e.g. lost connection) now shows a full message instead of one ending in an empty space.

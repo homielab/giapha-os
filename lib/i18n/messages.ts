@@ -476,7 +476,7 @@ export const messages = {
       'Đăng nhập với {provider} chưa được cấu hình trên hệ thống.',
     aboutTitle: 'Giới thiệu dự án',
     aboutDescription:
-      'Gia Phả OS là một giải pháp mã nguồn mở được thiết kế giúp các dòng họ, gia đình tự xây dựng và quản lý cây phả hệ của riêng mình. Dự án giúp bảo tồn và truyền đạt lại thông tin cội nguồn một cách trực quan, hiện đại, và đặc biệt là an toàn.',
+      '{siteName} là một giải pháp mã nguồn mở được thiết kế giúp các dòng họ, gia đình tự xây dựng và quản lý cây phả hệ của riêng mình. Dự án giúp bảo tồn và truyền đạt lại thông tin cội nguồn một cách trực quan, hiện đại, và đặc biệt là an toàn.',
     privacyTitle: 'Tuyên bố từ chối trách nhiệm & Quyền riêng tư',
     sourceOnly:
       'Dự án này chỉ cung cấp mã nguồn (source code). Không có bất kỳ dữ liệu cá nhân nào được thu thập hay lưu trữ bởi tác giả.',
@@ -1694,7 +1694,7 @@ export const messages = {
     oauthNotConfigured: '{provider} sign-in is not configured on this system.',
     aboutTitle: 'About the project',
     aboutDescription:
-      'Gia Phả OS is an open-source solution that helps families build and manage their own family tree. It preserves and presents family history in a visual, modern, and secure way.',
+      '{siteName} is an open-source solution that helps families build and manage their own family tree. It preserves and presents family history in a visual, modern, and secure way.',
     privacyTitle: 'Disclaimer & privacy',
     sourceOnly:
       'This project provides source code only. The author does not collect or store any personal data.',

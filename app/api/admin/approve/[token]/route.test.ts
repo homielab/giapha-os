@@ -8,6 +8,7 @@ import {
   test
 } from 'bun:test'
 
+import config from '@/app/config'
 import { createApprovalToken, hashApprovalToken } from '@/utils/approval'
 import {
   fakeSupabase,
@@ -119,6 +120,18 @@ afterEach(() => {
 })
 
 describe('POST /api/admin/approve/[token]', () => {
+  test('the page title uses the configured site name', async () => {
+    const siteName = config.siteName
+    config.siteName = 'Họ Nguyễn <Hà Nội>'
+    try {
+      const html = await (await post()).text()
+      expect(html).toContain('<title>Họ Nguyễn &lt;Hà Nội&gt; - ')
+      expect(html).not.toContain('Gia Phả OS')
+    } finally {
+      config.siteName = siteName
+    }
+  })
+
   test('activates the user and marks the link as used', async () => {
     const response = await post()
 

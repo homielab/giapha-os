@@ -42,6 +42,13 @@ describe('messages', () => {
     }
   })
 
+  test('aboutDescription names the site through {siteName}', () => {
+    for (const locale of ['vi', 'en'] as const) {
+      expect(messages[locale].aboutDescription).toContain('{siteName}')
+      expect(messages[locale].aboutDescription).not.toContain('Gia Phả OS')
+    }
+  })
+
   test('english backupPhotosNote contains photo', () => {
     expect(messages.en.backupPhotosNote.toLowerCase()).toContain('photo')
   })
