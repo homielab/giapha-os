@@ -1160,6 +1160,12 @@ export const messages = {
       'Không thể thêm: người cha/mẹ này đang là con cháu của người con, quan hệ sẽ tạo vòng.',
     relationshipChildOlderThanParent:
       'Không thể thêm: người con sinh trước cha/mẹ.',
+    relationshipInvalidBirthYear:
+      'Năm sinh không hợp lệ: chỉ nhập số nguyên từ 1 trở lên (ví dụ 1990).',
+    relationshipBirthYearInFuture:
+      'Năm sinh không được sau năm nay. Kiểm tra lại năm.',
+    relationshipInvalidBirthOrder:
+      'Thứ tự con không hợp lệ: chỉ nhập số nguyên từ 1 trở lên.',
     memberBornBeforeParent:
       'Ngày sinh không hợp lệ: sớm hơn ngày sinh của cha/mẹ {name}.',
     memberBornAfterChild:
@@ -2363,6 +2369,12 @@ export const messages = {
       'Cannot add: this parent is already a descendant of the child, which would create a loop.',
     relationshipChildOlderThanParent:
       'Cannot add: the child was born before the parent.',
+    relationshipInvalidBirthYear:
+      'Invalid birth year: enter a whole number from 1 up (for example 1990).',
+    relationshipBirthYearInFuture:
+      'The birth year cannot be after this year. Check the year.',
+    relationshipInvalidBirthOrder:
+      'Invalid birth order: enter a whole number from 1 up.',
     memberBornBeforeParent:
       'Invalid birth date: earlier than the birth date of parent {name}.',
     memberBornAfterChild:

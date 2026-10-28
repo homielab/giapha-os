@@ -8,6 +8,9 @@ export type RelationshipValidationCode =
   | 'cycle'
   | 'childOlderThanParent'
   | 'motherDiedBeforeBirth'
+  | 'invalidBirthYear'
+  | 'birthYearInFuture'
+  | 'invalidBirthOrder'
 
 /**
  * The date fields a check needs; month and day may be unknown. `gender` and
@@ -392,7 +395,10 @@ const ERROR_KEYS: Record<RelationshipValidationCode, TranslationKey> = {
   childOlderThanParent: 'relationshipChildOlderThanParent',
   motherDiedBeforeBirth: 'relationshipMotherDiedBeforeBirth',
   duplicateParent: 'relationshipDuplicateParent',
-  tooManyParents: 'relationshipTooManyParents'
+  tooManyParents: 'relationshipTooManyParents',
+  invalidBirthYear: 'relationshipInvalidBirthYear',
+  birthYearInFuture: 'relationshipBirthYearInFuture',
+  invalidBirthOrder: 'relationshipInvalidBirthOrder'
 }
 
 /** Translation key of the message shown for a validation code. */

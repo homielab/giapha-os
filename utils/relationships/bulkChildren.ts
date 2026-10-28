@@ -1,8 +1,10 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 
 import { BulkChildRow } from '@/components/relationship/relationshipTypes'
+import { vnToday } from '@/utils/dateHelpers'
 import {
   DatedPerson,
+  RelationshipValidationCode,
   RelationshipValidationError,
   validateNewChildren
 } from '@/utils/relationshipValidation'
@@ -16,10 +18,46 @@ export interface BulkChildInput {
   parentGeneration: number | null
 }
 
+const MAX_INT = 2147483647
+
+// A whole number written with digits only: "12abc", "-5" and "1990.5" are not.
+function parseWholeNumber(value: string): number | null {
+  const text = value.trim()
+  if (!/^\d+$/.test(text)) return null
+  const number = Number(text)
+  return number <= MAX_INT ? number : null
+}
+
+// Empty means unknown (null); anything that is not a whole number gives NaN,
+// which validateChildRow rejects.
 export function parseBirthYear(value: string): number | null {
   if (value.trim() === '') return null
-  const year = parseInt(value)
-  return isNaN(year) ? null : year
+  return parseWholeNumber(value) ?? NaN
+}
+
+function parseBirthOrder(value: string): number | null {
+  if (value.trim() === '') return null
+  return parseWholeNumber(value) ?? NaN
+}
+
+/**
+ * Checks the birth year and birth order a row would save, like the member
+ * form does for a single member: whole numbers only, a year from 1 up to the
+ * current year (Vietnam time), a birth order from 1.
+ */
+export function validateChildRow(
+  row: Pick<BulkChildRow, 'birthYear' | 'birthOrder'>,
+  today: Date = vnToday()
+): RelationshipValidationCode | null {
+  const year = parseBirthYear(row.birthYear)
+  if (year != null) {
+    if (Number.isNaN(year) || year < 1) return 'invalidBirthYear'
+    if (year > today.getFullYear()) return 'birthYearInFuture'
+  }
+  const order = parseBirthOrder(row.birthOrder)
+  if (order != null && (Number.isNaN(order) || order < 1))
+    return 'invalidBirthOrder'
+  return null
 }
 
 export interface BulkChildFailure {
@@ -63,10 +101,8 @@ async function createChildWithParents(
   }
   const birthYear = parseBirthYear(child.birthYear)
   if (birthYear != null) personPayload.birth_year = birthYear
-  if (child.birthOrder.trim() !== '') {
-    const order = parseInt(child.birthOrder)
-    if (!isNaN(order)) personPayload.birth_order = order
-  }
+  const birthOrder = parseBirthOrder(child.birthOrder)
+  if (birthOrder != null) personPayload.birth_order = birthOrder
 
   try {
     const { data: newPersonData, error: insertError } = await supabase
@@ -129,6 +165,12 @@ export async function bulkCreateChildren(
   }
 ): Promise<BulkCreateResult> {
   const { children, parentId, otherParentId, parentGeneration } = input
+
+  // Every row is checked before anything is saved.
+  for (const child of children) {
+    const code = validateChildRow(child)
+    if (code) throw new RelationshipValidationError(code, child.name.trim())
+  }
 
   const invalid = validateNewChildren(
     input.parents,

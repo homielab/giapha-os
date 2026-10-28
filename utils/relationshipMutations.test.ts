@@ -8,6 +8,7 @@ import {
   createSpouseWithMarriage,
   deleteRelationship
 } from '@/utils/relationshipMutations'
+import { RelationshipValidationError } from '@/utils/relationshipValidation'
 import {
   FakeCall,
   FakeResult,
@@ -51,6 +52,53 @@ function respondWith(override?: (call: FakeCall) => FakeResult | undefined) {
     return { data: [] }
   }
 }
+
+describe('bulkCreateChildren row checks', () => {
+  const year = new Date().getFullYear()
+  const cases: [string, string, string, string][] = [
+    ['12abc', '12abc', '', 'invalidBirthYear'],
+    ['-5', '-5', '', 'invalidBirthYear'],
+    ['1990.5', '1990.5', '', 'invalidBirthYear'],
+    ['0', '0', '', 'invalidBirthYear'],
+    ['2099', '2099', '', 'birthYearInFuture'],
+    ['order 0', '', '0', 'invalidBirthOrder'],
+    ['order -1', '', '-1', 'invalidBirthOrder'],
+    ['order 2x', '', '2x', 'invalidBirthOrder']
+  ]
+  for (const [label, birthYear, birthOrder, code] of cases) {
+    test(`${label} is refused and nothing is saved`, async () => {
+      const { client, calls } = fakeSupabase(respondWith())
+      const input = bulkInput(['An', 'Bình'])
+      input.children[1] = { ...input.children[1], birthYear, birthOrder }
+      const error = await bulkCreateChildren(client, input).catch((e) => e)
+      expect(error).toBeInstanceOf(RelationshipValidationError)
+      expect(error.code).toBe(code)
+      expect(error.subject).toBe('Bình')
+      expect(calls).toHaveLength(0)
+    })
+  }
+
+  test('empty and valid values are saved', async () => {
+    const { client, calls } = fakeSupabase(respondWith())
+    const input = bulkInput(['An', 'Bình'])
+    input.children[0] = { ...input.children[0], birthYear: ' 1990 ' }
+    input.children[1] = {
+      ...input.children[1],
+      birthYear: String(year),
+      birthOrder: '2'
+    }
+    const result = await bulkCreateChildren(client, input)
+    expect(result.created).toBe(2)
+    const inserts = calls.filter(
+      (c) => c.table === 'persons' && c.op === 'insert'
+    )
+    expect(inserts[0].payload).toMatchObject({ birth_year: 1990 })
+    expect(inserts[1].payload).toMatchObject({
+      birth_year: year,
+      birth_order: 2
+    })
+  })
+})
 
 describe('bulkCreateChildren', () => {
   test('creates every child with one insert linking both parents', async () => {
