@@ -23,7 +23,9 @@ function setup(user: { id: string } | null) {
   const fake = fakeSupabase((call) =>
     call.table === 'profiles'
       ? { data: { id: user?.id, role: 'admin', is_active: true } }
-      : { data: null }
+      : call.table === 'persons'
+        ? { data: { id: 'person-1', full_name: 'Nguyễn Văn A' } }
+        : { data: null }
   )
   let authChecks = 0
   let clients = 0
@@ -79,5 +81,25 @@ describe('createSessionQueries', () => {
     expect(await queries.getProfile()).toBeNull()
     expect(await queries.getIsAdmin()).toBe(false)
     expect(profileQueries()).toBe(0)
+  })
+
+  test('a member page and its metadata read the person once', async () => {
+    const { queries, calls } = setup({ id: 'user-1' })
+
+    // members/[id]/page.tsx: generateMetadata and the page body.
+    const [metadata, page] = await Promise.all([
+      queries.getPersonById('person-1'),
+      queries.getPersonById('person-1')
+    ])
+    await queries.getPersonById('person-2')
+
+    expect(metadata).toBe(page)
+    expect(page.person?.full_name).toBe('Nguyễn Văn A')
+    expect(page.error).toBeNull()
+    const personQueries = calls.filter((call) => call.table === 'persons')
+    expect(personQueries.map((call) => call.filters)).toEqual([
+      [['eq', 'id', 'person-1']],
+      [['eq', 'id', 'person-2']]
+    ])
   })
 })

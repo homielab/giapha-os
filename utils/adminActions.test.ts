@@ -67,6 +67,7 @@ mock.module('@/utils/supabase/queries', () => ({
   // Not used here; mock.module outlives the file, so keep every export.
   getUser: async () => null,
   getProfile: async () => null,
+  getPersonById: async () => ({ person: null, error: null }),
   getSupabase
 }))
 mock.module('@/lib/i18n/server', () => ({

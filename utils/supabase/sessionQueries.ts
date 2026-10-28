@@ -1,6 +1,6 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js'
 
-import type { Profile } from '@/types'
+import type { Person, Profile } from '@/types'
 
 // Memoizes a function for the current request. In the app this is React's
 // `cache`, which keys the result by the call's arguments: every caller must
@@ -52,5 +52,22 @@ export function createSessionQueries(
     return profile?.role === 'admin' && profile.is_active
   })
 
-  return { getSupabase, getUser, getProfile, getIsAdmin }
+  // One person row per id and request: a member page's metadata and its body
+  // share it. The error is returned, not thrown, so each caller decides.
+  const getPersonById = cache(
+    async (
+      id: string
+    ): Promise<{ person: Person | null; error: PostgrestError | null }> => {
+      const supabase = await getSupabase()
+      const { data, error } = await supabase
+        .from('persons')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle()
+
+      return { person: (data as Person | null) ?? null, error }
+    }
+  )
+
+  return { getSupabase, getUser, getProfile, getIsAdmin, getPersonById }
 }

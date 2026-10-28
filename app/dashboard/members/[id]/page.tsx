@@ -9,7 +9,11 @@ import MemberDetailContent from '@/context/MemberDetailContent'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { memberPrintTitle } from '@/utils/memberPrint'
 import { fetchPrivateDetails } from '@/utils/privateDetails'
-import { getProfile, getSupabase } from '@/utils/supabase/queries'
+import {
+  getPersonById,
+  getProfile,
+  getSupabase
+} from '@/utils/supabase/queries'
 import { isUuid } from '@/utils/uuid'
 
 interface PageProps {
@@ -22,14 +26,10 @@ export async function generateMetadata({
   const [{ t }, { id }] = await Promise.all([getServerTranslations(), params])
   if (!isUuid(id)) return { title: t('familyTree') }
 
-  const supabase = await getSupabase()
-  const { data } = await supabase
-    .from('persons')
-    .select('full_name')
-    .eq('id', id)
-    .maybeSingle()
+  // Same cached row as the page below: one persons query per visit.
+  const { person } = await getPersonById(id)
 
-  return { title: data?.full_name || t('familyTree') }
+  return { title: person?.full_name || t('familyTree') }
 }
 
 export default async function MemberDetailPage({ params }: PageProps) {
@@ -51,11 +51,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
   // Fetch Person Public Data
   // A database error is thrown to the dashboard error page; only a missing
   // row is a 404.
-  const { data: person, error } = await supabase
-    .from('persons')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle()
+  const { person, error } = await getPersonById(id)
 
   if (error) throw error
   if (!person) notFound()

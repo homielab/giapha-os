@@ -43,6 +43,7 @@ mock.module('@/utils/supabase/queries', () => ({
   getUser: async () => user,
   getProfile: async () => profile,
   getIsAdmin: async () => profile?.role === 'admin' && profile.is_active,
+  getPersonById: async () => ({ person: null, error: null }),
   getSupabase
 }))
 mock.module('@/lib/i18n/server', () => ({
