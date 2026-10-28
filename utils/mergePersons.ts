@@ -24,6 +24,8 @@ export interface MergePerson {
   other_names: string | null
   avatar_url: string | null
   note: string | null
+  /** Missing on databases without the burial_place column yet. */
+  burial_place?: string | null
 }
 
 export interface MergeRelationshipRow {
@@ -61,6 +63,7 @@ export type MergeFillKey =
   | 'birthOrder'
   | 'generation'
   | 'avatar'
+  | 'burialPlace'
 
 export interface MergePreview {
   /** Relationships of the dropped member that are re-pointed to the keeper. */
@@ -163,10 +166,16 @@ export function previewMerge(input: {
     personFills.push({ key: 'isDeceased', value: true })
   if (!keep.is_in_law && drop.is_in_law)
     personFills.push({ key: 'isInLaw', value: true })
-
-  const privateMoved = privateKeep == null && privateDrop != null
   const empty = (value: string | null | undefined) =>
     (value ?? '').trim() === ''
+  // Text column: an empty string counts as empty, like in the RPC.
+  if (empty(keep.burial_place) && !empty(drop.burial_place))
+    personFills.push({
+      key: 'burialPlace',
+      value: (drop.burial_place ?? '').trim()
+    })
+
+  const privateMoved = privateKeep == null && privateDrop != null
   const privateFills =
     privateKeep == null || privateDrop == null
       ? []
@@ -208,11 +217,8 @@ export function previewMerge(input: {
 }
 
 /**
- * Columns the merge preview reads from `persons` (everything the RPC may
- * change or move).
+ * Columns the merge preview reads from `persons`: the whole row, because the
+ * RPC may change or move almost every column, and '*' still works on a
+ * database without the burial_place column yet.
  */
-export const MERGE_PERSON_COLUMNS =
-  'id, full_name, birth_year, birth_month, birth_day, death_year, ' +
-  'death_month, death_day, death_lunar_year, death_lunar_month, ' +
-  'death_lunar_day, is_deceased, is_in_law, birth_order, generation, ' +
-  'other_names, avatar_url, note'
+export const MERGE_PERSON_COLUMNS = '*'

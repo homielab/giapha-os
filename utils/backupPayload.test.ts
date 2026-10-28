@@ -5,11 +5,13 @@ import {
   buildRestorePayload,
   isMissingRestoreFunction,
   legacyCustomEventRows,
+  legacyPersonRows,
   MAX_PERSONS,
   MAX_RELATIONSHIPS,
   MAX_REPORTED_ISSUES,
   RESTORE_PAYLOAD_VERSION,
   toCustomEventExport,
+  toPersonExport,
   validateImportPayload,
   type ImportPayload,
   type Translator
@@ -500,5 +502,75 @@ describe('custom event recurrence in backups', () => {
       'recurrence',
       'yearly_solar'
     )
+  })
+})
+
+describe('burial place in backups', () => {
+  test('export → import keeps the burial place', () => {
+    const row = person(A, { burial_place: 'Nghĩa trang làng Đông Ngạc' })
+    const exported = JSON.parse(
+      JSON.stringify({
+        ...validPayload(),
+        version: BACKUP_VERSION,
+        persons: [
+          toPersonExport(row as ImportPayload['persons'][number]),
+          person(B, { gender: 'female' })
+        ]
+      })
+    ) as ImportPayload
+    expect(exported.persons[0]).toHaveProperty('created_at')
+    expect(validateImportPayload(exported, t)).toBeNull()
+    const persons = buildRestorePayload(exported).persons
+    expect(persons[0].burial_place).toBe('Nghĩa trang làng Đông Ngạc')
+    expect(persons[1].burial_place).toBeNull()
+  })
+
+  test('exports rows of a database without the column as null', () => {
+    const exported = toPersonExport(
+      person(A) as ImportPayload['persons'][number]
+    )
+    expect(exported).toHaveProperty('burial_place', null)
+  })
+
+  test('older backups without the field restore it as null', () => {
+    const payload = buildRestorePayload(validPayload())
+    expect(payload.persons[0]).toHaveProperty('burial_place', null)
+  })
+
+  test('blank values become null', () => {
+    const payload = buildRestorePayload({
+      ...validPayload(),
+      persons: [
+        person(A, { burial_place: '   ' }),
+        person(B, { burial_place: '  Đồi thông  ' })
+      ] as ImportPayload['persons']
+    })
+    expect(payload.persons[0].burial_place).toBeNull()
+    expect(payload.persons[1].burial_place).toBe('Đồi thông')
+  })
+
+  test('rejects a burial place that is not text or too long', () => {
+    for (const value of [12, 'x'.repeat(2001)]) {
+      const payload = {
+        ...validPayload(),
+        persons: [person(A, { burial_place: value }), person(B)]
+      } as unknown as ImportPayload
+      expect(validateImportPayload(payload, t)).toBe(
+        `fieldTooLong:${JSON.stringify({ field: 'burial_place' })}`
+      )
+    }
+  })
+
+  test('the old chunked restore leaves the column out while no member has one', () => {
+    const none = buildRestorePayload(validPayload()).persons
+    expect(legacyPersonRows(none)[0]).not.toHaveProperty('burial_place')
+    const some = buildRestorePayload({
+      ...validPayload(),
+      persons: [
+        person(A, { burial_place: 'Quê nội' }),
+        person(B)
+      ] as ImportPayload['persons']
+    }).persons
+    expect(legacyPersonRows(some)[0]).toHaveProperty('burial_place', 'Quê nội')
   })
 })

@@ -292,6 +292,8 @@ Admin có thể mở mục **Nâng cấp hệ thống** trong menu quản trị 
 
 **Sự kiện lặp hằng năm cần migration `20261027180000_custom_events_recurrence.sql`.** Migration thêm cột `recurrence` vào bảng `custom_events` (`none` = một lần, `yearly_solar` = hằng năm theo ngày/tháng dương lịch, `yearly_lunar` = hằng năm theo ngày/tháng âm lịch của ngày diễn ra, giữ tháng nhuận như ngày giỗ) với mặc định `none`: sự kiện cũ giữ nguyên, không mất dữ liệu, và cập nhật hàm `restore_backup` để phục hồi giữ kiểu lặp. Trang **Nâng cấp hệ thống** tự liệt kê migration này. Khi chưa chạy migration, sự kiện một lần vẫn thêm/sửa bình thường; chọn kiểu lặp hằng năm sẽ báo lỗi database cho tới khi nâng cấp.
 
+**Nơi an táng cần migration `20261028120000_add_burial_place.sql`.** Migration thêm cột `burial_place` (văn bản, có thể để trống) vào bảng `persons` để ghi nơi an táng của thành viên. Cột công khai như ngày mất: mọi thành viên đã được duyệt đều xem được, quyền (RLS) không đổi. Migration cũng cập nhật hàm `restore_backup` (phục hồi giữ nơi an táng; bản sao lưu cũ không có trường này thì để trống) và `merge_persons` (gộp hồ sơ điền nơi an táng còn trống của hồ sơ giữ từ hồ sơ bị gộp). Sao lưu JSON (định dạng v5) và CSV có thêm cột `burial_place`. Trang **Nâng cấp hệ thống** tự liệt kê migration này. Khi chưa chạy migration, ứng dụng vẫn hoạt động như cũ, chỉ chưa lưu được nơi an táng.
+
 ### Hướng dẫn cập nhật source code
 
 Khi trang `/dashboard/upgrade` thông báo source code đang cũ, hãy cập nhật **toàn bộ source code** lên version mới nhất. Không chỉ sửa số `version` trong `package.json` để bỏ qua cảnh báo, vì migration có thể yêu cầu các thay đổi tương ứng trong code.

@@ -49,6 +49,8 @@ export interface Person {
   birth_order: number | null
   generation: number | null
   other_names: string | null
+  /** Where the member is buried; missing on databases not upgraded yet. */
+  burial_place?: string | null
 }
 
 export interface Relationship {

@@ -845,6 +845,7 @@ export const messages = {
     mergeField_birthOrder: 'Thứ tự con',
     mergeField_generation: 'Đời',
     mergeField_avatar: 'Ảnh đại diện',
+    mergeField_burialPlace: 'Nơi an táng',
     mergePrivateMoved:
       'Thông tin riêng tư (số điện thoại, nghề nghiệp, nơi ở) của hồ sơ bị gộp chuyển sang hồ sơ giữ.',
     mergePrivateFilled:
@@ -2031,6 +2032,7 @@ export const messages = {
     mergeField_birthOrder: 'Birth order',
     mergeField_generation: 'Generation',
     mergeField_avatar: 'Avatar',
+    mergeField_burialPlace: 'Burial place',
     mergePrivateMoved:
       'The merged-away profile’s private details (phone, occupation, residence) move to the kept profile.',
     mergePrivateFilled:

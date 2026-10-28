@@ -184,4 +184,27 @@ describe('previewMerge', () => {
     expect(same.otherNamesAdded).toEqual(['AN'])
     expect(same.noteAppended).toBe(false)
   })
+
+  test('an empty burial place of the keeper takes the dropped one', () => {
+    const filled = previewMerge({
+      ...baseInput,
+      keep: person({ ...A, burial_place: '  ' }),
+      drop: person({ ...B, burial_place: ' Nghĩa trang Văn Điển ' })
+    })
+    expect(filled.personFills).toContainEqual({
+      key: 'burialPlace',
+      value: 'Nghĩa trang Văn Điển'
+    })
+
+    // Missing on a database without the column: nothing to fill.
+    const missing = previewMerge({ ...baseInput, keep: A, drop: B })
+    expect(missing.personFills.map((f) => f.key)).not.toContain('burialPlace')
+
+    const kept = previewMerge({
+      ...baseInput,
+      keep: person({ ...A, burial_place: 'Quê nội' }),
+      drop: person({ ...B, burial_place: 'Quê ngoại' })
+    })
+    expect(kept.personFills.map((f) => f.key)).not.toContain('burialPlace')
+  })
 })

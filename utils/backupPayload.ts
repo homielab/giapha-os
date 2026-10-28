@@ -33,6 +33,8 @@ export interface PersonExport {
   other_names: string | null
   avatar_url: string | null
   note: string | null
+  /** Missing in backups made before burial places (= null). */
+  burial_place?: string | null
   // DB-managed fields (kept in export for traceability, stripped on import)
   created_at?: string
   updated_at?: string
@@ -84,7 +86,10 @@ export interface ImportPayload {
   custom_events?: CustomEventExport[]
 }
 
-export type SanitizedPerson = Omit<PersonExport, 'created_at' | 'updated_at'>
+export type SanitizedPerson = Omit<
+  PersonExport,
+  'created_at' | 'updated_at' | 'burial_place'
+> & { burial_place: string | null }
 export type SanitizedRelationship = Omit<
   RelationshipExport,
   'id' | 'created_at' | 'updated_at'
@@ -120,10 +125,10 @@ export const RESTORE_PAYLOAD_VERSION = 1
 /**
  * Version written into JSON backups. v2 added birth order and generation, v3
  * lunar death dates, private details, relationship notes and custom events, v4
- * the recurrence of custom events. Raise it when the backup format changes;
+ * the recurrence of custom events, v5 the burial place. Raise it when the backup format changes;
  * files with a higher version are refused.
  */
-export const BACKUP_VERSION = 4
+export const BACKUP_VERSION = 5
 
 // Keep in sync with private.restore_backup in docs/migrations.
 export const MAX_PERSONS = 10000
@@ -231,7 +236,7 @@ export function validateImportPayload(
     }
     if (!['male', 'female', 'other'].includes(String(row.gender)))
       return t('invalidGender')
-    for (const field of ['other_names', 'avatar_url', 'note']) {
+    for (const field of ['other_names', 'avatar_url', 'note', 'burial_place']) {
       if (!isShortText(row[field], 2000)) return t('fieldTooLong', { field })
     }
     const badField = findInvalidNumberField(row)
@@ -373,8 +378,34 @@ export function sanitizePerson(p: PersonExport): SanitizedPerson {
     generation: p.generation ?? null,
     other_names: p.other_names ?? null,
     avatar_url: p.avatar_url ?? null,
-    note: p.note ?? null
+    note: p.note ?? null,
+    burial_place: p.burial_place?.trim() || null
   }
+}
+
+/**
+ * The exported fields of a persons row (read with '*', so a database without
+ * the burial_place column yet still exports): no burial place = null.
+ */
+export function toPersonExport(p: PersonExport): PersonExport {
+  return {
+    ...sanitizePerson(p),
+    created_at: p.created_at,
+    updated_at: p.updated_at
+  }
+}
+
+/**
+ * Person rows for the old chunked restore. A database that old may not have
+ * the burial_place column: leave it out while no member has one.
+ */
+export function legacyPersonRows(persons: SanitizedPerson[]): object[] {
+  if (persons.some((p) => p.burial_place !== null)) return persons
+  return persons.map((person) => {
+    const row: Partial<SanitizedPerson> = { ...person }
+    delete row.burial_place
+    return row
+  })
 }
 
 export function sanitizeRelationship(

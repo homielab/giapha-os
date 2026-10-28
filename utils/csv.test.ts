@@ -189,6 +189,20 @@ describe('parseCsvZip', () => {
     expect(result.custom_events?.[0].recurrence).toBe('yearly_lunar')
   })
 
+  test('keeps the burial place of members as text', async () => {
+    const result = await parseCsvZip(
+      await exportToCsvZip({
+        persons: [
+          { ...persons[0], burial_place: 'Nghĩa trang Văn Điển, lô 12' },
+          { ...persons[1], burial_place: null }
+        ],
+        relationships
+      })
+    )
+    expect(result.persons[0].burial_place).toBe('Nghĩa trang Văn Điển, lô 12')
+    expect(result.persons[1].burial_place).toBeNull()
+  })
+
   test('accepts files without a BOM', async () => {
     const result = await parseCsvZip(
       await zipWith({

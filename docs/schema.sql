@@ -90,7 +90,8 @@ CREATE TABLE IF NOT EXISTS public.persons (
   other_names TEXT,
   avatar_url TEXT,
   note TEXT,
-  
+  burial_place TEXT, -- Nơi an táng (public, like the dates of death)
+
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

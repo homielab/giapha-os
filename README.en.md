@@ -291,6 +291,8 @@ Administrators can open **System upgrade** from the administration menu to check
 
 **Yearly events need the migration `20261027180000_custom_events_recurrence.sql`.** It adds a `recurrence` column to `custom_events` (`none` = once, `yearly_solar` = every year on the solar day and month, `yearly_lunar` = every year on the lunar day and month of the event date, leap month kept like a death anniversary) with the default `none`: existing events stay as they are and no data is lost. It also updates `restore_backup` so a restore keeps each event's recurrence. The **System upgrade** page lists it automatically. Until it is run, one-off events can still be added and edited; choosing a yearly option shows a database error until you upgrade.
 
+**Burial places need the migration `20261028120000_add_burial_place.sql`.** It adds a nullable text column `burial_place` to `persons` to record where a member is buried. Like the dates of death it is public: every approved member can read it, and the Row Level Security is unchanged. It also updates `restore_backup` (a restore keeps the burial place; older backups without it restore it empty) and `merge_persons` (a merge fills the kept profile's empty burial place from the merged-away one). JSON backups (format v5) and CSV exports gain a `burial_place` column. The **System upgrade** page lists it automatically. Until it is run, the app works as before; burial places just cannot be stored yet.
+
 ### Source code updates
 
 When `/dashboard/upgrade` reports that the source code is outdated, update the **entire source tree** to the latest version. Do not only change the `version` number in `package.json` to bypass the warning, because migrations may require corresponding code changes.

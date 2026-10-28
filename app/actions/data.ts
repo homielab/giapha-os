@@ -9,7 +9,9 @@ import {
   buildRestorePayload,
   isMissingRestoreFunction,
   legacyCustomEventRows,
+  legacyPersonRows,
   toCustomEventExport,
+  toPersonExport,
   validateImportPayload,
   type BackupPayload,
   type CustomEventExport,
@@ -68,11 +70,10 @@ export async function exportData(
   let allCustomEvents: CustomEventExport[] = []
 
   try {
-    allPersons = await fetchAll<PersonExport>(
-      'persons',
-      'id, full_name, gender, birth_year, birth_month, birth_day, death_year, death_month, death_day, death_lunar_year, death_lunar_month, death_lunar_day, is_deceased, is_in_law, birth_order, generation, other_names, avatar_url, note, created_at, updated_at',
-      'created_at'
-    )
+    // '*' also works on databases without the burial_place column yet.
+    allPersons = (
+      await fetchAll<PersonExport>('persons', '*', 'created_at')
+    ).map(toPersonExport)
     allRels = await fetchAll<RelationshipExport>(
       'relationships',
       'id, type, person_a, person_b, note, created_at, updated_at',
@@ -240,7 +241,7 @@ async function legacyImport(
 
   const CHUNK = 200
   const insertions: Array<[string, object[], TranslationKey]> = [
-    ['persons', payload.persons, 'importPersonsError'],
+    ['persons', legacyPersonRows(payload.persons), 'importPersonsError'],
     ['relationships', payload.relationships, 'importRelationshipsError'],
     [
       'person_details_private',
