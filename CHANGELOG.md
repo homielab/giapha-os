@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- GEDCOM import now reads notes written as a pointer (`1 NOTE @N1@`, used by Gramps, Family Tree Maker, Legacy and Ancestry) instead of importing the text `@N1@` and losing the note; GEDCOM export splits long notes into `CONC` lines of at most 255 characters.
 - A long biography no longer makes your own backup unrestorable: the member form now limits names to 200, notes, other names and burial place to 2,000 and phone, occupation and residence to 500 characters (with an "n/2000" counter under the note), and a GEDCOM or CSV file with longer text is restored with the excess cut, after a warning in the restore confirmation.
 - Gallery: replacing a photo now deletes the old file from storage, and a failed save no longer leaves the newly uploaded file behind, so edits stop using up the free storage quota.
 - Members list: sorting by "Recently updated" / "Least recently updated" now works; the list no longer loaded the update time, so the order never changed. The extra column adds about 60 KB for 2,000 members.

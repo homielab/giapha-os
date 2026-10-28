@@ -1,5 +1,6 @@
 import { formatDate } from './dates'
 import { formatName, splitOtherNames } from './names'
+import { noteLines } from './notes'
 import type { GedcomPerson, GedcomRelationship } from './types'
 
 export function exportToGedcom(data: {
@@ -222,11 +223,7 @@ export function exportToGedcom(data: {
 
     // Note
     if (person.note) {
-      const lines = person.note.split('\n')
-      gedcom += `1 NOTE ${lines[0]}\n`
-      for (let i = 1; i < lines.length; i++) {
-        gedcom += `2 CONT ${lines[i]}\n`
-      }
+      gedcom += noteLines(1, 'NOTE', person.note)
     }
   }
 

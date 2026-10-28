@@ -1,5 +1,7 @@
 import { parseGedcomDate } from './dates'
 import { readName } from './names'
+import { isNotePointer, readNoteRecord } from './notes'
+import { readRecords } from './records'
 import type { GedcomPerson, GedcomRelationship } from './types'
 
 function generateUUID() {
@@ -25,34 +27,14 @@ export function parseGedcom(gedcom: string): {
   // `${indiXref} ${famXref}` of FAMC links marked PEDI ADOPTED
   const adoptedLinks = new Set<string>()
 
-  type ParseRecord = {
-    type: 'INDI' | 'FAM'
-    id: string
-    lines: string[]
-  }
-
-  const records: ParseRecord[] = []
-  let currentRecord: ParseRecord | null = null
-
-  for (const line of lines) {
-    if (line.startsWith('0 ')) {
-      if (currentRecord) records.push(currentRecord)
-      const match = line.match(/^0\s+@([^@]+)@\s+(INDI|FAM)/)
-      if (match) {
-        currentRecord = {
-          id: match[1],
-          type: match[2] as 'INDI' | 'FAM',
-          lines: []
-        }
-      } else {
-        currentRecord = null
-      }
-    } else if (currentRecord) {
-      // Keep trailing spaces: a CONC line may end with a word break.
-      currentRecord.lines.push(line.trimStart())
+  const records = readRecords(lines)
+  // Shared note records, resolved when an INDI points at them.
+  const noteTexts = new Map<string, string>()
+  for (const record of records) {
+    if (record.type === 'NOTE') {
+      noteTexts.set(record.id, readNoteRecord(record.first, record.lines))
     }
   }
-  if (currentRecord) records.push(currentRecord)
 
   // Parse Individuals
   for (const record of records.filter((r) => r.type === 'INDI')) {
@@ -71,7 +53,8 @@ export function parseGedcom(gedcom: string): {
     let death_day = null
     let death_month = null
     let death_year = null
-    let note = ''
+    const notes: string[] = []
+    let inlineNote = false
     let burialPlace: string | null = null
     let deathLunar: { day: number; month: number; year: number } | null = null
     let deathLunarLeap = false
@@ -113,7 +96,11 @@ export function parseGedcom(gedcom: string): {
         } else if (tag === 'DEAT') {
           is_deceased = val.trim().length === 0 || val === 'Y'
         } else if (tag === 'NOTE') {
-          note = val
+          // A pointer to a missing record gives no note.
+          inlineNote = !isNotePointer(val)
+          notes.push(
+            inlineNote ? val : (noteTexts.get(val.trim().slice(1, -1)) ?? '')
+          )
         } else if (tag === '_GEN' || tag === '_ORDER') {
           const n = /^\d+$/.test(val) ? parseInt(val) : null
           if (tag === '_GEN') generation = n
@@ -130,10 +117,10 @@ export function parseGedcom(gedcom: string): {
           if (famc && val.trim().toUpperCase() === 'ADOPTED') {
             adoptedLinks.add(`${record.id} ${famc}`)
           }
-        } else if (currentTag === 'NOTE' && tag === 'CONT') {
-          note += '\n' + val
-        } else if (currentTag === 'NOTE' && tag === 'CONC') {
-          note += val
+        } else if (currentTag === 'NOTE' && tag === 'CONT' && inlineNote) {
+          notes[notes.length - 1] += '\n' + val
+        } else if (currentTag === 'NOTE' && tag === 'CONC' && inlineNote) {
+          notes[notes.length - 1] += val
         } else if (currentTag === 'BIRT' && tag === 'DATE') {
           const date = parseGedcomDate(val)
           birth_day = date.day
@@ -167,6 +154,7 @@ export function parseGedcom(gedcom: string): {
     }
 
     // A range keeps only its first date: say so in the note.
+    let note = notes.filter((n) => n.trim()).join('\n\n')
     if (rangeNotes.length > 0) {
       note = [note, ...rangeNotes].filter(Boolean).join('\n')
     }

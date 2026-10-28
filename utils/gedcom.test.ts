@@ -826,3 +826,99 @@ describe('decodeGedcom', () => {
     expect(r.persons).toHaveLength(1)
   })
 })
+
+describe('GEDCOM pointer notes', () => {
+  const file = (...lines: string[]) => ['0 HEAD', ...lines, '0 TRLR'].join('\n')
+  const indi = (...lines: string[]) => [
+    '0 @I1@ INDI',
+    '1 NAME /Lê/ Văn Bình',
+    ...lines
+  ]
+
+  test('resolves a NOTE pointer to the shared record', () => {
+    const { persons } = parseGedcom(
+      file(...indi('1 NOTE @N1@'), '0 @N1@ NOTE Sinh tại Huế')
+    )
+    expect(persons[0].note).toBe('Sinh tại Huế')
+  })
+
+  test('joins CONC and CONT lines of a pointed note', () => {
+    const { persons } = parseGedcom(
+      file(
+        ...indi('1 NOTE @N1@'),
+        '0 @N1@ NOTE Dòng một dài ',
+        '1 CONC tiếp tục',
+        '1 CONT Dòng hai',
+        '1 CONT Dòng ba'
+      )
+    )
+    expect(persons[0].note).toBe('Dòng một dài tiếp tục\nDòng hai\nDòng ba')
+  })
+
+  test('a pointer to a missing record gives no note', () => {
+    const { persons } = parseGedcom(file(...indi('1 NOTE @N9@')))
+    expect(persons[0].note).toBeNull()
+  })
+
+  test('reads inline and pointer notes in the same file', () => {
+    const { persons } = parseGedcom(
+      file(
+        ...indi('1 NOTE @N1@'),
+        '0 @I2@ INDI',
+        '1 NAME /Lê/ Thị Hoa',
+        '1 NOTE Ghi chú trực tiếp',
+        '2 CONT Dòng hai',
+        '0 @N1@ NOTE Tiểu sử chung'
+      )
+    )
+    expect(persons[0].note).toBe('Tiểu sử chung')
+    expect(persons[1].note).toBe('Ghi chú trực tiếp\nDòng hai')
+  })
+
+  test('reads several notes of one person and GEDCOM 7 SNOTE', () => {
+    const { persons } = parseGedcom(
+      file(
+        ...indi('1 NOTE @N1@', '1 NOTE Thêm'),
+        '0 @N1@ SNOTE Một',
+        '1 CONT Hai'
+      )
+    )
+    expect(persons[0].note).toBe('Một\nHai\n\nThêm')
+  })
+
+  test('a Gramps-style file keeps the note and later records', () => {
+    const { persons, relationships } = parseGedcom(
+      file(
+        '0 @I1@ INDI',
+        '1 NAME An /Lê/',
+        '1 NOTE @N1@',
+        '1 FAMS @F1@',
+        '0 @N1@ NOTE Làm ruộng',
+        '1 CONC  và dạy học',
+        '0 @I2@ INDI',
+        '1 NAME Hoa /Trần/',
+        '1 FAMS @F1@',
+        '0 @F1@ FAM',
+        '1 HUSB @I1@',
+        '1 WIFE @I2@'
+      )
+    )
+    expect(persons[0].note).toBe('Làm ruộng và dạy học')
+    expect(persons[1].note).toBeNull()
+    expect(relationships).toHaveLength(1)
+  })
+
+  test('export splits a long note into CONC lines and round-trips', () => {
+    const long = 'Tiểu sử 😀 '.repeat(120) + 'hết.\nĐoạn hai ' + 'x'.repeat(600)
+    const ged = exportToGedcom({
+      persons: [person('a', 'male', { note: long })],
+      relationships: []
+    })
+    const lines = ged.split('\n')
+    for (const line of lines)
+      expect(Array.from(line).length).toBeLessThanOrEqual(255)
+    expect(ged).toContain('\n2 CONC ')
+    expect(ged).toContain('\n2 CONT Đoạn hai ')
+    expect(parseGedcom(ged).persons[0].note).toBe(long)
+  })
+})
