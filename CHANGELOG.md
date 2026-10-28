@@ -74,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- GEDCOM import: notes and sources of a family with only a husband or only a wife are no longer dropped silently; the restore confirmation now counts them in its warning (they are still not imported, since there is no marriage to hold them).
 - New custom events default to today in Vietnam, like the rest of the dashboard, instead of the device's date, which was a day off when the family member opening the dialog lives in another time zone.
 - Cleaning up replaced gallery photos and merged avatars no longer treats a `*` in a file path as a wildcard (PostgREST reads `*` as `%`), so a file whose name contains a star is matched as itself.
 - GEDCOM export no longer drops marriage notes (including the "Nguồn: …" lines kept from an import): they are written as `NOTE` on the family record, and import reads a family's `NOTE` (inline or pointer, a missing pointer counted in the restore warning) back into the marriage's note.

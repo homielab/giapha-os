@@ -32,7 +32,7 @@ export function parseGedcom(gedcom: string): {
   const ctx: PersonContext = {
     noteTexts: new Map(),
     sourTexts: new Map(),
-    stats: { missingNotes: 0, sources: 0 },
+    stats: { missingNotes: 0, sources: 0, droppedFamilyNotes: 0 },
     adoptedLinks: new Set()
   }
   for (const record of records) {

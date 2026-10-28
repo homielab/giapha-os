@@ -38,4 +38,6 @@ export interface GedcomImportStats {
   missingNotes: number
   /** SOUR and REPO records; only source titles survive, in notes. */
   sources: number
+  /** FAM records with a NOTE or SOUR but without both spouses (no marriage to keep it). */
+  droppedFamilyNotes: number
 }

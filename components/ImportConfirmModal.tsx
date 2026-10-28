@@ -103,13 +103,17 @@ export default function ImportConfirmModal({
                   {t('restoreTruncated', { count: truncated })}
                 </p>
               ) : null}
-              {gedcom && (gedcom.sources > 0 || gedcom.missingNotes > 0) ? (
+              {gedcom &&
+              (gedcom.sources > 0 ||
+                gedcom.missingNotes > 0 ||
+                gedcom.droppedFamilyNotes > 0) ? (
                 <p
                   role='alert'
                   className='mt-3 rounded-lg bg-amber-50 p-2 text-sm text-amber-800'>
                   {t('restoreGedcomDropped', {
                     sources: gedcom.sources,
-                    missingNotes: gedcom.missingNotes
+                    missingNotes: gedcom.missingNotes,
+                    droppedFamilyNotes: gedcom.droppedFamilyNotes
                   })}
                 </p>
               ) : null}

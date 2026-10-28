@@ -1115,7 +1115,11 @@ describe('GEDCOM sources and missing notes', () => {
       file('0 @I1@ INDI', '1 NAME An /Lê/', '1 NOTE @N9@', '1 NOTE Có thật')
     )
     expect(persons[0].note).toBe('Có thật')
-    expect(stats).toEqual({ missingNotes: 1, sources: 0 })
+    expect(stats).toEqual({
+      missingNotes: 1,
+      sources: 0,
+      droppedFamilyNotes: 0
+    })
   })
 
   test('cited sources become "Nguồn: …" notes of the person and the marriage', () => {
@@ -1155,7 +1159,11 @@ describe('GEDCOM sources and missing notes', () => {
     )
     expect(persons[1].note).toBe('Nguồn: Gia phả họ Lê bản 1950')
     expect(relationships[0].note).toBe('Nguồn: Sổ hộ tịch\nTrang 3\ndòng hai')
-    expect(stats).toEqual({ missingNotes: 0, sources: 3 })
+    expect(stats).toEqual({
+      missingNotes: 0,
+      sources: 3,
+      droppedFamilyNotes: 0
+    })
   })
 
   test('the header SOUR of the app does not become a note', () => {
@@ -1171,7 +1179,11 @@ describe('GEDCOM sources and missing notes', () => {
     )
     expect(persons[0].note).toBeNull()
     expect(relationships).toEqual([])
-    expect(stats).toEqual({ missingNotes: 0, sources: 0 })
+    expect(stats).toEqual({
+      missingNotes: 0,
+      sources: 0,
+      droppedFamilyNotes: 0
+    })
   })
 
   test('a file exported by the app imports without warnings', () => {
@@ -1183,7 +1195,11 @@ describe('GEDCOM sources and missing notes', () => {
       relationships: [{ type: 'marriage', person_a: 'a', person_b: 'b' }]
     })
     const { persons, relationships, stats } = parseGedcom(ged)
-    expect(stats).toEqual({ missingNotes: 0, sources: 0 })
+    expect(stats).toEqual({
+      missingNotes: 0,
+      sources: 0,
+      droppedFamilyNotes: 0
+    })
     expect(persons[0].note).toBe('Tiểu sử')
     expect(relationships[0]).not.toHaveProperty('note')
   })
@@ -1244,6 +1260,69 @@ describe('roundtrip', () => {
   })
 })
 
+describe('GEDCOM family notes without both spouses', () => {
+  const file = (...lines: string[]) => ['0 HEAD', ...lines, '0 TRLR'].join('\n')
+  const people = [
+    '0 @I1@ INDI',
+    '1 NAME An /Lê/',
+    '0 @I2@ INDI',
+    '1 NAME Bình /Trần/',
+    '0 @I3@ INDI',
+    '1 NAME Cúc /Lê/'
+  ]
+
+  test('a single-parent family with a note is counted and its note is not given to anyone', () => {
+    const { persons, relationships, stats } = parseGedcom(
+      file(
+        ...people,
+        '0 @F1@ FAM',
+        '1 HUSB @I1@',
+        '1 CHIL @I3@',
+        '1 NOTE Vợ không rõ'
+      )
+    )
+    expect(stats.droppedFamilyNotes).toBe(1)
+    expect(relationships).toEqual([
+      {
+        type: 'biological_child',
+        person_a: persons[0].id,
+        person_b: persons[2].id
+      }
+    ])
+    expect(persons.every((p) => p.note === null)).toBe(true)
+  })
+
+  test('a single-parent family citing a source is counted', () => {
+    const { stats } = parseGedcom(
+      file(
+        ...people,
+        '0 @F1@ FAM',
+        '1 WIFE @I2@',
+        '1 SOUR @S1@',
+        '0 @S1@ SOUR',
+        '1 TITL Gia phả'
+      )
+    )
+    expect(stats.droppedFamilyNotes).toBe(1)
+  })
+
+  test('families with both spouses, or without notes, are not counted', () => {
+    const { stats } = parseGedcom(
+      file(
+        ...people,
+        '0 @F1@ FAM',
+        '1 HUSB @I1@',
+        '1 WIFE @I2@',
+        '1 NOTE Cưới năm 1950',
+        '0 @F2@ FAM',
+        '1 HUSB @I1@',
+        '1 CHIL @I3@'
+      )
+    )
+    expect(stats.droppedFamilyNotes).toBe(0)
+  })
+})
+
 describe('GEDCOM marriage notes', () => {
   const file = (...lines: string[]) => ['0 HEAD', ...lines, '0 TRLR'].join('\n')
   const couple = [
@@ -1279,7 +1358,11 @@ describe('GEDCOM marriage notes', () => {
     const { relationships, stats } = parseGedcom(ged)
     expect(relationships).toHaveLength(1)
     expect(relationships[0].note).toBe(note)
-    expect(stats).toEqual({ missingNotes: 0, sources: 0 })
+    expect(stats).toEqual({
+      missingNotes: 0,
+      sources: 0,
+      droppedFamilyNotes: 0
+    })
   })
 
   test('import reads inline FAM notes with CONC/CONT before cited sources', () => {
@@ -1318,6 +1401,10 @@ describe('GEDCOM marriage notes', () => {
       )
     )
     expect(relationships[0].note).toBe('Hôn thú\nsố 12')
-    expect(stats).toEqual({ missingNotes: 1, sources: 0 })
+    expect(stats).toEqual({
+      missingNotes: 1,
+      sources: 0,
+      droppedFamilyNotes: 0
+    })
   })
 })

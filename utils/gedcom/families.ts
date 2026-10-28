@@ -8,7 +8,8 @@ import type { GedcomRelationship } from './types'
 // the family's NOTEs and cited sources as its note) and a parent link from
 // each of them to every CHIL. `ctx.adoptedLinks` holds `${indiXref}
 // ${famXref}` of FAMC links marked PEDI ADOPTED. Members missing from `idMap`
-// are skipped.
+// are skipped. A family without both spouses has no marriage, so its notes
+// and sources are dropped and counted in `ctx.stats.droppedFamilyNotes`.
 export function readFamilies(
   records: ParseRecord[],
   idMap: Map<string, string>,
@@ -48,19 +49,22 @@ export function readFamilies(
       }
     }
 
+    const note = [
+      ...noteReader.notes,
+      ...sourceNotes(record.lines, ctx.sourTexts)
+    ]
+      .filter((n) => n.trim())
+      .join('\n\n')
     if (husb && wife && husb !== wife) {
-      const note = [
-        ...noteReader.notes,
-        ...sourceNotes(record.lines, ctx.sourTexts)
-      ]
-        .filter((n) => n.trim())
-        .join('\n\n')
       relationships.push({
         type: 'marriage',
         person_a: husb,
         person_b: wife,
         ...(note ? { note } : {})
       })
+    } else if (note) {
+      // No marriage to hold the note: the import drops it and warns
+      ctx.stats.droppedFamilyNotes++
     }
 
     // Link each child to the parents this family actually has
