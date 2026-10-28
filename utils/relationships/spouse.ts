@@ -1,6 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 
 import { Person } from '@/types'
+import { checkTextLength, MAX_NAME, MAX_NOTE } from '@/utils/limits'
 import { PersonNotCreatedError } from '@/utils/writeErrors'
 
 export interface SpouseInput {
@@ -11,13 +12,19 @@ export interface SpouseInput {
 }
 
 // Creates a spouse person (default gender opposite to `person`) and links the
-// marriage. Returns the new spouse's ID; throws on failure.
+// marriage. Returns the new spouse's ID; throws on failure (TextTooLongError
+// before anything is saved when the name or note is over the backup limits).
 export async function createSpouseWithMarriage(
   supabase: SupabaseClient,
   { person, name, birthYear, note }: SpouseInput
 ): Promise<string> {
   // Determine default gender based on current person
   // Default to opposite. If original is other, default to female (arbitrary choice, or let user pick, but standard says opposite)
+  const fullName = name.trim()
+  const relationshipNote = note.trim()
+  checkTextLength('fullName', fullName, MAX_NAME)
+  checkTextLength('note', relationshipNote, MAX_NOTE)
+
   const newSpouseGender =
     person.gender === 'male'
       ? 'female'
@@ -32,7 +39,7 @@ export async function createSpouseWithMarriage(
     is_in_law?: boolean
     generation?: number
   } = {
-    full_name: name.trim(),
+    full_name: fullName,
     gender: newSpouseGender,
     is_in_law: person.is_in_law === true ? false : true
   }
@@ -63,7 +70,7 @@ export async function createSpouseWithMarriage(
     person_a: person.id,
     person_b: newSpouseId,
     type: 'marriage',
-    note: note.trim() || null
+    note: relationshipNote || null
   })
 
   if (relError) throw relError

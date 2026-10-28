@@ -4,11 +4,13 @@ import {
   canEditCustomEvent,
   CustomEventNotAllowedError,
   deleteCustomEvent,
-  saveCustomEvent
+  saveCustomEvent,
+  type CustomEventPayload
 } from './customEventMutations'
+import { MAX_NAME, MAX_NOTE, TextTooLongError } from './limits'
 import { fakeSupabase } from './testing/fakeSupabase'
 
-const payload = {
+const payload: CustomEventPayload = {
   name: 'Họp mặt',
   event_date: '2026-12-01',
   location: null,
@@ -25,6 +27,24 @@ describe('canEditCustomEvent', () => {
 })
 
 describe('saveCustomEvent', () => {
+  const tooLong: [string, Partial<CustomEventPayload>, string, number][] = [
+    ['name', { name: 'a'.repeat(MAX_NAME + 1) }, 'eventName', MAX_NAME],
+    ['location', { location: 'b'.repeat(MAX_NOTE + 1) }, 'location', MAX_NOTE],
+    ['content', { content: 'c'.repeat(MAX_NOTE + 1) }, 'details', MAX_NOTE]
+  ]
+  for (const [field, change, label, max] of tooLong) {
+    test(`${field} over the backup limit is refused and nothing is saved`, async () => {
+      const { client, calls } = fakeSupabase(() => ({ data: [{ id: 'e1' }] }))
+      const error = await saveCustomEvent(client, {
+        ...payload,
+        ...change
+      }).catch((e) => e)
+      expect(error).toBeInstanceOf(TextTooLongError)
+      expect(error).toMatchObject({ label, max })
+      expect(calls).toHaveLength(0)
+    })
+  }
+
   test('update that changes one row succeeds', async () => {
     const { client, calls } = fakeSupabase(() => ({ data: [{ id: 'e1' }] }))
     await saveCustomEvent(client, payload, 'e1')

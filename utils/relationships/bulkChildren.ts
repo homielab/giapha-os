@@ -2,6 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 
 import { BulkChildRow } from '@/components/relationship/relationshipTypes'
 import { vnToday } from '@/utils/dateHelpers'
+import { checkTextLength, MAX_NAME } from '@/utils/limits'
 import {
   DatedPerson,
   RelationshipValidationCode,
@@ -168,6 +169,7 @@ export async function bulkCreateChildren(
 
   // Every row is checked before anything is saved.
   for (const child of children) {
+    checkTextLength('fullName', child.name.trim(), MAX_NAME)
     const code = validateChildRow(child)
     if (code) throw new RelationshipValidationError(code, child.name.trim())
   }

@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
+import type { LimitedTextLabel } from '@/utils/limits'
+
 import { globalErrorMessages } from './globalErrorMessages'
 import { interpolate, messages, translate } from './messages'
 
@@ -71,6 +73,27 @@ describe('globalErrorMessages', () => {
     for (const locale of ['vi', 'en'] as const) {
       for (const [key, value] of Object.entries(globalErrorMessages[locale])) {
         expect(messages[locale][key as keyof typeof messages.vi]).toBe(value)
+      }
+    }
+  })
+
+  test('every field checked by checkTextLength has a label in vi and en', () => {
+    const labels: LimitedTextLabel[] = [
+      'fullName',
+      'note',
+      'eventName',
+      'location',
+      'details'
+    ]
+    for (const locale of ['vi', 'en'] as const) {
+      for (const label of labels) {
+        const text = translate(locale, 'textTooLong', {
+          field: translate(locale, label),
+          max: 200
+        })
+        expect(text).toContain(messages[locale][label])
+        expect(text).toContain('200')
+        expect(text).not.toContain('{')
       }
     }
   })

@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { emptyBulkChildRow } from '@/components/relationship/relationshipTypes'
 import { Person } from '@/types'
+import { MAX_NAME, MAX_NOTE, TextTooLongError } from '@/utils/limits'
 import {
   addRelationshipWithTargetSync,
   bulkCreateChildren,
@@ -77,6 +78,22 @@ describe('bulkCreateChildren row checks', () => {
       expect(calls).toHaveLength(0)
     })
   }
+
+  test('a name over the backup limit is refused and nothing is saved', async () => {
+    const { client, calls } = fakeSupabase(respondWith())
+    const input = bulkInput(['An', 'a'.repeat(MAX_NAME + 1)])
+    const error = await bulkCreateChildren(client, input).catch((e) => e)
+    expect(error).toBeInstanceOf(TextTooLongError)
+    expect(error).toMatchObject({ label: 'fullName', max: MAX_NAME })
+    expect(calls).toHaveLength(0)
+  })
+
+  test('a name of exactly the limit (spaces around trimmed) is saved', async () => {
+    const { client } = fakeSupabase(respondWith())
+    const input = bulkInput([` ${'a'.repeat(MAX_NAME)} `])
+    const result = await bulkCreateChildren(client, input)
+    expect(result.created).toBe(1)
+  })
 
   test('empty and valid values are saved', async () => {
     const { client, calls } = fakeSupabase(respondWith())
@@ -306,5 +323,26 @@ describe('createSpouseWithMarriage', () => {
     await expect(createSpouseWithMarriage(client, input)).rejects.toEqual(
       denied
     )
+  })
+
+  test('a name over the backup limit is refused and nothing is saved', async () => {
+    const { client, calls } = fakeSupabase(() => ({ data: { id: 's1' } }))
+    const error = await createSpouseWithMarriage(client, {
+      ...input,
+      name: 'a'.repeat(MAX_NAME + 1)
+    }).catch((e) => e)
+    expect(error).toBeInstanceOf(TextTooLongError)
+    expect(error).toMatchObject({ label: 'fullName', max: MAX_NAME })
+    expect(calls).toHaveLength(0)
+  })
+
+  test('a note over the backup limit is refused and nothing is saved', async () => {
+    const { client, calls } = fakeSupabase(() => ({ data: { id: 's1' } }))
+    const error = await createSpouseWithMarriage(client, {
+      ...input,
+      note: 'n'.repeat(MAX_NOTE + 1)
+    }).catch((e) => e)
+    expect(error).toMatchObject({ label: 'note', max: MAX_NOTE })
+    expect(calls).toHaveLength(0)
   })
 })

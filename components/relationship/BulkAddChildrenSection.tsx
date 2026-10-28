@@ -10,6 +10,7 @@ import {
 } from '@/components/relationship/relationshipTypes'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
+import { TextTooLongError } from '@/utils/limits'
 import { bulkCreateChildren } from '@/utils/relationshipMutations'
 import {
   relationshipErrorKey,
@@ -100,6 +101,10 @@ export default function BulkAddChildrenSection({
       )
       if (created > 0 || failures.some((f) => f.orphaned)) onSaved()
     } catch (err: unknown) {
+      if (err instanceof TextTooLongError) {
+        showError(t('textTooLong', { field: t(err.label), max: err.max }))
+        return
+      }
       if (err instanceof RelationshipValidationError) {
         const message = t(relationshipErrorKey(err.code))
         showError(err.subject ? `${err.subject}: ${message}` : message)

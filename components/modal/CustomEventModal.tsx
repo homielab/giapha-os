@@ -23,6 +23,7 @@ import {
   defaultEventDate,
   toRecurrence
 } from '@/utils/eventHelpers'
+import { TextTooLongError } from '@/utils/limits'
 import { lunarToSolar } from '@/utils/lunarCalendar'
 import { createClient } from '@/utils/supabase/client'
 
@@ -144,6 +145,8 @@ export default function CustomEventModal({
       console.error(err)
       if (err instanceof CustomEventNotAllowedError) {
         setError(t('eventNotAllowed'))
+      } else if (err instanceof TextTooLongError) {
+        setError(t('textTooLong', { field: t(err.label), max: err.max }))
       } else if (err instanceof Error) {
         setError(err.message || t('saveEventError'))
       } else {

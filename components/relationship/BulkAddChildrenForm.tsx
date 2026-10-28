@@ -6,6 +6,7 @@ import {
   EnrichedRelationship
 } from '@/components/relationship/relationshipTypes'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { MAX_NAME } from '@/utils/limits'
 
 interface BulkAddChildrenFormProps {
   spouseOptions: EnrichedRelationship[]
@@ -120,6 +121,7 @@ export default function BulkAddChildrenForm({
                   type='text'
                   aria-label={t('childName')}
                   placeholder={t('requiredFullName')}
+                  maxLength={MAX_NAME}
                   value={child.name}
                   onChange={(e) => updateRow(index, { name: e.target.value })}
                   className='w-[calc(100%-4rem)] min-w-0 rounded-lg border border-stone-300 bg-stone-50 px-3 py-2 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-sky-500 focus:ring-sky-500 sm:w-auto sm:flex-1'

@@ -4,6 +4,7 @@ import type {
   CustomEventRecord,
   CustomEventRecurrence
 } from '@/utils/eventHelpers'
+import { checkTextLength, MAX_NAME, MAX_NOTE } from '@/utils/limits'
 
 /** The row-level policy lets only the creator or an admin change an event. */
 export function canEditCustomEvent(
@@ -34,13 +35,17 @@ export interface CustomEventPayload {
 /**
  * Inserts or updates a custom event. Row-level security hides rows from an
  * update or delete without an error, so `.select('id')` is used and zero rows
- * are reported as `CustomEventNotAllowedError`.
+ * are reported as `CustomEventNotAllowedError`. A name, location or content
+ * over the backup limits throws `TextTooLongError` before anything is saved.
  */
 export async function saveCustomEvent(
   supabase: SupabaseClient,
   payload: CustomEventPayload,
   eventId?: string
 ): Promise<void> {
+  checkTextLength('eventName', payload.name, MAX_NAME)
+  checkTextLength('location', payload.location, MAX_NOTE)
+  checkTextLength('details', payload.content, MAX_NOTE)
   if (!eventId) {
     const { error } = await supabase.from('custom_events').insert([payload])
     if (error) throw error

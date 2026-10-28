@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The quick "add spouse" form, "add several children" and the custom event dialog now stop names over 200 characters and notes, places and event details over 2,000 characters, like the member form. Before, such text saved but a backup holding it was refused on restore.
 - The account menu and the export menu now close with Esc and put focus back on their button; screen readers hear that the button opens a menu and whether it is open, and export errors are read out.
 - GEDCOM import: notes and sources of a family with only a husband or only a wife are no longer dropped silently; the restore confirmation now counts them in its warning (they are still not imported, since there is no marriage to hold them).
 - New custom events default to today in Vietnam, like the rest of the dashboard, instead of the device's date, which was a day off when the family member opening the dialog lives in another time zone.

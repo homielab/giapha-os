@@ -4,6 +4,36 @@ export const MAX_NAME = 200
 export const MAX_NOTE = 2000
 export const MAX_PRIVATE = 500
 
+/** Translation key of the label of a field checked by `checkTextLength`. */
+export type LimitedTextLabel =
+  'fullName' | 'note' | 'eventName' | 'location' | 'details'
+
+/**
+ * A text is longer than the limit a backup is checked against. Thrown before
+ * anything is saved, so every saved record still restores from a backup.
+ */
+export class TextTooLongError extends Error {
+  readonly label: LimitedTextLabel
+  readonly max: number
+
+  constructor(label: LimitedTextLabel, max: number) {
+    super(`${label} is longer than ${max} characters`)
+    this.name = 'TextTooLongError'
+    this.label = label
+    this.max = max
+  }
+}
+
+/** Throws `TextTooLongError` when `value` (as it will be saved) is over `max`. */
+export function checkTextLength(
+  label: LimitedTextLabel,
+  value: string | null | undefined,
+  max: number
+): void {
+  if (value != null && value.length > max)
+    throw new TextTooLongError(label, max)
+}
+
 /** Backup fields (table -> field) and the limit each one is checked against. */
 const PERSON_LIMITS: Record<string, number> = {
   full_name: MAX_NAME,

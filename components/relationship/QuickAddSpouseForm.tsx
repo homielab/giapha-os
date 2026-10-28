@@ -1,6 +1,7 @@
 'use client'
 
 import { useI18n } from '@/lib/i18n/useI18n'
+import { MAX_NAME, MAX_NOTE } from '@/utils/limits'
 
 interface QuickAddSpouseFormProps {
   personGender: 'male' | 'female' | 'other'
@@ -48,6 +49,7 @@ export default function QuickAddSpouseForm({
             name='spouse-name'
             type='text'
             placeholder={t('fullNamePlaceholder')}
+            maxLength={MAX_NAME}
             value={newSpouseName}
             onChange={(e) => onNameChange(e.target.value)}
             className='block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-rose-500 focus:ring-rose-500 sm:p-2.5'
@@ -82,6 +84,7 @@ export default function QuickAddSpouseForm({
             name='spouse-note'
             type='text'
             placeholder={t('optional')}
+            maxLength={MAX_NOTE}
             value={newSpouseNote}
             onChange={(e) => onNoteChange(e.target.value)}
             className='block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-rose-500 focus:ring-rose-500 sm:p-2.5'
