@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Members list (by generation): siblings, cousins' families and a member's spouses born in the same year now follow the month and day of birth, like the family tree and the family book, instead of the order they were entered. A set birth order still comes first; members without a known date come last.
 - Changing a member's generation no longer shifts that member a second time when old imported data has a parent-child loop back to them; only their descendants move.
 - Keyboard and screen reader: the cards on the Events page that open a profile or an event can be reached with Tab and opened with Enter or Space; cards that open nothing stay out of the Tab order. The day/month/year boxes of the birth date, the solar and lunar death dates and the lunar event date are now grouped under their label, so a screen reader says which date they belong to, and the birth order and birth year boxes of "add several children" have a name.
 

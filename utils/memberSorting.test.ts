@@ -84,6 +84,35 @@ describe('groupIntoCoupleGroups', () => {
     expect(groups.map(ids)[1]).toEqual(['single'])
   })
 
+  test('wives born the same year sort by month and day', () => {
+    const groups = groupIntoCoupleGroups(
+      [
+        person('husband', 'male', { birth_year: 1940 }),
+        person('wifeB', 'female', {
+          is_in_law: true,
+          birth_year: 1945,
+          birth_month: 3,
+          birth_day: 20
+        }),
+        person('wifeA', 'female', {
+          is_in_law: true,
+          birth_year: 1945,
+          birth_month: 3,
+          birth_day: 5
+        }),
+        person('wifeC', 'female', { is_in_law: true, birth_year: 1945 })
+      ],
+      linkMap([
+        ['husband', 'wifeC'],
+        ['husband', 'wifeB'],
+        ['husband', 'wifeA']
+      ])
+    )
+    // Bloodline in the middle, wives placed oldest first (right, far left,
+    // then the free slot); the one without a known date is placed last.
+    expect(ids(groups[0])).toEqual(['wifeB', 'wifeC', 'husband', 'wifeA'])
+  })
+
   test('a spouse outside the given list is not added', () => {
     const groups = groupIntoCoupleGroups(
       [person('husband', 'male')],
@@ -173,5 +202,87 @@ describe('sortPersonsByGeneration', () => {
       spousesOf
     )
     expect(ids(sorted)).toEqual(['dad', 'mom', 'aunt', 'grandpa', 'grandma'])
+  })
+
+  test('siblings born the same year sort by month, then day, unknown last', () => {
+    const kids = [
+      person('dad', 'male', { generation: 1 }),
+      person('c', 'male', { generation: 2, birth_year: 1970 }),
+      person('b', 'male', {
+        generation: 2,
+        birth_year: 1970,
+        birth_month: 8,
+        birth_day: 2
+      }),
+      person('a', 'female', {
+        generation: 2,
+        birth_year: 1970,
+        birth_month: 2,
+        birth_day: 14
+      }),
+      person('d', 'female', {
+        generation: 2,
+        birth_year: 1970,
+        birth_month: 8,
+        birth_day: 1
+      }),
+      person('b-wife', 'female', { generation: 2, is_in_law: true })
+    ]
+    const sorted = sortPersonsByGeneration(
+      kids,
+      'generation_asc',
+      new Map(kids.map((p) => [p.id, p])),
+      new Map(['a', 'b', 'c', 'd'].map((id) => [id, ['dad']])),
+      linkMap([['b', 'b-wife']])
+    )
+    expect(ids(sorted)).toEqual(['dad', 'a', 'd', 'b', 'b-wife', 'c'])
+  })
+
+  test('a stored birth order still wins over the birth date', () => {
+    const kids = [
+      person('dad', 'male', { generation: 1 }),
+      person('older', 'male', {
+        generation: 2,
+        birth_year: 1970,
+        birth_month: 1
+      }),
+      person('first', 'male', {
+        generation: 2,
+        birth_year: 1970,
+        birth_month: 12,
+        birth_order: 1
+      })
+    ]
+    const sorted = sortPersonsByGeneration(
+      kids,
+      'generation_asc',
+      new Map(kids.map((p) => [p.id, p])),
+      new Map([
+        ['older', ['dad']],
+        ['first', ['dad']]
+      ]),
+      new Map()
+    )
+    expect(ids(sorted)).toEqual(['dad', 'first', 'older'])
+  })
+
+  test('families of cousins born the same year sort by birth date', () => {
+    const all = [
+      person('p1', 'male', { generation: 1 }),
+      person('p2', 'male', { generation: 1 }),
+      person('x', 'male', { generation: 2, birth_year: 1990, birth_month: 9 }),
+      person('y', 'male', { generation: 2, birth_year: 1990, birth_month: 4 })
+    ]
+    const sorted = sortPersonsByGeneration(
+      all,
+      'generation_asc',
+      new Map(all.map((p) => [p.id, p])),
+      new Map([
+        ['x', ['p1']],
+        ['y', ['p2']]
+      ]),
+      new Map()
+    )
+    expect(ids(sorted).slice(2)).toEqual(['y', 'x'])
   })
 })

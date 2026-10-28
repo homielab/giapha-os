@@ -98,7 +98,7 @@ export function sortPersonsByGeneration(
     // Find the "core" member (usually the bloodline, not in-law)
     const coreMember = members.find((m) => !m.is_in_law) || members[0]
 
-    // Score is [generation, parentBirthOrder, ownBirthOrder, birthYear]
+    // Score: the parent's birth order, then the core member (compareBirth)
     const parents = parentsOf.get(coreMember.id) || []
     let parentBirthOrder = 999
     if (parents.length > 0) {
@@ -106,11 +106,7 @@ export function sortPersonsByGeneration(
       if (p1) parentBirthOrder = p1.birth_order || 999
     }
 
-    return {
-      parentBirthOrder,
-      ownBirthOrder: coreMember.birth_order || 999,
-      birthYear: coreMember.birth_year || 9999
-    }
+    return { parentBirthOrder, coreMember }
   }
 
   const familyScores = new Map(
@@ -127,10 +123,7 @@ export function sortPersonsByGeneration(
     if (scoreA.parentBirthOrder !== scoreB.parentBirthOrder) {
       return scoreA.parentBirthOrder - scoreB.parentBirthOrder
     }
-    if (scoreA.ownBirthOrder !== scoreB.ownBirthOrder) {
-      return scoreA.ownBirthOrder - scoreB.ownBirthOrder
-    }
-    return scoreA.birthYear - scoreB.birthYear
+    return compareBirth(scoreA.coreMember, scoreB.coreMember)
   })
 
   // 5. Flatten the grouped and sorted families
@@ -151,12 +144,7 @@ export function sortPersonsByGeneration(
       const refB = getBloodlineRef(b)
 
       // Different bloodline partner -> sort by the bloodline partner's order/age
-      if (refA.id !== refB.id) {
-        if ((refA.birth_order || 999) !== (refB.birth_order || 999)) {
-          return (refA.birth_order || 999) - (refB.birth_order || 999)
-        }
-        return (refA.birth_year || 9999) - (refB.birth_year || 9999)
-      }
+      if (refA.id !== refB.id) return compareBirth(refA, refB)
 
       // Same bloodline partner (e.g. one is bloodline, other is spouse)
       if (a.is_in_law !== b.is_in_law) {
@@ -164,7 +152,7 @@ export function sortPersonsByGeneration(
       }
 
       // Both are spouses or both bloodline? Sort by age
-      return (a.birth_year || 9999) - (b.birth_year || 9999)
+      return compareBirth(a, b)
     })
     finalSorted.push(...members.map((m) => ({ ...m, _familyId: groupId })))
   })
@@ -220,10 +208,10 @@ export function groupIntoCoupleGroups(
     // This ensures HUB -- SPOUSE links work best in a horizontal grid.
     const bloodlineMembers = group
       .filter((m) => !m.is_in_law)
-      .sort((a, b) => (a.birth_year || 0) - (b.birth_year || 0))
+      .sort((a, b) => compareBirth(a, b))
     const inLawMembers = group
       .filter((m) => m.is_in_law)
-      .sort((a, b) => (a.birth_year || 0) - (b.birth_year || 0))
+      .sort((a, b) => compareBirth(a, b))
 
     const balanced: Person[] = []
     if (group.length <= 2) {
