@@ -935,6 +935,10 @@ export const messages = {
     fileTooLarge10: 'Kích thước file phải nhỏ hơn 10MB.',
     unsupportedImageType: 'Chỉ hỗ trợ ảnh JPG, PNG, GIF hoặc WEBP.',
     galleryPagination: 'Phân trang phòng trưng bày',
+    galleryImageUnavailable: 'Không tải được ảnh',
+    galleryLoadErrorTitle: 'Không tải được ảnh của phòng trưng bày',
+    galleryLoadErrorDescription:
+      'Không tạo được đường dẫn xem ảnh. Hãy kiểm tra bucket Supabase Storage "gallery" đã được tạo và chính sách của nó khớp với docs/schema.sql (xem README, mục cài đặt), rồi thử lại.',
     galleryPageStatus: 'Trang {page}/{pageCount} · {total} ảnh',
     previousPage: 'Trang trước',
     nextPage: 'Trang sau',
@@ -2131,6 +2135,10 @@ export const messages = {
     fileTooLarge10: 'The file must be smaller than 10MB.',
     unsupportedImageType: 'Only JPG, PNG, GIF or WEBP images are supported.',
     galleryPagination: 'Gallery pages',
+    galleryImageUnavailable: 'Image could not be loaded',
+    galleryLoadErrorTitle: 'The gallery images could not be loaded',
+    galleryLoadErrorDescription:
+      'Image links could not be created. Check that the Supabase Storage bucket "gallery" exists and its policies match docs/schema.sql (see the README setup section), then try again.',
     galleryPageStatus: 'Page {page} of {pageCount} · {total} images',
     previousPage: 'Previous page',
     nextPage: 'Next page',

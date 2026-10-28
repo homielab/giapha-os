@@ -2,9 +2,9 @@
 
 import dayjs from 'dayjs'
 import { CalendarDays, X } from 'lucide-react'
-import Image from 'next/image'
 import { useId } from 'react'
 
+import GalleryImage from '@/components/GalleryImage'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { GalleryItem } from '@/types'
@@ -47,10 +47,8 @@ export default function GalleryLightbox({
       <div className='flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-stone-950 shadow-2xl lg:flex-row'>
         {/* Image Section */}
         <div className='relative flex min-h-[50vh] flex-1 items-center justify-center bg-black/50 p-4 lg:min-h-0'>
-          <Image
-            unoptimized
-            src={item.image_url}
-            alt={item.title}
+          <GalleryImage
+            item={item}
             width={1200}
             height={800}
             className='max-h-[80vh] max-w-full rounded-lg object-contain'

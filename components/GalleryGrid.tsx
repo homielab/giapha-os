@@ -2,9 +2,9 @@
 
 import dayjs from 'dayjs'
 import { CalendarDays, Clock, Maximize2 } from 'lucide-react'
-import Image from 'next/image'
 import { useMemo, useState } from 'react'
 
+import GalleryImage from '@/components/GalleryImage'
 import GalleryLightbox from '@/components/GalleryLightbox'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { GalleryItem } from '@/types'
@@ -135,10 +135,8 @@ export default function GalleryGrid({
               }}
               onClick={() => setSelectedItem(item)}>
               {/* Image */}
-              <Image
-                unoptimized
-                src={item.image_url}
-                alt={item.title}
+              <GalleryImage
+                item={item}
                 width={800}
                 height={600}
                 className='w-full object-cover transition-transform duration-700 group-hover:scale-105'
@@ -201,10 +199,8 @@ export default function GalleryGrid({
                     className='group flex cursor-pointer flex-col justify-between rounded-2xl border border-stone-200/80 bg-white/80 p-4 backdrop-blur-xl transition-colors duration-300 hover:-translate-y-1'>
                     <div>
                       <div className='relative mb-4 aspect-16/10 overflow-hidden rounded-xl bg-stone-100'>
-                        <Image
-                          unoptimized
-                          src={item.image_url}
-                          alt={item.title}
+                        <GalleryImage
+                          item={item}
                           width={600}
                           height={400}
                           className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'

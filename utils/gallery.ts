@@ -7,6 +7,18 @@ import { GalleryItemNotUpdatedError } from '@/utils/writeErrors'
 export const GALLERY_PAGE_SIZE = 24
 export const SIGNED_URL_TTL_SECONDS = 60 * 60
 
+export const GALLERY_BUCKET = 'gallery'
+
+/** Thrown when the signing request itself fails (missing bucket, policy, Storage down). */
+export class GallerySigningError extends Error {
+  constructor(detail: string) {
+    super(
+      `Cannot sign gallery image URLs: ${detail}. Check that the Supabase Storage bucket "${GALLERY_BUCKET}" exists and that its policies match docs/schema.sql.`
+    )
+    this.name = 'GallerySigningError'
+  }
+}
+
 export interface GalleryPage {
   items: GalleryItem[]
   page: number
@@ -69,22 +81,32 @@ export async function loadGalleryPage(
 
   const toSign = [...new Set(paths.filter(Boolean))]
   if (toSign.length > 0) {
-    const { data: signed } = await supabase.storage
-      .from('gallery')
+    const { data: signed, error: signError } = await supabase.storage
+      .from(GALLERY_BUCKET)
       .createSignedUrls(toSign, SIGNED_URL_TTL_SECONDS)
+    if (signError) {
+      console.error('Cannot sign gallery URLs:', signError.message)
+      throw new GallerySigningError(signError.message)
+    }
     for (const entry of signed ?? []) {
-      if (entry.path && entry.signedUrl) {
+      if (entry.path && entry.signedUrl && !entry.error) {
         signedUrls.set(entry.path, entry.signedUrl)
+      } else if (entry.error) {
+        console.error('Cannot sign gallery URL:', entry.path, entry.error)
       }
     }
   }
 
   return {
-    items: rows.map((item, index) => ({
-      ...item,
-      image_url: signedUrls.get(paths[index]) ?? '',
-      storage_path: paths[index]
-    })),
+    items: rows.map((item, index) => {
+      const signedUrl = signedUrls.get(paths[index])
+      return {
+        ...item,
+        image_url: signedUrl ?? '',
+        image_error: !signedUrl,
+        storage_path: paths[index]
+      }
+    }),
     page,
     pageCount: getGalleryPageCount(total),
     total

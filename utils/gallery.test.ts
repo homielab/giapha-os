@@ -13,6 +13,7 @@ import {
   deleteGalleryItem,
   GALLERY_PAGE_SIZE,
   GalleryItemNotDeletedError,
+  GallerySigningError,
   getGalleryPageCount,
   loadGalleryPage,
   parseGalleryPage,
@@ -329,5 +330,49 @@ describe('saveGalleryItem', () => {
     })
     await done
     expect(removed()).toEqual([])
+  })
+})
+
+describe('loadGalleryPage signing errors', () => {
+  function withSigner(
+    rows: GalleryItem[],
+    sign: (paths: string[]) => Promise<unknown>
+  ) {
+    const { client } = fakeSupabase(rows)
+    const base = client as unknown as {
+      from: unknown
+      storage: unknown
+    }
+    return {
+      from: base.from,
+      storage: { from: () => ({ createSignedUrls: sign }) }
+    } as unknown as SupabaseClient
+  }
+
+  test('an entry that fails to sign is marked, the others are normal', async () => {
+    const client = withSigner(makeItems(3), async (paths) => ({
+      data: paths.map((path) =>
+        path === '1.jpg'
+          ? { path, signedUrl: null, error: 'Object not found' }
+          : { path, signedUrl: `https://cdn.test/${path}`, error: null }
+      ),
+      error: null
+    }))
+    const { items } = await loadGalleryPage(client, 1)
+    expect(items[1].image_url).toBe('')
+    expect(items[1].image_error).toBe(true)
+    expect(items[0].image_url).toBe('https://cdn.test/0.jpg')
+    expect(items[0].image_error).toBe(false)
+    expect(items[2].image_error).toBe(false)
+  })
+
+  test('a failed signing request throws and names the bucket', async () => {
+    const client = withSigner(makeItems(2), async () => ({
+      data: null,
+      error: { message: 'Bucket not found' }
+    }))
+    const promise = loadGalleryPage(client, 1)
+    await expect(promise).rejects.toBeInstanceOf(GallerySigningError)
+    await expect(promise).rejects.toThrow('"gallery"')
   })
 })
