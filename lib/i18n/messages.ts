@@ -767,7 +767,7 @@ export const messages = {
     lunarRecomputeFailed: 'Không thể tính lại ngày giỗ. Vui lòng thử lại.',
     dataCheckTitle: 'Kiểm tra dữ liệu',
     dataCheckDescription:
-      'Rà cả cây tìm mốc ngày vô lý, thường gặp ở dữ liệu nhập từ GEDCOM hoặc CSV: mất trước khi sinh, con sinh sau khi mẹ mất, cha/mẹ hơn con dưới 12 hoặc trên 70 tuổi (chỉ xét khi có đủ năm sinh; bỏ qua con nuôi), ngày sinh/mất trong tương lai, quan hệ bị lặp; và nhóm thiếu thông tin: chưa có năm sinh, đã mất nhưng thiếu năm mất, chưa rõ giới tính. Chỉ để xem; không có gì bị sửa. Mở từng hồ sơ để sửa.',
+      'Rà cả cây tìm mốc ngày vô lý, thường gặp ở dữ liệu nhập từ GEDCOM hoặc CSV: mất trước khi sinh, con sinh sau khi mẹ mất, cha/mẹ hơn con dưới 12 hoặc trên 70 tuổi (chỉ xét khi có đủ năm sinh; bỏ qua con nuôi), ngày sinh/mất trong tương lai, quan hệ bị lặp, con có quá nhiều cha mẹ ruột, vòng cha–con (một người vừa là tổ tiên vừa là con cháu của chính mình), người nối quan hệ với chính mình; và nhóm thiếu thông tin: chưa có năm sinh, đã mất nhưng thiếu năm mất, chưa rõ giới tính. Chỉ để xem; không có gì bị sửa. Mở từng hồ sơ để sửa.',
     dataCheckRun: 'Kiểm tra dữ liệu',
     dataCheckRunning: 'Đang kiểm tra...',
     dataCheckNone: 'Không phát hiện gì.',
@@ -798,6 +798,12 @@ export const messages = {
     dataCheckDuplicateChild: '{a} và {b} có hai quan hệ cha/mẹ – con.',
     dataCheckTooManyParents:
       '{child} có {count} cha mẹ ruột (tối đa một cha và một mẹ): {parents}.',
+    dataCheckKindParentChildLoop: 'Vòng cha–con',
+    dataCheckKindSelfLink: 'Quan hệ với chính mình',
+    dataCheckParentChildLoop:
+      'Vòng {count} người, mỗi người là cha/mẹ của người sau: {path}.',
+    dataCheckSelfMarriage: '{name} kết hôn với chính mình.',
+    dataCheckSelfChild: '{name} là cha/mẹ của chính mình.',
     duplicateScanTitle: 'Người có thể trùng',
     duplicateScanDescription:
       'Quét cả cây tìm thành viên có thể là một người nhập hai lần: cùng tên (không phân biệt dấu) và cùng năm sinh, hoặc cùng tên và cùng cha/mẹ. Chỉ để xem; không có gì bị sửa hay xoá. Hãy mở từng hồ sơ và tự sửa hoặc xoá bằng công cụ sẵn có.',
@@ -1981,7 +1987,7 @@ export const messages = {
     lunarRecomputeFailed: 'Could not recompute the dates. Please try again.',
     dataCheckTitle: 'Data check',
     dataCheckDescription:
-      'Looks through the whole tree for impossible dates, common in data imported from GEDCOM or CSV: death before birth, a child born after the mother died, a parent less than 12 or more than 70 years older than the child (only when both birth years are known; adopted children are skipped), birth or death dates in the future, repeated relationships; and a group of missing information: no birth year, deceased but no death year, gender unknown. View only; nothing is changed. Open each profile to fix it.',
+      'Looks through the whole tree for impossible dates, common in data imported from GEDCOM or CSV: death before birth, a child born after the mother died, a parent less than 12 or more than 70 years older than the child (only when both birth years are known; adopted children are skipped), birth or death dates in the future, repeated relationships, a child with too many biological parents, parent–child loops (someone who is both an ancestor and a descendant of themselves), people linked to themselves; and a group of missing information: no birth year, deceased but no death year, gender unknown. View only; nothing is changed. Open each profile to fix it.',
     dataCheckRun: 'Check the data',
     dataCheckRunning: 'Checking...',
     dataCheckNone: 'Nothing found.',
@@ -2011,6 +2017,12 @@ export const messages = {
     dataCheckDuplicateChild: '{a} and {b} have two parent–child links.',
     dataCheckTooManyParents:
       '{child} has {count} biological parents: {parents}.',
+    dataCheckKindParentChildLoop: 'Parent–child loop',
+    dataCheckKindSelfLink: 'Linked to themselves',
+    dataCheckParentChildLoop:
+      'Loop of {count} people, each a parent of the next: {path}.',
+    dataCheckSelfMarriage: '{name} is married to themselves.',
+    dataCheckSelfChild: '{name} is their own parent.',
     duplicateScanTitle: 'Possible duplicates',
     duplicateScanDescription:
       'Scans the whole tree for members who may have been entered twice: the same name (ignoring accents) and birth year, or the same name and a shared parent. View only; nothing is changed or deleted. Open each profile and fix or delete it with the usual tools.',

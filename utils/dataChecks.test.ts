@@ -291,3 +291,72 @@ describe('runDataChecks order', () => {
     expect(names(persons).map((p) => p.id)).toEqual(['a', 'b'])
   })
 })
+
+describe('runDataChecks: loops and self links', () => {
+  const marriage = (a: string, b: string): DataCheckRelationship => ({
+    type: 'marriage',
+    person_a: a,
+    person_b: b
+  })
+  const people = ['A', 'B', 'C', 'D'].map((id) => person(id, { full_name: id }))
+  const run = (relationships: DataCheckRelationship[]) =>
+    runDataChecks(people, relationships, TODAY).filter(
+      (f) => f.kind === 'parentChildLoop' || f.kind === 'selfLink'
+    )
+
+  test('reports a two-person loop once', () => {
+    expect(run([child('A', 'B'), child('B', 'A')])).toEqual([
+      {
+        kind: 'parentChildLoop',
+        people: [
+          { id: 'A', name: 'A' },
+          { id: 'B', name: 'B' }
+        ],
+        params: { count: 2, path: 'A → B → A' }
+      }
+    ])
+  })
+
+  test('reports a three-person loop, adopted links included', () => {
+    const found = run([
+      child('A', 'B'),
+      child('B', 'C'),
+      { type: 'adopted_child', person_a: 'C', person_b: 'A' },
+      child('A', 'D')
+    ])
+    expect(found).toHaveLength(1)
+    expect(found[0].people.map((p) => p.id)).toEqual(['A', 'B', 'C'])
+    expect(found[0].params).toEqual({ count: 3, path: 'A → B → C → A' })
+  })
+
+  test('reports a marriage or a parent link to oneself only as selfLink', () => {
+    const found = runDataChecks(
+      people,
+      [marriage('A', 'A'), child('B', 'B')],
+      TODAY
+    ).filter((f) => !f.kind.startsWith('missing'))
+    expect(found).toEqual([
+      {
+        kind: 'selfLink',
+        people: [{ id: 'A', name: 'A' }],
+        params: { name: 'A', type: 'marriage' }
+      },
+      {
+        kind: 'selfLink',
+        people: [{ id: 'B', name: 'B' }],
+        params: { name: 'B', type: 'child' }
+      }
+    ])
+  })
+
+  test('finds nothing in a clean tree', () => {
+    expect(
+      run([
+        marriage('A', 'B'),
+        child('A', 'C'),
+        child('B', 'C'),
+        child('C', 'D')
+      ])
+    ).toEqual([])
+  })
+})

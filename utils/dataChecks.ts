@@ -1,6 +1,10 @@
 import { vnToday } from '@/utils/dateHelpers'
 import { comparePartialDates } from '@/utils/memberFormHelpers'
-import { checkParentDeath } from '@/utils/relationshipValidation'
+import {
+  checkParentDeath,
+  findRelationshipIssues,
+  isParentChildType
+} from '@/utils/relationshipValidation'
 
 /** Columns the whole-tree data check reads. */
 export const DATA_CHECK_PERSON_COLUMNS =
@@ -34,6 +38,8 @@ export const DATA_CHECK_KINDS = [
   'futureDate',
   'duplicateRelationship',
   'tooManyParents',
+  'parentChildLoop',
+  'selfLink',
   'missingBirthYear',
   'missingDeathYear',
   'missingGender'
@@ -78,7 +84,9 @@ const ref = (p: DataCheckPerson) => ({ id: p.id, name: p.full_name })
  * writes nothing. A date or year that is missing is never part of a date check,
  * and adopted children are left out of the parent checks (as in the member
  * form). People that cannot be reached from the root are not reported here
- * (the Lineage page lists them). Findings are sorted by kind, then name
+ * (the Lineage page lists them). A link from a person to themselves is only
+ * reported as `selfLink`; parent–child loops are listed once each, as the
+ * people along the loop. Findings are sorted by kind, then name
  * (Vietnamese order), then id.
  */
 export function runDataChecks(
@@ -166,9 +174,25 @@ export function runDataChecks(
   }
 
   const seenLinks = new Set<string>()
+  const links: DataCheckRelationship[] = []
   for (const r of relationships) {
     const a = byId.get(r.person_a)
     const b = byId.get(r.person_b)
+
+    if (r.person_a === r.person_b) {
+      if (a) {
+        findings.push({
+          kind: 'selfLink',
+          people: [ref(a)],
+          params: {
+            name: a.full_name,
+            type: r.type === 'marriage' ? 'marriage' : 'child'
+          }
+        })
+      }
+      continue
+    }
+    links.push(r)
 
     if (r.type === 'biological_child' && a && b) {
       if (checkParentDeath(a, b) === 'motherDiedBeforeBirth') {
@@ -229,7 +253,7 @@ export function runDataChecks(
 
   // A child has at most one father and one mother; adopted links don't count.
   const parentsOf = new Map<string, Set<string>>()
-  for (const r of relationships) {
+  for (const r of links) {
     if (r.type !== 'biological_child') continue
     const set = parentsOf.get(r.person_b)
     if (set) set.add(r.person_a)
@@ -251,6 +275,26 @@ export function runDataChecks(
         child: child.full_name,
         count: parents.length,
         parents: parents.map((p) => p.full_name).join(', ')
+      }
+    })
+  }
+
+  // Every loop is reported (the limit only bounds the search).
+  const parentLinks = links.filter((r) => isParentChildType(r.type))
+  for (const issue of findRelationshipIssues(
+    parentLinks,
+    parentLinks.length + 1
+  )) {
+    if (issue.code !== 'cycle') continue
+    const loop = issue.path.flatMap((id) => byId.get(id) ?? [])
+    if (loop.length !== issue.path.length) continue
+    findings.push({
+      kind: 'parentChildLoop',
+      // The last id repeats the first one.
+      people: loop.slice(0, -1).map(ref),
+      params: {
+        count: loop.length - 1,
+        path: loop.map((p) => p.full_name).join(' → ')
       }
     })
   }
