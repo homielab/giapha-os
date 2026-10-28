@@ -3,12 +3,20 @@
 import { useRouter } from 'next/navigation'
 import { useCallback, useContext, useEffect, useState } from 'react'
 
+import {
+  AvatarUrlProvider,
+  useInAvatarUrlProvider
+} from '@/context/AvatarUrlContext'
 import { MemberListContext } from '@/context/memberListViewContext'
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
+import { NO_SIGNED_AVATAR_URLS } from '@/utils/avatar'
 import { createLatestGuard } from '@/utils/latestOnly'
-import { fetchRelationshipData } from '@/utils/relationshipFetch'
+import {
+  fetchRelationshipData,
+  signRelationshipAvatars
+} from '@/utils/relationshipFetch'
 import { deleteRelationship } from '@/utils/relationshipMutations'
 import { createClient } from '@/utils/supabase/client'
 import { RelationshipNotDeletedError } from '@/utils/writeErrors'
@@ -42,6 +50,9 @@ export default function RelationshipManager({
   const memberListContext = useContext(MemberListContext)
   const { setMemberModalId } = useMemberListView()
   const router = useRouter()
+  // A page that already signed every avatar (members list, kinship) shares
+  // its URLs; alone (member page) the relatives' avatars are signed here.
+  const inAvatarProvider = useInAvatarUrlProvider()
 
   const personId = person.id
 
@@ -55,6 +66,9 @@ export default function RelationshipManager({
   }
 
   const [relationships, setRelationships] = useState<EnrichedRelationship[]>([])
+  const [signedAvatarUrls, setSignedAvatarUrls] = useState(
+    NO_SIGNED_AVATAR_URLS
+  )
   const [loading, setLoading] = useState(true)
   // Set when loading failed: show it with a retry instead of an empty list
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -80,8 +94,13 @@ export default function RelationshipManager({
         personId,
         t
       )
+      // Signed before the list shows, so no photo starts on `/api/avatar`.
+      const signed = inAvatarProvider
+        ? NO_SIGNED_AVATAR_URLS
+        : await signRelationshipAvatars(supabase, relationships)
       if (!fetchGuard.isCurrent(token)) return
       setRelationships(relationships)
+      setSignedAvatarUrls(signed)
       setLoadError(null)
       onStatsLoaded?.(stats)
     } catch (err) {
@@ -92,7 +111,7 @@ export default function RelationshipManager({
     } finally {
       if (fetchGuard.isCurrent(token)) setLoading(false)
     }
-  }, [fetchGuard, personId, supabase, onStatsLoaded, t])
+  }, [fetchGuard, inAvatarProvider, personId, supabase, onStatsLoaded, t])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(fetchRelationships, 0)
@@ -148,15 +167,25 @@ export default function RelationshipManager({
       </div>
     )
 
+  const relationshipList = (
+    <RelationshipList
+      relationships={relationships}
+      isAdmin={isAdmin}
+      canEdit={canEdit}
+      onPersonClick={handlePersonClick}
+      onDelete={handleDelete}
+    />
+  )
+
   return (
     <div className='space-y-6'>
-      <RelationshipList
-        relationships={relationships}
-        isAdmin={isAdmin}
-        canEdit={canEdit}
-        onPersonClick={handlePersonClick}
-        onDelete={handleDelete}
-      />
+      {inAvatarProvider ? (
+        relationshipList
+      ) : (
+        <AvatarUrlProvider signedUrls={signedAvatarUrls}>
+          {relationshipList}
+        </AvatarUrlProvider>
+      )}
 
       {/* Add Buttons (Admin) */}
       {canEdit && !isAdding && !isAddingBulk && !isAddingSpouse && (

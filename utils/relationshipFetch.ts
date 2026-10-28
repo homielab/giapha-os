@@ -6,6 +6,8 @@ import {
 } from '@/components/relationship/relationshipTypes'
 import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
 import type { Person, RelationshipType } from '@/types'
+import { NO_SIGNED_AVATAR_URLS, type SignedAvatarUrls } from '@/utils/avatar'
+import { signAvatarUrls } from '@/utils/avatarSigning'
 
 import { PERSON_LIST_COLUMNS } from './personColumns'
 
@@ -213,5 +215,23 @@ function computeRelationshipStats(
     maternalGrandchildren,
     sonInLaw,
     daughterInLaw
+  }
+}
+
+// Signs the avatars of every relative in one storage request, instead of one
+// `/api/avatar` round trip per photo. Never throws: when signing fails the
+// list still shows and the photos fall back to `/api/avatar`.
+export async function signRelationshipAvatars(
+  supabase: SupabaseClient,
+  relationships: EnrichedRelationship[]
+): Promise<SignedAvatarUrls> {
+  try {
+    return await signAvatarUrls(
+      supabase,
+      relationships.map((r) => r.targetPerson.avatar_url)
+    )
+  } catch (err) {
+    console.error('Cannot sign relative avatars:', err)
+    return NO_SIGNED_AVATAR_URLS
   }
 }

@@ -8,7 +8,8 @@ import {
   type SignedAvatarUrls
 } from '@/utils/avatar'
 
-const AvatarUrlContext = createContext<SignedAvatarUrls>(NO_SIGNED_AVATAR_URLS)
+// null = no provider above: avatars load through `/api/avatar`.
+const AvatarUrlContext = createContext<SignedAvatarUrls | null>(null)
 
 // Hands the avatar URLs a server page signed in one request to every avatar
 // below it. Outside a provider avatars load through `/api/avatar`.
@@ -28,9 +29,14 @@ export function AvatarUrlProvider({
 
 /** Returns a function mapping a stored `avatar_url` to a displayable URL. */
 export function useAvatarUrl() {
-  const signedUrls = useContext(AvatarUrlContext)
+  const signedUrls = useContext(AvatarUrlContext) ?? NO_SIGNED_AVATAR_URLS
   return useCallback(
     (value: string | null | undefined) => resolveAvatarUrl(value, signedUrls),
     [signedUrls]
   )
+}
+
+/** True below an `AvatarUrlProvider`, so a component need not sign again. */
+export function useInAvatarUrlProvider() {
+  return useContext(AvatarUrlContext) !== null
 }

@@ -13,9 +13,10 @@ const SIGN_BATCH_SIZE = 1000
 /**
  * Signs the avatars of a page with the caller's Supabase client, so storage
  * RLS ("Active users can view avatars") decides access exactly like the
- * `/api/avatar` route. Call it on the server only, after checking that the
- * user's profile is active. A failed batch is left out and those avatars fall
- * back to `/api/avatar`.
+ * `/api/avatar` route. On the server, call it after checking that the user's
+ * profile is active; from the browser, RLS refuses inactive users the same
+ * way. A failed batch is left out and those avatars fall back to
+ * `/api/avatar`.
  */
 export async function signAvatarUrls(
   supabase: SupabaseClient,

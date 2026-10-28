@@ -2,8 +2,12 @@ import { describe, expect, test } from 'bun:test'
 
 import type { Person } from '@/types'
 
+import { NO_SIGNED_AVATAR_URLS } from './avatar'
 import { PERSON_LIST_COLUMNS } from './personColumns'
-import { fetchRelationshipData } from './relationshipFetch'
+import {
+  fetchRelationshipData,
+  signRelationshipAvatars
+} from './relationshipFetch'
 import { fakeSupabase, type FakeCall } from './testing/fakeSupabase'
 
 const t = (key: string, values?: Record<string, string | number>) =>
@@ -320,5 +324,66 @@ describe('fetchRelationshipData', () => {
       expect(columns).toBe(PERSON_LIST_COLUMNS)
       expect(columns).not.toContain('note')
     }
+  })
+})
+
+describe('signRelationshipAvatars', () => {
+  const relative = (id: string, avatar_url: string | null) => ({
+    id: `r-${id}`,
+    type: 'biological_child' as const,
+    direction: 'child' as const,
+    note: null,
+    targetPerson: { ...person(id, 'male'), avatar_url }
+  })
+
+  test('signs every relative avatar in one createSignedUrls call', async () => {
+    const relationships = [
+      relative('p1', 'a/1.jpg'),
+      relative('p2', 'a/2.jpg'),
+      relative('p3', 'a/3.jpg'),
+      relative('p4', 'a/4.jpg'),
+      relative('p5', 'a/5.jpg'),
+      relative('p6', null),
+      // the same person twice (parent and spouse of a parent…)
+      relative('p1', 'a/1.jpg')
+    ]
+    const { client, calls } = fakeSupabase((call) => ({
+      data: (call.payload as [string[]])[0].map((path) => ({
+        path,
+        signedUrl: `https://cdn.test/${path}`,
+        error: null
+      }))
+    }))
+    const signed = await signRelationshipAvatars(client, relationships)
+    expect(calls).toHaveLength(1)
+    expect(calls[0].table).toBe('storage:avatars')
+    expect(calls[0].op).toBe('createSignedUrls')
+    expect(Object.keys(signed.urls)).toEqual([
+      'a/1.jpg',
+      'a/2.jpg',
+      'a/3.jpg',
+      'a/4.jpg',
+      'a/5.jpg'
+    ])
+  })
+
+  test('falls back to /api/avatar when signing fails', async () => {
+    const { client } = fakeSupabase(() => ({
+      error: { message: 'denied by RLS' }
+    }))
+    const signed = await signRelationshipAvatars(client, [
+      relative('p1', 'a/1.jpg')
+    ])
+    expect(signed.urls).toEqual({})
+  })
+
+  test('never throws when the storage request rejects', async () => {
+    const { client } = fakeSupabase(() => {
+      throw new Error('offline')
+    })
+    const signed = await signRelationshipAvatars(client, [
+      relative('p1', 'a/1.jpg')
+    ])
+    expect(signed).toBe(NO_SIGNED_AVATAR_URLS)
   })
 })
