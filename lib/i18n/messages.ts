@@ -459,6 +459,9 @@ export const messages = {
     ssoError:
       'SSO chưa được cấu hình đầy đủ. Vui lòng liên hệ quản trị viên hoặc xem hướng dẫn.',
     ssoGuide: 'Xem hướng dẫn cấu hình SSO',
+    ssoGuideUrl:
+      'https://github.com/homielab/giapha-os#đăng-nhập-bằng-google-và-facebook',
+    sourceCodeLabel: 'Mã nguồn',
     noAccount: 'Chưa có tài khoản? Đăng ký ngay',
     hasAccount: 'Đã có tài khoản? Đăng nhập',
     demoLoginNotice:
@@ -1669,6 +1672,9 @@ export const messages = {
     ssoError:
       'SSO is not fully configured. Please contact an administrator or view the setup guide.',
     ssoGuide: 'View the SSO setup guide',
+    ssoGuideUrl:
+      'https://github.com/homielab/giapha-os/blob/main/README.en.md#sign-in-with-google-and-facebook',
+    sourceCodeLabel: 'Source code',
     noAccount: "Don't have an account? Sign up now",
     hasAccount: 'Already have an account? Log in',
     demoLoginNotice:

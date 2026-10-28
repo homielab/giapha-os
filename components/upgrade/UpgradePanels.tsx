@@ -117,7 +117,9 @@ export function SourceStatusCard({
           <AlertTriangle className='mt-0.5 size-5 shrink-0 text-amber-700' />
         )}
         <div className='min-w-0'>
-          <p className='text-sm font-medium text-stone-600'>Source code</p>
+          <p className='text-sm font-medium text-stone-600'>
+            {t('sourceCodeLabel')}
+          </p>
           <h3 className='mt-1 text-base font-semibold text-stone-900'>
             {sourceStatusLabel}
           </h3>

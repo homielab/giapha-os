@@ -104,7 +104,7 @@ export function SsoNotice({ show, text }: { show: boolean; text: string }) {
       className='rounded-xl border border-amber-200/70 bg-amber-50 p-3 text-center text-sm font-medium text-amber-800'>
       <p>{text}</p>
       <a
-        href='https://github.com/homielab/giapha-os#đăng-nhập-bằng-google-và-facebook'
+        href={t('ssoGuideUrl')}
         target='_blank'
         rel='noopener noreferrer'
         className='mt-2 inline-block font-medium text-amber-900 underline decoration-amber-400 underline-offset-2 hover:text-amber-700'>
