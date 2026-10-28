@@ -230,7 +230,12 @@ export function parseGedcom(gedcom: string): {
   const seenKeys = new Set<string>()
 
   for (const rel of relationships) {
-    const key = `${rel.type}_${rel.person_a}_${rel.person_b}`
+    // A marriage has no direction: A-B and B-A are the same couple
+    const pair =
+      rel.type === 'marriage'
+        ? [rel.person_a, rel.person_b].sort()
+        : [rel.person_a, rel.person_b]
+    const key = `${rel.type}_${pair[0]}_${pair[1]}`
     if (!seenKeys.has(key)) {
       seenKeys.add(key)
       uniqueRelationships.push(rel)

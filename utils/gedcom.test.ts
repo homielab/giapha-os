@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
+import { validateImportPayload } from './backupPayload'
 import {
   decodeGedcom,
   exportToGedcom,
@@ -938,5 +939,53 @@ describe('GEDCOM pointer notes', () => {
     expect(ged).toContain('\n2 CONC ')
     expect(ged).toContain('\n2 CONT Đoạn hai ')
     expect(parseGedcom(ged).persons[0].note).toBe(long)
+  })
+})
+
+describe('GEDCOM duplicate marriages', () => {
+  const ged = (fams: string[]) =>
+    [
+      '0 HEAD',
+      '0 @I1@ INDI',
+      '1 NAME An /Nguyễn/',
+      '1 SEX M',
+      '0 @I2@ INDI',
+      '1 NAME Bình /Trần/',
+      '1 SEX F',
+      '0 @I3@ INDI',
+      '1 NAME Cúc /Lê/',
+      '1 SEX F',
+      ...fams,
+      '0 TRLR'
+    ].join('\n')
+
+  test('two families with husband and wife swapped give one marriage that passes validation', () => {
+    const { persons, relationships } = parseGedcom(
+      ged([
+        '0 @F1@ FAM',
+        '1 HUSB @I1@',
+        '1 WIFE @I2@',
+        '0 @F2@ FAM',
+        '1 HUSB @I2@',
+        '1 WIFE @I1@'
+      ])
+    )
+    expect(relationships.filter((r) => r.type === 'marriage')).toHaveLength(1)
+    const t = (key: string) => key
+    expect(validateImportPayload({ persons, relationships }, t)).toBeNull()
+  })
+
+  test('different couples keep all their marriages', () => {
+    const { relationships } = parseGedcom(
+      ged([
+        '0 @F1@ FAM',
+        '1 HUSB @I1@',
+        '1 WIFE @I2@',
+        '0 @F2@ FAM',
+        '1 HUSB @I3@',
+        '1 WIFE @I1@'
+      ])
+    )
+    expect(relationships.filter((r) => r.type === 'marriage')).toHaveLength(2)
   })
 })
