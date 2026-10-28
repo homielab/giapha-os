@@ -5,6 +5,7 @@ import { messages } from '@/lib/i18n/messages'
 import { vnToday } from './dateHelpers'
 import {
   computeEvents,
+  defaultEventDate,
   filterVisibleEvents,
   formatLunarDateLabel,
   toRecurrence,
@@ -398,5 +399,19 @@ describe('computeEvents: repeating custom events', () => {
     expect(toRecurrence('yearly_lunar')).toBe('yearly_lunar')
     expect(toRecurrence('monthly')).toBe('none')
     expect(toRecurrence(undefined)).toBe('none')
+  })
+})
+
+describe('defaultEventDate', () => {
+  test('is already tomorrow after midnight in Vietnam', () => {
+    expect(defaultEventDate(new Date('2026-10-27T18:30:00Z'))).toBe(
+      '2026-10-28'
+    )
+  })
+
+  test('is still today just before midnight in Vietnam', () => {
+    expect(defaultEventDate(new Date('2026-10-27T16:59:00Z'))).toBe(
+      '2026-10-27'
+    )
   })
 })

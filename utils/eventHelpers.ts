@@ -1,4 +1,4 @@
-import { vnToday, type Translate } from '@/utils/dateHelpers'
+import { formatIsoDay, vnToday, type Translate } from '@/utils/dateHelpers'
 import { lunarAnniversaryInYear, solarToLunar } from '@/utils/lunarCalendar'
 
 export type EventType = 'birthday' | 'death_anniversary' | 'custom_event'
@@ -50,6 +50,14 @@ export function toRecurrence(value: unknown): CustomEventRecurrence {
   return CUSTOM_EVENT_RECURRENCES.includes(value as CustomEventRecurrence)
     ? (value as CustomEventRecurrence)
     : 'none'
+}
+
+/**
+ * Default `event_date` (`YYYY-MM-DD`) of a new custom event: today in Vietnam,
+ * like the rest of the dashboard, whatever the browser's time zone.
+ */
+export function defaultEventDate(now: Date = new Date()): string {
+  return formatIsoDay(vnToday(now))
 }
 
 export interface CustomEventRecord {

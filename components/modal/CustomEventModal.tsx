@@ -20,6 +20,7 @@ import {
 import {
   CustomEventRecord,
   CustomEventRecurrence,
+  defaultEventDate,
   toRecurrence
 } from '@/utils/eventHelpers'
 import { lunarToSolar } from '@/utils/lunarCalendar'
@@ -72,12 +73,7 @@ export default function CustomEventModal({
         setRecurrence(toRecurrence(eventToEdit.recurrence))
       } else {
         setName('')
-        // Default to today
-        const now = new Date()
-        const y = now.getFullYear()
-        const m = String(now.getMonth() + 1).padStart(2, '0')
-        const d = String(now.getDate()).padStart(2, '0')
-        setEventDate(`${y}-${m}-${d}`)
+        setEventDate(defaultEventDate())
         setLocation('')
         setContent('')
         setRecurrence('none')
