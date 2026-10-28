@@ -23,6 +23,7 @@ import {
   type RestoreWarning
 } from '@/utils/backupSummary'
 import { CsvParseError, CsvZipInvalidError } from '@/utils/csvErrors'
+import { formatIsoDay } from '@/utils/dateHelpers'
 import { memberSearchCache } from '@/utils/memberSearchCache'
 
 import PersonSelector from './PersonSelector'
@@ -77,7 +78,7 @@ export default function DataImportExport() {
         const url = URL.createObjectURL(zipBlob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `giapha-export-${new Date().toISOString().split('T')[0]}.zip`
+        a.download = `giapha-export-${formatIsoDay()}.zip`
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
@@ -104,7 +105,7 @@ export default function DataImportExport() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `giapha-export-${new Date().toISOString().split('T')[0]}.${extension}`
+      a.download = `giapha-export-${formatIsoDay()}.${extension}`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)

@@ -73,7 +73,8 @@ export function calculateAge(
   deathYear: number | null,
   deathMonth: number | null,
   deathDay: number | null,
-  isDeceased: boolean = false
+  isDeceased: boolean = false,
+  now: Date = new Date()
 ): { age: number; isDeceased: boolean } | null {
   if (!birthYear) return null
 
@@ -93,11 +94,7 @@ export function calculateAge(
     return null
   }
 
-  const now = new Date()
-  const vnTimeStr = now.toLocaleString('en-US', {
-    timeZone: 'Asia/Ho_Chi_Minh'
-  })
-  const vnDate = new Date(vnTimeStr)
+  const vnDate = vnToday(now)
   const currentYear = vnDate.getFullYear()
 
   let age = currentYear - birthYear
@@ -202,6 +199,14 @@ export function vnToday(now: Date = new Date()): Date {
   const get = (type: string) =>
     Number(parts.find((p) => p.type === type)?.value)
   return new Date(get('year'), get('month') - 1, get('day'))
+}
+
+/** `YYYY-MM-DD` of the Vietnamese calendar day (default: today), for file names. */
+export function formatIsoDay(date: Date = vnToday()): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 /**

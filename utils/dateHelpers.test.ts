@@ -5,11 +5,13 @@ import { Locale, translate } from '@/lib/i18n/messages'
 import {
   calculateAge,
   formatDisplayDate,
+  formatIsoDay,
   getLunarDateString,
   getSolarDateString,
   getTodayLunar,
   getZodiacAnimal,
   getZodiacSign,
+  vnToday,
   type Translate
 } from './dateHelpers'
 
@@ -185,5 +187,40 @@ describe('getTodayLunar', () => {
     // 2025-07-24T18:00Z is already 25 July (01:00) in Vietnam.
     const result = getTodayLunar(vi, new Date('2025-07-24T18:00:00Z'))
     expect(result.solarStr).toContain('25')
+  })
+})
+
+describe('formatIsoDay', () => {
+  const lateEveningUtc = new Date('2026-10-27T18:00:00Z')
+
+  test('names the Vietnamese day after midnight UTC+7, not the UTC day', () => {
+    expect(formatIsoDay(vnToday(lateEveningUtc))).toBe('2026-10-28')
+  })
+
+  test('keeps the day just before midnight in Vietnam', () => {
+    expect(formatIsoDay(vnToday(new Date('2026-10-27T16:59:00Z')))).toBe(
+      '2026-10-27'
+    )
+  })
+
+  test('pads month and day', () => {
+    expect(formatIsoDay(new Date(2026, 0, 5))).toBe('2026-01-05')
+  })
+})
+
+describe('calculateAge with a fixed now', () => {
+  const age = (now: string, m: number, d: number, y = 2000) =>
+    calculateAge(y, m, d, null, null, null, false, new Date(now))?.age
+
+  test('a 28/10 birthday adds a year exactly at 0h in Vietnam', () => {
+    expect(age('2026-10-27T16:59:59Z', 10, 28)).toBe(25)
+    expect(age('2026-10-27T17:00:00Z', 10, 28)).toBe(26)
+  })
+
+  test('a 29/2 birthday counts from 1/3 in a common year, 29/2 in a leap year', () => {
+    expect(age('2026-02-28T05:00:00Z', 2, 29)).toBe(25)
+    expect(age('2026-03-01T05:00:00Z', 2, 29)).toBe(26)
+    expect(age('2028-02-28T05:00:00Z', 2, 29)).toBe(27)
+    expect(age('2028-02-29T05:00:00Z', 2, 29)).toBe(28)
   })
 })

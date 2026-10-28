@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Exported file names (backup ZIP/JSON/CSV, tree PNG/PDF) carry the Vietnamese date instead of the UTC date, so a file saved between 0h and 7h in Vietnam no longer gets yesterday's date. Ages are computed from the same Vietnamese date and are right around midnight in any browser time zone.
 - "Add several children" now checks birth year and birth order like the member form: whole numbers only, a year from 1 up to the current year and an order from 1. A row such as `12abc`, `-5` or `2099` is refused with the child's name before any child is saved.
 - Gallery no longer shows empty cards when image links cannot be created: an image that cannot be signed shows an "Image could not be loaded" placeholder, and a failed signing request (missing `gallery` bucket, wrong policy, Storage down) shows a message naming the bucket and logs the cause.
 - The account approval link in the admin email is no longer used up when activating the account fails (database or network error, account not found): the link keeps working, so the admin can click "Confirm" again. A double click still approves only once.

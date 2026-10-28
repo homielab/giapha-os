@@ -12,6 +12,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 
 import { useI18n } from '@/lib/i18n/useI18n'
+import { formatIsoDay } from '@/utils/dateHelpers'
 import {
   canvasLimitsFor,
   ExportTooLargeError,
@@ -125,10 +126,7 @@ export default function ExportButton() {
       },
       width
     })
-    downloadDataUrl(
-      url,
-      `giapha-sodo-${new Date().toISOString().split('T')[0]}.png`
-    )
+    downloadDataUrl(url, `giapha-sodo-${formatIsoDay()}.png`)
   }
 
   const handleExportPdf = async (
@@ -176,7 +174,7 @@ export default function ExportButton() {
       pdfHeight *= scale
     }
 
-    const filename = `giapha-sodo-${new Date().toISOString().split('T')[0]}.pdf`
+    const filename = `giapha-sodo-${formatIsoDay()}.pdf`
 
     if (format !== 'single') {
       const page = PDF_PAGE_SIZES_PT[format]
