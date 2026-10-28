@@ -1078,3 +1078,85 @@ describe('GEDCOM duplicate marriages', () => {
     expect(relationships.filter((r) => r.type === 'marriage')).toHaveLength(2)
   })
 })
+
+describe('GEDCOM sources and missing notes', () => {
+  const file = (...lines: string[]) => ['0 HEAD', ...lines, '0 TRLR'].join('\n')
+
+  test('a dangling note pointer is counted and adds no empty note', () => {
+    const { persons, stats } = parseGedcom(
+      file('0 @I1@ INDI', '1 NAME An /Lê/', '1 NOTE @N9@', '1 NOTE Có thật')
+    )
+    expect(persons[0].note).toBe('Có thật')
+    expect(stats).toEqual({ missingNotes: 1, sources: 0 })
+  })
+
+  test('cited sources become "Nguồn: …" notes of the person and the marriage', () => {
+    const { persons, relationships, stats } = parseGedcom(
+      file(
+        '0 @I1@ INDI',
+        '1 NAME An /Lê/',
+        '1 NOTE Làm ruộng',
+        '1 SOUR @S1@',
+        '2 PAGE tr. 12',
+        '1 BIRT',
+        '2 DATE 1900',
+        '2 SOUR @S2@',
+        '0 @I2@ INDI',
+        '1 NAME Hoa /Trần/',
+        '1 SOUR @S1@',
+        '1 SOUR @S9@',
+        '0 @F1@ FAM',
+        '1 HUSB @I1@',
+        '1 WIFE @I2@',
+        '1 SOUR @S2@',
+        '0 @S1@ SOUR',
+        '1 TITL Gia phả họ Lê',
+        '2 CONC  bản 1950',
+        '1 REPO @R1@',
+        '0 @S2@ SOUR',
+        '1 ABBR Sổ hộ tịch',
+        '1 TEXT Trang ',
+        '2 CONC 3',
+        '2 CONT dòng hai',
+        '0 @R1@ REPO',
+        '1 NAME Nhà thờ họ'
+      )
+    )
+    expect(persons[0].note).toBe(
+      'Làm ruộng\n\nNguồn: Gia phả họ Lê bản 1950\n\nNguồn: Sổ hộ tịch\nTrang 3\ndòng hai'
+    )
+    expect(persons[1].note).toBe('Nguồn: Gia phả họ Lê bản 1950')
+    expect(relationships[0].note).toBe('Nguồn: Sổ hộ tịch\nTrang 3\ndòng hai')
+    expect(stats).toEqual({ missingNotes: 0, sources: 3 })
+  })
+
+  test('the header SOUR of the app does not become a note', () => {
+    const { persons, relationships, stats } = parseGedcom(
+      [
+        '0 HEAD',
+        '1 SOUR Giapha_OS',
+        '2 NAME Giapha OS',
+        '0 @I1@ INDI',
+        '1 NAME An /Lê/',
+        '0 TRLR'
+      ].join('\n')
+    )
+    expect(persons[0].note).toBeNull()
+    expect(relationships).toEqual([])
+    expect(stats).toEqual({ missingNotes: 0, sources: 0 })
+  })
+
+  test('a file exported by the app imports without warnings', () => {
+    const ged = exportToGedcom({
+      persons: [
+        person('a', 'male', { note: 'Tiểu sử' }),
+        person('b', 'female')
+      ],
+      relationships: [{ type: 'marriage', person_a: 'a', person_b: 'b' }]
+    })
+    const { persons, relationships, stats } = parseGedcom(ged)
+    expect(stats).toEqual({ missingNotes: 0, sources: 0 })
+    expect(persons[0].note).toBe('Tiểu sử')
+    expect(relationships[0]).not.toHaveProperty('note')
+  })
+})

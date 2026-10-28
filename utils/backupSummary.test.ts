@@ -141,3 +141,41 @@ describe('readRestoreFile length limits', () => {
     expect(truncated).toBe(0)
   })
 })
+
+describe('readRestoreFile GEDCOM stats', () => {
+  const ged = (text: string) => ({
+    name: 'a.ged',
+    arrayBuffer: async () =>
+      new TextEncoder().encode(text).buffer as ArrayBuffer
+  })
+
+  test('counts dropped notes and sources, outside the payload', async () => {
+    const { payload, gedcom } = await readRestoreFile(
+      ged(
+        [
+          '0 HEAD',
+          '0 @I1@ INDI',
+          '1 NAME An /Nguyễn/',
+          '1 NOTE @N9@',
+          '1 SOUR @S1@',
+          '0 @S1@ SOUR',
+          '1 TITL Gia phả',
+          '0 @R1@ REPO',
+          '0 TRLR'
+        ].join('\n')
+      )
+    )
+    expect(gedcom).toEqual({ missingNotes: 1, sources: 2 })
+    expect(payload).not.toHaveProperty('stats')
+    expect(payload.persons[0].note).toBe('Nguồn: Gia phả')
+    expect(validateImportPayload(payload, (key) => key)).toBeNull()
+  })
+
+  test('JSON backups carry no GEDCOM stats', async () => {
+    const { gedcom } = await readRestoreFile({
+      name: 'a.json',
+      text: async () => JSON.stringify({ persons: [], relationships: [] })
+    })
+    expect(gedcom).toBeUndefined()
+  })
+})

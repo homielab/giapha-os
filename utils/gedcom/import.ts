@@ -3,7 +3,12 @@ import { parseGedcomDate } from './dates'
 import { readName } from './names'
 import { isNotePointer, readNoteRecord } from './notes'
 import { readRecords } from './records'
-import type { GedcomPerson, GedcomRelationship } from './types'
+import { readSourceRecord, sourceNotes } from './sources'
+import type {
+  GedcomImportStats,
+  GedcomPerson,
+  GedcomRelationship
+} from './types'
 
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -16,6 +21,7 @@ function generateUUID() {
 export function parseGedcom(gedcom: string): {
   persons: GedcomPerson[]
   relationships: GedcomRelationship[]
+  stats: GedcomImportStats
 } {
   const lines = gedcom
     .replace(/^\uFEFF/, '')
@@ -31,9 +37,17 @@ export function parseGedcom(gedcom: string): {
   const records = readRecords(lines)
   // Shared note records, resolved when an INDI points at them.
   const noteTexts = new Map<string, string>()
+  // Source records, cited as "Nguồn: <title>" in notes.
+  const sourTexts = new Map<string, string>()
+  const stats: GedcomImportStats = { missingNotes: 0, sources: 0 }
   for (const record of records) {
     if (record.type === 'NOTE') {
       noteTexts.set(record.id, readNoteRecord(record.first, record.lines))
+    } else if (record.type === 'SOUR' || record.type === 'REPO') {
+      stats.sources++
+      if (record.type === 'SOUR') {
+        sourTexts.set(record.id, readSourceRecord(record.lines))
+      }
     }
   }
 
@@ -97,11 +111,11 @@ export function parseGedcom(gedcom: string): {
         } else if (tag === 'DEAT') {
           is_deceased = val.trim().length === 0 || val === 'Y'
         } else if (tag === 'NOTE') {
-          // A pointer to a missing record gives no note.
+          // A pointer to a missing record gives no note, but is counted.
           inlineNote = !isNotePointer(val)
-          notes.push(
-            inlineNote ? val : (noteTexts.get(val.trim().slice(1, -1)) ?? '')
-          )
+          const text = inlineNote ? val : noteTexts.get(val.trim().slice(1, -1))
+          if (text === undefined) stats.missingNotes++
+          notes.push(text ?? '')
         } else if (tag === '_GEN' || tag === '_ORDER') {
           const n = /^\d+$/.test(val) ? parseInt(val) : null
           if (tag === '_GEN') generation = n
@@ -155,6 +169,7 @@ export function parseGedcom(gedcom: string): {
     }
 
     // A range keeps only its first date: say so in the note.
+    notes.push(...sourceNotes(record.lines, sourTexts))
     let note = notes.filter((n) => n.trim()).join('\n\n')
     if (rangeNotes.length > 0) {
       note = [note, ...rangeNotes].filter(Boolean).join('\n')
@@ -225,10 +240,12 @@ export function parseGedcom(gedcom: string): {
     }
 
     if (husb && wife && husb !== wife) {
+      const note = sourceNotes(record.lines, sourTexts).join('\n\n')
       relationships.push({
         type: 'marriage',
         person_a: husb,
-        person_b: wife
+        person_b: wife,
+        ...(note ? { note } : {})
       })
     }
 
@@ -262,5 +279,5 @@ export function parseGedcom(gedcom: string): {
     }
   }
 
-  return { persons, relationships: uniqueRelationships }
+  return { persons, relationships: uniqueRelationships, stats }
 }

@@ -24,6 +24,7 @@ import {
 } from '@/utils/backupSummary'
 import { CsvParseError, CsvZipInvalidError } from '@/utils/csvErrors'
 import { formatIsoDay } from '@/utils/dateHelpers'
+import type { GedcomImportStats } from '@/utils/gedcom'
 import { memberSearchCache } from '@/utils/memberSearchCache'
 
 import PersonSelector from './PersonSelector'
@@ -50,6 +51,7 @@ export default function DataImportExport() {
     summary: BackupSummary
     warning?: RestoreWarning
     truncated?: number
+    gedcom?: GedcomImportStats
   } | null>(null)
   const [isReadingFile, setIsReadingFile] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
@@ -151,13 +153,14 @@ export default function DataImportExport() {
     setImportStatus(null)
     setIsReadingFile(true)
     try {
-      const { payload, warning, truncated } = await readRestoreFile(file)
+      const { payload, warning, truncated, gedcom } =
+        await readRestoreFile(file)
       const summary = summarizeBackup(payload)
       if (!summary) return fail(t('invalidBackupFile'))
       const invalid = validateImportPayload(payload, t)
       if (invalid) return fail(invalid)
       setSelectedFile(file)
-      setParsedBackup({ payload, summary, warning, truncated })
+      setParsedBackup({ payload, summary, warning, truncated, gedcom })
       setShowConfirm(true)
     } catch (error: unknown) {
       fail(
@@ -330,6 +333,7 @@ export default function DataImportExport() {
           summary={parsedBackup.summary}
           warning={parsedBackup.warning}
           truncated={parsedBackup.truncated}
+          gedcom={parsedBackup.gedcom}
           locale={locale}
           isImporting={isImporting}
           isDownloading={isExporting}

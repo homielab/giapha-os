@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- GEDCOM import keeps cited sources: a `SOUR @S1@` citation of a person or a family becomes a "Nguồn: <title>" line in the person's or marriage's note. The restore confirmation now warns how many source/repository records the file has and how many note pointers lead to notes missing from the file, instead of dropping them silently.
+
 - The burial place can be entered for a deceased member (under the dates of death in the member form) and shows on the member page, the printed profile and the family book ("An táng tại …"). GEDCOM export writes it as `BURI`/`PLAC` and import reads it back.
 - Members can store a burial place ("Nơi an táng"), public like the dates of death, so the family knows where to go for tomb sweeping. JSON (now format v5) and CSV backups carry it, older backups restore it empty, and merging duplicates fills an empty burial place from the merged-away profile. Existing installs need the new `add_burial_place` migration (Dashboard → Upgrade).
 - Custom events can repeat every year: a "Repeats" choice in the event dialog offers once, every year on the solar date, or every year on the lunar date (like a death anniversary, leap month kept), so clan meetings or tomb sweeping no longer need to be entered again each year. Backups (JSON/CSV) and the .ics export carry the choice; existing installs need the new `custom_events_recurrence` migration (Dashboard → Upgrade), existing events stay one-off.

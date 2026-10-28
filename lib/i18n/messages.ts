@@ -1177,6 +1177,8 @@ export const messages = {
     textTooLong: '{field} quá dài: tối đa {max} ký tự.',
     restoreTruncated:
       '{count} giá trị trong file dài quá giới hạn sẽ bị cắt bớt khi khôi phục (tên 200, ghi chú 2.000, thông tin riêng 500 ký tự).',
+    restoreGedcomDropped:
+      'File GEDCOM có {sources} bản ghi nguồn/kho lưu trữ (SOUR/REPO) và {missingNotes} ghi chú trỏ tới bản ghi không có trong file. Ứng dụng không lưu nguồn: chỉ tên nguồn được chép vào ghi chú ("Nguồn: …"); ghi chú không tìm thấy sẽ bị bỏ qua.',
     memberPossibleDuplicate:
       'Có {count} người trùng tên và năm sinh: {names}. Vẫn tạo thêm người mới?',
     memberMotherDiedBeforeBirth:
@@ -2389,6 +2391,8 @@ export const messages = {
     textTooLong: '{field} is too long: at most {max} characters.',
     restoreTruncated:
       '{count} values in the file are over the length limits and will be cut when restored (names 200, notes 2,000, private details 500 characters).',
+    restoreGedcomDropped:
+      'The GEDCOM file has {sources} source/repository records (SOUR/REPO) and {missingNotes} notes pointing to records missing from the file. The app does not store sources: only source titles are copied into notes ("Nguồn: …"); missing notes are skipped.',
     memberPossibleDuplicate:
       '{count} existing people have the same name and birth year: {names}. Create another one anyway?',
     memberMotherDiedBeforeBirth:

@@ -1,4 +1,5 @@
 import type { ImportPayload } from '@/utils/backupPayload'
+import type { GedcomImportStats } from '@/utils/gedcom'
 import type { GedcomEncodingWarning } from '@/utils/gedcom/encoding'
 import { clipImportedText } from '@/utils/limits'
 
@@ -52,6 +53,8 @@ export async function readRestoreFile(
   warning?: RestoreWarning
   /** Values of a GEDCOM/CSV file that were cut to the length limits. */
   truncated?: number
+  /** What a GEDCOM file holds that the import drops (notes, sources). */
+  gedcom?: GedcomImportStats
 }> {
   const name = file.name.toLowerCase()
   if (name.endsWith('.ged')) {
@@ -60,8 +63,14 @@ export async function readRestoreFile(
       file.arrayBuffer!()
     ])
     const { text, warning } = decodeGedcom(buffer)
-    const payload = parseGedcom(text) as unknown as ImportPayload
-    return { payload, warning, truncated: clipImportedText(payload) }
+    const { stats, ...parsed } = parseGedcom(text)
+    const payload = parsed as unknown as ImportPayload
+    return {
+      payload,
+      warning,
+      truncated: clipImportedText(payload),
+      gedcom: stats
+    }
   }
   if (name.endsWith('.zip')) {
     const { parseCsvZip } = await import('@/utils/csv')

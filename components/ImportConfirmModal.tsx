@@ -8,6 +8,7 @@ import { useModalA11y } from '@/hooks/useModalA11y'
 import type { Locale } from '@/lib/i18n/messages'
 import { useI18n } from '@/lib/i18n/useI18n'
 import type { BackupSummary, RestoreWarning } from '@/utils/backupSummary'
+import type { GedcomImportStats } from '@/utils/gedcom'
 
 interface ImportConfirmModalProps {
   fileName: string
@@ -15,6 +16,8 @@ interface ImportConfirmModalProps {
   warning?: RestoreWarning
   /** Values of the file cut to the length limits. */
   truncated?: number
+  /** Notes and sources of a GEDCOM file the import cannot keep. */
+  gedcom?: GedcomImportStats
   locale: Locale
   isImporting: boolean
   isDownloading: boolean
@@ -29,6 +32,7 @@ export default function ImportConfirmModal({
   summary,
   warning,
   truncated,
+  gedcom,
   locale,
   isImporting,
   isDownloading,
@@ -97,6 +101,16 @@ export default function ImportConfirmModal({
                   role='alert'
                   className='mt-3 rounded-lg bg-amber-50 p-2 text-sm text-amber-800'>
                   {t('restoreTruncated', { count: truncated })}
+                </p>
+              ) : null}
+              {gedcom && (gedcom.sources > 0 || gedcom.missingNotes > 0) ? (
+                <p
+                  role='alert'
+                  className='mt-3 rounded-lg bg-amber-50 p-2 text-sm text-amber-800'>
+                  {t('restoreGedcomDropped', {
+                    sources: gedcom.sources,
+                    missingNotes: gedcom.missingNotes
+                  })}
                 </p>
               ) : null}
               {summary.exportedAt && (

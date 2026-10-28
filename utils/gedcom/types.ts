@@ -28,4 +28,14 @@ export interface GedcomRelationship {
   type?: string
   person_a?: string
   person_b?: string
+  /** Read from GEDCOM only (source citations of a family); not exported. */
+  note?: string | null
+}
+
+/** What a GEDCOM import could not keep, shown before the restore. */
+export interface GedcomImportStats {
+  /** `NOTE @N1@` pointers to a note record the file does not have. */
+  missingNotes: number
+  /** SOUR and REPO records; only source titles survive, in notes. */
+  sources: number
 }
