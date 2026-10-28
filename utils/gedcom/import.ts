@@ -168,7 +168,8 @@ export function parseGedcom(gedcom: string): {
       }
     }
 
-    // A range keeps only its first date: say so in the note.
+    // A range keeps only its first date and an impossible day is dropped:
+    // keep the original text in the note.
     notes.push(...sourceNotes(record.lines, sourTexts))
     let note = notes.filter((n) => n.trim()).join('\n\n')
     if (rangeNotes.length > 0) {

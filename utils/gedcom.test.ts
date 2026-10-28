@@ -601,6 +601,34 @@ describe('GEDCOM notes, dates and other names from other programs', () => {
     )
   })
 
+  test('drops a day that does not exist and keeps the text in the note', () => {
+    const { persons, relationships } = parseGedcom(
+      indi('1 BIRT', '2 DATE 31 APR 1850', '1 DEAT', '2 DATE 29 FEB 1900')
+    )
+    const p = persons[0]
+    expect([p.birth_day, p.birth_month, p.birth_year]).toEqual([null, 4, 1850])
+    expect([p.death_day, p.death_month, p.death_year]).toEqual([null, 2, 1900])
+    expect(p.note).toBe('BIRT: 31 APR 1850\nDEAT: 29 FEB 1900')
+    const t = (key: string) => key
+    expect(validateImportPayload({ persons, relationships }, t)).toBeNull()
+  })
+
+  test('keeps 29 FEB of a leap year', () => {
+    const { persons } = parseGedcom(indi('1 BIRT', '2 DATE 29 FEB 1904'))
+    const p = persons[0]
+    expect([p.birth_day, p.birth_month, p.birth_year]).toEqual([29, 2, 1904])
+    expect(p.note).toBeNull()
+  })
+
+  test('keeps a whole range in the note when its first day does not exist', () => {
+    const { persons } = parseGedcom(
+      indi('1 BIRT', '2 DATE BET 30 FEB 1850 AND 1855')
+    )
+    const p = persons[0]
+    expect([p.birth_day, p.birth_month, p.birth_year]).toEqual([null, 2, 1850])
+    expect(p.note).toBe('BIRT: BET 30 FEB 1850 AND 1855')
+  })
+
   test('ignores calendar escapes and qualifiers', () => {
     const { persons } = parseGedcom(
       indi(
@@ -1158,5 +1186,60 @@ describe('GEDCOM sources and missing notes', () => {
     expect(stats).toEqual({ missingNotes: 0, sources: 0 })
     expect(persons[0].note).toBe('Tiểu sử')
     expect(relationships[0]).not.toHaveProperty('note')
+  })
+})
+
+describe('roundtrip', () => {
+  const t = (key: string) => key
+
+  /** Export one person, import it back and check it passes validation. */
+  function again(extra: Partial<GedcomPerson>) {
+    const data = { persons: [person('a', 'male', extra)], relationships: [] }
+    const parsed = parseGedcom(exportToGedcom(data))
+    expect(validateImportPayload(parsed, t)).toBeNull()
+    expect(parsed.persons).toHaveLength(1)
+    return parsed.persons[0]
+  }
+
+  test('keeps a date with only a year', () => {
+    const p = again({ birth_year: 1850, is_deceased: true, death_year: 1920 })
+    expect(p).toMatchObject({
+      birth_day: null,
+      birth_month: null,
+      birth_year: 1850,
+      death_day: null,
+      death_month: null,
+      death_year: 1920,
+      note: null
+    })
+  })
+
+  test('keeps a date with a month and a year', () => {
+    const p = again({
+      birth_month: 4,
+      birth_year: 1850,
+      is_deceased: true,
+      death_month: 2,
+      death_year: 1900
+    })
+    expect(p).toMatchObject({
+      birth_day: null,
+      birth_month: 4,
+      birth_year: 1850,
+      death_day: null,
+      death_month: 2,
+      death_year: 1900,
+      note: null
+    })
+  })
+
+  test('keeps a note of several lines with LF or CRLF breaks', () => {
+    const lines = ['Con trưởng', 'Lấy vợ năm 1950', '', 'Mất ở quê']
+    expect(again({ note: lines.join('\n') }).note).toBe(lines.join('\n'))
+    expect(again({ note: lines.join('\r\n') }).note).toBe(lines.join('\n'))
+  })
+
+  test('keeps a one-word name', () => {
+    expect(again({ full_name: 'Tùng' }).full_name).toBe('Tùng')
   })
 })

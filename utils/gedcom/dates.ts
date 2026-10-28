@@ -1,3 +1,5 @@
+import { isValidSolarDate } from '../lunarCalendar'
+
 /**
  * A GEDCOM date is `[[DD] MON] YYYY`: a day needs a month and every date
  * needs a year, so a day without a month (or a date without a year) is left
@@ -43,7 +45,10 @@ export type ParsedDate = {
   day: number | null
   month: number | null
   year: number | null
-  /** The original text when only the first date of a range was kept. */
+  /**
+   * The original text when the date was not kept as written: only the first
+   * date of a range, or a day that does not exist (`31 APR 1850`).
+   */
   rangeText: string | null
 }
 
@@ -54,7 +59,9 @@ const DATE_QUALIFIER = /^(ABT|EST|AFT|BEF|CAL|INT)\s+/i
  * Reads a GEDCOM date value. Qualifiers (ABT, EST, AFT, BEF, CAL, INT) and
  * calendar escapes (`@#DJULIAN@`) are ignored; for a range (`BET a AND b`,
  * `FROM a TO b`, `TO b`) the first date is kept and the original text is
- * returned in `rangeText`.
+ * returned in `rangeText`. A day that does not exist in that month and year
+ * (`31 APR 1850`, `29 FEB 1900`) is dropped, keeping month and year, and the
+ * original text is returned in `rangeText` too.
  */
 export function parseGedcomDate(raw: string): ParsedDate {
   const clean = (v: string) => {
@@ -86,6 +93,15 @@ export function parseGedcomDate(raw: string): ParsedDate {
   } else if (parts.length === 2) {
     date.month = parseMonthName(parts[0])
     date.year = parseInt(parts[1]) || null
+  }
+  if (
+    date.day !== null &&
+    date.month !== null &&
+    date.year !== null &&
+    !isValidSolarDate(date.year, date.month, date.day)
+  ) {
+    date.day = null
+    date.rangeText ??= value
   }
   return date
 }

@@ -73,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- GEDCOM import no longer rejects the whole file when one person has a day that does not exist (`31 APR 1850`, `29 FEB 1900`): the day is left empty, month and year are kept, and the original date is written in the person's note.
 - GEDCOM export turns a `/` inside a name ("Nguyễn Văn A/B") into a space, so Gramps, Family Tree Maker and other programs no longer read it as a surname delimiter and split the name wrongly.
 - Screen readers now name the list/tree/mind map/bubble view buttons and the "Show" filter button on phones, where only their icons show, and announce which view or event filter is selected, whether the filter panel is open, and the new event count after changing the filter.
 - Siblings born in the same year are now ordered by birth month and day (then name) everywhere: the tree, "Recompute generations", the member list and the family book no longer disagree about who is the elder.
