@@ -22,7 +22,7 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  const profile = await getProfile(user.id)
+  const profile = await getProfile()
 
   if (!profile?.is_active) {
     return (

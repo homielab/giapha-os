@@ -12,6 +12,7 @@ type CookieMethods = { setAll: (cookies: CookieToSet[]) => void }
 let user: { id: string } | null = null
 let profileErrorCode: string | null = null
 let refreshedCookies: CookieToSet[] = []
+let profileProbes = 0
 
 mock.module('@supabase/ssr', () => ({
   createServerClient: (
@@ -26,17 +27,20 @@ mock.module('@supabase/ssr', () => ({
         return { data: { user } }
       }
     },
-    from: () => ({
-      select: () => ({
-        limit: async () => ({
-          error: profileErrorCode ? { code: profileErrorCode } : null
+    from: (table: string) => {
+      if (table === 'profiles') profileProbes++
+      return {
+        select: () => ({
+          limit: async () => ({
+            error: profileErrorCode ? { code: profileErrorCode } : null
+          })
         })
-      })
-    })
+      }
+    }
   })
 }))
 
-const { updateSession } = await import('./middleware')
+const { resetSchemaCheck, updateSession } = await import('./middleware')
 
 const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const originalKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
@@ -71,6 +75,8 @@ beforeEach(() => {
   user = null
   profileErrorCode = null
   refreshedCookies = []
+  profileProbes = 0
+  resetSchemaCheck()
 })
 
 afterAll(() => {
@@ -138,5 +144,48 @@ describe('updateSession', () => {
     profileErrorCode = '42501'
     const response = await updateSession(request('/dashboard'))
     expect(response.headers.get('location')).toBeNull()
+  })
+
+  test('probes the schema once, then skips it on later requests', async () => {
+    user = { id: 'user-1' }
+    await updateSession(request('/dashboard'))
+    expect(profileProbes).toBe(1)
+
+    const second = await updateSession(request('/dashboard/members'))
+    expect(second.headers.get('location')).toBeNull()
+    await updateSession(request('/login'))
+    expect(profileProbes).toBe(1)
+  })
+
+  test('keeps probing and redirecting to /setup until the schema exists', async () => {
+    profileErrorCode = '42P01'
+    for (const path of ['/dashboard', '/login']) {
+      const response = await updateSession(request(path))
+      expect(response.headers.get('location')).toBe(
+        'http://localhost:3000/setup'
+      )
+    }
+    expect(profileProbes).toBe(2)
+
+    // After /setup created the tables the next request finds them.
+    profileErrorCode = null
+    user = { id: 'user-1' }
+    const ready = await updateSession(request('/dashboard'))
+    expect(ready.headers.get('location')).toBeNull()
+    expect(profileProbes).toBe(3)
+  })
+
+  test('an unrelated profile error does not mark the schema as checked', async () => {
+    user = { id: 'user-1' }
+    profileErrorCode = '42501'
+    await updateSession(request('/dashboard'))
+    await updateSession(request('/dashboard'))
+    expect(profileProbes).toBe(2)
+  })
+
+  test('public pages never probe the schema', async () => {
+    await updateSession(request('/'))
+    await updateSession(request('/about'))
+    expect(profileProbes).toBe(0)
   })
 })

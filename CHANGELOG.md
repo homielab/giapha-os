@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Dashboard and login pages make fewer Supabase queries: the check that the database is set up now runs only until it first succeeds (a fresh install still goes to `/setup`), and a dashboard page reads the signed-in user's profile once instead of twice.
 - Exporting a branch is now covered by tests and walks the tree without recursion, so very deep or cyclic data cannot overflow or hang it; the README states what a branch export includes (descendants incl. adopted, their spouses; custom events are always exported in full).
 - Gallery uploads are scaled down in the browser to at most 2048 px on the long side and stored as WebP (quality 0.85), so a 6 MB phone photo takes well under 1 MB and the gallery page loads much faster on mobile data. GIFs, animated WebP and images that are already small are uploaded unchanged; photos uploaded earlier are not touched. The 10 MB limit still applies to the file you pick.
 - Internal: the death-date input logic of the member form (solar/lunar sync and the leap-month flag) is now plain functions in `utils/deathDates.ts` with tests; behaviour is unchanged.

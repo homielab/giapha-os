@@ -12,6 +12,17 @@ function redirectWithCookies(url: URL, supabaseResponse: NextResponse) {
   return response
 }
 
+// Set once the profiles table has answered without error. The schema does not
+// disappear while the server runs, so later requests skip the probe instead of
+// paying an extra Supabase query each. Until then (fresh install, /setup not
+// run yet) every dashboard or login request still checks and redirects.
+let schemaReady = false
+
+// For tests: forget a previous successful probe.
+export function resetSchemaCheck() {
+  schemaReady = false
+}
+
 export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
@@ -67,7 +78,7 @@ export async function updateSession(request: NextRequest) {
   const isLoginPage = request.nextUrl.pathname.startsWith('/login')
 
   // Check if DB schema is initialized by checking if profiles table exists
-  if (isProtectedPath || isLoginPage) {
+  if ((isProtectedPath || isLoginPage) && !schemaReady) {
     const { error: profileError } = await supabase
       .from('profiles')
       .select('id')
@@ -81,6 +92,8 @@ export async function updateSession(request: NextRequest) {
       url.pathname = '/setup'
       return redirectWithCookies(url, supabaseResponse)
     }
+
+    if (!profileError) schemaReady = true
   }
 
   if (isProtectedPath && !user) {
