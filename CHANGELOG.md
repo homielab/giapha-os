@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The account approval link in the admin email is no longer used up when activating the account fails (database or network error, account not found): the link keeps working, so the admin can click "Confirm" again. A double click still approves only once.
 - The .ics export now repeats a 29/2 birthday on the last day of February (29/2 in leap years), so calendars no longer show it on 28/2 every year.
 - GEDCOM files with old Mac (CR-only) line endings are no longer read as empty.
 - GEDCOM import now reads notes written as a pointer (`1 NOTE @N1@`, used by Gramps, Family Tree Maker, Legacy and Ancestry) instead of importing the text `@N1@` and losing the note; GEDCOM export splits long notes into `CONC` lines of at most 255 characters.

@@ -189,28 +189,18 @@ export async function POST(_request: Request, { params }: RouteContext) {
       return invalidRequestResponse(locale, t)
     }
 
-    // Claim the one-time request first. The conditional update makes two
-    // concurrent clicks mutually exclusive even though this route is stateless.
-    const { data: claimedRequest, error: claimError } = await supabase
-      .from('user_approval_requests')
-      .update({ used_at: new Date().toISOString() })
-      .eq('id', request.id)
-      .is('used_at', null)
-      .select('id')
-      .maybeSingle()
-
-    if (claimError) throw claimError
-    if (!claimedRequest) {
-      return processedResponse(locale, t)
-    }
-
+    // Activate first, then mark the link as used. If activation fails the
+    // link stays usable, so the admin can simply click again. Activating is
+    // idempotent (guarded by is_active = false) and the conditional claim
+    // below still lets only one of two concurrent clicks report success.
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('is_active')
       .eq('id', request.user_id)
       .maybeSingle()
 
-    if (profileError || !profile) {
+    if (profileError) throw profileError
+    if (!profile) {
       return htmlResponse(
         `<h1 style="margin-top:0;color:#991b1b">${t('approvalNotFoundTitle')}</h1><p>${t('approvalNotFoundText')}</p>`,
         404,
@@ -226,6 +216,19 @@ export async function POST(_request: Request, { params }: RouteContext) {
         .eq('is_active', false)
 
       if (updateError) throw updateError
+    }
+
+    const { data: claimedRequest, error: claimError } = await supabase
+      .from('user_approval_requests')
+      .update({ used_at: new Date().toISOString() })
+      .eq('id', request.id)
+      .is('used_at', null)
+      .select('id')
+      .maybeSingle()
+
+    if (claimError) throw claimError
+    if (!claimedRequest) {
+      return processedResponse(locale, t)
     }
 
     return htmlResponse(
