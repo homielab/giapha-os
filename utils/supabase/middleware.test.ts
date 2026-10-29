@@ -1,5 +1,4 @@
 import { afterAll, beforeEach, describe, expect, mock, test } from 'bun:test'
-
 import { NextRequest, type NextResponse } from 'next/server'
 
 type CookieToSet = {

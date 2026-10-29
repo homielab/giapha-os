@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test'
-
 import { renderToStaticMarkup } from 'react-dom/server'
 
 import Footer from '@/components/Footer'

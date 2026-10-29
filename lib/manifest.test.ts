@@ -1,5 +1,6 @@
-import { describe, expect, test } from 'bun:test'
 import { existsSync } from 'node:fs'
+
+import { describe, expect, test } from 'bun:test'
 
 import config from '@/app/config'
 import {
