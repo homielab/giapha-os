@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- GEDCOM export no longer drops a birthday or death anniversary whose year is unknown: a birth or death date with day and month but no year is written as the custom tag `_DATEDM`, a lunar death date without a year as `_LUNAR <day> <month>`, and import reads both back, so moving a tree between two installs keeps them.
 - The printed family book no longer invents a death anniversary (giỗ) for someone whose death year alone is known, and marks a leap lunar month only when the stored lunar day and month match the death date.
 - The footer credit "Gia Phả OS by HomieLab" now reads "bởi" in the Vietnamese interface.
 - The Deploy to Vercel button and the README steps now ask for `SITE_NAME` and `SHORT_NAME`, so the home-screen icon name can be set at deploy time.

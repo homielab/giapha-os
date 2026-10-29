@@ -2,15 +2,22 @@ import { isValidSolarDate } from '../lunarCalendar'
 
 /**
  * A GEDCOM date is `[[DD] MON] YYYY`: a day needs a month and every date
- * needs a year, so a day without a month (or a date without a year) is left
- * out instead of being written as an invalid or misread date.
+ * needs a year, so a day without a month is left out instead of being written
+ * as an invalid or misread date. A day and month without a year (a birthday
+ * or death anniversary whose year is unknown) has no GEDCOM date: it is
+ * written as the custom tag `2 _DATEDM <day> <month>`, read back by
+ * `parseDayMonth`; anything else without a year is left out.
  */
 export function formatDate(
   day: number | null | undefined,
   month: number | null | undefined,
   year: number | null | undefined
 ): string {
-  if (!year || year <= 0) return ''
+  if (!year || year <= 0) {
+    return day && month && isValidDayMonth(day, month)
+      ? `2 _DATEDM ${day} ${month}\n`
+      : ''
+  }
   const mon = getMonthName(month ?? null)
   const dd = mon && day && day > 0 ? String(day).padStart(2, '0') : ''
   return `2 DATE ${[dd, mon, String(year)].filter(Boolean).join(' ')}\n`
@@ -104,4 +111,20 @@ export function parseGedcomDate(raw: string): ParsedDate {
     date.rangeText ??= value
   }
   return date
+}
+
+// A day and month that exist in some year (29 February included).
+function isValidDayMonth(day: number, month: number): boolean {
+  return isValidSolarDate(2000, month, day)
+}
+
+/** Reads the value of a `_DATEDM <day> <month>` tag; null when invalid. */
+export function parseDayMonth(
+  raw: string
+): { day: number; month: number } | null {
+  const match = raw.trim().match(/^(\d{1,2})\s+(\d{1,2})$/)
+  if (!match) return null
+  const day = parseInt(match[1])
+  const month = parseInt(match[2])
+  return isValidDayMonth(day, month) ? { day, month } : null
 }

@@ -781,6 +781,100 @@ describe('GEDCOM other names and lunar death date', () => {
     expect(read(['2 _LUNAR 10 2 2022 LEAP']).death_year).toBeNull()
   })
 
+  test('round-trips day and month without a year (birthday, anniversary)', () => {
+    const ged = exportToGedcom({
+      persons: [
+        person('a', 'male', {
+          full_name: 'Lê Văn Sinh',
+          birth_day: 15,
+          birth_month: 3,
+          is_deceased: true,
+          death_day: 2,
+          death_month: 9,
+          death_lunar_day: 15,
+          death_lunar_month: 7
+        })
+      ],
+      relationships: []
+    })
+    expect(ged).toContain('1 BIRT\n2 _DATEDM 15 3\n')
+    expect(ged).toContain('1 DEAT Y\n2 _DATEDM 2 9\n2 _LUNAR 15 7\n')
+    const back = parseGedcom(ged).persons[0]
+    expect([back.birth_day, back.birth_month, back.birth_year]).toEqual([
+      15,
+      3,
+      null
+    ])
+    expect([back.death_day, back.death_month, back.death_year]).toEqual([
+      2,
+      9,
+      null
+    ])
+    expect([
+      back.death_lunar_day,
+      back.death_lunar_month,
+      back.death_lunar_year
+    ]).toEqual([15, 7, null])
+    expect(back.is_deceased).toBe(true)
+  })
+
+  test('writes dates with a year as before, without _DATEDM', () => {
+    const ged = exportToGedcom({
+      persons: [
+        person('a', 'male', {
+          full_name: 'Lê Văn Năm',
+          birth_day: 15,
+          birth_month: 3,
+          birth_year: 1950,
+          is_deceased: true,
+          death_year: 2000,
+          death_lunar_day: 15,
+          death_lunar_month: 7,
+          death_lunar_year: 2000
+        }),
+        person('b', 'female', { full_name: 'Lê Thị Tháng', birth_month: 3 })
+      ],
+      relationships: []
+    })
+    expect(ged).toContain('1 BIRT\n2 DATE 15 MAR 1950\n')
+    expect(ged).toContain('1 DEAT Y\n2 DATE 2000\n2 _LUNAR 15 7 2000\n')
+    expect(ged).not.toContain('_DATEDM')
+  })
+
+  test('reads _DATEDM only when the file has no dated DATE', () => {
+    const read = (...lines: string[]) =>
+      parseGedcom(['0 @I1@ INDI', ...lines].join('\n')).persons[0]
+    const kept = read('1 BIRT', '2 DATE 1 JAN 1960', '2 _DATEDM 15 3')
+    expect([kept.birth_day, kept.birth_month, kept.birth_year]).toEqual([
+      1, 1, 1960
+    ])
+    const yearOnly = read('1 BIRT', '2 _DATEDM 15 3', '2 DATE 1960')
+    expect([yearOnly.birth_day, yearOnly.birth_month]).toEqual([null, null])
+    expect(read('1 BIRT', '2 _DATEDM 31 2').birth_day).toBeNull()
+    expect(read('1 BIRT', '2 _DATEDM 29 2').birth_day).toBe(29)
+    expect(read('1 BIRT', '2 _DATEDM abc').birth_month).toBeNull()
+    // Gramps-style file without custom tags: as before.
+    const plain = read('1 BIRT', '2 DATE MAR 1960', '1 DEAT', '2 PLAC Huế')
+    expect([plain.birth_day, plain.birth_month, plain.birth_year]).toEqual([
+      null,
+      3,
+      1960
+    ])
+    expect(plain.is_deceased).toBe(true)
+    expect(plain.death_lunar_day).toBeNull()
+  })
+
+  test('reads _LUNAR without a year and ignores LEAP there', () => {
+    const read = (v: string) =>
+      parseGedcom(['0 @I1@ INDI', '1 DEAT Y', `2 _LUNAR ${v}`].join('\n'))
+        .persons[0]
+    const noYear = read('15 7 LEAP')
+    expect([noYear.death_lunar_day, noYear.death_lunar_month]).toEqual([15, 7])
+    expect(noYear.death_lunar_year).toBeNull()
+    expect(noYear.death_year).toBeNull()
+    expect(read('15 13').death_lunar_day).toBeNull()
+  })
+
   test('round-trips generation, birth order and the in-law flag', () => {
     const ged = exportToGedcom({
       persons: [

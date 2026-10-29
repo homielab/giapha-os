@@ -201,14 +201,13 @@ export function exportToGedcom(data: {
         person.death_year
       )
       // Custom tag: GEDCOM has no lunar calendar, so the lunar death date
-      // (the anniversary) travels as `2 _LUNAR <day> <month> <year> [LEAP]`.
-      if (
-        person.death_lunar_day &&
-        person.death_lunar_month &&
-        person.death_lunar_year
-      ) {
+      // (the anniversary) travels as `2 _LUNAR <day> <month> [<year>] [LEAP]`
+      // (no year when it is unknown; LEAP needs the full date).
+      if (person.death_lunar_day && person.death_lunar_month) {
+        const lunar = [person.death_lunar_day, person.death_lunar_month]
+        if (person.death_lunar_year) lunar.push(person.death_lunar_year)
         const leap = isLeapDeath(person) ? ' LEAP' : ''
-        gedcom += `2 _LUNAR ${person.death_lunar_day} ${person.death_lunar_month} ${person.death_lunar_year}${leap}\n`
+        gedcom += `2 _LUNAR ${lunar.join(' ')}${leap}\n`
       }
     }
 

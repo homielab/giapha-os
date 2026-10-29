@@ -1,5 +1,5 @@
 import { lunarToSolar } from '../lunarCalendar'
-import { parseGedcomDate } from './dates'
+import { parseDayMonth, parseGedcomDate } from './dates'
 import { readName } from './names'
 import { createNoteReader } from './notes'
 import type { ParseRecord } from './records'
@@ -22,7 +22,17 @@ type SolarDate = {
   year: number | null
 }
 
-type LunarDate = { day: number; month: number; year: number }
+// The year is null for an anniversary whose year is unknown.
+type LunarDate = { day: number; month: number; year: number | null }
+
+type DayMonth = { day: number; month: number }
+
+// `_DATEDM` (day and month, no year) only stands in for a missing GEDCOM
+// date: a DATE with a year or a day in the file wins.
+function withDayMonth(date: SolarDate, dayMonth: DayMonth | null): SolarDate {
+  if (!dayMonth || date.year !== null || date.day !== null) return date
+  return { day: dayMonth.day, month: dayMonth.month, year: null }
+}
 
 // A leap-month death without a solar date: the LEAP flag is the only place
 // the leap month survives, so derive the solar date from it.
@@ -33,6 +43,7 @@ function leapDeathDate(
 ): SolarDate {
   if (
     !lunar ||
+    lunar.year === null ||
     !leap ||
     (death.day !== null && death.month !== null && death.year !== null)
   ) {
@@ -68,6 +79,8 @@ export function readPerson(
   let is_deceased = false
   let birth: SolarDate = { day: null, month: null, year: null }
   let death: SolarDate = { day: null, month: null, year: null }
+  let birthDayMonth: DayMonth | null = null
+  let deathDayMonth: DayMonth | null = null
   const noteReader = createNoteReader(ctx.noteTexts, ctx.stats)
   let burialPlace: string | null = null
   let deathLunar: LunarDate | null = null
@@ -153,6 +166,11 @@ export function readPerson(
         const date = parseGedcomDate(val)
         death = { day: date.day, month: date.month, year: date.year }
         if (date.rangeText) rangeNotes.push(`DEAT: ${date.rangeText}`)
+      } else if (currentTag === 'BIRT' && tag === '_DATEDM') {
+        birthDayMonth = parseDayMonth(val)
+      } else if (currentTag === 'DEAT' && tag === '_DATEDM') {
+        deathDayMonth = parseDayMonth(val)
+        if (deathDayMonth) is_deceased = true
       } else if (currentTag === 'BURI' && tag === 'PLAC') {
         // A burial means the person has died.
         if (val) {
@@ -160,13 +178,20 @@ export function readPerson(
           is_deceased = true
         }
       } else if (currentTag === 'DEAT' && tag === '_LUNAR') {
-        const [d, m, y, flag] = val.split(/\s+/)
-        const day = parseInt(d)
-        const month = parseInt(m)
-        const year = parseInt(y)
-        if (day >= 1 && day <= 30 && month >= 1 && month <= 12 && year > 0) {
+        // `<day> <month> [<year>] [LEAP]`: the year may be unknown.
+        const match = val.match(/^(\d+)\s+(\d+)(?:\s+(\d+))?(?:\s+(LEAP))?$/i)
+        const day = match ? parseInt(match[1]) : NaN
+        const month = match ? parseInt(match[2]) : NaN
+        const year = match?.[3] ? parseInt(match[3]) : null
+        if (
+          day >= 1 &&
+          day <= 30 &&
+          month >= 1 &&
+          month <= 12 &&
+          (year === null || year > 0)
+        ) {
           deathLunar = { day, month, year }
-          deathLunarLeap = flag?.toUpperCase() === 'LEAP'
+          deathLunarLeap = year !== null && match?.[4] !== undefined
         }
       }
     }
@@ -191,6 +216,8 @@ export function readPerson(
     note = [note, ...rangeNotes, ...factNotes].filter(Boolean).join('\n')
   }
 
+  birth = withDayMonth(birth, birthDayMonth)
+  death = withDayMonth(death, deathDayMonth)
   death = leapDeathDate(death, deathLunar, deathLunarLeap)
 
   return {
