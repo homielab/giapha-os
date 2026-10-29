@@ -200,6 +200,20 @@ describe('validateImportPayload', () => {
     )
   })
 
+  test('rejects two private detail rows for the same member', () => {
+    const payload = withChange((p) =>
+      p.person_details_private.push({
+        person_id: A,
+        phone_number: null,
+        occupation: null,
+        current_residence: null
+      })
+    )
+    expect(validateImportPayload(payload, t)).toBe(
+      `duplicatePrivateDetail:${JSON.stringify({ id: A })}`
+    )
+  })
+
   test('rejects invalid custom events', () => {
     const payload = withChange(
       (p) =>
@@ -210,6 +224,46 @@ describe('validateImportPayload', () => {
         })
     )
     expect(validateImportPayload(payload, t)).toBe('invalidEventId')
+  })
+
+  test('rejects a duplicate event ID', () => {
+    const payload = withChange((p) =>
+      p.custom_events.push({
+        id: E,
+        name: 'Họp họ',
+        content: null,
+        event_date: '2026-02-01',
+        location: null,
+        created_by: A
+      })
+    )
+    expect(validateImportPayload(payload, t)).toBe(
+      `duplicateEventId:${JSON.stringify({ id: E })}`
+    )
+  })
+
+  test('rejects an invalid or missing event date', () => {
+    const withEvent = (event: Record<string, unknown>) =>
+      withChange((p) => (p.custom_events[0] = event))
+    const expected = `invalidEventDate:${JSON.stringify({
+      name: 'Họp họ',
+      id: E
+    })}`
+    expect(
+      validateImportPayload(
+        withEvent({ id: E, name: 'Họp họ', event_date: 'abc' }),
+        t
+      )
+    ).toBe(expected)
+    expect(
+      validateImportPayload(
+        withEvent({ id: E, name: 'Họp họ', event_date: '2026-02-30' }),
+        t
+      )
+    ).toBe(expected)
+    expect(validateImportPayload(withEvent({ id: E, name: 'Họp họ' }), t)).toBe(
+      expected
+    )
   })
 })
 

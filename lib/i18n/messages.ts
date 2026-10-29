@@ -109,10 +109,15 @@ export const messages = {
     invalidPrivateDetails: 'Thông tin riêng tư không hợp lệ.',
     invalidPrivateDetailsPerson:
       'Thông tin riêng tư trỏ tới hồ sơ không hợp lệ.',
+    duplicatePrivateDetail:
+      'Thông tin riêng tư của thành viên {id} xuất hiện nhiều lần.',
     eventsLimit: 'Số lượng sự kiện vượt quá giới hạn cho phép.',
     invalidEvent: 'Sự kiện không hợp lệ.',
     invalidEventId: 'ID sự kiện không hợp lệ.',
+    duplicateEventId: 'File chứa ID sự kiện bị trùng: {id}.',
     invalidEventName: 'Tên sự kiện không hợp lệ.',
+    invalidEventDate:
+      'Sự kiện "{name}" ({id}) có ngày không hợp lệ (cần YYYY-MM-DD).',
     invalidEventRecurrence:
       'Kiểu lặp của sự kiện không hợp lệ (none, yearly_solar hoặc yearly_lunar).',
     loadDataError: 'Lỗi tải dữ liệu: {error}',
@@ -1328,10 +1333,15 @@ export const messages = {
     invalidPrivateDetails: 'Invalid private information.',
     invalidPrivateDetailsPerson:
       'Private information points to an invalid member profile.',
+    duplicatePrivateDetail:
+      'The private details of member {id} appear more than once.',
     eventsLimit: 'The number of events exceeds the allowed limit.',
     invalidEvent: 'Invalid event.',
     invalidEventId: 'Invalid event ID.',
+    duplicateEventId: 'Duplicate event ID in the file: {id}.',
     invalidEventName: 'Invalid event name.',
+    invalidEventDate:
+      'Event "{name}" ({id}) has an invalid date (expected YYYY-MM-DD).',
     invalidEventRecurrence:
       'Invalid event recurrence (none, yearly_solar or yearly_lunar).',
     loadDataError: 'Could not load data: {error}',

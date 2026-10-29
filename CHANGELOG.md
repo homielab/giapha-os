@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Restoring a backup now refuses a file with an invalid custom-event date: the date must be a real `YYYY-MM-DD` calendar day (missing or wrong ones like "abc" used to break the restore halfway with a raw database error). The error names the event and its ID. It also refuses two custom events with the same ID and two private-details rows for the same member, naming the duplicate ID.
 - GEDCOM export no longer drops a birthday or death anniversary whose year is unknown: a birth or death date with day and month but no year is written as the custom tag `_DATEDM`, a lunar death date without a year as `_LUNAR <day> <month>`, and import reads both back, so moving a tree between two installs keeps them.
 - The printed family book no longer invents a death anniversary (giỗ) for someone whose death year alone is known, and marks a leap lunar month only when the stored lunar day and month match the death date.
 - The footer credit "Gia Phả OS by HomieLab" now reads "bởi" in the Vietnamese interface.

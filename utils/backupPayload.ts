@@ -188,6 +188,14 @@ function findInvalidNumberField(row: Record<string, unknown>) {
   return null
 }
 
+/** The events table stores a calendar date as a `YYYY-MM-DD` string. */
+function isValidEventDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value))
+    return false
+  const [year, month, day] = value.split('-').map(Number)
+  return isValidSolarDate(year, month, day)
+}
+
 export type Translator = (
   key: TranslationKey,
   values?: TranslationValues
@@ -276,12 +284,16 @@ export function validateImportPayload(
     ) {
       return t('privateDetailsLimit')
     }
+    const detailPersonIds = new Set<string>()
     for (const detail of privateDetails) {
       if (!detail || typeof detail !== 'object')
         return t('invalidPrivateDetails')
       const row = detail as Record<string, unknown>
       if (typeof row.person_id !== 'string' || !personIds.has(row.person_id))
         return t('invalidPrivateDetailsPerson')
+      if (detailPersonIds.has(row.person_id))
+        return t('duplicatePrivateDetail', { id: row.person_id })
+      detailPersonIds.add(row.person_id)
       for (const field of ['phone_number', 'occupation', 'current_residence']) {
         if (!isShortText(row[field], MAX_PRIVATE))
           return t('fieldTooLong', { field })
@@ -297,17 +309,22 @@ export function validateImportPayload(
     ) {
       return t('eventsLimit')
     }
+    const eventIds = new Set<string>()
     for (const event of customEvents) {
       if (!event || typeof event !== 'object') return t('invalidEvent')
       const row = event as Record<string, unknown>
       if (typeof row.id !== 'string' || !isUuid(row.id))
         return t('invalidEventId')
+      if (eventIds.has(row.id)) return t('duplicateEventId', { id: row.id })
+      eventIds.add(row.id)
       if (
         typeof row.name !== 'string' ||
         row.name.trim().length === 0 ||
         row.name.length > MAX_NAME
       )
         return t('invalidEventName')
+      if (!isValidEventDate(row.event_date))
+        return t('invalidEventDate', { name: row.name.trim(), id: row.id })
       for (const field of ['content', 'location']) {
         if (!isShortText(row[field], MAX_NOTE))
           return t('fieldTooLong', { field })
