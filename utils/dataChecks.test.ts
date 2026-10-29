@@ -30,6 +30,9 @@ function person(
     death_lunar_year: null,
     death_lunar_month: null,
     death_lunar_day: null,
+    is_in_law: false,
+    birth_order: null,
+    generation: null,
     ...extra
   }
 }
@@ -39,15 +42,24 @@ const child = (parent: string, kid: string): DataCheckRelationship => ({
   person_a: parent,
   person_b: kid
 })
-// Missing info and ages over 120 have their own tests; the fixtures below use
-// living people born long ago.
+// Missing info, ages over 120 and people with no link have their own tests;
+// the fixtures below use living people born long ago, often unlinked.
 const kinds = (
   persons: DataCheckPerson[],
   relationships: DataCheckRelationship[] = []
 ) =>
   runDataChecks(persons, relationships, TODAY)
     .map((f) => f.kind)
-    .filter((k) => !k.startsWith('missing') && k !== 'implausibleAge')
+    .filter(
+      (k) =>
+        !k.startsWith('missing') &&
+        k !== 'implausibleAge' &&
+        k !== 'isolatedPerson'
+    )
+
+// For fixtures of unrelated people.
+const unlinked = (persons: DataCheckPerson[]) =>
+  runDataChecks(persons, [], TODAY).filter((f) => f.kind !== 'isolatedPerson')
 
 describe('runDataChecks: parents of one child', () => {
   const people = [
@@ -258,7 +270,7 @@ describe('runDataChecks', () => {
       person('d', { birth_year: 1950, death_year: 1940 })
     ]
     expect(
-      runDataChecks(persons, [], TODAY)
+      unlinked(persons)
         .filter((f) => !f.kind.startsWith('missing'))
         .map((f) => [f.kind, f.people[0].name])
     ).toEqual([
@@ -288,9 +300,7 @@ describe('missing information', () => {
         death_year: 2010
       })
     ]
-    expect(
-      runDataChecks(persons, [], TODAY).map((f) => [f.kind, f.people[0].id])
-    ).toEqual([
+    expect(unlinked(persons).map((f) => [f.kind, f.people[0].id])).toEqual([
       ['missingBirthYear', 'a'],
       ['missingDeathYear', 'b'],
       ['missingGender', 'c']
@@ -322,9 +332,7 @@ describe('missing information', () => {
         death_lunar_day: 1
       })
     ]
-    expect(
-      runDataChecks(persons, [], TODAY).map((f) => [f.kind, f.people[0].id])
-    ).toEqual([
+    expect(unlinked(persons).map((f) => [f.kind, f.people[0].id])).toEqual([
       ['deceasedFlagMissing', 'a'],
       ['deceasedFlagMissing', 'b']
     ])
@@ -335,15 +343,13 @@ describe('missing information', () => {
       person('x', { gender: 'other', birth_year: 1950 }),
       person('y', { gender: 'male', birth_year: 1950, is_deceased: false })
     ]
-    expect(runDataChecks(persons, [], TODAY).map((f) => f.kind)).toEqual([
-      'missingGender'
-    ])
+    expect(unlinked(persons).map((f) => f.kind)).toEqual(['missingGender'])
   })
 })
 
 describe('runDataChecks: implausible age', () => {
   const ages = (persons: DataCheckPerson[]) =>
-    runDataChecks(persons, [], TODAY)
+    unlinked(persons)
       .filter((f) => f.kind === 'implausibleAge')
       .map((f) => [f.people[0].id, f.params.field, f.params.age])
 
@@ -420,7 +426,7 @@ describe('runDataChecks order', () => {
   const missingBirth = (id: string, full_name: string) =>
     person(id, { full_name, gender: 'male' })
   const names = (persons: DataCheckPerson[]) =>
-    runDataChecks(persons, [], TODAY).map((f) => f.people[0])
+    unlinked(persons).map((f) => f.people[0])
 
   test('sorts names with Vietnamese collation', () => {
     const persons = ['Đào', 'Dũng', 'Ân', 'An'].map((n, i) =>
@@ -482,7 +488,9 @@ describe('runDataChecks: loops and self links', () => {
       people,
       [marriage('A', 'A'), child('B', 'B')],
       TODAY
-    ).filter((f) => !f.kind.startsWith('missing'))
+    ).filter(
+      (f) => !f.kind.startsWith('missing') && f.kind !== 'isolatedPerson'
+    )
     expect(found).toEqual([
       {
         kind: 'selfLink',
@@ -506,5 +514,242 @@ describe('runDataChecks: loops and self links', () => {
         child('C', 'D')
       ])
     ).toEqual([])
+  })
+})
+
+describe('runDataChecks: people with no link', () => {
+  const marriage = (a: string, b: string): DataCheckRelationship => ({
+    type: 'marriage',
+    person_a: a,
+    person_b: b
+  })
+  const isolated = (
+    persons: DataCheckPerson[],
+    relationships: DataCheckRelationship[]
+  ) =>
+    runDataChecks(persons, relationships, TODAY)
+      .filter((f) => f.kind === 'isolatedPerson')
+      .map((f) => f.people[0].id)
+
+  test('reports someone with no parent, spouse or child', () => {
+    const persons = ['a', 'b', 'c', 'd', 'e'].map((id) => person(id))
+    expect(
+      isolated(persons, [
+        child('a', 'b'),
+        marriage('a', 'c'),
+        { type: 'adopted_child', person_a: 'c', person_b: 'd' }
+      ])
+    ).toEqual(['e'])
+  })
+
+  test('a link to oneself does not count as a link', () => {
+    const persons = [person('a'), person('b'), person('c')]
+    expect(isolated(persons, [child('a', 'b'), marriage('c', 'c')])).toEqual([
+      'c'
+    ])
+  })
+
+  test('a tree of one person is not reported', () => {
+    expect(isolated([person('a')], [])).toEqual([])
+    expect(isolated([], [])).toEqual([])
+  })
+})
+
+describe('runDataChecks: generation mismatch', () => {
+  const mismatches = (
+    persons: DataCheckPerson[],
+    relationships: DataCheckRelationship[]
+  ) =>
+    runDataChecks(persons, relationships, TODAY).filter(
+      (f) => f.kind === 'generationMismatch'
+    )
+
+  test('reports a biological child not one generation below the parent', () => {
+    const persons = [
+      person('f', { full_name: 'Father', generation: 3 }),
+      person('k', { full_name: 'Kid', generation: 3 }),
+      person('g', { full_name: 'Grandkid', generation: 4 })
+    ]
+    expect(mismatches(persons, [child('f', 'k'), child('k', 'g')])).toEqual([
+      {
+        kind: 'generationMismatch',
+        people: [
+          { id: 'k', name: 'Kid' },
+          { id: 'f', name: 'Father' }
+        ],
+        params: {
+          child: 'Kid',
+          parent: 'Father',
+          childGeneration: 3,
+          parentGeneration: 3,
+          expected: 4
+        }
+      }
+    ])
+  })
+
+  test('a repeated link is reported once', () => {
+    const persons = [
+      person('f', { generation: 1 }),
+      person('k', { generation: 5 })
+    ]
+    expect(
+      mismatches(persons, [child('f', 'k'), child('f', 'k')])
+    ).toHaveLength(1)
+  })
+
+  test('leaves out adopted children, in-laws and unknown generations', () => {
+    const persons = [
+      person('f', { generation: 1 }),
+      person('adopted', { generation: 4 }),
+      person('dau', { generation: 2, is_in_law: true }),
+      person('dauParent', { generation: 5 }),
+      person('inLawParent', { generation: 7, is_in_law: true }),
+      person('kid', { generation: 2 }),
+      person('unknown', { generation: null }),
+      person('unknownParent', { generation: null }),
+      person('kid2', { generation: 9 })
+    ]
+    expect(
+      mismatches(persons, [
+        { type: 'adopted_child', person_a: 'f', person_b: 'adopted' },
+        // a daughter-in-law's own parents: she takes her husband's generation
+        child('dauParent', 'dau'),
+        child('inLawParent', 'kid'),
+        child('f', 'unknown'),
+        child('unknownParent', 'kid2'),
+        child('f', 'kid')
+      ])
+    ).toEqual([])
+  })
+})
+
+describe('runDataChecks: birth order', () => {
+  const conflicts = (
+    persons: DataCheckPerson[],
+    relationships: DataCheckRelationship[]
+  ) =>
+    runDataChecks(persons, relationships, TODAY).filter(
+      (f) => f.kind === 'birthOrderConflict'
+    )
+  const kid = (
+    id: string,
+    birth_order: number | null,
+    birth_year: number | null = null,
+    extra: Partial<DataCheckPerson> = {}
+  ) => person(id, { full_name: id, birth_order, birth_year, ...extra })
+
+  test('reports children of one parent sharing a birth order, once for full siblings', () => {
+    const persons = [
+      person('f', { full_name: 'F', gender: 'male' }),
+      person('m', { full_name: 'M', gender: 'female' }),
+      kid('B', 2),
+      kid('A', 2),
+      kid('C', 1)
+    ]
+    const relationships = ['A', 'B', 'C'].flatMap((id) => [
+      child('f', id),
+      child('m', id)
+    ])
+    expect(conflicts(persons, relationships)).toEqual([
+      {
+        kind: 'birthOrderConflict',
+        people: [
+          { id: 'A', name: 'A' },
+          { id: 'B', name: 'B' }
+        ],
+        params: { type: 'same', names: 'A, B', parent: 'F', order: 2 }
+      }
+    ])
+  })
+
+  test('groups by father or by mother: half siblings count too', () => {
+    const persons = [
+      person('f'),
+      person('m1'),
+      person('m2'),
+      kid('A', 1),
+      kid('B', 1)
+    ]
+    const found = conflicts(persons, [
+      child('f', 'A'),
+      child('m1', 'A'),
+      child('f', 'B'),
+      child('m2', 'B')
+    ])
+    expect(found).toHaveLength(1)
+    expect(found[0].people.map((p) => p.id)).toEqual(['A', 'B'])
+  })
+
+  test('reports a birth order that runs against the birth years', () => {
+    const persons = [
+      person('f', { full_name: 'F' }),
+      kid('A', 1, 1990),
+      kid('B', 2, 1985),
+      kid('C', 3, 1995)
+    ]
+    expect(
+      conflicts(persons, [child('f', 'A'), child('f', 'B'), child('f', 'C')])
+    ).toEqual([
+      {
+        kind: 'birthOrderConflict',
+        people: [
+          { id: 'A', name: 'A' },
+          { id: 'B', name: 'B' }
+        ],
+        params: {
+          type: 'reversed',
+          a: 'A',
+          b: 'B',
+          parent: 'F',
+          orderA: 1,
+          orderB: 2,
+          birthA: '1990',
+          birthB: '1985'
+        }
+      }
+    ])
+  })
+
+  test('compares month and day only when both are known', () => {
+    const persons = [
+      person('f'),
+      kid('A', 1, 1990, { birth_month: 8 }),
+      kid('B', 2, 1990, { birth_month: 3 }),
+      kid('C', 3, 1990)
+    ]
+    const found = conflicts(persons, [
+      child('f', 'A'),
+      child('f', 'B'),
+      child('f', 'C')
+    ])
+    expect(found.map((f) => f.people.map((p) => p.id))).toEqual([['A', 'B']])
+  })
+
+  test('skips unknown years and orders, adopted and in-law children', () => {
+    const persons = [
+      person('f'),
+      kid('A', 1, 1990),
+      kid('noYear', 2, null),
+      kid('B', 3, 1995),
+      kid('noOrder', null, 1980),
+      kid('adopted', 3, 1970),
+      kid('inLaw', 1, 1960, { is_in_law: true })
+    ]
+    expect(
+      conflicts(persons, [
+        child('f', 'A'),
+        child('f', 'noYear'),
+        child('f', 'B'),
+        child('f', 'noOrder'),
+        { type: 'adopted_child', person_a: 'f', person_b: 'adopted' },
+        child('f', 'inLaw')
+      ])
+    ).toEqual([])
+  })
+
+  test('children of different parents may share an order', () => {
+    const persons = [person('f1'), person('f2'), kid('A', 1), kid('B', 1)]
+    expect(conflicts(persons, [child('f1', 'A'), child('f2', 'B')])).toEqual([])
   })
 })

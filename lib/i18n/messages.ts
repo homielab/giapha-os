@@ -849,6 +849,17 @@ export const messages = {
       'Vòng {count} người, mỗi người là cha/mẹ của người sau: {path}.',
     dataCheckSelfMarriage: '{name} kết hôn với chính mình.',
     dataCheckSelfChild: '{name} là cha/mẹ của chính mình.',
+    dataCheckKindGenerationMismatch: 'Đời của con khác đời cha mẹ cộng một',
+    dataCheckKindBirthOrderConflict: 'Con thứ bị trùng hoặc ngược năm sinh',
+    dataCheckKindIsolatedPerson: 'Người không có quan hệ nào',
+    dataCheckGenerationMismatch:
+      '{child} ghi đời {childGeneration}, cha/mẹ {parent} đời {parentGeneration} (con phải là đời {expected}).',
+    dataCheckBirthOrderSame:
+      '{names} (con của {parent}) cùng là con thứ {order}.',
+    dataCheckBirthOrderReversed:
+      '{a} là con thứ {orderA} (sinh {birthA}) nhưng sinh sau {b}, con thứ {orderB} (sinh {birthB}); cùng là con của {parent}.',
+    dataCheckIsolatedPerson:
+      '{name} không có cha mẹ, vợ chồng hay con nào trong cây.',
     duplicateScanTitle: 'Người có thể trùng',
     duplicateScanDescription:
       'Quét cả cây tìm thành viên có thể là một người nhập hai lần: cùng tên (không phân biệt dấu) và cùng năm sinh, hoặc cùng tên và cùng cha/mẹ. Chỉ để xem; không có gì bị sửa hay xoá. Hãy mở từng hồ sơ và tự sửa hoặc xoá bằng công cụ sẵn có.',
@@ -2127,6 +2138,19 @@ export const messages = {
       'Loop of {count} people, each a parent of the next: {path}.',
     dataCheckSelfMarriage: '{name} is married to themselves.',
     dataCheckSelfChild: '{name} is their own parent.',
+    dataCheckKindGenerationMismatch:
+      "Child's generation is not the parent's plus one",
+    dataCheckKindBirthOrderConflict:
+      'Birth order repeated or against birth dates',
+    dataCheckKindIsolatedPerson: 'Person with no relationships',
+    dataCheckGenerationMismatch:
+      '{child} is in generation {childGeneration}, parent {parent} in generation {parentGeneration} (the child should be in {expected}).',
+    dataCheckBirthOrderSame:
+      '{names} (children of {parent}) are all child no. {order}.',
+    dataCheckBirthOrderReversed:
+      '{a} is child no. {orderA} (born {birthA}) but was born after {b}, child no. {orderB} (born {birthB}); both children of {parent}.',
+    dataCheckIsolatedPerson:
+      '{name} has no parent, spouse or child in the tree.',
     duplicateScanTitle: 'Possible duplicates',
     duplicateScanDescription:
       'Scans the whole tree for members who may have been entered twice: the same name (ignoring accents) and birth year, or the same name and a shared parent. View only; nothing is changed or deleted. Open each profile and fix or delete it with the usual tools.',

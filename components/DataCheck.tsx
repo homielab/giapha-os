@@ -23,6 +23,9 @@ const KIND_TITLES = {
   tooManyParents: 'dataCheckKindTooManyParents',
   parentChildLoop: 'dataCheckKindParentChildLoop',
   selfLink: 'dataCheckKindSelfLink',
+  generationMismatch: 'dataCheckKindGenerationMismatch',
+  birthOrderConflict: 'dataCheckKindBirthOrderConflict',
+  isolatedPerson: 'dataCheckKindIsolatedPerson',
   missingBirthYear: 'dataCheckKindMissingBirthYear',
   missingDeathYear: 'dataCheckKindMissingDeathYear',
   deceasedFlagMissing: 'dataCheckKindDeceasedFlagMissing',
@@ -60,6 +63,14 @@ function messageKey(f: DataCheckFinding): TranslationKey {
       return f.params.type === 'marriage'
         ? 'dataCheckSelfMarriage'
         : 'dataCheckSelfChild'
+    case 'generationMismatch':
+      return 'dataCheckGenerationMismatch'
+    case 'birthOrderConflict':
+      return f.params.type === 'same'
+        ? 'dataCheckBirthOrderSame'
+        : 'dataCheckBirthOrderReversed'
+    case 'isolatedPerson':
+      return 'dataCheckIsolatedPerson'
     case 'missingBirthYear':
     case 'missingDeathYear':
     case 'deceasedFlagMissing':

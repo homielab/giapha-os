@@ -8,7 +8,7 @@ import {
 
 /** Columns the whole-tree data check reads. */
 export const DATA_CHECK_PERSON_COLUMNS =
-  'id, full_name, gender, is_deceased, birth_year, birth_month, birth_day, death_year, death_month, death_day, death_lunar_year, death_lunar_month, death_lunar_day'
+  'id, full_name, gender, is_deceased, birth_year, birth_month, birth_day, death_year, death_month, death_day, death_lunar_year, death_lunar_month, death_lunar_day, is_in_law, birth_order, generation'
 
 export interface DataCheckPerson {
   id: string
@@ -24,6 +24,9 @@ export interface DataCheckPerson {
   death_lunar_year: number | null
   death_lunar_month: number | null
   death_lunar_day: number | null
+  is_in_law: boolean | null
+  birth_order: number | null
+  generation: number | null
 }
 
 export interface DataCheckRelationship {
@@ -45,6 +48,9 @@ export const DATA_CHECK_KINDS = [
   'tooManyParents',
   'parentChildLoop',
   'selfLink',
+  'generationMismatch',
+  'birthOrderConflict',
+  'isolatedPerson',
   'missingBirthYear',
   'missingDeathYear',
   'deceasedFlagMissing',
@@ -107,7 +113,12 @@ const ref = (p: DataCheckPerson) => ({ id: p.id, name: p.full_name })
  * day is unknown). Someone older than `MAX_AGE` (in years) is reported:
  * living with no date of death at all, or died older than that. People that
  * cannot be reached from the root are not reported here (the Lineage page
- * lists them). A link from a person to themselves is
+ * lists them), except someone with no link at all in a tree of two or more
+ * (`isolatedPerson`, often a GEDCOM family record that did not come through).
+ * A biological child must be one generation below the parent when both
+ * generations are known and neither is an in-law; children of one parent must
+ * not share a birth order, nor have it run against birth dates that are known
+ * (adopted and in-law children left out). A link from a person to themselves is
  * only reported as `selfLink`; parent–child loops are listed once each, as the
  * people along the loop. Findings are sorted by kind, then name
  * (Vietnamese order), then id.
@@ -366,6 +377,25 @@ export function runDataChecks(
     })
   }
 
+  findings.push(
+    ...checkGenerations(links, byId),
+    ...checkBirthOrders(links, byId)
+  )
+
+  // One person alone is a tree just started, not a lost link.
+  if (persons.length > 1) {
+    const linked = new Set(links.flatMap((r) => [r.person_a, r.person_b]))
+    for (const p of persons) {
+      if (!linked.has(p.id)) {
+        findings.push({
+          kind: 'isolatedPerson',
+          people: [ref(p)],
+          params: { name: p.full_name }
+        })
+      }
+    }
+  }
+
   const order = (k: DataCheckKind) => DATA_CHECK_KINDS.indexOf(k)
   return findings.sort(
     (x, y) =>
@@ -373,4 +403,143 @@ export function runDataChecks(
       x.people[0].name.localeCompare(y.people[0].name, 'vi') ||
       x.people[0].id.localeCompare(y.people[0].id)
   )
+}
+
+/** Each biological parent → child link once, both people known. */
+function biologicalLinks(
+  links: DataCheckRelationship[],
+  byId: Map<string, DataCheckPerson>
+): [DataCheckPerson, DataCheckPerson][] {
+  const seen = new Set<string>()
+  return links.flatMap((r) => {
+    const key = `${r.person_a}|${r.person_b}`
+    const parent = byId.get(r.person_a)
+    const kid = byId.get(r.person_b)
+    if (r.type !== 'biological_child' || !parent || !kid || seen.has(key))
+      return []
+    seen.add(key)
+    return [[parent, kid] as [DataCheckPerson, DataCheckPerson]]
+  })
+}
+
+/**
+ * A biological child one generation below the parent. In-laws are left out:
+ * they take the generation of their spouse, not of their own parents.
+ */
+function checkGenerations(
+  links: DataCheckRelationship[],
+  byId: Map<string, DataCheckPerson>
+): DataCheckFinding[] {
+  return biologicalLinks(links, byId).flatMap(([parent, kid]) => {
+    if (
+      parent.generation == null ||
+      kid.generation == null ||
+      parent.is_in_law ||
+      kid.is_in_law ||
+      kid.generation === parent.generation + 1
+    )
+      return []
+    return [
+      {
+        kind: 'generationMismatch' as const,
+        people: [ref(kid), ref(parent)],
+        params: {
+          child: kid.full_name,
+          parent: parent.full_name,
+          childGeneration: kid.generation,
+          parentGeneration: parent.generation,
+          expected: parent.generation + 1
+        }
+      }
+    ]
+  })
+}
+
+/**
+ * Children of one father or one mother sharing a birth order, or whose order
+ * runs against known birth dates (only years that are recorded, down to the
+ * month and day when both have them). Full siblings, seen from both parents,
+ * are reported once.
+ */
+function checkBirthOrders(
+  links: DataCheckRelationship[],
+  byId: Map<string, DataCheckPerson>
+): DataCheckFinding[] {
+  const childrenOf = new Map<string, DataCheckPerson[]>()
+  for (const [parent, kid] of biologicalLinks(links, byId)) {
+    if (kid.birth_order == null || kid.is_in_law) continue
+    const list = childrenOf.get(parent.id)
+    if (list) list.push(kid)
+    else childrenOf.set(parent.id, [kid])
+  }
+
+  const findings: DataCheckFinding[] = []
+  const reported = new Set<string>()
+  const byName = (x: DataCheckPerson, y: DataCheckPerson) =>
+    x.full_name.localeCompare(y.full_name, 'vi') || x.id.localeCompare(y.id)
+  const birthDate = (p: DataCheckPerson) => ({
+    year: p.birth_year ?? ('' as const),
+    month: p.birth_month ?? ('' as const),
+    day: p.birth_day ?? ('' as const)
+  })
+
+  for (const [parentId, kids] of childrenOf) {
+    const parent = byId.get(parentId)!
+
+    const sameOrder = new Map<number, DataCheckPerson[]>()
+    for (const kid of kids) {
+      const order = kid.birth_order as number
+      sameOrder.set(order, [...(sameOrder.get(order) ?? []), kid])
+    }
+    for (const [order, group] of sameOrder) {
+      if (group.length < 2) continue
+      group.sort(byName)
+      const key = `same|${group.map((p) => p.id).join('|')}`
+      if (reported.has(key)) continue
+      reported.add(key)
+      findings.push({
+        kind: 'birthOrderConflict',
+        people: group.map(ref),
+        params: {
+          type: 'same',
+          names: group.map((p) => p.full_name).join(', '),
+          parent: parent.full_name,
+          order
+        }
+      })
+    }
+
+    // Each child against the next one in birth order whose year is known.
+    const dated = kids
+      .filter((p) => p.birth_year != null)
+      .sort(
+        (x, y) =>
+          (x.birth_order as number) - (y.birth_order as number) ||
+          (comparePartialDates(birthDate(x), birthDate(y)) ?? 0)
+      )
+    for (let i = 0; i + 1 < dated.length; i++) {
+      const [earlier, later] = [dated[i], dated[i + 1]]
+      if (earlier.birth_order === later.birth_order) continue
+      const born = comparePartialDates(birthDate(earlier), birthDate(later))
+      if (born == null || born <= 0) continue
+      const key = `reversed|${earlier.id}|${later.id}`
+      if (reported.has(key)) continue
+      reported.add(key)
+      findings.push({
+        kind: 'birthOrderConflict',
+        people: [ref(earlier), ref(later)],
+        params: {
+          type: 'reversed',
+          a: earlier.full_name,
+          b: later.full_name,
+          parent: parent.full_name,
+          orderA: earlier.birth_order as number,
+          orderB: later.birth_order as number,
+          birthA: birthOf(earlier),
+          birthB: birthOf(later)
+        }
+      })
+    }
+  }
+  return findings
 }
