@@ -2,7 +2,7 @@
 
 import { ReactNode, useMemo, useState } from 'react'
 
-import { interpolate } from './interpolate'
+import { translateWith } from './interpolate'
 import type { Locale } from './locales'
 import type { Messages } from './messages'
 import { I18nContext, I18nContextValue } from './useI18n'
@@ -32,7 +32,7 @@ export function I18nProvider({
       locale,
       messages,
       setLocale,
-      t: (key, values) => interpolate(messages[key], values)
+      t: (key, values) => translateWith(messages, locale, key, values)
     }),
     [locale, messages]
   )

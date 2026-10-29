@@ -1,9 +1,10 @@
 import { cookies } from 'next/headers'
 
-import { interpolate, type TranslationValues } from './interpolate'
+import type { TranslationValues } from './interpolate'
 import {
   getLocale,
   getMessages,
+  translate,
   type Locale,
   type TranslationKey
 } from './messages'
@@ -21,6 +22,6 @@ export async function getServerTranslations() {
     locale,
     dictionary,
     t: (key: TranslationKey, values?: TranslationValues) =>
-      interpolate(dictionary[key], values)
+      translate(locale, key, values)
   }
 }
