@@ -1,20 +1,20 @@
 'use client'
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  LayoutGrid,
-  Plus
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 
 import { useI18n } from '@/lib/i18n/useI18n'
 import { GalleryItem } from '@/types'
+import {
+  readGalleryView,
+  subscribeGalleryView,
+  writeGalleryView
+} from '@/utils/galleryView'
 
 import GalleryGrid from './GalleryGrid'
+import GalleryViewSwitcher from './GalleryViewSwitcher'
 import UploadModal from './modal/UploadModal'
 
 export default function GalleryClient({
@@ -33,7 +33,11 @@ export default function GalleryClient({
   // Hide deleted items right away; router.refresh() then brings the new page.
   const [deletedIds, setDeletedIds] = useState<Set<string>>(() => new Set())
   const items = pageItems.filter((item) => !deletedIds.has(item.id))
-  const [viewMode, setViewMode] = useState<'grid' | 'timeline'>('timeline')
+  const viewMode = useSyncExternalStore(
+    subscribeGalleryView,
+    readGalleryView,
+    () => 'timeline' as const
+  )
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null)
   const router = useRouter()
@@ -75,30 +79,7 @@ export default function GalleryClient({
 
         <div className='flex items-center gap-3'>
           {/* View switcher */}
-          <div className='flex items-center rounded-xl border border-stone-200/60 bg-stone-100 p-1'>
-            <button
-              onClick={() => setViewMode('timeline')}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                viewMode === 'timeline'
-                  ? 'bg-white text-stone-900 shadow-xs'
-                  : 'text-stone-500 hover:text-stone-800'
-              }`}
-              title={t('timelineView')}>
-              <Clock className='size-4' />
-              <span className='xs:inline hidden'>{t('timelineView')}</span>
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                viewMode === 'grid'
-                  ? 'bg-white text-stone-900 shadow-xs'
-                  : 'text-stone-500 hover:text-stone-800'
-              }`}
-              title={t('gridView')}>
-              <LayoutGrid className='size-4' />
-              <span className='xs:inline hidden'>{t('gridView')}</span>
-            </button>
-          </div>
+          <GalleryViewSwitcher value={viewMode} onChange={writeGalleryView} />
 
           {isAdmin && (
             <button

@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The gallery remembers the Timeline/Grid choice across pages and visits.
 - Large family trees (more than 1,000 members or relationships) open faster on the members list, tree, kinship, statistics, events and lineage pages, and back up faster: after the first 1,000 rows, the remaining rows are loaded four pages at a time instead of one after another. Trees under 1,000 rows load as before.
 - Pages load less JavaScript up front: the animation library's features now arrive after the first render instead of with every page. First load JS (gzip) drops by about 27 kB: home 226 → 198 kB, login 297 → 269 kB, members 347 → 320 kB.
 - Updated Next.js and eslint-config-next to 16.4.3, lucide-react to 1.63 and @types/node to 26.6.6.
@@ -89,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Screen readers now name the gallery's Timeline/Grid buttons on narrow screens and hear which one is on, and they announce an error when deleting a member fails.
 - Ctrl+K search and the person pickers match each typed word and the birth or death year like the member list: `nguyen an` finds Nguyễn Văn An and `tran 1950` finds Trần born or died in 1950.
 - Screen readers read each person's name once on member cards, the mind map, the tree, the relationship list and the person picker (the photo next to the name no longer repeats it), and now say the gender (Nam/Nữ) on member cards and in the person picker.
 - Restoring a GEDCOM file from Gramps, MyHeritage or other programs now reads names surname first (`1 NAME Văn An /Nguyễn/` becomes "Nguyễn Văn An", not "Văn An Nguyễn"). The restore dialog lets you keep the order the file uses instead. Files exported by Giapha OS read as before.

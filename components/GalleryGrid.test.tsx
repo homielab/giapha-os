@@ -8,6 +8,7 @@ import {
 } from '@/components/galleryCardReveal'
 import GalleryGrid from '@/components/GalleryGrid'
 import GalleryLightbox from '@/components/GalleryLightbox'
+import GalleryViewSwitcher from '@/components/GalleryViewSwitcher'
 import { interpolate } from '@/lib/i18n/interpolate'
 import { messages } from '@/lib/i18n/messages'
 import { I18nContext } from '@/lib/i18n/useI18n'
@@ -106,5 +107,17 @@ describe('GalleryLightbox navigation', () => {
     const html = lightbox(1, 1)
     expect(html).not.toContain('Ảnh trước')
     expect(html).not.toContain('Ảnh 1/1')
+  })
+})
+
+describe('GalleryViewSwitcher', () => {
+  test('both buttons are named and report which view is on', () => {
+    const html = render(<GalleryViewSwitcher value='grid' onChange={noop} />)
+    expect(html).toContain(
+      `aria-label="${messages.vi.gridView}" aria-pressed="true"`
+    )
+    expect(html).toContain(
+      `aria-label="${messages.vi.timelineView}" aria-pressed="false"`
+    )
   })
 })

@@ -6,6 +6,7 @@ import { useState } from 'react'
 
 import { deleteMemberProfile } from '@/app/actions/member'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { noticeAria } from '@/utils/a11y'
 import { memberSearchCache } from '@/utils/memberSearchCache'
 
 interface DeleteMemberButtonProps {
@@ -57,7 +58,9 @@ export default function DeleteMemberButton({
       </button>
 
       {error && (
-        <div className='animate-in fade-in slide-in-from-top-2 absolute top-full right-0 z-50 mt-2 w-72 rounded-lg border border-red-200 bg-red-50 p-3 duration-200'>
+        <div
+          {...noticeAria('error')}
+          className='animate-in fade-in slide-in-from-top-2 absolute top-full right-0 z-50 mt-2 w-72 rounded-lg border border-red-200 bg-red-50 p-3 duration-200'>
           <div className='flex items-start gap-2 text-sm text-red-800'>
             <AlertCircle className='mt-0.5 h-5 w-5 shrink-0 text-red-500' />
             <div className='flex-1 pr-4'>{error}</div>

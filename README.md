@@ -102,6 +102,7 @@ Xuất/nhập GEDCOM (7.0) để mở gia phả trong Gramps, MyHeritage… ho�
 - Nhận ảnh JPG, PNG, GIF, WEBP tối đa 10 MB, qua nút chọn file hay kéo thả đều như nhau. Ứng dụng đọc phần đầu file để biết đúng loại ảnh (file chữ đổi đuôi thành `.jpg` bị từ chối) và đặt phần mở rộng trong bucket `gallery` theo loại đó, không theo tên file. Trước khi tải lên, trình duyệt thu nhỏ ảnh về cạnh dài tối đa 2048 px và lưu dạng WebP (ảnh 6 MB từ điện thoại còn dưới 1 MB); GIF, WebP động và ảnh đã nhỏ giữ nguyên. Ảnh đã tải lên trước đó không bị đổi.
 - Mỗi trang hiện 24 ảnh (`/dashboard/gallery?page=2`…); đường dẫn ký cho cả trang được tạo trong một lần gọi Supabase Storage, hiệu lực 1 giờ. Trang vượt quá trang cuối hiện trang cuối. Nếu một ảnh không ký được đường dẫn (file thiếu trong bucket) thì thẻ đó hiện "Không tải được ảnh" thay vì ô trống; nếu cả lần ký thất bại (chưa tạo bucket `gallery`, chính sách sai, Storage lỗi) trang hiện thông báo kèm tên bucket, và lỗi chi tiết nằm trong log server.
 - Khi xem ảnh phóng to, dùng nút Trước/Sau hoặc phím mũi tên Trái/Phải để sang ảnh khác trên trang hiện tại (theo thứ tự đang hiện, dòng thời gian hay lưới); góc dưới ảnh hiện vị trí ("Ảnh 3/12"). Xoá ảnh đang xem thì chuyển sang ảnh kế, hết ảnh thì đóng.
+- Chế độ xem Dòng thời gian/Lưới được nhớ trong trình duyệt (localStorage `giapha-gallery-view`), giữ nguyên khi sang trang khác hay mở lại.
 
 ### Ảnh đại diện
 
