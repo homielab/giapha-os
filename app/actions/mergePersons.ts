@@ -12,6 +12,8 @@ import {
   type MergePrivateDetails,
   type MergeRelationshipRow
 } from '@/utils/mergePersons'
+import type { RelationshipLink } from '@/utils/relationshipValidation'
+import { fetchAllRows } from '@/utils/supabase/fetchAll'
 import { isMissingDatabaseFunction } from '@/utils/supabase/missingFunction'
 import { getIsAdmin, getSupabase } from '@/utils/supabase/queries'
 
@@ -73,12 +75,50 @@ export async function loadMergePreview(
   const privateKeep = privateRows.find((d) => d.person_id === keepId) ?? null
   const privateDrop = privateRows.find((d) => d.person_id === dropId) ?? null
 
+  const pairLinks = relationships.data as MergeRelationshipRow[]
+  // For the warnings: the gender of both members' birth parents and every
+  // parent-child link (a loop can run through grandparents).
+  const parentIds = [
+    ...new Set(
+      pairLinks
+        .filter(
+          (r) =>
+            r.type === 'biological_child' &&
+            (r.person_b === keepId || r.person_b === dropId)
+        )
+        .map((r) => r.person_a)
+    )
+  ]
+  const [parents, lineage] = await Promise.all([
+    parentIds.length > 0
+      ? supabase.from('persons').select('id, gender').in('id', parentIds)
+      : Promise.resolve({ data: [], error: null }),
+    fetchAllRows<RelationshipLink>((from, to) =>
+      supabase
+        .from('relationships')
+        .select('person_a, person_b, type')
+        .in('type', ['biological_child', 'adopted_child'])
+        .order('id')
+        .range(from, to)
+    )
+  ])
+  if (parents.error) return { error: parents.error.message }
+  if (lineage.error) return { error: lineage.error.message }
+  const genders: Record<string, string | null> = {}
+  for (const row of (parents.data ?? []) as Array<{
+    id: string
+    gender: string | null
+  }>)
+    genders[row.id] = row.gender
+
   const preview = previewMerge({
     keep,
     drop,
-    relationships: relationships.data as MergeRelationshipRow[],
+    relationships: pairLinks,
     privateKeep,
-    privateDrop
+    privateDrop,
+    lineage: lineage.data,
+    genders
   })
 
   // Names of everyone on the other end of the affected relationships.

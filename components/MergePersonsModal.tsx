@@ -10,11 +10,12 @@ import {
   type MergeSummary
 } from '@/app/actions/mergePersons'
 import ImportStatusMessage from '@/components/ImportStatusMessage'
+import MergeWarnings from '@/components/MergeWarnings'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import type { DuplicateGroupMember } from '@/utils/duplicatePeople'
 import { memberSearchCache } from '@/utils/memberSearchCache'
-import type { MergePreview } from '@/utils/mergePersons'
+import { canConfirmMerge, type MergePreview } from '@/utils/mergePersons'
 
 interface MergePersonsModalProps {
   members: DuplicateGroupMember[]
@@ -40,6 +41,7 @@ export default function MergePersonsModal({
   const [previewError, setPreviewError] = useState<string | null>(null)
   const [isLoadingPreview, setIsLoadingPreview] = useState(false)
   const [confirmText, setConfirmText] = useState('')
+  const [acknowledged, setAcknowledged] = useState(false)
   const [isMerging, setIsMerging] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -52,7 +54,15 @@ export default function MergePersonsModal({
     keepId !== '' &&
     dropId !== '' &&
     keepId !== dropId &&
-    confirmText.trim() === (drop?.full_name.trim() ?? '')
+    canConfirmMerge({
+      preview,
+      acknowledged,
+      confirmText,
+      dropName: drop?.full_name
+    })
+  // With warnings, the name can only be typed once they are acknowledged.
+  const needsAcknowledge =
+    preview != null && preview.warnings.length > 0 && !acknowledged
 
   const pickMember = (picker: 'keep' | 'drop', id: string) => {
     if (picker === 'keep') {
@@ -65,6 +75,7 @@ export default function MergePersonsModal({
     setPreview(null)
     setPreviewError(null)
     setConfirmText('')
+    setAcknowledged(false)
     setError(null)
   }
 
@@ -326,6 +337,14 @@ export default function MergePersonsModal({
                 </div>
               )}
 
+              {preview && (
+                <MergeWarnings
+                  warnings={preview.warnings}
+                  acknowledged={acknowledged}
+                  onAcknowledgedChange={setAcknowledged}
+                />
+              )}
+
               <div className='mt-4 space-y-2'>
                 <label className='block space-y-1.5'>
                   <span className='text-xs font-semibold text-stone-600'>
@@ -334,7 +353,8 @@ export default function MergePersonsModal({
                   <input
                     value={confirmText}
                     onChange={(e) => setConfirmText(e.target.value)}
-                    className='w-full rounded-xl border border-stone-300 px-3.5 py-2.5 text-sm outline-none focus:border-stone-900'
+                    disabled={!preview || needsAcknowledge}
+                    className='w-full rounded-xl border border-stone-300 px-3.5 py-2.5 text-sm outline-none focus:border-stone-900 disabled:cursor-not-allowed disabled:bg-stone-100'
                   />
                 </label>
               </div>

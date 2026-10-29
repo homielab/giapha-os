@@ -5,6 +5,12 @@
  * dropped member is deleted. Pure: reads nothing, writes nothing.
  */
 
+import {
+  isDescendant,
+  isParentChildType,
+  type RelationshipLink
+} from './relationshipValidation'
+
 export interface MergePerson {
   id: string
   full_name: string
@@ -65,6 +71,13 @@ export type MergeFillKey =
   | 'avatar'
   | 'burialPlace'
 
+/**
+ * Damage the merge would do to the tree, which neither the RPC nor the Data
+ * check stops before it happens: more than two birth parents, two birth
+ * parents of the same gender, or a member who becomes their own ancestor.
+ */
+export type MergeWarning = 'tooManyParents' | 'sameGenderParents' | 'loop'
+
 export interface MergePreview {
   /** Relationships of the dropped member that are re-pointed to the keeper. */
   moved: MergePreviewRelationship[]
@@ -85,6 +98,8 @@ export interface MergePreview {
   otherNamesAdded: string[]
   /** True when the dropped member's note is appended to the keeper's. */
   noteAppended: boolean
+  /** Problems the merged member would have; the UI asks to acknowledge. */
+  warnings: MergeWarning[]
 }
 
 const FILLED_COLUMNS: Array<{
@@ -120,6 +135,13 @@ export function previewMerge(input: {
   relationships: MergeRelationshipRow[]
   privateKeep: MergePrivateDetails | null
   privateDrop: MergePrivateDetails | null
+  /**
+   * Every parent–child link of the family, for the loop check. Defaults to
+   * `relationships`, which only finds a loop through the pair's own links.
+   */
+  lineage?: RelationshipLink[]
+  /** Gender of the members' birth parents, by id. */
+  genders?: Record<string, string | null | undefined>
 }): MergePreview {
   const { keep, drop, relationships, privateKeep, privateDrop } = input
   const isBetweenPair = (r: MergeRelationshipRow) =>
@@ -212,8 +234,74 @@ export function previewMerge(input: {
     privateMoved,
     privateFills,
     otherNamesAdded: added,
-    noteAppended: (drop.note ?? '').trim() !== ''
+    noteAppended: (drop.note ?? '').trim() !== '',
+    warnings: mergeWarnings(
+      keep.id,
+      drop.id,
+      relationships,
+      input.lineage ?? relationships,
+      input.genders ?? {}
+    )
   }
+}
+
+function mergeWarnings(
+  keepId: string,
+  dropId: string,
+  relationships: RelationshipLink[],
+  lineage: RelationshipLink[],
+  genders: Record<string, string | null | undefined>
+): MergeWarning[] {
+  const pair = new Set([keepId, dropId])
+  const warnings: MergeWarning[] = []
+
+  // Birth parents of the merged member: the keeper's plus the dropped one's.
+  const parents = new Set<string>()
+  for (const r of relationships) {
+    if (
+      r.type === 'biological_child' &&
+      pair.has(r.person_b) &&
+      !pair.has(r.person_a)
+    )
+      parents.add(r.person_a)
+  }
+  if (parents.size > 2) warnings.push('tooManyParents')
+  else if (parents.size === 2) {
+    const [first, second] = [...parents].map((id) => genders[id])
+    if ((first === 'male' || first === 'female') && first === second)
+      warnings.push('sameGenderParents')
+  }
+
+  // A direct parent link between the two is deleted by the merge; any other
+  // path from one to the other turns into a loop.
+  const links = lineage.filter(
+    (r) =>
+      isParentChildType(r.type) &&
+      !(pair.has(r.person_a) && pair.has(r.person_b))
+  )
+  if (
+    isDescendant(links, keepId, dropId) ||
+    isDescendant(links, dropId, keepId)
+  )
+    warnings.push('loop')
+
+  return warnings
+}
+
+/**
+ * The merge button is enabled once the preview is loaded, its warnings (if
+ * any) are acknowledged and the dropped member's name is typed exactly.
+ */
+export function canConfirmMerge(input: {
+  preview: Pick<MergePreview, 'warnings'> | null
+  acknowledged: boolean
+  confirmText: string
+  dropName: string | undefined
+}): boolean {
+  const { preview, acknowledged, confirmText, dropName } = input
+  if (!preview || dropName == null) return false
+  if (preview.warnings.length > 0 && !acknowledged) return false
+  return confirmText.trim() === dropName.trim()
 }
 
 /**

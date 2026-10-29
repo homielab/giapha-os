@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import {
+  canConfirmMerge,
   previewMerge,
   splitOtherNames,
   type MergePerson,
@@ -206,5 +207,111 @@ describe('previewMerge', () => {
       drop: person({ ...B, burial_place: 'Quê ngoại' })
     })
     expect(kept.personFills.map((f) => f.key)).not.toContain('burialPlace')
+  })
+})
+
+describe('previewMerge warnings', () => {
+  const F1 = 'aaaaaaaa-0000-0000-0000-000000000011'
+  const F2 = 'aaaaaaaa-0000-0000-0000-000000000012'
+  const M = 'aaaaaaaa-0000-0000-0000-000000000013'
+
+  test('two different fathers on the two profiles', () => {
+    const preview = previewMerge({
+      ...baseInput,
+      relationships: [
+        rel('r1', 'biological_child', F1, A.id),
+        rel('r2', 'biological_child', F2, B.id)
+      ],
+      genders: { [F1]: 'male', [F2]: 'male' }
+    })
+    expect(preview.warnings).toEqual(['sameGenderParents'])
+  })
+
+  test('more than two birth parents', () => {
+    const preview = previewMerge({
+      ...baseInput,
+      relationships: [
+        rel('r1', 'biological_child', F1, A.id),
+        rel('r2', 'biological_child', M, A.id),
+        rel('r3', 'biological_child', F2, B.id)
+      ],
+      genders: { [F1]: 'male', [F2]: 'male', [M]: 'female' }
+    })
+    expect(preview.warnings).toEqual(['tooManyParents'])
+  })
+
+  test('the dropped member is the keeper’s grandfather: a loop', () => {
+    // B (dropped) -> X -> A (kept): A would become their own grandfather.
+    const lineage = [
+      rel('r1', 'biological_child', B.id, X),
+      rel('r2', 'biological_child', X, A.id)
+    ]
+    const preview = previewMerge({
+      ...baseInput,
+      relationships: lineage,
+      lineage,
+      genders: { [X]: 'male' }
+    })
+    expect(preview.warnings).toEqual(['loop'])
+    // Kept the other way round, the same loop.
+    expect(
+      previewMerge({ ...baseInput, keep: B, drop: A, lineage }).warnings
+    ).toEqual(['loop'])
+  })
+
+  test('an ordinary merge has no warning', () => {
+    const preview = previewMerge({
+      ...baseInput,
+      relationships: [
+        // Same father on both profiles, a mother only on the dropped one.
+        rel('r1', 'biological_child', F1, A.id),
+        rel('r2', 'biological_child', F1, B.id),
+        rel('r3', 'biological_child', M, B.id),
+        // A direct parent link between the two is just deleted.
+        rel('r4', 'biological_child', B.id, A.id),
+        rel('r5', 'biological_child', A.id, Y)
+      ],
+      genders: { [F1]: 'male', [M]: 'female' }
+    })
+    expect(preview.warnings).toEqual([])
+  })
+
+  test('parents of unknown gender are not compared', () => {
+    const preview = previewMerge({
+      ...baseInput,
+      relationships: [
+        rel('r1', 'biological_child', F1, A.id),
+        rel('r2', 'biological_child', F2, B.id)
+      ],
+      genders: { [F1]: 'other', [F2]: 'other' }
+    })
+    expect(preview.warnings).toEqual([])
+  })
+})
+
+describe('canConfirmMerge', () => {
+  const ok = { confirmText: ' Nguyen Van An ', dropName: 'Nguyen Van An' }
+
+  test('needs the preview and the exact name', () => {
+    expect(canConfirmMerge({ ...ok, preview: null, acknowledged: false })).toBe(
+      false
+    )
+    expect(
+      canConfirmMerge({ ...ok, preview: { warnings: [] }, acknowledged: false })
+    ).toBe(true)
+    expect(
+      canConfirmMerge({
+        ...ok,
+        confirmText: 'Nguyen Van',
+        preview: { warnings: [] },
+        acknowledged: false
+      })
+    ).toBe(false)
+  })
+
+  test('warnings block the merge until acknowledged', () => {
+    const preview = { warnings: ['loop' as const] }
+    expect(canConfirmMerge({ ...ok, preview, acknowledged: false })).toBe(false)
+    expect(canConfirmMerge({ ...ok, preview, acknowledged: true })).toBe(true)
   })
 })

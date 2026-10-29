@@ -882,6 +882,15 @@ export const messages = {
       'Ghi chú của hồ sơ bị gộp sẽ nối vào ghi chú của hồ sơ giữ.',
     mergeYes: 'Có',
     mergeNo: 'Không',
+    mergeWarningsTitle: 'Cảnh báo: gộp hai hồ sơ này sẽ làm sai cây gia phả',
+    mergeWarning_tooManyParents:
+      'Hồ sơ giữ sẽ có hơn 2 cha mẹ ruột (cha mẹ của cả hai hồ sơ cộng lại).',
+    mergeWarning_sameGenderParents:
+      'Hồ sơ giữ sẽ có 2 cha mẹ ruột cùng giới tính (ví dụ hai người cha).',
+    mergeWarning_loop:
+      'Một hồ sơ là tổ tiên của hồ sơ kia: sau khi gộp, người này sẽ thành tổ tiên của chính mình và cây sẽ bị vòng lặp.',
+    mergeWarningsAcknowledge:
+      'Tôi hiểu, vẫn gộp (sau đó sửa lại quan hệ trong hồ sơ). Gộp không hoàn tác được.',
     mergeConfirmLabel: 'Gõ đúng tên hồ sơ bị gộp để xác nhận: "{name}"',
     mergeConfirmButton: 'Gộp và xoá hồ sơ',
     mergeMerging: 'Đang gộp...',
@@ -2116,6 +2125,16 @@ export const messages = {
       'The merged-away profile’s note is appended to the kept profile’s note.',
     mergeYes: 'Yes',
     mergeNo: 'No',
+    mergeWarningsTitle:
+      'Warning: merging these profiles will break the family tree',
+    mergeWarning_tooManyParents:
+      'The kept profile will have more than 2 birth parents (both profiles’ parents together).',
+    mergeWarning_sameGenderParents:
+      'The kept profile will have 2 birth parents of the same gender (for example two fathers).',
+    mergeWarning_loop:
+      'One profile is an ancestor of the other: after merging, this person becomes their own ancestor and the tree has a loop.',
+    mergeWarningsAcknowledge:
+      'I understand, merge anyway (then fix the relationships in the profile). A merge cannot be undone.',
     mergeConfirmLabel:
       'Type the merged-away profile’s name to confirm: "{name}"',
     mergeConfirmButton: 'Merge and delete profile',

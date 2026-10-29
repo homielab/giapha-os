@@ -80,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Merging duplicate profiles now warns before it breaks the tree: when the kept profile would get more than two birth parents, two birth parents of the same gender, or one profile is an ancestor of the other (the person would become their own ancestor), the preview lists the problem and the merge waits for an "I understand" tick. The preview must be loaded before merging.
 - The death anniversary count ("năm thứ …") is right for a death in January or early February when only the solar date is stored (GEDCOM without lunar dates, older backups): it counts from the lunar year of death, so the first giỗ shows "năm thứ 1" instead of nothing.
 - Screen readers can tell the expand/collapse buttons of the family tree and the mind map apart: each one is named after its person ("Nhánh Nguyễn Văn An" / "Nguyễn Văn An's branch") and announces expanded or collapsed, instead of dozens of identical "Mở rộng"/"Thu gọn" buttons.
 - Death anniversaries no longer show up in the lunar year of death: someone who died this lunar year gets no "past" or "today" giỗ on the Events page, the dashboard or the downloaded calendar (.ics); the first one is in the next lunar year. Members without a known year of death are unchanged.
