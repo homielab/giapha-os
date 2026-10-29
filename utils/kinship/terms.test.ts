@@ -64,9 +64,15 @@ describe('calling the person who married in', () => {
     expect(termForSpouseOfRelative('Chị gái', 'male')).toBe('Anh rể')
   })
 
-  test('uncles and aunts swap with their spouse', () => {
-    expect(termForSpouseOfRelative('Chú', 'female')).toBe('Cô')
-    expect(termForSpouseOfRelative('Cậu', 'female')).toBe('Dì')
+  test('spouses of uncles and aunts are Thím, Mợ, Dượng, Bác gái', () => {
+    expect(termForSpouseOfRelative('Chú', 'female')).toBe('Thím')
+    expect(termForSpouseOfRelative('Cậu', 'female')).toBe('Mợ')
+    expect(termForSpouseOfRelative('Cô', 'male')).toBe('Dượng')
+    expect(termForSpouseOfRelative('Dì', 'male')).toBe('Dượng')
+    expect(termForSpouseOfRelative('Bác', 'female')).toBe('Bác gái')
+    expect(termForSpouseOfRelative('Bác', 'male')).toBe('Bác')
+    expect(termRelativeCallsInLaw('Chú', 'female')).toBe('Thím')
+    expect(termRelativeCallsInLaw('Cậu', 'female')).toBe('Mợ')
     expect(termForSpouseOfRelative('Bà Cô', 'male')).toBe('Ông Dượng')
     expect(termRelativeCallsInLaw('Bác họ', 'female')).toBe('Bác họ')
     expect(termForSpouseOfRelative('Bác họ', 'female')).toBe('Vợ của Bác họ')

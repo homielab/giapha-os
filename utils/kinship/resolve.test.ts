@@ -252,3 +252,56 @@ describe('relations through marriage', () => {
     expect(terms('a', 'ke', p, e)).toEqual(['Vợ của Ông nội', 'Chồng của Cháu'])
   })
 })
+
+describe('spouses of uncles and aunts', () => {
+  const persons = [
+    person('ong', 'male'),
+    person('bacTrai', 'male', { birth_order: 1 }),
+    person('bo', 'male', { birth_order: 2 }),
+    person('chu', 'male', { birth_order: 4 }),
+    person('bacGai', 'female', { birth_order: 1 }),
+    person('co', 'female', { birth_order: 3 }),
+    person('vb', 'female', { is_in_law: true }),
+    person('vc', 'female', { is_in_law: true }),
+    person('cbg', 'male', { is_in_law: true }),
+    person('cc', 'male', { is_in_law: true }),
+    person('me', 'female', { is_in_law: true }),
+    person('ongNgoai', 'male'),
+    person('cau', 'male', { birth_order: 1 }),
+    person('di', 'female', { birth_order: 3 }),
+    person('vcau', 'female', { is_in_law: true }),
+    person('cdi', 'male', { is_in_law: true }),
+    person('chau', 'male')
+  ]
+  const rels = [
+    child('ong', 'bacTrai'),
+    child('ong', 'bacGai'),
+    child('ong', 'bo'),
+    child('ong', 'co'),
+    child('ong', 'chu'),
+    child('ongNgoai', 'cau'),
+    child('ongNgoai', 'me'),
+    child('ongNgoai', 'di'),
+    child('bo', 'chau'),
+    child('me', 'chau'),
+    marriage('bo', 'me'),
+    marriage('bacTrai', 'vb'),
+    marriage('chu', 'vc'),
+    marriage('cbg', 'bacGai'),
+    marriage('cc', 'co'),
+    marriage('cau', 'vcau'),
+    marriage('cdi', 'di')
+  ]
+
+  test.each([
+    ['vc', 'Thím'],
+    ['vcau', 'Mợ'],
+    ['cc', 'Dượng'],
+    ['cdi', 'Dượng'],
+    ['vb', 'Bác gái'],
+    ['cbg', 'Bác']
+  ])('the nephew calls %s "%s" and is called Cháu', (id, term) => {
+    expect(terms('chau', id, persons, rels)).toEqual([term, 'Cháu'])
+    expect(terms(id, 'chau', persons, rels)).toEqual(['Cháu', term])
+  })
+})

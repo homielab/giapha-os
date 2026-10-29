@@ -86,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Kinship finder: the spouse of a Chú is now Thím, of a Cậu Mợ, of a Cô or Dì Dượng, and of a Bác Bác gái (or Bác), as the guide says, instead of Cô, Dì, Cậu or "Vợ của Bác".
 - Kinship finder: siblings or cousins born in the same year are now told apart by birth month and day; when nothing tells them apart (e.g. twins with no birth order) both possible terms are shown instead of calling each the other's older brother.
 - Branch backup export now includes children linked only to a spouse of someone in the branch (and their descendants), as the family tree shows them, instead of dropping them silently.
 - The member list sorted by generation now orders cousins' families by their blood parent's birth order, even when the mother (an in-law) is linked before the father.
