@@ -6,7 +6,8 @@ interface RelationshipLike {
 
 /**
  * Ids of a branch: the root, every biological or adopted descendant, and the
- * spouses of all of them. Parents of the root and the spouses' own families
+ * spouses of all of them. As in the tree view, a child linked only to a
+ * spouse of someone in the branch belongs to the branch too. Parents of the root and the spouses' own families
  * are left out. Walks with a queue, so cyclic data cannot hang it.
  */
 export function subtreePersonIds(
@@ -33,10 +34,13 @@ export function subtreePersonIds(
   const ids = new Set<string>([rootId])
   const queue = [rootId]
   for (let i = 0; i < queue.length; i++) {
-    for (const childId of children.get(queue[i]) ?? []) {
-      if (!ids.has(childId)) {
-        ids.add(childId)
-        queue.push(childId)
+    const parents = [queue[i], ...(spouses.get(queue[i]) ?? [])]
+    for (const parentId of parents) {
+      for (const childId of children.get(parentId) ?? []) {
+        if (!ids.has(childId)) {
+          ids.add(childId)
+          queue.push(childId)
+        }
       }
     }
   }

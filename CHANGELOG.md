@@ -85,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Branch backup export now includes children linked only to a spouse of someone in the branch (and their descendants), as the family tree shows them, instead of dropping them silently.
 - The member list sorted by generation now orders cousins' families by their blood parent's birth order, even when the mother (an in-law) is linked before the father.
 - The restore confirmation shows the backup date in Vietnam time, so it no longer shows the day before on computers set to UTC or US time, nor "Invalid Date" for a broken date.
 - The "Past" events tab now shows everything from the last 365 days, not only this year: in early January it lists the December birthdays, death anniversaries and yearly events just gone, and after Tết the anniversaries of the previous lunar year.

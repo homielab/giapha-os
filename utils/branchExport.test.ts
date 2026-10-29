@@ -46,6 +46,43 @@ describe('subtreePersonIds', () => {
     expect(Array.from(subtreePersonIds(cyclic, 'a')).sort()).toEqual(['a', 'b'])
   })
 
+  it('takes a child linked only to a spouse, but not the spouse parents', () => {
+    const data = [
+      rel('marriage', 'a', 'b'),
+      rel('biological_child', 'b-dad', 'b'),
+      rel('biological_child', 'b', 'c'),
+      rel('marriage', 'c', 'c-spouse'),
+      rel('biological_child', 'c-spouse', 'd')
+    ]
+    expect(Array.from(subtreePersonIds(data, 'a')).sort()).toEqual([
+      'a',
+      'b',
+      'c',
+      'c-spouse',
+      'd'
+    ])
+    const persons = ['a', 'b', 'b-dad', 'c', 'c-spouse', 'd'].map((id) => ({
+      id
+    }))
+    const out = filterBranch({ persons, relationships: data, details: [] }, 'a')
+    expect(out.persons.map((p) => p.id)).not.toContain('b-dad')
+    expect(out.relationships).toContainEqual(rel('biological_child', 'b', 'c'))
+  })
+
+  it('does not hang on cyclic data through spouses', () => {
+    const cyclic = [
+      rel('marriage', 'a', 'b'),
+      rel('biological_child', 'b', 'c'),
+      rel('marriage', 'c', 'a'),
+      rel('biological_child', 'c', 'b')
+    ]
+    expect(Array.from(subtreePersonIds(cyclic, 'a')).sort()).toEqual([
+      'a',
+      'b',
+      'c'
+    ])
+  })
+
   it('handles a very deep chain without recursion limits', () => {
     const chain = Array.from({ length: 50000 }, (_, i) =>
       rel('biological_child', `p${i}`, `p${i + 1}`)
