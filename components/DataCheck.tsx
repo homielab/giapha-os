@@ -24,6 +24,7 @@ const KIND_TITLES = {
   selfLink: 'dataCheckKindSelfLink',
   missingBirthYear: 'dataCheckKindMissingBirthYear',
   missingDeathYear: 'dataCheckKindMissingDeathYear',
+  deceasedFlagMissing: 'dataCheckKindDeceasedFlagMissing',
   missingGender: 'dataCheckKindMissingGender'
 } as const satisfies Record<(typeof DATA_CHECK_KINDS)[number], TranslationKey>
 
@@ -56,6 +57,7 @@ function messageKey(f: DataCheckFinding): TranslationKey {
         : 'dataCheckSelfChild'
     case 'missingBirthYear':
     case 'missingDeathYear':
+    case 'deceasedFlagMissing':
     case 'missingGender':
       return 'dataCheckMissingPerson'
   }

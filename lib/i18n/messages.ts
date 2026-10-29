@@ -794,6 +794,7 @@ export const messages = {
     dataCheckKindMissingBirthYear: 'Thiếu thông tin: chưa có năm sinh',
     dataCheckKindMissingDeathYear:
       'Thiếu thông tin: đã mất nhưng thiếu năm mất',
+    dataCheckKindDeceasedFlagMissing: 'Có ngày mất nhưng chưa đánh dấu đã mất',
     dataCheckKindMissingGender: 'Thiếu thông tin: chưa rõ giới tính',
     dataCheckMissingPerson: '{name}',
     dataCheckDeathBeforeBirth: '{name}: sinh {birth}, mất {death}.',
@@ -2025,6 +2026,8 @@ export const messages = {
     dataCheckKindTooManyParents: 'Child with too many biological parents',
     dataCheckKindMissingBirthYear: 'Missing info: no birth year',
     dataCheckKindMissingDeathYear: 'Missing info: deceased but no death year',
+    dataCheckKindDeceasedFlagMissing:
+      'Has a date of death but not marked deceased',
     dataCheckKindMissingGender: 'Missing info: gender unknown',
     dataCheckMissingPerson: '{name}',
     dataCheckDeathBeforeBirth: '{name}: born {birth}, died {death}.',

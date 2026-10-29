@@ -8,7 +8,7 @@ import {
 
 /** Columns the whole-tree data check reads. */
 export const DATA_CHECK_PERSON_COLUMNS =
-  'id, full_name, gender, is_deceased, birth_year, birth_month, birth_day, death_year, death_month, death_day'
+  'id, full_name, gender, is_deceased, birth_year, birth_month, birth_day, death_year, death_month, death_day, death_lunar_year, death_lunar_month, death_lunar_day'
 
 export interface DataCheckPerson {
   id: string
@@ -21,6 +21,9 @@ export interface DataCheckPerson {
   death_year: number | null
   death_month: number | null
   death_day: number | null
+  death_lunar_year: number | null
+  death_lunar_month: number | null
+  death_lunar_day: number | null
 }
 
 export interface DataCheckRelationship {
@@ -43,6 +46,7 @@ export const DATA_CHECK_KINDS = [
   'selfLink',
   'missingBirthYear',
   'missingDeathYear',
+  'deceasedFlagMissing',
   'missingGender'
 ] as const
 
@@ -54,6 +58,17 @@ export interface DataCheckFinding {
   people: { id: string; name: string }[]
   /** Values for the message of the kind. */
   params: Record<string, string | number>
+}
+
+function hasDeathDate(p: DataCheckPerson): boolean {
+  return [
+    p.death_year,
+    p.death_month,
+    p.death_day,
+    p.death_lunar_year,
+    p.death_lunar_month,
+    p.death_lunar_day
+  ].some((v) => v != null)
 }
 
 /** A parent younger than this at the child's birth is reported. */
@@ -149,6 +164,15 @@ export function runDataChecks(
     if (p.is_deceased && p.death_year == null) {
       findings.push({
         kind: 'missingDeathYear',
+        people: [ref(p)],
+        params: { name: p.full_name }
+      })
+    }
+    // A date of death on someone not marked deceased (CSV/JSON restore keep the
+    // two apart): no death anniversary, counted as living, yet shown as dead.
+    if (!p.is_deceased && hasDeathDate(p)) {
+      findings.push({
+        kind: 'deceasedFlagMissing',
         people: [ref(p)],
         params: { name: p.full_name }
       })

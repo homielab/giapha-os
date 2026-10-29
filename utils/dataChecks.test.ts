@@ -17,13 +17,19 @@ function person(
     id,
     full_name: `Person ${id}`,
     gender: null,
-    is_deceased: false,
+    // Someone given a date of death is deceased unless the test says otherwise.
+    is_deceased: Object.entries(extra).some(
+      ([key, value]) => key.startsWith('death_') && value != null
+    ),
     birth_year: null,
     birth_month: null,
     birth_day: null,
     death_year: null,
     death_month: null,
     death_day: null,
+    death_lunar_year: null,
+    death_lunar_month: null,
+    death_lunar_day: null,
     ...extra
   }
 }
@@ -284,6 +290,39 @@ describe('missing information', () => {
       ['missingBirthYear', 'a'],
       ['missingDeathYear', 'b'],
       ['missingGender', 'c']
+    ])
+  })
+
+  test('a date of death on someone not marked deceased is reported', () => {
+    const persons = [
+      person('a', {
+        gender: 'male',
+        birth_year: 1920,
+        is_deceased: false,
+        death_year: 1990
+      }),
+      person('b', {
+        gender: 'female',
+        birth_year: 1925,
+        is_deceased: null,
+        death_lunar_month: 3,
+        death_lunar_day: 10
+      }),
+      person('c', {
+        gender: 'male',
+        birth_year: 1930,
+        is_deceased: true,
+        death_year: 2000,
+        death_lunar_year: 2000,
+        death_lunar_month: 5,
+        death_lunar_day: 1
+      })
+    ]
+    expect(
+      runDataChecks(persons, [], TODAY).map((f) => [f.kind, f.people[0].id])
+    ).toEqual([
+      ['deceasedFlagMissing', 'a'],
+      ['deceasedFlagMissing', 'b']
     ])
   })
 

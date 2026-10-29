@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Data check now lists people who have a date of death (solar or lunar) but are not marked deceased, which a CSV/JSON restore can leave behind: such a person had no death anniversary and counted as living in the statistics.
 - Data check now also lists a father who died more than 10 months before the child's birth (more than a year when a month or day is missing), a common entry mistake after a GEDCOM/CSV import, like the mother rule the member form already had; adopted children are skipped.
 - Data check now lists parent–child loops (someone who ends up as their own ancestor, common after a GEDCOM/CSV import), naming each person on the loop with a link to their profile, and people with a marriage or parent–child link to themselves.
 - GEDCOM import keeps the place of birth (`BIRT`/`PLAC`), the place of death (`DEAT`/`PLAC`) and occupations (`OCCU`) from Gramps, MyHeritage and other programs as "Nơi sinh: …", "Nơi mất: …" and "Nghề nghiệp: …" lines at the end of the person's note, instead of dropping them. Exporting and importing again does not repeat the lines.
