@@ -7,6 +7,7 @@ import {
   slideInOnInteract
 } from '@/components/galleryCardReveal'
 import GalleryGrid from '@/components/GalleryGrid'
+import GalleryLightbox from '@/components/GalleryLightbox'
 import { interpolate } from '@/lib/i18n/interpolate'
 import { messages } from '@/lib/i18n/messages'
 import { I18nContext } from '@/lib/i18n/useI18n'
@@ -68,5 +69,42 @@ describe('GalleryGrid timeline view', () => {
   test('the expand icon reveals on focus and without hover', () => {
     const html = render(<GalleryGrid items={[item]} viewMode='timeline' />)
     expect(html).toContain(revealOnInteract)
+  })
+})
+
+describe('GalleryLightbox navigation', () => {
+  const lightbox = (position: number, total: number) =>
+    render(
+      <GalleryLightbox
+        item={item}
+        isDeleting={false}
+        onClose={noop}
+        onDelete={noop}
+        position={position}
+        total={total}
+        onPrev={noop}
+        onNext={noop}
+      />
+    )
+  const button = (html: string, label: string) =>
+    html.match(new RegExp(`<button[^>]*aria-label="${label}"[^>]*>`))?.[0] ?? ''
+
+  test('first image: previous disabled, next enabled, counter shown', () => {
+    const html = lightbox(1, 3)
+    expect(button(html, 'Ảnh trước')).toContain('disabled=""')
+    expect(button(html, 'Ảnh sau')).not.toContain('disabled=""')
+    expect(html).toContain('Ảnh 1/3')
+  })
+
+  test('last image: next disabled', () => {
+    const html = lightbox(3, 3)
+    expect(button(html, 'Ảnh trước')).not.toContain('disabled=""')
+    expect(button(html, 'Ảnh sau')).toContain('disabled=""')
+  })
+
+  test('a single image has no navigation', () => {
+    const html = lightbox(1, 1)
+    expect(html).not.toContain('Ảnh trước')
+    expect(html).not.toContain('Ảnh 1/1')
   })
 })

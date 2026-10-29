@@ -1012,6 +1012,9 @@ export const messages = {
     unsupportedImageType: 'Chỉ hỗ trợ ảnh JPG, PNG, GIF hoặc WEBP.',
     galleryPagination: 'Phân trang phòng trưng bày',
     galleryImageUnavailable: 'Không tải được ảnh',
+    galleryPrevImage: 'Ảnh trước',
+    galleryNextImage: 'Ảnh sau',
+    galleryImagePosition: 'Ảnh {position}/{total}',
     galleryLoadErrorTitle: 'Không tải được ảnh của phòng trưng bày',
     galleryLoadErrorDescription:
       'Không tạo được đường dẫn xem ảnh. Hãy kiểm tra bucket Supabase Storage "gallery" đã được tạo và chính sách của nó khớp với docs/schema.sql (xem README, mục cài đặt), rồi thử lại.',
@@ -2306,6 +2309,9 @@ export const messages = {
     unsupportedImageType: 'Only JPG, PNG, GIF or WEBP images are supported.',
     galleryPagination: 'Gallery pages',
     galleryImageUnavailable: 'Image could not be loaded',
+    galleryPrevImage: 'Previous image',
+    galleryNextImage: 'Next image',
+    galleryImagePosition: 'Image {position} of {total}',
     galleryLoadErrorTitle: 'The gallery images could not be loaded',
     galleryLoadErrorDescription:
       'Image links could not be created. Check that the Supabase Storage bucket "gallery" exists and its policies match docs/schema.sql (see the README setup section), then try again.',

@@ -1,7 +1,7 @@
 'use client'
 
 import dayjs from 'dayjs'
-import { CalendarDays, X } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useId } from 'react'
 
 import GalleryImage from '@/components/GalleryImage'
@@ -16,6 +16,11 @@ interface GalleryLightboxProps {
   onClose: () => void
   onEdit?: (item: GalleryItem) => void
   onDelete: (item: GalleryItem) => void
+  /** 1-based position of `item` among `total` browsable items. */
+  position?: number
+  total?: number
+  onPrev?: () => void
+  onNext?: () => void
 }
 
 export default function GalleryLightbox({
@@ -24,11 +29,19 @@ export default function GalleryLightbox({
   isDeleting,
   onClose,
   onEdit,
-  onDelete
+  onDelete,
+  position = 1,
+  total = 1,
+  onPrev,
+  onNext
 }: GalleryLightboxProps) {
   const { t } = useI18n()
   const titleId = useId()
   const dialogRef = useModalA11y(onClose)
+  const hasPrev = !!onPrev && position > 1
+  const hasNext = !!onNext && position < total
+  const navButton =
+    'absolute top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/40 p-3 text-white/80 transition-colors hover:bg-black/60 hover:text-white disabled:cursor-not-allowed disabled:opacity-30'
   return (
     <div
       ref={dialogRef}
@@ -36,6 +49,16 @@ export default function GalleryLightbox({
       aria-modal='true'
       aria-labelledby={titleId}
       tabIndex={-1}
+      onKeyDown={(e) => {
+        if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+        if (e.key === 'ArrowLeft' && hasPrev) {
+          e.preventDefault()
+          onPrev?.()
+        } else if (e.key === 'ArrowRight' && hasNext) {
+          e.preventDefault()
+          onNext?.()
+        }
+      }}
       className='animate-in fade-in fixed inset-0 z-60 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm duration-200 outline-none'>
       <button
         onClick={onClose}
@@ -53,6 +76,31 @@ export default function GalleryLightbox({
             height={800}
             className='max-h-[80vh] max-w-full rounded-lg object-contain'
           />
+          {total > 1 && (
+            <>
+              <button
+                type='button'
+                onClick={onPrev}
+                disabled={!hasPrev}
+                aria-label={t('galleryPrevImage')}
+                className={`${navButton} left-3`}>
+                <ChevronLeft className='size-6' />
+              </button>
+              <button
+                type='button'
+                onClick={onNext}
+                disabled={!hasNext}
+                aria-label={t('galleryNextImage')}
+                className={`${navButton} right-3`}>
+                <ChevronRight className='size-6' />
+              </button>
+              <p
+                aria-live='polite'
+                className='absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-sm font-medium text-white tabular-nums'>
+                {t('galleryImagePosition', { position, total })}
+              </p>
+            </>
+          )}
         </div>
 
         {/* Content Section */}

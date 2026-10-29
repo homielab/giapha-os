@@ -13,6 +13,7 @@ import GalleryLightbox from '@/components/GalleryLightbox'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { GalleryItem } from '@/types'
 import { deleteGalleryItem, GalleryItemNotDeletedError } from '@/utils/gallery'
+import { idAfterDelete, stepIndex } from '@/utils/galleryNav'
 import { createClient } from '@/utils/supabase/client'
 
 interface GalleryGridProps {
@@ -31,7 +32,9 @@ export default function GalleryGrid({
   onDeleteSuccess
 }: GalleryGridProps) {
   const { t } = useI18n()
-  const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const setSelectedItem = (item: GalleryItem | null) =>
+    setSelectedId(item ? item.id : null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   // Group items by year/month for timeline mode
@@ -87,13 +90,33 @@ export default function GalleryGrid({
     return groups
   }, [items, viewMode, t])
 
+  // Lightbox order follows what is on screen
+  const orderedItems = useMemo(
+    () =>
+      viewMode === 'timeline'
+        ? timelineGroups.flatMap((group) => group.items)
+        : items,
+    [items, viewMode, timelineGroups]
+  )
+  const selectedIndex = orderedItems.findIndex((i) => i.id === selectedId)
+  const selectedItem = selectedIndex >= 0 ? orderedItems[selectedIndex] : null
+  const step = (dir: -1 | 1) => {
+    const next = stepIndex(selectedIndex, orderedItems.length, dir)
+    if (next !== null) setSelectedId(orderedItems[next].id)
+  }
+
   const handleDelete = async (item: GalleryItem) => {
     if (!confirm(t('deleteImageConfirm'))) return
     setIsDeleting(true)
     try {
       await deleteGalleryItem(createClient(), item)
 
-      setSelectedItem(null)
+      setSelectedId(
+        idAfterDelete(
+          orderedItems.map((i) => i.id),
+          orderedItems.findIndex((i) => i.id === item.id)
+        )
+      )
       if (onDeleteSuccess) onDeleteSuccess(item.id)
     } catch (err) {
       console.error('Error deleting gallery item', err)
@@ -253,6 +276,10 @@ export default function GalleryGrid({
           onClose={() => setSelectedItem(null)}
           onEdit={onEdit}
           onDelete={handleDelete}
+          position={selectedIndex + 1}
+          total={orderedItems.length}
+          onPrev={() => step(-1)}
+          onNext={() => step(1)}
         />
       )}
     </>
