@@ -23,6 +23,41 @@ interface FamilyTreeNodeRendererProps {
   toggleCollapse: (personId: string) => void
 }
 
+/**
+ * The +/- button under a tree row. The label names the person so a screen
+ * reader can tell the buttons apart; `aria-expanded` carries the state.
+ */
+export function TreeExpandToggle({
+  name,
+  isCollapsed,
+  onToggle
+}: {
+  name: string
+  isCollapsed: boolean
+  onToggle: () => void
+}) {
+  const { t } = useI18n()
+  return (
+    <button
+      type='button'
+      onClick={(e) => {
+        e.stopPropagation()
+        e.preventDefault()
+        onToggle()
+      }}
+      className='absolute -bottom-3 left-1/2 z-100 flex size-6 -translate-x-1/2 items-center justify-center rounded-full border border-stone-200/80 bg-white text-stone-500 transition-colors hover:border-amber-300 hover:text-amber-600'
+      title={isCollapsed ? t('expand') : t('collapse')}
+      aria-label={t('branchOf', { name })}
+      aria-expanded={!isCollapsed}>
+      {isCollapsed ? (
+        <Plus className='h-3.5 w-3.5' />
+      ) : (
+        <Minus className='h-3.5 w-3.5' />
+      )}
+    </button>
+  )
+}
+
 /** Recursively renders the CSS-tree node list. */
 export default function FamilyTreeNodeRenderer({
   roots,
@@ -32,8 +67,6 @@ export default function FamilyTreeNodeRenderer({
   hideExpandButtons,
   toggleCollapse
 }: FamilyTreeNodeRendererProps) {
-  const { t } = useI18n()
-
   // Tracks visited IDs to prevent infinite loops from circular relationships
   const renderTreeNode = (
     personId: string,
@@ -72,23 +105,11 @@ export default function FamilyTreeNodeRenderer({
 
             {/* Expand/Collapse Toggle – centered on the row */}
             {!hideExpandButtons && hasChildren && (
-              <button
-                type='button'
-                onClick={(e) => {
-                  e.stopPropagation()
-                  e.preventDefault()
-                  toggleCollapse(personId)
-                }}
-                className='absolute -bottom-3 left-1/2 z-100 flex size-6 -translate-x-1/2 items-center justify-center rounded-full border border-stone-200/80 bg-white text-stone-500 transition-colors hover:border-amber-300 hover:text-amber-600'
-                title={isCollapsed ? t('expand') : t('collapse')}
-                aria-label={isCollapsed ? t('expand') : t('collapse')}
-                aria-expanded={!isCollapsed}>
-                {isCollapsed ? (
-                  <Plus className='h-3.5 w-3.5' />
-                ) : (
-                  <Minus className='h-3.5 w-3.5' />
-                )}
-              </button>
+              <TreeExpandToggle
+                name={data.person.full_name}
+                isCollapsed={isCollapsed}
+                onToggle={() => toggleCollapse(personId)}
+              />
             )}
           </div>
         </div>

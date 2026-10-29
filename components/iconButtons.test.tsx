@@ -4,6 +4,8 @@ import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
 import AdminUserRow from '@/components/admin/AdminUserRow'
+import { TreeExpandToggle } from '@/components/FamilyTreeNodeRenderer'
+import { ExpandToggle } from '@/components/MindmapNode'
 import { MindmapExpandControls } from '@/components/MindmapToolbar'
 import { TreeToolbarControls } from '@/components/TreeToolbar'
 import { interpolate } from '@/lib/i18n/interpolate'
@@ -107,6 +109,69 @@ describe('mind map toolbar controls', () => {
       'Mở rộng Tất cả'
     ])
   })
+})
+
+describe('branch expand/collapse toggles', () => {
+  const renderTree = (
+    name: string,
+    isCollapsed: boolean,
+    locale: 'vi' | 'en'
+  ) =>
+    render(
+      <TreeExpandToggle
+        name={name}
+        isCollapsed={isCollapsed}
+        onToggle={noop}
+      />,
+      locale
+    )
+  const renderMindmap = (
+    name: string,
+    isExpanded: boolean,
+    locale: 'vi' | 'en'
+  ) =>
+    render(
+      <ExpandToggle
+        name={name}
+        visible
+        isExpanded={isExpanded}
+        onToggle={noop}
+      />,
+      locale
+    )
+
+  test.each([
+    ['vi', 'Nhánh Nguyễn Văn An', 'Nhánh Trần Thị Bình'],
+    ['en', "Nguyễn Văn An's branch", "Trần Thị Bình's branch"]
+  ] as const)(
+    '%s: labels name the person, state is in aria-expanded',
+    (locale, a, b) => {
+      for (const draw of [renderTree, renderMindmap]) {
+        const first = expectNamedButtons(
+          draw('Nguyễn Văn An', true, locale),
+          1
+        )[0]
+        const second = expectNamedButtons(
+          draw('Trần Thị Bình', false, locale),
+          1
+        )[0]
+        expect(first.label?.replace('&#x27;', "'")).toBe(a)
+        expect(second.label?.replace('&#x27;', "'")).toBe(b)
+        expect(first.label).not.toBe(second.label)
+      }
+      // The label stays the same when the state flips; aria-expanded changes.
+      const treeOpen = buttons(renderTree('Nguyễn Văn An', false, locale))[0]
+      const treeShut = buttons(renderTree('Nguyễn Văn An', true, locale))[0]
+      expect(treeOpen.label).toBe(treeShut.label)
+      expect(treeOpen.attrs).toContain('aria-expanded="true"')
+      expect(treeShut.attrs).toContain('aria-expanded="false"')
+      const mapOpen = buttons(renderMindmap('Nguyễn Văn An', true, locale))[0]
+      const mapShut = buttons(renderMindmap('Nguyễn Văn An', false, locale))[0]
+      expect(mapOpen.label).toBe(mapShut.label)
+      expect(mapOpen.attrs).toContain('aria-expanded="true"')
+      expect(mapShut.attrs).toContain('aria-expanded="false"')
+    }
+  )
 })
 
 describe('admin user row', () => {

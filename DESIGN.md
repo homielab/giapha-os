@@ -155,7 +155,7 @@ Use the existing rounded tokens. Main content cards use the established organic 
 - **Family node card:** Semi-transparent white surface with the existing rounded shape and a clear, non-conflicting border or shadow treatment. Avatars are circular.
 - **Dialogs and modals:** Full-screen masks on mobile and centered rounded drawers on desktop. Use either a border or a shadow for the dialog surface, with clean dividers and consistent internal padding.
 - **Popup menus:** A button that opens a menu (account, export) uses `hooks/usePopupMenu.ts`: a press outside or Esc closes it, Esc puts focus back on the button, and the button carries `aria-haspopup` and `aria-expanded`. Dialogs use `hooks/useModalA11y.ts` instead.
-- **Icon-only buttons:** Give the button `type='button'` and an `aria-label` with the same translated text as its `title`, and mark the icon `aria-hidden='true'`. Buttons whose text is hidden on small screens (`hidden sm:inline`) need the `aria-label` too.
+- **Icon-only buttons:** Give the button `type='button'` and an `aria-label` with the same translated text as its `title`, and mark the icon `aria-hidden='true'`. Buttons whose text is hidden on small screens (`hidden sm:inline`) need the `aria-label` too. A button repeated per item (expand/collapse of a tree branch) names its item in the `aria-label` (`branchOf`: "Nhánh {name}") and carries the state in `aria-expanded`/`aria-pressed`, not in the label.
 - **Hover-only content:** Content shown on `group-hover` must also show for keyboard focus and touch screens: add `group-focus-within:` and `[@media(hover:none)]:` variants (see `components/galleryCardReveal.ts`).
 
 ## Do's and don'ts

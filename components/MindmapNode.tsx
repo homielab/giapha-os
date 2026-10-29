@@ -229,11 +229,17 @@ function NodeConnectors({ isLast }: { isLast: boolean }) {
   )
 }
 
-function ExpandToggle({
+/**
+ * The chevron before a mind map node. The label names the person so a screen
+ * reader can tell the buttons apart; `aria-expanded` carries the state.
+ */
+export function ExpandToggle({
+  name,
   visible,
   isExpanded,
   onToggle
 }: {
+  name: string
   visible: boolean
   isExpanded: boolean
   onToggle: () => void
@@ -249,7 +255,8 @@ function ExpandToggle({
       onClick={onToggle}
       type='button'
       className='flex size-5 items-center justify-center rounded border border-stone-200 bg-white text-stone-500 transition-colors hover:bg-amber-50 hover:text-amber-600'
-      aria-label={isExpanded ? t('collapse') : t('expand')}
+      title={isExpanded ? t('collapse') : t('expand')}
+      aria-label={t('branchOf', { name })}
       aria-expanded={isExpanded}>
       {isExpanded ? (
         <ChevronDown strokeWidth={2.5} className='h-3.5 w-3.5' />
@@ -316,6 +323,7 @@ export const MindmapNode = memo(
           {/* Expand/Collapse Toggle or spacer */}
           <div className='z-10 flex size-5 shrink-0 items-center justify-center bg-transparent'>
             <ExpandToggle
+              name={data.person.full_name}
               visible={hasChildren && !ctx.hideExpandButtons}
               isExpanded={isExpanded}
               onToggle={() => setIsExpanded(!isExpanded)}

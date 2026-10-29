@@ -80,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Screen readers can tell the expand/collapse buttons of the family tree and the mind map apart: each one is named after its person ("Nhánh Nguyễn Văn An" / "Nguyễn Văn An's branch") and announces expanded or collapsed, instead of dozens of identical "Mở rộng"/"Thu gọn" buttons.
 - Death anniversaries no longer show up in the lunar year of death: someone who died this lunar year gets no "past" or "today" giỗ on the Events page, the dashboard or the downloaded calendar (.ics); the first one is in the next lunar year. Members without a known year of death are unchanged.
 - Restoring a backup now refuses duplicate parent–child relationship rows (same parent, child and type, naming both people) and person numbers that do not fit the database columns (years must be in `1..9999`, `generation` and `birth_order` within 32-bit integers), instead of failing during the database insert.
 - Restoring a backup now refuses a file with an invalid custom-event date: the date must be a real `YYYY-MM-DD` calendar day (missing or wrong ones like "abc" used to break the restore halfway with a raw database error). The error names the event and its ID. It also refuses two custom events with the same ID and two private-details rows for the same member, naming the duplicate ID.
