@@ -3,6 +3,8 @@ export interface PersonNode {
   full_name: string
   gender: 'male' | 'female' | 'other'
   birth_year: number | null
+  birth_month?: number | null
+  birth_day?: number | null
   birth_order: number | null
   generation: number | null
   is_in_law: boolean

@@ -14,7 +14,10 @@ import type {
 
 /**
  * So sánh thứ bậc giữa hai người (cùng bố mẹ hoặc cùng thế hệ)
- * Ưu tiên: Thứ tự sinh (birth_order) -> Năm sinh (birth_year)
+ * Ưu tiên: Thứ tự sinh (birth_order) -> năm -> tháng -> ngày sinh.
+ * Birth order counts when both have it; the date goes year → month → day and
+ * stops at the first part one of them lacks. When nothing tells them apart
+ * (missing data, or the same date such as twins) the result is 'unknown'.
  */
 function compareSeniority(
   a: PersonNode,
@@ -27,16 +30,19 @@ function compareSeniority(
     if (a.birth_order > b.birth_order) return 'junior'
   }
 
-  if (a.birth_year != null && b.birth_year != null) {
-    if (a.birth_year < b.birth_year) return 'senior'
-    if (a.birth_year > b.birth_year) return 'junior'
+  // The date counts from the year down: a month only when both years are
+  // known and equal, a day only when both months are too.
+  const dateKeys: [number | null | undefined, number | null | undefined][] = [
+    [a.birth_year, b.birth_year],
+    [a.birth_month, b.birth_month],
+    [a.birth_day, b.birth_day]
+  ]
+  for (const [x, y] of dateKeys) {
+    if (x == null || y == null) return 'unknown'
+    if (x < y) return 'senior'
+    if (x > y) return 'junior'
   }
-
-  // Neither birth order nor birth year can tell them apart: that is missing
-  // data, not a tie.
-  const orderMissing = a.birth_order == null || b.birth_order == null
-  const yearMissing = a.birth_year == null || b.birth_year == null
-  return orderMissing && yearMissing ? 'unknown' : 'equal'
+  return 'unknown'
 }
 
 /** Marks the result as a guess about who is older, naming the two people to fill in. */

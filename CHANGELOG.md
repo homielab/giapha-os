@@ -85,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Kinship finder: siblings or cousins born in the same year are now told apart by birth month and day; when nothing tells them apart (e.g. twins with no birth order) both possible terms are shown instead of calling each the other's older brother.
 - Branch backup export now includes children linked only to a spouse of someone in the branch (and their descendants), as the family tree shows them, instead of dropping them silently.
 - The member list sorted by generation now orders cousins' families by their blood parent's birth order, even when the mother (an in-law) is linked before the father.
 - The restore confirmation shows the backup date in Vietnam time, so it no longer shows the day before on computers set to UTC or US time, nor "Invalid Date" for a broken date.

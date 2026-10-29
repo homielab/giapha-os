@@ -67,10 +67,61 @@ describe('siblings when who is older is unknown', () => {
     expect(r.description.uncertain).toBeUndefined()
   })
 
-  test('the same birth year is a real tie, not missing data', () => {
-    const r = siblings({ birth_year: 1950 }, { birth_year: 1950 })
+  test('the same birth year: the month decides, both ways', () => {
+    const an = { birth_year: 1990, birth_month: 3 }
+    const binh = { birth_year: 1990, birth_month: 11 }
+    const r = siblings(an, binh)
+    expect(r.aCallsB).toBe('Em trai')
+    expect(r.bCallsA).toBe('Anh trai')
+    expect(r.description.uncertain).toBeUndefined()
+    const back = siblings(binh, an)
+    expect(back.aCallsB).toBe('Anh trai')
+    expect(back.bCallsA).toBe('Em trai')
+  })
+
+  test('the same month: the day decides', () => {
+    const r = siblings(
+      { birth_year: 1990, birth_month: 3, birth_day: 20 },
+      { birth_year: 1990, birth_month: 3, birth_day: 5 }
+    )
     expect(r.aCallsB).toBe('Anh trai')
     expect(r.description.uncertain).toBeUndefined()
+  })
+
+  test('twins on the same date without a birth order are unknown', () => {
+    const date = { birth_year: 1990, birth_month: 3, birth_day: 5 }
+    const r = siblings(date, date)
+    expect(r.aCallsB).toBe('Anh/Em trai')
+    expect(r.description.uncertain).toBe(true)
+  })
+
+  test('the same year without months is unknown', () => {
+    const r = siblings({ birth_year: 1950 }, { birth_year: 1950 })
+    expect(r.description.uncertain).toBe(true)
+  })
+
+  test('a month without a year does not decide', () => {
+    const r = siblings(
+      { birth_month: 3 },
+      { birth_year: 1990, birth_month: 11 }
+    )
+    expect(r.description.uncertain).toBe(true)
+  })
+
+  test('a day without both months does not decide', () => {
+    const r = siblings(
+      { birth_year: 1990, birth_day: 1 },
+      { birth_year: 1990, birth_month: 3, birth_day: 9 }
+    )
+    expect(r.description.uncertain).toBe(true)
+  })
+
+  test('birth order wins over the birth date', () => {
+    const r = siblings(
+      { birth_order: 1, birth_year: 1990, birth_month: 11 },
+      { birth_order: 2, birth_year: 1990, birth_month: 3 }
+    )
+    expect(r.aCallsB).toBe('Em trai')
   })
 })
 
