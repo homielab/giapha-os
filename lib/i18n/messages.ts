@@ -101,6 +101,8 @@ export const messages = {
     invalidRelationship: 'Có quan hệ không hợp lệ.',
     invalidRelationshipData: 'Quan hệ chứa dữ liệu không hợp lệ.',
     relationshipNoteTooLong: 'Ghi chú quan hệ quá dài.',
+    duplicateRelationship:
+      'Quan hệ cha/mẹ – con giữa "{a}" và "{b}" xuất hiện nhiều lần.',
     backupRelationshipIssues:
       'File sao lưu có quan hệ không hợp lệ (liệt kê tối đa {max} lỗi đầu), chưa phục hồi gì:',
     backupRelationshipCycle: 'Vòng cha mẹ – con: {path}',
@@ -1328,6 +1330,8 @@ export const messages = {
     invalidRelationship: 'An invalid relationship was found.',
     invalidRelationshipData: 'The relationship contains invalid data.',
     relationshipNoteTooLong: 'The relationship note is too long.',
+    duplicateRelationship:
+      'The parent–child relationship between "{a}" and "{b}" appears more than once.',
     backupRelationshipIssues:
       'The backup has invalid relationships (showing at most the first {max}); nothing was restored:',
     backupRelationshipCycle: 'Parent–child loop: {path}',

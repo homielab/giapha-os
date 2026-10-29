@@ -397,6 +397,29 @@ describe('validateImportPayload relationship checks', () => {
     expect(error).toContain('Vợ')
   })
 
+  test('refuses two identical parent–child rows and names both people', () => {
+    for (const type of ['biological_child', 'adopted_child']) {
+      const payload = {
+        persons: [named(A, 'Cha'), named(B, 'Con')],
+        relationships: [link(type, A, B), link(type, A, B)]
+      }
+      expect(validateImportPayload(payload, t)).toBe(
+        `duplicateRelationship:${JSON.stringify({ a: 'Cha', b: 'Con' })}`
+      )
+    }
+  })
+
+  test('accepts the same pair linked as both biological and adopted child', () => {
+    const payload = {
+      persons: [named(A, 'Cha'), named(B, 'Con')],
+      relationships: [
+        link('biological_child', A, B),
+        link('adopted_child', A, B)
+      ]
+    }
+    expect(validateImportPayload(payload, t)).toBeNull()
+  })
+
   test('shortens a long loop to its two ends', () => {
     const ids = Array.from(
       { length: 12 },
@@ -451,8 +474,15 @@ describe('validateImportPayload person numbers and dates', () => {
     [{ birth_day: 32 }, 'birth_day'],
     [{ death_lunar_day: 31 }, 'death_lunar_day'],
     [{ death_lunar_month: 0 }, 'death_lunar_month'],
+    [{ birth_year: 0 }, 'birth_year'],
+    [{ birth_year: 10000 }, 'birth_year'],
+    [{ birth_year: 3e9 }, 'birth_year'],
+    [{ death_year: 0 }, 'death_year'],
+    [{ death_lunar_year: 10000 }, 'death_lunar_year'],
     [{ generation: -1 }, 'generation'],
+    [{ generation: 2147483648 }, 'generation'],
     [{ birth_order: -2 }, 'birth_order'],
+    [{ birth_order: 3e9 }, 'birth_order'],
     [{ birth_year: 'abc' }, 'birth_year'],
     [{ death_year: 1990.5 }, 'death_year']
   ])('rejects %j', (overrides, field) => {

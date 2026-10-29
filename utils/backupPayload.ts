@@ -161,14 +161,20 @@ const INTEGER_FIELDS = [
   'birth_order'
 ] as const
 
+const MAX_INT = 2147483647
+
 /** Name of the first date/number field of a person record that is invalid. */
 function findInvalidNumberField(row: Record<string, unknown>) {
   for (const field of INTEGER_FIELDS) {
     const value = row[field]
     if (value === null || value === undefined) continue
     if (typeof value !== 'number' || !Number.isInteger(value)) return field
-    if ((field === 'generation' || field === 'birth_order') && value < 0)
+    if (
+      (field === 'generation' || field === 'birth_order') &&
+      (value < 0 || value > MAX_INT)
+    )
       return field
+    if (field.endsWith('_year') && (value < 1 || value > 9999)) return field
     if (field.endsWith('_month') && (value < 1 || value > 12)) return field
     if (field.endsWith('_day') && (value < 1 || value > 31)) return field
     if (field === 'death_lunar_day' && value > 30) return field
@@ -228,14 +234,13 @@ export function validateImportPayload(
   if (relationships.length > MAX_RELATIONSHIPS)
     return t('tooManyRelationships', { count: MAX_RELATIONSHIPS })
 
-  const personIds = new Set<string>()
+  const personNames = new Map<string, string>()
   for (const person of persons) {
     if (!person || typeof person !== 'object') return t('invalidPersonRecord')
     const row = person as Record<string, unknown>
     if (typeof row.id !== 'string' || !isUuid(row.id))
       return t('invalidPersonId')
-    if (personIds.has(row.id)) return t('duplicatePersonId')
-    personIds.add(row.id)
+    if (personNames.has(row.id)) return t('duplicatePersonId')
     if (
       typeof row.full_name !== 'string' ||
       row.full_name.trim().length === 0 ||
@@ -243,6 +248,7 @@ export function validateImportPayload(
     ) {
       return t('invalidPersonName')
     }
+    personNames.set(row.id, row.full_name.trim())
     if (!['male', 'female', 'other'].includes(String(row.gender)))
       return t('invalidGender')
     for (const field of ['other_names', 'avatar_url', 'note', 'burial_place']) {
@@ -258,15 +264,16 @@ export function validateImportPayload(
       })
   }
 
+  const childLinks = new Set<string>()
   for (const relationship of relationships) {
     if (!relationship || typeof relationship !== 'object')
       return t('invalidRelationship')
     const row = relationship as Record<string, unknown>
     if (
       typeof row.person_a !== 'string' ||
-      !personIds.has(row.person_a) ||
+      !personNames.has(row.person_a) ||
       typeof row.person_b !== 'string' ||
-      !personIds.has(row.person_b) ||
+      !personNames.has(row.person_b) ||
       row.person_a === row.person_b ||
       !['marriage', 'biological_child', 'adopted_child'].includes(
         String(row.type)
@@ -274,6 +281,15 @@ export function validateImportPayload(
     )
       return t('invalidRelationshipData')
     if (!isShortText(row.note, MAX_NOTE)) return t('relationshipNoteTooLong')
+    if (row.type !== 'marriage') {
+      const key = `${row.type}|${row.person_a}|${row.person_b}`
+      if (childLinks.has(key))
+        return t('duplicateRelationship', {
+          a: personNames.get(row.person_a) ?? row.person_a,
+          b: personNames.get(row.person_b) ?? row.person_b
+        })
+      childLinks.add(key)
+    }
   }
 
   const privateDetails = payload.person_details_private
@@ -289,7 +305,7 @@ export function validateImportPayload(
       if (!detail || typeof detail !== 'object')
         return t('invalidPrivateDetails')
       const row = detail as Record<string, unknown>
-      if (typeof row.person_id !== 'string' || !personIds.has(row.person_id))
+      if (typeof row.person_id !== 'string' || !personNames.has(row.person_id))
         return t('invalidPrivateDetailsPerson')
       if (detailPersonIds.has(row.person_id))
         return t('duplicatePrivateDetail', { id: row.person_id })
