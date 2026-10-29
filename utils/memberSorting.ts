@@ -98,13 +98,16 @@ export function sortPersonsByGeneration(
     // Find the "core" member (usually the bloodline, not in-law)
     const coreMember = members.find((m) => !m.is_in_law) || members[0]
 
-    // Score: the parent's birth order, then the core member (compareBirth)
-    const parents = parentsOf.get(coreMember.id) || []
-    let parentBirthOrder = 999
-    if (parents.length > 0) {
-      const p1 = personMap.get(parents[0])
-      if (p1) parentBirthOrder = p1.birth_order || 999
-    }
+    // Score: the blood parent (not an in-law) who comes first among their
+    // siblings, so the order of the parent rows doesn't matter
+    const parents = (parentsOf.get(coreMember.id) || [])
+      .map((id) => personMap.get(id))
+      .filter((p): p is Person => !!p)
+    const blood = parents.filter((p) => !p.is_in_law)
+    const parent = [...(blood.length > 0 ? blood : parents)].sort((a, b) =>
+      compareBirth(a, b)
+    )[0]
+    const parentBirthOrder = parent?.birth_order || 999
 
     return { parentBirthOrder, coreMember }
   }

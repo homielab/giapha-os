@@ -85,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The member list sorted by generation now orders cousins' families by their blood parent's birth order, even when the mother (an in-law) is linked before the father.
 - The restore confirmation shows the backup date in Vietnam time, so it no longer shows the day before on computers set to UTC or US time, nor "Invalid Date" for a broken date.
 - The "Past" events tab now shows everything from the last 365 days, not only this year: in early January it lists the December birthdays, death anniversaries and yearly events just gone, and after Tết the anniversaries of the previous lunar year.
 - English text with a count of 1 now uses the singular: "1 event today", "1 person", "1 year old", "in 1 week" instead of "1 events today", "1 people", "1 years old" on the dashboard, the events page, the statistics and the family book.

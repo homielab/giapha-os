@@ -204,6 +204,31 @@ describe('sortPersonsByGeneration', () => {
     expect(ids(sorted)).toEqual(['dad', 'mom', 'aunt', 'grandpa', 'grandma'])
   })
 
+  test('orders sibling branches by the blood parent, whatever the parent row order', () => {
+    const fam = [
+      person('a', 'male', { generation: 1, birth_order: 1 }),
+      person('a-wife', 'female', { generation: 1, is_in_law: true }),
+      person('b', 'male', { generation: 1, birth_order: 2 }),
+      person('b-wife', 'female', { generation: 1, is_in_law: true }),
+      person('b-kid', 'male', { generation: 2 }),
+      person('a-kid', 'male', { generation: 2 })
+    ]
+    const sorted = sortPersonsByGeneration(
+      fam,
+      'generation_asc',
+      new Map(fam.map((p) => [p.id, p])),
+      new Map([
+        ['a-kid', ['a-wife', 'a']],
+        ['b-kid', ['b', 'b-wife']]
+      ]),
+      linkMap([
+        ['a', 'a-wife'],
+        ['b', 'b-wife']
+      ])
+    )
+    expect(ids(sorted).slice(-2)).toEqual(['a-kid', 'b-kid'])
+  })
+
   test('siblings born the same year sort by month, then day, unknown last', () => {
     const kids = [
       person('dad', 'male', { generation: 1 }),
