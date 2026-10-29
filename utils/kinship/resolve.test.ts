@@ -253,6 +253,43 @@ describe('relations through marriage', () => {
   })
 })
 
+describe('relations through marriage when the relative age is unknown', () => {
+  const persons = [
+    person('cha', 'male'),
+    person('lan', 'female'),
+    person('minh', 'male'),
+    person('a', 'male')
+  ]
+  const rels = [child('cha', 'lan'), child('cha', 'minh'), marriage('a', 'lan')]
+
+  test("the wife's brother is Anh/Em vợ and calls A Anh/Em rể", () => {
+    const find = (id: string) => persons.find((p) => p.id === id)!
+    const ab = computeKinship(find('a'), find('minh'), persons, rels)
+    expect([ab?.aCallsB, ab?.bCallsA]).toEqual(['Anh/Em vợ', 'Anh/Em rể'])
+    expect(ab?.description.uncertain).toBe(true)
+    const ba = computeKinship(find('minh'), find('a'), persons, rels)
+    expect([ba?.aCallsB, ba?.bCallsA]).toEqual(['Anh/Em rể', 'Anh/Em vợ'])
+    expect(ba?.description.uncertain).toBe(true)
+  })
+
+  test("the wife's uncle keeps vợ", () => {
+    const p = [
+      person('ong', 'male'),
+      person('chu', 'male'),
+      person('bo', 'male'),
+      person('lan', 'female'),
+      person('a', 'male')
+    ]
+    const e = [
+      child('ong', 'chu'),
+      child('ong', 'bo'),
+      child('bo', 'lan'),
+      marriage('a', 'lan')
+    ]
+    expect(terms('a', 'chu', p, e)).toEqual(['Bác/Chú vợ', 'Cháu rể'])
+  })
+})
+
 describe('spouses of uncles and aunts', () => {
   const persons = [
     person('ong', 'male'),

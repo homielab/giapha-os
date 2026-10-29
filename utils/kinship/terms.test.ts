@@ -40,7 +40,15 @@ describe('calling the blood relative of a spouse', () => {
     ['Cậu họ', 'Cậu vợ'],
     ['Cháu họ', 'Cháu vợ'],
     ['Con', 'Con'],
-    ['Chắt', 'Chắt']
+    ['Chắt', 'Chắt'],
+    ['Anh/Em trai', 'Anh/Em vợ'],
+    ['Chị/Em gái', 'Chị/Em vợ'],
+    ['Anh/Em họ', 'Anh/Em vợ (họ)'],
+    ['Chị/Em họ', 'Chị/Em vợ (họ)'],
+    ['Bác/Chú', 'Bác/Chú vợ'],
+    ['Bác/Cô', 'Bác/Cô vợ'],
+    ['Bác/Chú họ', 'Bác/Chú vợ'],
+    ['Bác/Cô họ', 'Bác/Cô vợ']
   ])('%s', (term, expected) => {
     expect(callSpouseRelative(term, ' vợ', true)).toBe(expected)
   })
@@ -48,6 +56,23 @@ describe('calling the blood relative of a spouse', () => {
   test('the "họ" is kept when the spouse side is B', () => {
     expect(callSpouseRelative('Bác họ', ' chồng', false)).toBe('Bác họ chồng')
     expect(callSpouseRelative('Bác họ', ' chồng', true)).toBe('Bác chồng')
+  })
+})
+
+describe('in-law terms when the relative age is unknown', () => {
+  test.each([
+    ['Anh/Em trai', 'male', 'Anh/Em rể', 'Anh/Em rể'],
+    ['Anh/Em trai', 'female', 'Chị/Em dâu', 'Chị/Em dâu'],
+    ['Chị/Em gái', 'male', 'Anh/Em rể', 'Anh/Em rể'],
+    ['Chị/Em gái', 'female', 'Chị/Em dâu', 'Chị/Em dâu'],
+    ['Anh/Em họ', 'female', 'Chị/Em dâu (họ)', 'Chị/Em dâu (họ)'],
+    ['Chị/Em họ', 'male', 'Anh/Em rể (họ)', 'Anh/Em rể (họ)'],
+    ['Bác/Chú', 'female', 'Bác gái/Thím', 'Bác gái/Thím'],
+    ['Bác/Cô', 'male', 'Bác/Dượng', 'Bác/Dượng'],
+    ['Bác/Chú họ', 'female', 'Bác gái/Thím họ', 'Bác gái/Thím họ']
+  ] as const)('%s, %s', (term, gender, calledByRelative, spouseOf) => {
+    expect(termRelativeCallsInLaw(term, gender)).toBe(calledByRelative)
+    expect(termForSpouseOfRelative(term, gender)).toBe(spouseOf)
   })
 })
 

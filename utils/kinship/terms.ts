@@ -81,22 +81,36 @@ const SIBLING_STEMS = new Map<string, string>([
   ['Anh trai', 'Anh'],
   ['Chị gái', 'Chị'],
   ['Em gái', 'Em'],
-  ['Em trai', 'Em']
+  ['Em trai', 'Em'],
+  ['Anh/Em trai', 'Anh/Em'],
+  ['Chị/Em gái', 'Chị/Em']
 ])
 const COUSIN_STEMS = new Map<string, string>([
   ['Anh họ', 'Anh'],
   ['Chị họ', 'Chị'],
-  ['Em họ', 'Em']
+  ['Em họ', 'Em'],
+  ['Anh/Em họ', 'Anh/Em'],
+  ['Chị/Em họ', 'Chị/Em']
 ])
 /** Aunts and uncles: kept, and the "họ" ones lose it when A calls B. */
-const UNCLE_AUNT_TERMS = new Set(['Bác', 'Chú', 'Cô', 'Cậu', 'Dì'])
+const UNCLE_AUNT_TERMS = new Set([
+  'Bác',
+  'Chú',
+  'Cô',
+  'Cậu',
+  'Dì',
+  'Bác/Chú',
+  'Bác/Cô'
+])
 const UNCLE_AUNT_COUSIN_TERMS = new Set([
   'Bác họ',
   'Chú họ',
   'Cô họ',
   'Cậu họ',
   'Dì họ',
-  'Cháu họ'
+  'Cháu họ',
+  'Bác/Chú họ',
+  'Bác/Cô họ'
 ])
 
 /**
@@ -145,7 +159,14 @@ const IN_LAW_COMMON = new Map<string, GenderTerms>([
   ['Dì', KEEP('Dượng')],
   ['Bà Cô', KEEP('Ông Dượng')],
   ['Ông Chú', KEEP('Bà Thím')],
-  ['Ông Bác', KEEP('Bà Bác')]
+  ['Ông Bác', KEEP('Bà Bác')],
+  // Relative age unknown (no birth data): both terms, joined by '/'.
+  ['Anh/Em họ', KEEP('Chị/Em dâu (họ)')],
+  ['Chị/Em họ', KEEP('Anh/Em rể (họ)')],
+  ['Bác/Chú', byGender('Bác/Dượng', 'Bác gái/Thím')],
+  ['Bác/Cô', byGender('Bác/Dượng', 'Bác gái/Thím')],
+  ['Bác/Chú họ', byGender('Bác/Dượng họ', 'Bác gái/Thím họ')],
+  ['Bác/Cô họ', byGender('Bác/Dượng họ', 'Bác gái/Thím họ')]
 ])
 
 /**
@@ -156,7 +177,9 @@ const IN_LAW_CALLED_BY_RELATIVE = new Map<string, GenderTerms>([
   ...IN_LAW_COMMON,
   ['Anh trai', byGender('Anh rể', 'Chị dâu')],
   ['Chị gái', byGender('Anh rể', 'Chị dâu')],
-  ['Bác họ', KEEP('Bác họ')]
+  ['Bác họ', KEEP('Bác họ')],
+  ['Anh/Em trai', byGender('Anh/Em rể', 'Chị/Em dâu')],
+  ['Chị/Em gái', byGender('Anh/Em rể', 'Chị/Em dâu')]
 ])
 
 /**
@@ -166,7 +189,9 @@ const IN_LAW_CALLED_BY_RELATIVE = new Map<string, GenderTerms>([
 const SPOUSE_OF_RELATIVE = new Map<string, GenderTerms>([
   ...IN_LAW_COMMON,
   ['Anh trai', byGender('Anh rể', 'Chị dâu', 'Anh rể')],
-  ['Chị gái', byGender('Anh rể', 'Chị dâu', 'Chị dâu')]
+  ['Chị gái', byGender('Anh rể', 'Chị dâu', 'Chị dâu')],
+  ['Anh/Em trai', byGender('Anh/Em rể', 'Chị/Em dâu', 'Anh/Em rể')],
+  ['Chị/Em gái', byGender('Anh/Em rể', 'Chị/Em dâu', 'Chị/Em dâu')]
 ])
 
 function lookupInLaw(
