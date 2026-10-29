@@ -45,3 +45,43 @@ export function searchPersons<
   )
   return ranked.slice(0, limit).map((r) => r.person)
 }
+
+/** Per-person index for the member list filter: names kept apart, years as text. */
+export interface PersonSearchIndex {
+  names: string[]
+  years: string[]
+}
+
+export function buildPersonSearchIndex(person: {
+  full_name: string
+  other_names?: string | null
+  birth_year?: number | null
+  death_year?: number | null
+}): PersonSearchIndex {
+  return {
+    names: [person.full_name, person.other_names]
+      .map(normalizeSearchText)
+      .filter(Boolean),
+    years: [person.birth_year, person.death_year]
+      .filter((y): y is number => typeof y === 'number')
+      .map(String)
+  }
+}
+
+/**
+ * True when every word of the query matches: number words must equal the
+ * birth or death year, the other words must all occur in the same name field
+ * (full name or other names), so a query never spans both fields.
+ */
+export function matchesPersonSearch(
+  index: PersonSearchIndex,
+  query: string
+): boolean {
+  const words = normalizeSearchText(query).split(' ').filter(Boolean)
+  if (words.length === 0) return true
+  const yearWords = words.filter((w) => /^\d+$/.test(w))
+  const nameWords = words.filter((w) => !/^\d+$/.test(w))
+  if (!yearWords.every((w) => index.years.includes(w))) return false
+  if (nameWords.length === 0) return true
+  return index.names.some((name) => nameWords.every((w) => name.includes(w)))
+}

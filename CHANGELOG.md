@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The member list search finds people by birth or death year (e.g. `1950`); every name word must match the full name or the other names, so `an binh` no longer matches An whose other name is Bình.
 - The statistics page has a Lifespan card: average lifespan, the longest-lived person and the oldest living member (linked to their profiles), and average lifespan by birth decade. Only people with both a birth and a death year are counted, and the card says how many.
 - A "View on tree" button on the member page and in the member details dialog, for every role, opens the family tree with that person as the root, so a branch can be seen without going back to the list and picking the root by hand.
 - Upcoming event cards on the dashboard are now links: a birthday or death anniversary opens that person's profile, a custom event opens the events page. They can be reached and opened with the keyboard.

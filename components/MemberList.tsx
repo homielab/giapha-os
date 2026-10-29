@@ -16,7 +16,11 @@ import {
 } from '@/utils/batchedList'
 import { listGenerations, matchesPersonFilter } from '@/utils/memberFilters'
 import { sortPersonsByGeneration, sortPersonsFlat } from '@/utils/memberSorting'
-import { normalizeSearchText } from '@/utils/search'
+import {
+  buildPersonSearchIndex,
+  matchesPersonSearch,
+  type PersonSearchIndex
+} from '@/utils/search'
 
 const EMPTY_RELATIONSHIPS: Relationship[] = []
 
@@ -51,25 +55,21 @@ export default function MemberList({
     return map
   }, [initialPersons])
 
-  // Accent-insensitive search index over full name and other names
+  // Accent-insensitive search index over names and birth/death years
   const searchIndex = useMemo(() => {
-    const index = new Map<string, string>()
-    initialPersons.forEach((p) =>
-      index.set(
-        p.id,
-        normalizeSearchText(`${p.full_name} ${p.other_names ?? ''}`)
-      )
-    )
+    const index = new Map<string, PersonSearchIndex>()
+    initialPersons.forEach((p) => index.set(p.id, buildPersonSearchIndex(p)))
     return index
   }, [initialPersons])
 
   const filteredPersons = useMemo(() => {
-    const query = normalizeSearchText(deferredSearchTerm)
+    const query = deferredSearchTerm
     const filterOption = deferredFilterOption
 
     return initialPersons.filter((person) => {
-      const text = searchIndex.get(person.id)
-      const matchesSearch = !query || (text?.indexOf(query) ?? -1) !== -1
+      const index = searchIndex.get(person.id)
+      const matchesSearch =
+        !query.trim() || (!!index && matchesPersonSearch(index, query))
 
       return matchesSearch && matchesPersonFilter(person, filterOption)
     })
