@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import { validateImportPayload } from './backupPayload'
 import {
   BackupParseError,
+  formatExportedAt,
   parseRestoreFile,
   readRestoreFile,
   summarizeBackup
@@ -181,5 +182,19 @@ describe('readRestoreFile GEDCOM stats', () => {
       text: async () => JSON.stringify({ persons: [], relationships: [] })
     })
     expect(gedcom).toBeUndefined()
+  })
+})
+
+describe('formatExportedAt', () => {
+  test('shows the date in Vietnam time whatever the browser time zone', () => {
+    // 00:30 on 29 Oct in Vietnam, still 28 Oct in UTC and the US.
+    expect(formatExportedAt('2026-10-28T17:30:00Z', 'vi')).toBe('29/10/2026')
+    expect(formatExportedAt('2026-10-28T17:30:00Z', 'en')).toBe('10/29/2026')
+  })
+
+  test('returns an empty string for a missing or invalid date', () => {
+    expect(formatExportedAt(null, 'vi')).toBe('')
+    expect(formatExportedAt('', 'vi')).toBe('')
+    expect(formatExportedAt('not a date', 'vi')).toBe('')
   })
 })

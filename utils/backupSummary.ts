@@ -11,6 +11,23 @@ export interface BackupSummary {
   exportedAt: string | null
 }
 
+/**
+ * The export date for display, in Vietnam time like every other date in the
+ * app, so it matches the file name whatever the browser's time zone.
+ * Returns '' when the date is missing or invalid.
+ */
+export function formatExportedAt(
+  iso: string | null | undefined,
+  locale: string
+): string {
+  if (!iso) return ''
+  const time = Date.parse(iso)
+  if (Number.isNaN(time)) return ''
+  return new Date(time).toLocaleDateString(locale, {
+    timeZone: 'Asia/Ho_Chi_Minh'
+  })
+}
+
 /** Thrown when the file text is not valid JSON. */
 export class BackupParseError extends Error {}
 

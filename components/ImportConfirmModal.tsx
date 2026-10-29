@@ -7,7 +7,11 @@ import { useId } from 'react'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import type { Locale } from '@/lib/i18n/messages'
 import { useI18n } from '@/lib/i18n/useI18n'
-import type { BackupSummary, RestoreWarning } from '@/utils/backupSummary'
+import {
+  formatExportedAt,
+  type BackupSummary,
+  type RestoreWarning
+} from '@/utils/backupSummary'
 import type { GedcomImportStats } from '@/utils/gedcom'
 
 interface ImportConfirmModalProps {
@@ -43,6 +47,7 @@ export default function ImportConfirmModal({
 }: ImportConfirmModalProps) {
   const { t } = useI18n()
   const titleId = useId()
+  const exportedDate = formatExportedAt(summary.exportedAt, locale)
   const dialogRef = useModalA11y(() => {
     if (!isImporting) onCancel()
   })
@@ -117,13 +122,9 @@ export default function ImportConfirmModal({
                   })}
                 </p>
               ) : null}
-              {summary.exportedAt && (
+              {exportedDate && (
                 <p className='mt-1 text-xs text-stone-500'>
-                  {t('restoreFileExportedAt', {
-                    date: new Date(summary.exportedAt).toLocaleDateString(
-                      locale
-                    )
-                  })}
+                  {t('restoreFileExportedAt', { date: exportedDate })}
                 </p>
               )}
               <button

@@ -82,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The restore confirmation shows the backup date in Vietnam time, so it no longer shows the day before on computers set to UTC or US time, nor "Invalid Date" for a broken date.
 - The "Past" events tab now shows everything from the last 365 days, not only this year: in early January it lists the December birthdays, death anniversaries and yearly events just gone, and after Tết the anniversaries of the previous lunar year.
 - English text with a count of 1 now uses the singular: "1 event today", "1 person", "1 year old", "in 1 week" instead of "1 events today", "1 people", "1 years old" on the dashboard, the events page, the statistics and the family book.
 - Member cards and the mind map now show the solar year of death, like the birth year, the member search and the duplicate scan: someone who died on 10/02/2021 (lunar 29/12/2020) shows as 2021 everywhere instead of 2020 on cards. The lunar year is used only when just a lunar date of death is known; the duplicate scan and merge dialog now show it too.
