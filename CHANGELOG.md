@@ -82,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Member cards and the mind map now show the solar year of death, like the birth year, the member search and the duplicate scan: someone who died on 10/02/2021 (lunar 29/12/2020) shows as 2021 everywhere instead of 2020 on cards. The lunar year is used only when just a lunar date of death is known; the duplicate scan and merge dialog now show it too.
 - Member search (Ctrl/⌘ + K) now tells how many members match, also to screen readers, and says when the list stops at the first 20 so you can type a more precise name.
 - Zooming the family tree with the +/- buttons or Ctrl/⌘ + scroll no longer makes the tree drift away from what you were looking at: the buttons zoom around the middle of the view (like the `+`/`-` keys) and the wheel zooms around the mouse pointer.
 - Merging duplicate profiles now warns before it breaks the tree: when the kept profile would get more than two birth parents, two birth parents of the same gender, or one profile is an ancestor of the other (the person would become their own ancestor), the preview lists the problem and the merge waits for an "I understand" tick. The preview must be loaded before merging.

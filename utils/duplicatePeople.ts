@@ -43,6 +43,8 @@ export interface DuplicateScanPerson {
   full_name: string
   birth_year: number | null
   death_year: number | null
+  /** Shown when only a lunar date of death is known. */
+  death_lunar_year?: number | null
 }
 
 export interface DuplicateScanRelationship {
@@ -62,7 +64,7 @@ export interface DuplicateGroup {
 
 /** Columns the whole-tree duplicate scan reads. */
 export const DUPLICATE_SCAN_PERSON_COLUMNS =
-  'id, full_name, birth_year, death_year'
+  'id, full_name, birth_year, death_year, death_lunar_year'
 
 const PARENT_CHILD_TYPES = new Set(['biological_child', 'adopted_child'])
 

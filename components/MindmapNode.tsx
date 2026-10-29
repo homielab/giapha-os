@@ -8,6 +8,7 @@ import { memo, useMemo, useState } from 'react'
 import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
+import { lifeYearsLabel } from '@/utils/memberSearch'
 import { getAvatarBg } from '@/utils/styleHelpers'
 import {
   AdjacencyLists,
@@ -136,9 +137,7 @@ function NodeCard({
                 />
               </svg>
               <span className='truncate'>
-                {person.birth_year || t('unknownDate')}
-                {person.is_deceased &&
-                  ` → ${person.death_lunar_year || person.death_year || t('unknownDate')}`}
+                {lifeYearsLabel(person, t('unknownDate'))}
               </span>
             </span>
             <InLawBadge person={person} />

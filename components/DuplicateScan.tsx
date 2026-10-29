@@ -13,6 +13,7 @@ import DataCard from '@/components/DataCard'
 import ImportStatusMessage from '@/components/ImportStatusMessage'
 import MergePersonsModal from '@/components/MergePersonsModal'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { deathYearOf } from '@/utils/memberSearch'
 
 export default function DuplicateScan() {
   const { t } = useI18n()
@@ -151,7 +152,7 @@ export default function DuplicateScan() {
                               {member.full_name}
                             </td>
                             <td className='px-4 py-2 whitespace-nowrap text-stone-600'>
-                              {years(member.birth_year, member.death_year)}
+                              {years(member.birth_year, deathYearOf(member))}
                             </td>
                             <td className='px-4 py-2 text-stone-600'>
                               {member.relationshipCount}

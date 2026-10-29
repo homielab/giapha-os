@@ -7,6 +7,7 @@ import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
+import { lifeYearsLabel } from '@/utils/memberSearch'
 import { getAvatarBg } from '@/utils/styleHelpers'
 
 import DefaultAvatar from './DefaultAvatar'
@@ -146,9 +147,7 @@ function PersonCard({ person }: PersonCardProps) {
               />
             </svg>
             <span className='truncate'>
-              {person.birth_year || '...'}
-              {isDeceased &&
-                ` → ${person.death_lunar_year || person.death_year || '...'}`}
+              {lifeYearsLabel({ ...person, is_deceased: isDeceased }, '...')}
             </span>
           </p>
           <PersonBadges person={person} isDeceased={isDeceased} />

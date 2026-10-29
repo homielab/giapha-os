@@ -2,15 +2,20 @@ import { searchPersons } from '@/utils/search'
 
 /** Columns the global member search loads (name, birth and death year). */
 export const GLOBAL_SEARCH_COLUMNS =
-  'id, full_name, gender, birth_year, death_year, is_deceased, other_names'
+  'id, full_name, gender, birth_year, death_year, death_lunar_year, is_deceased, other_names'
 
-export interface SearchableMember {
+/** The year fields a life span is shown from. */
+export interface LifeYearsPerson {
+  birth_year?: number | null
+  death_year?: number | null
+  death_lunar_year?: number | null
+  is_deceased?: boolean | null
+}
+
+export interface SearchableMember extends LifeYearsPerson {
   id: string
   full_name: string
   other_names?: string | null
-  birth_year?: number | null
-  death_year?: number | null
-  is_deceased?: boolean | null
 }
 
 export interface MemberSearchResult<T extends SearchableMember> {
@@ -19,10 +24,32 @@ export interface MemberSearchResult<T extends SearchableMember> {
   years: string
 }
 
+/**
+ * Year of death to show next to a solar birth year: the solar year, or the
+ * lunar year when only a lunar date of death is known. A death on 10/02/2021
+ * (lunar 29/12/2020) is 2021, like everywhere else.
+ */
+export function deathYearOf(person: LifeYearsPerson): number | null {
+  return person.death_year || person.death_lunar_year || null
+}
+
+/**
+ * "1950 → 2021" on member cards and the mind map: the death part only for a
+ * deceased person, `unknown` in place of a missing year.
+ */
+export function lifeYearsLabel(
+  person: LifeYearsPerson,
+  unknown: string
+): string {
+  const birth = `${person.birth_year || unknown}`
+  if (!person.is_deceased) return birth
+  return `${birth} → ${deathYearOf(person) ?? unknown}`
+}
+
 /** Years shown beside a name so two people with the same name can be told apart. */
 export function formatLifeYears(member: SearchableMember): string {
-  const birth = member.birth_year ?? null
-  const death = member.death_year ?? null
+  const birth = member.birth_year || null
+  const death = deathYearOf(member)
   if (birth && death) return `${birth} – ${death}`
   if (birth) return member.is_deceased ? `${birth} – ?` : `${birth}`
   if (death) return `– ${death}`

@@ -14,6 +14,7 @@ import MergeWarnings from '@/components/MergeWarnings'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import type { DuplicateGroupMember } from '@/utils/duplicatePeople'
+import { deathYearOf } from '@/utils/memberSearch'
 import { memberSearchCache } from '@/utils/memberSearchCache'
 import { canConfirmMerge, type MergePreview } from '@/utils/mergePersons'
 
@@ -190,7 +191,7 @@ export default function MergePersonsModal({
                   </span>
                   <span className='block text-xs text-stone-500'>
                     {t('duplicateScanYears')}:{' '}
-                    {years(member.birth_year, member.death_year)}
+                    {years(member.birth_year, deathYearOf(member))}
                   </span>
                 </span>
                 <label className='flex cursor-pointer items-center gap-1.5'>

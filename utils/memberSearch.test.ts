@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'bun:test'
 
 import {
+  deathYearOf,
   formatLifeYears,
   GLOBAL_SEARCH_LIMIT,
+  lifeYearsLabel,
   rankMembers,
   searchStatusKey
 } from '@/utils/memberSearch'
@@ -45,6 +47,45 @@ describe('formatLifeYears', () => {
     expect(
       formatLifeYears(m('1', 'A', { birth_year: 1900, is_deceased: true }))
     ).toBe('1900 – ?')
+  })
+})
+
+describe('lifeYearsLabel', () => {
+  // Died 10/02/2021, lunar 29/12/2020: the solar year, like the birth year.
+  const died = {
+    id: '1',
+    full_name: 'A',
+    birth_year: 1940,
+    death_year: 2021,
+    death_lunar_year: 2020,
+    is_deceased: true
+  }
+
+  it('shows the solar year of death even when the lunar year differs', () => {
+    expect(deathYearOf(died)).toBe(2021)
+    expect(lifeYearsLabel(died, '...')).toBe('1940 → 2021')
+    expect(formatLifeYears(died)).toBe('1940 – 2021')
+  })
+
+  it('falls back to the lunar year when only a lunar date is known', () => {
+    const lunarOnly = { ...died, death_year: null }
+    expect(deathYearOf(lunarOnly)).toBe(2020)
+    expect(lifeYearsLabel(lunarOnly, '...')).toBe('1940 → 2020')
+    expect(formatLifeYears(lunarOnly)).toBe('1940 – 2020')
+  })
+
+  it('puts the unknown label in place of missing years', () => {
+    expect(lifeYearsLabel({ is_deceased: true }, 'Chưa rõ')).toBe(
+      'Chưa rõ → Chưa rõ'
+    )
+    expect(lifeYearsLabel({}, '...')).toBe('...')
+    expect(deathYearOf({})).toBeNull()
+  })
+
+  it('leaves out the death part for a living person', () => {
+    expect(lifeYearsLabel({ birth_year: 1990, death_year: null }, '?')).toBe(
+      '1990'
+    )
   })
 })
 
