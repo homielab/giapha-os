@@ -18,7 +18,19 @@ function generateUUID() {
   })
 }
 
-export function parseGedcom(gedcom: string): {
+export type ParseGedcomOptions = {
+  /**
+   * Full names surname first (Vietnamese order); default true. Ignored for
+   * files exported by this app (`1 SOUR Giapha_OS`), whose names already read
+   * in the right order.
+   */
+  surnameFirst?: boolean
+}
+
+export function parseGedcom(
+  gedcom: string,
+  { surnameFirst = true }: ParseGedcomOptions = {}
+): {
   persons: GedcomPerson[]
   relationships: GedcomRelationship[]
   stats: GedcomImportStats
@@ -28,12 +40,14 @@ export function parseGedcom(gedcom: string): {
     .split(/\r\n|\r|\n/)
     .filter((line) => line.trim().length > 0)
   const records = readRecords(lines)
+  const ownExport = lines.some((line) => /^1 SOUR Giapha_OS\s*$/.test(line))
 
   const ctx: PersonContext = {
     noteTexts: new Map(),
     sourTexts: new Map(),
     stats: { missingNotes: 0, sources: 0, droppedFamilyNotes: 0 },
-    adoptedLinks: new Set()
+    adoptedLinks: new Set(),
+    surnameFirst: surnameFirst && !ownExport
   }
   for (const record of records) {
     if (record.type === 'NOTE') {

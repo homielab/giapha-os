@@ -24,20 +24,35 @@ export function formatName(fullName: string | null | undefined): string {
 }
 
 /**
- * Full name from a GEDCOM NAME: SURN/GIVN when present, in the order the NAME
- * writes them (surname first for `/Nguyễn/ Văn An`), otherwise the NAME
- * without its slashes (`Văn /An/` → `Văn An`, as older exports wrote it).
+ * Full name from a GEDCOM NAME.
+ *
+ * `surnameFirst` (Vietnamese order) puts the surname first whatever order the
+ * file uses: SURN or the `/…/` part of NAME, then GIVN or the rest of NAME, so
+ * `Văn An /Nguyễn/` → `Nguyễn Văn An`.
+ *
+ * Without it: SURN/GIVN in the order the NAME writes them (surname first for
+ * `/Nguyễn/ Văn An`), otherwise the NAME without its slashes (`Văn /An/` →
+ * `Văn An`, as older exports wrote it).
  */
 export function readName(
   nameValue: string | null,
   surname: string | null,
-  givenName: string | null
+  givenName: string | null,
+  surnameFirst = false
 ): string {
   const clean = (s: string) => s.replace(/\//g, ' ').replace(/\s+/g, ' ').trim()
   const value = nameValue?.trim() ?? ''
+  if (surnameFirst) {
+    const match = value.match(/\/([^/]*)\//)
+    const surn = surname ?? match?.[1] ?? ''
+    const given = givenName ?? (match ? value.replace(match[0], ' ') : value)
+    return clean(`${surn} ${given}`) || 'Unknown'
+  }
   if (surname || givenName) {
-    const surnameFirst = value === '' || value.startsWith('/')
-    const parts = surnameFirst ? [surname, givenName] : [givenName, surname]
+    const surnameFirstInName = value === '' || value.startsWith('/')
+    const parts = surnameFirstInName
+      ? [surname, givenName]
+      : [givenName, surname]
     return clean(parts.filter(Boolean).join(' '))
   }
   return clean(value) || 'Unknown'

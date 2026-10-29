@@ -64,7 +64,9 @@ export interface RestoreFile {
  * plus an encoding warning for a GEDCOM that could not be decoded cleanly.
  */
 export async function readRestoreFile(
-  file: Pick<RestoreFile, 'name'> & Partial<RestoreFile>
+  file: Pick<RestoreFile, 'name'> & Partial<RestoreFile>,
+  /** GEDCOM only: full names surname first (default true). */
+  options: { surnameFirst?: boolean } = {}
 ): Promise<{
   payload: ImportPayload
   warning?: RestoreWarning
@@ -80,7 +82,7 @@ export async function readRestoreFile(
       file.arrayBuffer!()
     ])
     const { text, warning } = decodeGedcom(buffer)
-    const { stats, ...parsed } = parseGedcom(text)
+    const { stats, ...parsed } = parseGedcom(text, options)
     const payload = parsed as unknown as ImportPayload
     return {
       payload,

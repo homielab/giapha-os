@@ -73,7 +73,7 @@ Mỗi sự kiện có mã (UID) ổn định theo thành viên, nên nhập lạ
 
 Xuất/nhập GEDCOM (7.0) để mở gia phả trong Gramps, MyHeritage… hoặc nhập lại:
 
-- **Họ tên**: từ đầu tiên của họ tên là họ: `Nguyễn Văn An` được ghi `1 NAME /Nguyễn/ Văn An` kèm `2 SURN Nguyễn`, `2 GIVN Văn An`. Khi nhập, ứng dụng ưu tiên `SURN`/`GIVN` (giữ thứ tự họ–tên như dòng `NAME`), không có thì đọc `NAME` bỏ dấu `/` — file do bản cũ xuất vẫn đọc như trước.
+- **Họ tên**: từ đầu tiên của họ tên là họ: `Nguyễn Văn An` được ghi `1 NAME /Nguyễn/ Văn An` kèm `2 SURN Nguyễn`, `2 GIVN Văn An`. Khi nhập file từ chương trình khác (Gramps, MyHeritage…), mặc định họ đứng đầu: họ lấy từ `SURN` hoặc phần giữa hai dấu `/`, tên từ `GIVN` hoặc phần còn lại, nên `1 NAME Văn An /Nguyễn/` thành `Nguyễn Văn An`. Hộp xác nhận phục hồi có lựa chọn "Giữ như trong file": khi đó `SURN`/`GIVN` theo thứ tự như dòng `NAME`, không có thì đọc `NAME` bỏ dấu `/`. File do Giapha OS xuất (`1 SOUR Giapha_OS`, kể cả bản cũ) luôn đọc theo cách sau, như trước.
 - **Gia đình (FAM)**: mỗi con nằm trong gia đình của đúng cặp cha mẹ của mình (con vợ hai ở gia đình với vợ hai); con chỉ nối với một người (cha, mẹ hoặc người có giới tính "khác") có gia đình một cha/mẹ riêng. Người giới tính "khác" được ghi ở vị trí `HUSB`.
 - **Con nuôi**: ghi `2 PEDI ADOPTED` dưới `1 FAMC`; khi nhập, `PEDI ADOPTED` thành quan hệ con nuôi.
 - **Ngày tháng**: GEDCOM không có ngày thiếu tháng hay thiếu năm, nên ngày có ngày + năm mà không có tháng chỉ xuất năm. Ngày sinh/ngày mất có ngày + tháng mà không có năm (sinh nhật, ngày giỗ không rõ năm) ghi bằng tag riêng `2 _DATEDM <ngày> <tháng>` dưới `1 BIRT`/`1 DEAT` và được đọc lại khi nhập (chương trình khác bỏ qua); ngày không năm còn lại (chỉ có tháng) thì bỏ.

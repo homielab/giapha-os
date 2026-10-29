@@ -82,7 +82,8 @@ describe('parseRestoreFile', () => {
   test('ANSI GEDCOM keeps accents and gives no warning', async () => {
     const bytes = Uint8Array.from(Buffer.from(ged('José /Müller/'), 'latin1'))
     const { payload, warning } = await readRestoreFile(
-      bytesFile('a.ged', bytes)
+      bytesFile('a.ged', bytes),
+      { surnameFirst: false }
     )
     expect(payload.persons[0].full_name).toBe('José Müller')
     expect(warning).toBeUndefined()
@@ -95,8 +96,12 @@ describe('parseRestoreFile', () => {
     const { payload, warning } = await readRestoreFile(
       bytesFile('a.ged', bytes)
     )
-    expect(payload.persons[0].full_name).toBe('An Nguyễn')
+    expect(payload.persons[0].full_name).toBe('Nguyễn An')
     expect(warning).toBeUndefined()
+    const asWritten = await readRestoreFile(bytesFile('a.ged', bytes), {
+      surnameFirst: false
+    })
+    expect(asWritten.payload.persons[0].full_name).toBe('An Nguyễn')
   })
 
   test('ANSEL GEDCOM warns', async () => {

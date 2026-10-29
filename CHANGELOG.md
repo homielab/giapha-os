@@ -86,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Restoring a GEDCOM file from Gramps, MyHeritage or other programs now reads names surname first (`1 NAME Văn An /Nguyễn/` becomes "Nguyễn Văn An", not "Văn An Nguyễn"). The restore dialog lets you keep the order the file uses instead. Files exported by Giapha OS read as before.
 - Kinship terms through marriage when birth data is missing: the wife's sibling of unknown relative age is now "Anh/Em vợ" (and calls you "Anh/Em rể") instead of "Anh/Em trai"/"Chồng của Chị/Em gái", the wife's uncle keeps "vợ" ("Bác/Chú vợ"), and spouses of such relatives get "Anh/Em rể", "Chị/Em dâu", "Bác gái/Thím". The term is still flagged as uncertain.
 - Kinship finder: the spouse of a Chú is now Thím, of a Cậu Mợ, of a Cô or Dì Dượng, and of a Bác Bác gái (or Bác), as the guide says, instead of Cô, Dì, Cậu or "Vợ của Bác".
 - Kinship finder: siblings or cousins born in the same year are now told apart by birth month and day; when nothing tells them apart (e.g. twins with no birth order) both possible terms are shown instead of calling each the other's older brother.

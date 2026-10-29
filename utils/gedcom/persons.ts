@@ -14,6 +14,8 @@ export type PersonContext = {
   stats: GedcomImportStats
   // Receives `${indiXref} ${famXref}` of FAMC links marked PEDI ADOPTED.
   adoptedLinks: Set<string>
+  // Names in Vietnamese order (surname first), see `readName`.
+  surnameFirst?: boolean
 }
 
 type SolarDate = {
@@ -115,7 +117,7 @@ export function readPerson(
         // The first NAME is the primary name; later ones are other names.
         if (nameValue !== null) {
           currentTag = 'NAME_OTHER'
-          const other = readName(val, null, null)
+          const other = readName(val, null, null, ctx.surnameFirst)
           if (other !== 'Unknown') otherNames.push(other)
         } else nameValue = val
       } else if (tag === 'FAMC') {
@@ -222,7 +224,7 @@ export function readPerson(
 
   return {
     id,
-    full_name: readName(nameValue, surname, givenName),
+    full_name: readName(nameValue, surname, givenName, ctx.surnameFirst),
     gender,
     is_deceased,
     birth_day: nullIfNaN(birth.day),

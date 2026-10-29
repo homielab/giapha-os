@@ -54,6 +54,8 @@ export default function DataImportExport() {
     gedcom?: GedcomImportStats
   } | null>(null)
   const [isReadingFile, setIsReadingFile] = useState(false)
+  // GEDCOM names: surname first (Vietnamese order) or as the file writes them.
+  const [surnameFirst, setSurnameFirst] = useState(true)
   const [exportError, setExportError] = useState<string | null>(null)
 
   const { persons, error: personsError } = useAllPersons()
@@ -153,8 +155,10 @@ export default function DataImportExport() {
     setImportStatus(null)
     setIsReadingFile(true)
     try {
-      const { payload, warning, truncated, gedcom } =
-        await readRestoreFile(file)
+      const { payload, warning, truncated, gedcom } = await readRestoreFile(
+        file,
+        { surnameFirst }
+      )
       const summary = summarizeBackup(payload)
       if (!summary) return fail(t('invalidBackupFile'))
       const invalid = validateImportPayload(payload, t)
@@ -178,6 +182,24 @@ export default function DataImportExport() {
                 ? error.message
                 : t('restoreFailed')
       )
+    } finally {
+      setIsReadingFile(false)
+    }
+  }
+
+  // Reads the chosen GEDCOM again with the other name order.
+  const handleSurnameFirstChange = async (value: boolean) => {
+    if (!selectedFile || !parsedBackup) return
+    setSurnameFirst(value)
+    setIsReadingFile(true)
+    try {
+      const { payload } = await readRestoreFile(selectedFile, {
+        surnameFirst: value
+      })
+      setParsedBackup({ ...parsedBackup, payload })
+    } catch {
+      setImportStatus({ type: 'error', message: t('restoreFileUnreadable') })
+      resetFile()
     } finally {
       setIsReadingFile(false)
     }
@@ -334,6 +356,9 @@ export default function DataImportExport() {
           warning={parsedBackup.warning}
           truncated={parsedBackup.truncated}
           gedcom={parsedBackup.gedcom}
+          surnameFirst={surnameFirst}
+          onSurnameFirstChange={handleSurnameFirstChange}
+          isReadingFile={isReadingFile}
           locale={locale}
           isImporting={isImporting}
           isDownloading={isExporting}

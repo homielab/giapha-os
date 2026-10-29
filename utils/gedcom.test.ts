@@ -126,7 +126,7 @@ describe('parseGedcom', () => {
       '2 DATE MAR 1980',
       '0 TRLR'
     ].join('\r\n')
-    const [p] = parseGedcom(ged).persons
+    const [p] = parseGedcom(ged, { surnameFirst: false }).persons
     expect(p.full_name).toBe('Phạm Thị Hoa')
     expect(p.gender).toBe('female')
     expect(p.birth_year).toBe(1900)
@@ -146,7 +146,9 @@ describe('parseGedcom', () => {
       '0 TRLR'
     ]
     for (const sep of ['\r', '\n', '\r\n']) {
-      const { persons } = parseGedcom(lines.join(sep))
+      const { persons } = parseGedcom(lines.join(sep), {
+        surnameFirst: false
+      })
       expect(persons.map((p) => p.full_name)).toEqual([
         'An Nguyễn',
         'Bình Trần'
@@ -475,6 +477,7 @@ describe('parseGedcom with other name and family formats', () => {
   test('reads files written by earlier versions as before', () => {
     const ged = [
       '0 HEAD',
+      '1 SOUR Giapha_OS',
       '0 @I1@ INDI',
       '1 NAME Nguyễn Văn /An/',
       '1 SEX M',
@@ -528,11 +531,9 @@ describe('parseGedcom with other name and family formats', () => {
       '1 NAME /Phạm/ Hùng',
       '1 NAME Bí danh /Khác/'
     ].join('\n')
-    expect(parseGedcom(ged).persons.map((p) => p.full_name)).toEqual([
-      'John Smith',
-      'Lê Thị Mai',
-      'Phạm Hùng'
-    ])
+    expect(
+      parseGedcom(ged, { surnameFirst: false }).persons.map((p) => p.full_name)
+    ).toEqual(['John Smith', 'Lê Thị Mai', 'Phạm Hùng'])
   })
 
   test('reads PEDI ADOPTED per family', () => {
@@ -649,7 +650,69 @@ describe('GEDCOM notes, dates and other names from other programs', () => {
       indi('1 NAME Bình /Lê/', '2 TYPE aka', '1 NAME Ba Bình')
     )
     expect(persons[0].full_name).toBe('Lê Văn Bình')
-    expect(persons[0].other_names).toBe('Bình Lê, Ba Bình')
+    expect(persons[0].other_names).toBe('Lê Bình, Ba Bình')
+  })
+})
+
+describe('GEDCOM names from other programs', () => {
+  const ged = [
+    '0 HEAD',
+    '1 SOUR Gramps',
+    '0 @I1@ INDI',
+    '1 NAME /Nguyễn/ Văn An',
+    '0 @I2@ INDI',
+    '1 NAME Văn An /Nguyễn/',
+    '0 @I3@ INDI',
+    '1 NAME Văn An /Nguyễn/',
+    '2 GIVN Văn An',
+    '2 SURN Nguyễn',
+    '0 @I4@ INDI',
+    '1 NAME',
+    '2 SURN Nguyễn',
+    '2 GIVN Văn An',
+    '0 @I5@ INDI',
+    '1 NAME Tùng',
+    '0 @I6@ INDI',
+    '1 NAME //',
+    '0 TRLR'
+  ].join('\n')
+
+  test('reads names surname first by default', () => {
+    expect(parseGedcom(ged).persons.map((p) => p.full_name)).toEqual([
+      'Nguyễn Văn An',
+      'Nguyễn Văn An',
+      'Nguyễn Văn An',
+      'Nguyễn Văn An',
+      'Tùng',
+      'Unknown'
+    ])
+  })
+
+  test('keeps the order of the file when surnameFirst is off', () => {
+    expect(
+      parseGedcom(ged, { surnameFirst: false }).persons.map((p) => p.full_name)
+    ).toEqual([
+      'Nguyễn Văn An',
+      'Văn An Nguyễn',
+      'Văn An Nguyễn',
+      'Nguyễn Văn An',
+      'Tùng',
+      'Unknown'
+    ])
+  })
+
+  test('keeps names on an export and import round trip', () => {
+    const persons = [
+      { id: 'a', full_name: 'Nguyễn Văn An', gender: 'male' },
+      { id: 'b', full_name: 'Tôn Nữ Thị Hà', gender: 'female' },
+      { id: 'c', full_name: 'Tùng', gender: 'other' }
+    ] as unknown as GedcomPerson[]
+    const exported = exportToGedcom({ persons, relationships: [] })
+    for (const surnameFirst of [true, false]) {
+      expect(
+        parseGedcom(exported, { surnameFirst }).persons.map((p) => p.full_name)
+      ).toEqual(['Nguyễn Văn An', 'Tôn Nữ Thị Hà', 'Tùng'])
+    }
   })
 })
 

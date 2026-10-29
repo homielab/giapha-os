@@ -22,6 +22,10 @@ interface ImportConfirmModalProps {
   truncated?: number
   /** Notes and sources of a GEDCOM file the import cannot keep. */
   gedcom?: GedcomImportStats
+  /** GEDCOM only: names read surname first (Vietnamese order). */
+  surnameFirst?: boolean
+  onSurnameFirstChange?: (value: boolean) => void
+  isReadingFile?: boolean
   locale: Locale
   isImporting: boolean
   isDownloading: boolean
@@ -37,6 +41,9 @@ export default function ImportConfirmModal({
   warning,
   truncated,
   gedcom,
+  surnameFirst = true,
+  onSurnameFirstChange,
+  isReadingFile = false,
   locale,
   isImporting,
   isDownloading,
@@ -122,6 +129,32 @@ export default function ImportConfirmModal({
                   })}
                 </p>
               ) : null}
+              {gedcom && onSurnameFirstChange ? (
+                <fieldset
+                  className='mt-3'
+                  disabled={isImporting || isReadingFile}>
+                  <legend className='text-sm font-medium text-stone-800'>
+                    {t('restoreGedcomNameOrder')}
+                  </legend>
+                  {[true, false].map((value) => (
+                    <label
+                      key={String(value)}
+                      className='mt-1 flex items-center gap-2 text-sm text-stone-700'>
+                      <input
+                        type='radio'
+                        name={`${titleId}-name-order`}
+                        checked={surnameFirst === value}
+                        onChange={() => onSurnameFirstChange(value)}
+                      />
+                      {t(
+                        value
+                          ? 'restoreGedcomSurnameFirst'
+                          : 'restoreGedcomSurnameLast'
+                      )}
+                    </label>
+                  ))}
+                </fieldset>
+              ) : null}
               {exportedDate && (
                 <p className='mt-1 text-xs text-stone-500'>
                   {t('restoreFileExportedAt', { date: exportedDate })}
@@ -157,7 +190,7 @@ export default function ImportConfirmModal({
             </button>
             <button
               onClick={onConfirm}
-              disabled={isImporting}
+              disabled={isImporting || isReadingFile}
               className='rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-rose-700 disabled:opacity-50'>
               {isImporting ? t('restoring') : t('restoreContinue')}
             </button>
