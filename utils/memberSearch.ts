@@ -37,10 +37,36 @@ export function formatLifeYears(member: SearchableMember): string {
 export function rankMembers<T extends SearchableMember>(
   query: string,
   members: T[],
-  limit = 20
+  limit = GLOBAL_SEARCH_LIMIT
 ): MemberSearchResult<T>[] {
   return searchPersons(members, query, limit).map((member) => ({
     member,
     years: formatLifeYears(member)
   }))
+}
+
+/** Most results the global search shows; more matches mean "type more". */
+export const GLOBAL_SEARCH_LIMIT = 20
+
+export type SearchStatus =
+  | { key: 'globalSearchLoading' }
+  | { key: 'globalSearchNoResults' }
+  | { key: 'globalSearchResultCount'; count: number }
+  | { key: 'globalSearchResultsCapped'; count: number }
+
+/**
+ * Message for the search's live status region: loading, no match, how many
+ * matched, or that the list stops at `limit` and a more precise name helps.
+ * `results` is the number shown for a non-empty query.
+ */
+export function searchStatusKey(
+  loading: boolean,
+  results: number,
+  limit = GLOBAL_SEARCH_LIMIT
+): SearchStatus {
+  if (loading) return { key: 'globalSearchLoading' }
+  if (results === 0) return { key: 'globalSearchNoResults' }
+  if (results >= limit)
+    return { key: 'globalSearchResultsCapped', count: results }
+  return { key: 'globalSearchResultCount', count: results }
 }

@@ -9,6 +9,7 @@ import { useI18n } from '@/lib/i18n/useI18n'
 import {
   GLOBAL_SEARCH_COLUMNS,
   rankMembers,
+  searchStatusKey,
   type SearchableMember
 } from '@/utils/memberSearch'
 import { memberSearchCache } from '@/utils/memberSearchCache'
@@ -104,9 +105,10 @@ export default function GlobalMemberSearch() {
   const optionId = (i: number) => `${listId}-opt-${i}`
   const loading = !members && !loadError
   let status: string | null = null
-  if (loading) status = t('globalSearchLoading')
-  else if (query.trim() && members && results.length === 0)
-    status = t('globalSearchNoResults')
+  if (loading || query.trim()) {
+    const s = searchStatusKey(loading, results.length)
+    status = 'count' in s ? t(s.key, { count: s.count }) : t(s.key)
+  }
 
   return (
     <>

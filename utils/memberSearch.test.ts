@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'bun:test'
 
-import { formatLifeYears, rankMembers } from '@/utils/memberSearch'
+import {
+  formatLifeYears,
+  GLOBAL_SEARCH_LIMIT,
+  rankMembers,
+  searchStatusKey
+} from '@/utils/memberSearch'
 
 const m = (
   id: string,
@@ -40,5 +45,35 @@ describe('formatLifeYears', () => {
     expect(
       formatLifeYears(m('1', 'A', { birth_year: 1900, is_deceased: true }))
     ).toBe('1900 – ?')
+  })
+})
+
+describe('searchStatusKey', () => {
+  it('says the list is loading before any count', () => {
+    expect(searchStatusKey(true, 0, 20)).toEqual({ key: 'globalSearchLoading' })
+  })
+
+  it('says nothing matched', () => {
+    expect(searchStatusKey(false, 0, 20)).toEqual({
+      key: 'globalSearchNoResults'
+    })
+  })
+
+  it('announces how many matched', () => {
+    expect(searchStatusKey(false, 5, 20)).toEqual({
+      key: 'globalSearchResultCount',
+      count: 5
+    })
+  })
+
+  it('warns the list stops at the limit', () => {
+    expect(searchStatusKey(false, 20, 20)).toEqual({
+      key: 'globalSearchResultsCapped',
+      count: 20
+    })
+    expect(searchStatusKey(false, GLOBAL_SEARCH_LIMIT)).toEqual({
+      key: 'globalSearchResultsCapped',
+      count: GLOBAL_SEARCH_LIMIT
+    })
   })
 })

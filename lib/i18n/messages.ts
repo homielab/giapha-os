@@ -1107,6 +1107,9 @@ export const messages = {
     globalSearchPlaceholder: 'Gõ tên thành viên, không cần dấu...',
     globalSearchLoading: 'Đang tải danh sách thành viên...',
     globalSearchNoResults: 'Không có thành viên nào khớp.',
+    globalSearchResultCount: '{count} thành viên khớp.',
+    globalSearchResultsCapped:
+      'Hiện {count} thành viên khớp đầu tiên. Gõ tên cụ thể hơn để thu hẹp.',
     globalSearchLoadError: 'Không tải được danh sách thành viên: {error}.',
     pickerResultsCount:
       '{count} kết quả. Dùng mũi tên lên/xuống và Enter để chọn, Esc để đóng.',
@@ -2358,6 +2361,9 @@ export const messages = {
     globalSearchPlaceholder: 'Type a member name, accents optional...',
     globalSearchLoading: 'Loading the member list...',
     globalSearchNoResults: 'No matching member.',
+    globalSearchResultCount: 'Matching members: {count}.',
+    globalSearchResultsCapped:
+      'Showing the first {count} matching members. Type a more precise name to narrow it down.',
     globalSearchLoadError: 'Could not load the member list: {error}.',
     pickerResultsCount:
       '{count} results. Use the up/down arrows and Enter to choose, Esc to close.',
