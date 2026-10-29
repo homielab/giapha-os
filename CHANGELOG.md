@@ -87,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Screen readers read each person's name once on member cards, the mind map, the tree, the relationship list and the person picker (the photo next to the name no longer repeats it), and now say the gender (Nam/Nữ) on member cards and in the person picker.
 - Restoring a GEDCOM file from Gramps, MyHeritage or other programs now reads names surname first (`1 NAME Văn An /Nguyễn/` becomes "Nguyễn Văn An", not "Văn An Nguyễn"). The restore dialog lets you keep the order the file uses instead. Files exported by Giapha OS read as before.
 - Kinship terms through marriage when birth data is missing: the wife's sibling of unknown relative age is now "Anh/Em vợ" (and calls you "Anh/Em rể") instead of "Anh/Em trai"/"Chồng của Chị/Em gái", the wife's uncle keeps "vợ" ("Bác/Chú vợ"), and spouses of such relatives get "Anh/Em rể", "Chị/Em dâu", "Bác gái/Thím". The term is still flagged as uncertain.
 - Kinship finder: the spouse of a Chú is now Thím, of a Cậu Mợ, of a Cô or Dì Dượng, and of a Bác Bác gái (or Bác), as the guide says, instead of Cô, Dì, Cậu or "Vợ của Bác".

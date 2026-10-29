@@ -24,6 +24,7 @@ function getGenderStyle(gender: string) {
 }
 
 function PersonAvatar({ person }: { person: Person }) {
+  const { t } = useI18n()
   const avatarUrl = useAvatarUrl()
   return (
     <div className='relative'>
@@ -33,7 +34,7 @@ function PersonAvatar({ person }: { person: Person }) {
           <Image
             unoptimized
             src={avatarUrl(person.avatar_url)!}
-            alt={person.full_name}
+            alt=''
             width={32}
             height={32}
             className='h-full w-full object-cover'
@@ -45,9 +46,9 @@ function PersonAvatar({ person }: { person: Person }) {
       <div
         className={`absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full shadow-sm ring-2 ring-white ${getGenderStyle(person.gender)}`}>
         {person.gender === 'male' ? (
-          <MaleIcon className='size-5' />
+          <MaleIcon className='size-5' label={t('male')} />
         ) : person.gender === 'female' ? (
-          <FemaleIcon className='size-5' />
+          <FemaleIcon className='size-5' label={t('female')} />
         ) : null}
       </div>
     </div>

@@ -28,6 +28,7 @@ export function PersonAvatarBadge({
   bgClassName: string
   fallback: React.ReactNode
 }) {
+  const { t } = useI18n()
   const avatarUrl = useAvatarUrl()
   const url = avatarUrl(person.avatar_url)
   return (
@@ -38,7 +39,7 @@ export function PersonAvatarBadge({
           <Image
             unoptimized
             src={url}
-            alt={person.full_name}
+            alt=''
             width={32}
             height={32}
             className='h-full w-full object-cover'
@@ -50,9 +51,9 @@ export function PersonAvatarBadge({
       <div
         className={`absolute -right-0.5 -bottom-0.5 flex size-3.5 items-center justify-center rounded-full shadow-xs ring-1 ring-white ${getGenderStyle(person.gender)}`}>
         {person.gender === 'male' ? (
-          <MaleIcon className='size-2.5' />
+          <MaleIcon className='size-2.5' label={t('male')} />
         ) : person.gender === 'female' ? (
-          <FemaleIcon className='size-2.5' />
+          <FemaleIcon className='size-2.5' label={t('female')} />
         ) : null}
       </div>
     </div>

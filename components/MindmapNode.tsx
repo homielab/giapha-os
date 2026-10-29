@@ -59,7 +59,7 @@ function NodeAvatar({ person }: { person: Person }) {
           <Image
             unoptimized
             src={avatarUrl(person.avatar_url)!}
-            alt={person.full_name}
+            alt=''
             width={40}
             height={40}
             className='h-full w-full object-cover'
@@ -185,7 +185,7 @@ function SpouseChips({
                   <Image
                     unoptimized
                     src={avatarUrl(spouseData.person.avatar_url)!}
-                    alt={spouseData.person.full_name}
+                    alt=''
                     width={32}
                     height={32}
                     className='h-full w-full object-cover'

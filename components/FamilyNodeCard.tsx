@@ -31,7 +31,7 @@ function PersonAvatar({ person }: { person: Person }) {
           <Image
             unoptimized
             src={avatarUrl(person.avatar_url)!}
-            alt={person.full_name}
+            alt=''
             className='h-full w-full object-cover'
             width={64}
             height={64}

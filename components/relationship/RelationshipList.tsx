@@ -89,7 +89,7 @@ export default function RelationshipList({
                           <Image
                             unoptimized
                             src={avatarUrl(rel.targetPerson.avatar_url)!}
-                            alt={rel.targetPerson.full_name}
+                            alt=''
                             className='h-full w-full object-cover'
                             width={32}
                             height={32}
