@@ -49,6 +49,7 @@ Phù hợp với người Việt Nam.
 
 Ứng dụng dùng âm lịch Việt Nam (tính theo múi giờ UTC+7, thuật toán của Hồ Ngọc Đức), không dùng lịch Trung Quốc (UTC+8) — hai lịch có năm lệch nhau một ngày hoặc cả tháng (ví dụ Tết 2007 là 17/02 ở Việt Nam, 18/02 ở Trung Quốc). Ngày giỗ được tính lại mỗi năm theo âm lịch:
 
+- **Giỗ đầu**: giỗ bắt đầu từ năm âm lịch sau năm mất (năm mất lấy từ năm âm lịch, không có thì từ ngày mất dương lịch); năm mất không có giỗ, kể cả trên trang Sự kiện và file .ics. Không rõ năm mất thì giỗ hiện mọi năm.
 - **Ngày 30 ở tháng thiếu**: năm nào tháng đó chỉ có 29 ngày thì giỗ vào ngày 29 (ngày cuối tháng).
 - **Mất trong tháng nhuận**: năm nào có đúng tháng nhuận đó thì giỗ trong tháng nhuận, năm khác thì giỗ trong tháng thường cùng số. Ứng dụng biết tháng nhuận từ ngày mất dương lịch; ngày âm lịch nhập tay được hiểu là tháng thường, trừ khi tick ô "Tháng nhuận" (hiện khi năm âm đó có tháng nhuận trùng số tháng; chỉ dùng để quy đổi, không lưu). Sửa ngày âm mà không đổi tháng/năm thì giữ tháng nhuận đã có.
 - **Múi giờ và ngày 29/2**: "hôm nay" của sự kiện sắp tới luôn theo giờ Việt Nam (UTC+7), cả trên server lẫn trình duyệt, nên giỗ và sinh nhật không lệch một ngày trong khoảng 0–7 giờ sáng. Sinh nhật 29/2 rơi vào 28/2 ở năm thường.

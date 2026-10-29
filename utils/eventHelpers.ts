@@ -98,7 +98,8 @@ function anniversaryDate(
 /**
  * Computes upcoming FamilyEvents from a list of persons.
  * - Birthdays use the solar birth_month / birth_day.
- * - Death anniversaries (ngày giỗ) are observed on the *lunar* date of death.
+ * - Death anniversaries (ngày giỗ) are observed on the *lunar* date of death,
+ *   from the lunar year after the death on (the first giỗ is a year later).
  * - Custom events fall on their date, or repeat every year from it on the
  *   same solar day/month (yearly_solar) or lunar day/month (yearly_lunar,
  *   leap month kept, like a giỗ).
@@ -219,10 +220,20 @@ export function computeEvents(
       )?.year
       if (!currentLunarYear) continue
 
+      // The first giỗ is in the lunar year after the death, so no
+      // anniversary falls in the lunar year of death or before it. Without a
+      // known death year every year is kept.
+      const deathLunarYear =
+        p.death_lunar_year ?? lunarOfSolarDeath?.year ?? null
+      const anniversaryIn = (lunarYear: number) =>
+        deathLunarYear !== null && lunarYear <= deathLunarYear
+          ? null
+          : anniversaryDate(lunarYear, lMonth, lDay, leap)
+
       // This lunar year's anniversary; once it has passed, the next one is
       // in the following lunar year and this one is listed as past.
-      const thisYear = anniversaryDate(currentLunarYear, lMonth, lDay, leap)
-      const nextYear = anniversaryDate(currentLunarYear + 1, lMonth, lDay, leap)
+      const thisYear = anniversaryIn(currentLunarYear)
+      const nextYear = anniversaryIn(currentLunarYear + 1)
       const next = thisYear && thisYear >= today ? thisYear : nextYear
       if (!next) continue
 

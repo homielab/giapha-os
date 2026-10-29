@@ -49,6 +49,7 @@ Designed primarily for Vietnamese families.
 
 The app uses the Vietnamese lunar calendar (computed for UTC+7 with Hồ Ngọc Đức's algorithm), not the Chinese one (UTC+8): in some years the two differ by a day or a whole month (Tết 2007 is February 17 in Vietnam, February 18 in China). Death anniversaries are recomputed every year on the lunar calendar:
 
+- **First anniversary**: anniversaries start in the lunar year after the year of death (taken from the lunar year of death, else from the solar date of death); the year of death itself has none, on the Events page and in the .ics file. With an unknown year of death, every year has one.
 - **Day 30 in a 29-day month**: in a year where that month has only 29 days, the anniversary falls on day 29 (the last day of the month).
 - **Death in a leap month**: in a year with the same leap month, the anniversary falls in the leap month; otherwise in the regular month with the same number. The leap month is known from the solar date of death; a lunar date typed in by hand is read as a regular month.
 - **Time zone and 29 February**: "today" for upcoming events is always the date in Vietnam (UTC+7), on the server and in the browser, so anniversaries and birthdays are not a day off between midnight and 7 a.m. A 29 February birthday falls on 28 February in a common year.

@@ -136,6 +136,30 @@ describe('buildIcs', () => {
     )
   })
 
+  test('no anniversary in the lunar year of death', () => {
+    // Died 10/3 âm lịch 2026; the first giỗ is 10/3 âm lịch 2027.
+    const death = lunarToSolar(2026, 3, 10)!
+    const evs = events(
+      build([
+        person({
+          is_deceased: true,
+          death_year: death.year,
+          death_month: death.month,
+          death_day: death.day,
+          death_lunar_year: 2026,
+          death_lunar_month: 3,
+          death_lunar_day: 10
+        })
+      ])
+    )
+    const first = lunarToSolar(2027, 3, 10)!
+    const pad = (n: number) => String(n).padStart(2, '0')
+    expect(evs).toHaveLength(1)
+    expect(evs[0]).toContain(
+      `DTSTART;VALUE=DATE:${first.year}${pad(first.month)}${pad(first.day)}`
+    )
+  })
+
   test('anniversary dates match computeEvents', () => {
     const p = person({
       is_deceased: true,

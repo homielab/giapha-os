@@ -11,6 +11,7 @@ import {
   toRecurrence,
   type CustomEventRecord
 } from './eventHelpers'
+import { lunarToSolar } from './lunarCalendar'
 
 const tFor =
   (locale: 'vi' | 'en') =>
@@ -103,8 +104,9 @@ describe('computeEvents: death anniversaries (giỗ)', () => {
   test('the leap flag comes from the solar death date', () => {
     // Without a stored lunar date the solar date is converted (leap month).
     const person = deceased({ death_year: 2025, death_month: 7, death_day: 25 })
-    const [event] = deathEvents(person, day(2025, 7, 1))
-    expect(event.nextOccurrence).toEqual(day(2025, 7, 25))
+    const [event] = deathEvents(person, day(2026, 3, 1))
+    // Lunar 2026 has no leap month 6: observed in the regular month.
+    expect(event.nextOccurrence).toEqual(day(2026, 7, 14))
     expect(event.eventDateLabel).toBe('01/06')
     expect(event.lunarLabel).toEqual({ day: 1, month: 6, leap: true })
     expect(formatLunarDateLabel(event, tVi)).toBe('01/06 ÂL nhuận')
@@ -115,6 +117,55 @@ describe('computeEvents: death anniversaries (giỗ)', () => {
     const person = deceased({ death_lunar_month: 6, death_lunar_day: 1 })
     const [event] = deathEvents(person, day(2025, 6, 1))
     expect(event.nextOccurrence).toEqual(day(2025, 6, 25))
+  })
+
+  describe('no anniversary in the lunar year of death', () => {
+    const solar = (y: number, m: number, d: number) => {
+      const s = lunarToSolar(y, m, d)!
+      return day(s.year, s.month, s.day)
+    }
+    // Died on 10/3 âm lịch of the given lunar year.
+    const diedOn = (lunarYear: number) => {
+      const death = solar(lunarYear, 3, 10)
+      return deceased({
+        death_year: death.getFullYear(),
+        death_month: death.getMonth() + 1,
+        death_day: death.getDate(),
+        death_lunar_year: lunarYear,
+        death_lunar_month: 3,
+        death_lunar_day: 10
+      })
+    }
+
+    test('died earlier this lunar year: only next year, nothing past', () => {
+      const events = deathEvents(diedOn(2026), solar(2026, 5, 1))
+      expect(events.map((e) => e.nextOccurrence)).toEqual([solar(2027, 3, 10)])
+      expect(events.every((e) => e.daysUntil > 0)).toBe(true)
+    })
+
+    test('died today: the next one is next lunar year', () => {
+      const events = deathEvents(diedOn(2026), solar(2026, 3, 10))
+      expect(events.map((e) => e.nextOccurrence)).toEqual([solar(2027, 3, 10)])
+    })
+
+    test('the solar death date gives the year when no lunar year is stored', () => {
+      const person = { ...diedOn(2026), death_lunar_year: null }
+      const events = deathEvents(person, solar(2026, 5, 1))
+      expect(events.map((e) => e.nextOccurrence)).toEqual([solar(2027, 3, 10)])
+    })
+
+    test('died the year before: this year’s passed one is still listed', () => {
+      const events = deathEvents(diedOn(2025), solar(2026, 5, 1))
+      expect(events.map((e) => e.nextOccurrence)).toEqual([
+        solar(2026, 3, 10),
+        solar(2027, 3, 10)
+      ])
+    })
+
+    test('unknown year of death: every year as before', () => {
+      const person = deceased({ death_lunar_month: 3, death_lunar_day: 10 })
+      expect(deathEvents(person, solar(2026, 5, 1))).toHaveLength(2)
+    })
   })
 
   test('living people have no anniversary', () => {
