@@ -40,6 +40,7 @@ export const DATA_CHECK_KINDS = [
   'parentTooYoung',
   'parentTooOld',
   'futureDate',
+  'implausibleAge',
   'duplicateRelationship',
   'tooManyParents',
   'parentChildLoop',
@@ -75,6 +76,8 @@ function hasDeathDate(p: DataCheckPerson): boolean {
 export const MIN_PARENT_AGE = 12
 /** A parent older than this at the child's birth is reported. */
 export const MAX_PARENT_AGE = 70
+/** Someone living past this age, or who died older than it, is reported. */
+export const MAX_AGE = 120
 
 /** `d/m/y` as far as it is known. */
 export function formatPartialDate(
@@ -101,8 +104,10 @@ const ref = (p: DataCheckPerson) => ({ id: p.id, name: p.full_name })
  * and adopted children are left out of the parent checks (as in the member
  * form): a mother who died before the birth is reported, and so is a father
  * who died more than ten months before it (more than a year when a month or
- * day is unknown). People that cannot be reached from the root are not reported
- * here (the Lineage page lists them). A link from a person to themselves is
+ * day is unknown). Someone older than `MAX_AGE` (in years) is reported:
+ * living with no date of death at all, or died older than that. People that
+ * cannot be reached from the root are not reported here (the Lineage page
+ * lists them). A link from a person to themselves is
  * only reported as `selfLink`; parent–child loops are listed once each, as the
  * people along the loop. Findings are sorted by kind, then name
  * (Vietnamese order), then id.
@@ -183,6 +188,29 @@ export function runDataChecks(
         people: [ref(p)],
         params: { name: p.full_name }
       })
+    }
+    // Old trees imported from GEDCOM/CSV often lack the death: such a person
+    // still counts as living and gets a birthday every year.
+    if (p.birth_year != null) {
+      const age =
+        p.death_year != null
+          ? p.death_year - p.birth_year
+          : !p.is_deceased && !hasDeathDate(p)
+            ? now.year - p.birth_year
+            : null
+      if (age != null && age > MAX_AGE) {
+        findings.push({
+          kind: 'implausibleAge',
+          people: [ref(p)],
+          params: {
+            name: p.full_name,
+            field: p.death_year != null ? 'death' : 'living',
+            birth: birthOf(p),
+            death: deathOf(p),
+            age
+          }
+        })
+      }
     }
     if (isFuture(p.birth_year, p.birth_month, p.birth_day)) {
       findings.push({

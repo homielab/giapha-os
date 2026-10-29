@@ -39,13 +39,15 @@ const child = (parent: string, kid: string): DataCheckRelationship => ({
   person_a: parent,
   person_b: kid
 })
+// Missing info and ages over 120 have their own tests; the fixtures below use
+// living people born long ago.
 const kinds = (
   persons: DataCheckPerson[],
   relationships: DataCheckRelationship[] = []
 ) =>
   runDataChecks(persons, relationships, TODAY)
     .map((f) => f.kind)
-    .filter((k) => !k.startsWith('missing'))
+    .filter((k) => !k.startsWith('missing') && k !== 'implausibleAge')
 
 describe('runDataChecks: parents of one child', () => {
   const people = [
@@ -196,7 +198,9 @@ describe('runDataChecks', () => {
         child('p', 'nobirth')
       ],
       new Date(2100, 0, 1)
-    ).filter((f) => !f.kind.startsWith('missing'))
+    ).filter(
+      (f) => !f.kind.startsWith('missing') && f.kind !== 'implausibleAge'
+    )
     expect(found.map((f) => f.kind)).toEqual(['parentTooYoung', 'parentTooOld'])
     expect(found[0].params.age).toBe(11)
     expect(found[1].params.age).toBe(71)
@@ -334,6 +338,72 @@ describe('missing information', () => {
     expect(runDataChecks(persons, [], TODAY).map((f) => f.kind)).toEqual([
       'missingGender'
     ])
+  })
+})
+
+describe('runDataChecks: implausible age', () => {
+  const ages = (persons: DataCheckPerson[]) =>
+    runDataChecks(persons, [], TODAY)
+      .filter((f) => f.kind === 'implausibleAge')
+      .map((f) => [f.people[0].id, f.params.field, f.params.age])
+
+  test('living past 120 with no date of death is reported', () => {
+    expect(ages([person('a', { birth_year: 1850 })])).toEqual([
+      ['a', 'living', 176]
+    ])
+  })
+
+  test('exactly 120 this year is not reported', () => {
+    expect(ages([person('a', { birth_year: 1906 })])).toEqual([])
+    expect(ages([person('a', { birth_year: 1905 })])).toEqual([
+      ['a', 'living', 121]
+    ])
+  })
+
+  test('the current year comes from the date passed in', () => {
+    const persons = [person('a', { birth_year: 1850 })]
+    const at = (year: number) =>
+      runDataChecks(persons, [], new Date(year, 0, 1)).filter(
+        (f) => f.kind === 'implausibleAge'
+      ).length
+    expect(at(1970)).toBe(0)
+    expect(at(1971)).toBe(1)
+  })
+
+  test('died at a plausible age is not reported', () => {
+    expect(ages([person('a', { birth_year: 1850, death_year: 1920 })])).toEqual(
+      []
+    )
+  })
+
+  test('died older than 120 is reported', () => {
+    const [finding] = runDataChecks(
+      [person('a', { birth_year: 1800, death_year: 1925 })],
+      [],
+      TODAY
+    ).filter((f) => f.kind === 'implausibleAge')
+    expect(finding.params).toEqual({
+      name: 'Person a',
+      field: 'death',
+      birth: '1800',
+      death: '1925',
+      age: 125
+    })
+  })
+
+  test('deceased without a death year or with only a lunar date is left to the other checks', () => {
+    expect(
+      ages([
+        person('a', { birth_year: 1850, is_deceased: true }),
+        person('b', { birth_year: 1850, death_lunar_year: 1920 }),
+        person('c', {
+          birth_year: 1850,
+          death_lunar_month: 3,
+          is_deceased: false
+        }),
+        person('d')
+      ])
+    ).toEqual([])
   })
 })
 

@@ -18,6 +18,7 @@ const KIND_TITLES = {
   parentTooYoung: 'dataCheckKindParentTooYoung',
   parentTooOld: 'dataCheckKindParentTooOld',
   futureDate: 'dataCheckKindFutureDate',
+  implausibleAge: 'dataCheckKindImplausibleAge',
   duplicateRelationship: 'dataCheckKindDuplicateRelationship',
   tooManyParents: 'dataCheckKindTooManyParents',
   parentChildLoop: 'dataCheckKindParentChildLoop',
@@ -43,6 +44,10 @@ function messageKey(f: DataCheckFinding): TranslationKey {
       return f.params.field === 'death'
         ? 'dataCheckFutureDeath'
         : 'dataCheckFutureBirth'
+    case 'implausibleAge':
+      return f.params.field === 'death'
+        ? 'dataCheckDiedTooOld'
+        : 'dataCheckLivingTooOld'
     case 'duplicateRelationship':
       return f.params.type === 'marriage'
         ? 'dataCheckDuplicateMarriage'

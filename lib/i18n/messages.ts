@@ -789,6 +789,7 @@ export const messages = {
     dataCheckKindParentTooYoung: 'Cha/mẹ nhỏ hơn con dưới 12 tuổi',
     dataCheckKindParentTooOld: 'Cha/mẹ hơn con trên 70 tuổi',
     dataCheckKindFutureDate: 'Ngày trong tương lai',
+    dataCheckKindImplausibleAge: 'Tuổi trên 120',
     dataCheckKindDuplicateRelationship: 'Quan hệ bị lặp',
     dataCheckKindTooManyParents: 'Con có quá nhiều cha mẹ ruột',
     dataCheckKindMissingBirthYear: 'Thiếu thông tin: chưa có năm sinh',
@@ -806,6 +807,9 @@ export const messages = {
       '{parent} ({parentBirth}) và con {child} ({childBirth}) cách nhau {age} năm.',
     dataCheckFutureBirth: '{name}: ngày sinh {date} chưa tới.',
     dataCheckFutureDeath: '{name}: ngày mất {date} chưa tới.',
+    dataCheckLivingTooOld:
+      '{name}: sinh {birth}, chưa đánh dấu đã mất, nay {age} tuổi. Có thể thiếu ngày mất.',
+    dataCheckDiedTooOld: '{name}: sinh {birth}, mất {death}, thọ {age} tuổi.',
     dataCheckDuplicateMarriage: '{a} và {b} có hai quan hệ hôn nhân.',
     dataCheckDuplicateChild: '{a} và {b} có hai quan hệ cha/mẹ – con.',
     dataCheckTooManyParents:
@@ -2032,6 +2036,7 @@ export const messages = {
     dataCheckKindParentTooYoung: 'Parent less than 12 years older than child',
     dataCheckKindParentTooOld: 'Parent more than 70 years older than child',
     dataCheckKindFutureDate: 'Date in the future',
+    dataCheckKindImplausibleAge: 'Older than 120',
     dataCheckKindDuplicateRelationship: 'Repeated relationship',
     dataCheckKindTooManyParents: 'Child with too many biological parents',
     dataCheckKindMissingBirthYear: 'Missing info: no birth year',
@@ -2049,6 +2054,9 @@ export const messages = {
       '{parent} ({parentBirth}) and child {child} ({childBirth}) are {age} years apart.',
     dataCheckFutureBirth: '{name}: birth date {date} has not come yet.',
     dataCheckFutureDeath: '{name}: death date {date} has not come yet.',
+    dataCheckLivingTooOld:
+      '{name}: born {birth}, not marked deceased, now {age} years old. The date of death may be missing.',
+    dataCheckDiedTooOld: '{name}: born {birth}, died {death}, aged {age}.',
     dataCheckDuplicateMarriage: '{a} and {b} have two marriage links.',
     dataCheckDuplicateChild: '{a} and {b} have two parent–child links.',
     dataCheckTooManyParents:
