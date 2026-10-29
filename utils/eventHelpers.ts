@@ -249,7 +249,11 @@ export function computeEvents(
         daysUntil,
         eventDateLabel: `${pad2(lDay)}/${pad2(lMonth)}`,
         lunarLabel: { day: lDay, month: lMonth, leap },
-        originYear: (p.death_lunar_year ?? p.death_year) || null,
+        // The lunar year of death: a January death is still the previous
+        // lunar year, so the solar year would count one giỗ too many.
+        originYear:
+          (p.death_lunar_year ?? lunarOfSolarDeath?.year ?? p.death_year) ||
+          null,
         originMonth: p.death_lunar_month ?? p.death_month,
         originDay: p.death_lunar_day ?? p.death_day,
         ...(approximate ? { approximate } : {}),

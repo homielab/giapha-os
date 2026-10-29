@@ -11,7 +11,7 @@ import {
   formatEventDateLabel,
   getEventYearsInfo
 } from './eventCardLabels'
-import type { FamilyEvent } from './eventHelpers'
+import { computeEvents, type FamilyEvent } from './eventHelpers'
 
 // Fake translator: shows the key and its values, so tests pin which message
 // is chosen without depending on the wording.
@@ -240,5 +240,40 @@ describe('formatEventDateLabel: estimates', () => {
     expect(
       formatEventDateLabel(event({ approximate: false }), t)
     ).not.toContain('approximateDateSuffix')
+  })
+})
+
+describe('getEventYearsInfo: giỗ from a solar-only death date', () => {
+  // Died 2020-01-05 = 11/12 âm lịch 2019, no lunar date stored (GEDCOM
+  // without _LUNAR, old backups).
+  const person = {
+    id: 'p1',
+    full_name: 'An',
+    birth_year: null,
+    birth_month: null,
+    birth_day: null,
+    death_year: 2020,
+    death_month: 1,
+    death_day: 5,
+    death_lunar_year: null,
+    death_lunar_month: null,
+    death_lunar_day: null,
+    is_deceased: true
+  }
+  const nextGio = (now: Date) =>
+    computeEvents([person], [], now).find(
+      (e) => e.type === 'death_anniversary' && e.daysUntil >= 0
+    )!
+
+  test('the giỗ of 23/01/2021 is the first', () => {
+    const event = nextGio(new Date(2021, 0, 10))
+    expect(event.nextOccurrence).toEqual(new Date(2021, 0, 23))
+    expect(getEventYearsInfo(event, false, t)).toBe('yearsSince:{"count":1}')
+  })
+
+  test('the giỗ in January 2022 is the second', () => {
+    const event = nextGio(new Date(2021, 5, 1))
+    expect(event.nextOccurrence.getFullYear()).toBe(2022)
+    expect(getEventYearsInfo(event, false, t)).toBe('yearsSince:{"count":2}')
   })
 })

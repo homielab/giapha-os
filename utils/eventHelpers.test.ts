@@ -87,6 +87,14 @@ describe('computeEvents: death anniversaries (giỗ)', () => {
     expect(events[0].daysUntil).toBe(-27)
   })
 
+  test('the origin year is the lunar year when only the solar date is stored', () => {
+    // 2020-01-05 is 11/12 âm lịch 2019 (Kỷ Hợi).
+    const person = deceased({ death_year: 2020, death_month: 1, death_day: 5 })
+    const events = deathEvents(person, day(2021, 1, 10))
+    expect(events.map((e) => e.originYear)).toEqual([2019])
+    expect(events[0].nextOccurrence).toEqual(day(2021, 1, 23))
+  })
+
   test('a death in a leap month is observed in the regular month next year', () => {
     // Died 2025-07-25 = 1/6 nhuận 2025; lunar 2026 has no leap month.
     const person = deceased({

@@ -80,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The death anniversary count ("năm thứ …") is right for a death in January or early February when only the solar date is stored (GEDCOM without lunar dates, older backups): it counts from the lunar year of death, so the first giỗ shows "năm thứ 1" instead of nothing.
 - Screen readers can tell the expand/collapse buttons of the family tree and the mind map apart: each one is named after its person ("Nhánh Nguyễn Văn An" / "Nguyễn Văn An's branch") and announces expanded or collapsed, instead of dozens of identical "Mở rộng"/"Thu gọn" buttons.
 - Death anniversaries no longer show up in the lunar year of death: someone who died this lunar year gets no "past" or "today" giỗ on the Events page, the dashboard or the downloaded calendar (.ics); the first one is in the next lunar year. Members without a known year of death are unchanged.
 - Restoring a backup now refuses duplicate parent–child relationship rows (same parent, child and type, naming both people) and person numbers that do not fit the database columns (years must be in `1..9999`, `generation` and `birth_order` within 32-bit integers), instead of failing during the database insert.
