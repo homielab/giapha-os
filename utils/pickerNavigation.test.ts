@@ -96,7 +96,8 @@ describe('filterRootPersons', () => {
 
   test('matches the birth year together with the name', () => {
     expect(filterRootPersons(roots, 'van a 1950').map((p) => p.id)).toEqual([
-      '2'
+      '2',
+      '1'
     ])
     expect(filterRootPersons(roots, '1975').map((p) => p.id)).toEqual(['4'])
   })

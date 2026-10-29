@@ -16,26 +16,40 @@ export function normalizeSearchText(value: string | null | undefined): string {
 export const PERSON_SEARCH_LIMIT = 20
 
 /**
- * Accent-insensitive person search. A query matches when it is contained in
- * the normalized name (or other names); results are ranked by name starting
- * with the query, then a word starting with it, then any other match, and
- * ties go alphabetically (Vietnamese collation).
+ * Accent-insensitive person search, matched like the member list
+ * (`matchesPersonSearch`): every word must match, number words as the birth
+ * or death year, so "nguyen an" finds "Nguyễn Văn An" and "tran 1950" finds
+ * Trần born or died in 1950. Results are ranked by name starting with the
+ * typed words, then a word starting with them, then every typed word
+ * starting a word, then any other match in the full name, then other names; ties go alphabetically (Vietnamese collation).
  */
 export function searchPersons<
-  T extends { full_name: string; other_names?: string | null }
+  T extends {
+    full_name: string
+    other_names?: string | null
+    birth_year?: number | null
+    death_year?: number | null
+  }
 >(persons: T[], query: string, limit: number = PERSON_SEARCH_LIMIT): T[] {
   const q = normalizeSearchText(query)
   if (!q) return []
+  const phrase = q
+    .split(' ')
+    .filter((w) => !/^\d+$/.test(w))
+    .join(' ')
 
   const ranked: { person: T; rank: number }[] = []
   for (const person of persons) {
+    const index = buildPersonSearchIndex(person)
+    if (!matchesPersonSearch(index, q)) continue
     const name = normalizeSearchText(person.full_name)
-    let rank = -1
-    if (name.startsWith(q)) rank = 0
-    else if (name.includes(` ${q}`)) rank = 1
-    else if (name.includes(q)) rank = 2
-    else if (normalizeSearchText(person.other_names).includes(q)) rank = 3
-    if (rank >= 0) ranked.push({ person, rank })
+    const words = phrase.split(' ')
+    let rank = 4
+    if (name.startsWith(phrase)) rank = 0
+    else if (name.includes(` ${phrase}`)) rank = 1
+    else if (words.every((w) => ` ${name}`.includes(` ${w}`))) rank = 2
+    else if (words.every((w) => name.includes(w))) rank = 3
+    ranked.push({ person, rank })
   }
 
   ranked.sort(

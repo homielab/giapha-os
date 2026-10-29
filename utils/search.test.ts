@@ -50,6 +50,32 @@ describe('searchPersons', () => {
     expect(searchPersons(people, 'ĐỨC')).toHaveLength(3)
   })
 
+  it('matches every word anywhere in the name, in any order', () => {
+    const list = [p('Nguyễn Văn An'), p('Trần An'), p('An Nguyễn Bình')]
+    expect(searchPersons(list, 'nguyen an').map((x) => x.full_name)).toEqual([
+      'An Nguyễn Bình',
+      'Nguyễn Văn An'
+    ])
+    expect(searchPersons(list, 'an nguyen')[0].full_name).toBe('An Nguyễn Bình')
+    expect(searchPersons(list, 'nguyen xuan')).toEqual([])
+  })
+
+  it('matches number words against the birth or death year', () => {
+    const list = [
+      { full_name: 'Trần Văn Ba', birth_year: 1950 },
+      { full_name: 'Trần Thị Tư', birth_year: 1920, death_year: 1950 },
+      { full_name: 'Trần Văn Năm', birth_year: 1960 },
+      { full_name: 'Lê Văn Sáu', birth_year: 1950 }
+    ]
+    expect(searchPersons(list, 'tran 1950').map((x) => x.full_name)).toEqual([
+      'Trần Thị Tư',
+      'Trần Văn Ba'
+    ])
+    expect(searchPersons(list, '1960').map((x) => x.full_name)).toEqual([
+      'Trần Văn Năm'
+    ])
+  })
+
   it('returns nothing for an empty query and caps results', () => {
     expect(searchPersons(people, '  ')).toEqual([])
     const many = Array.from({ length: 50 }, (_, i) => p(`Nguyễn ${i}`))

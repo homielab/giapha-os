@@ -23,6 +23,14 @@ describe('rankMembers', () => {
     m('4', 'Nguyễn Văn An', { birth_year: 1950 })
   ]
 
+  it('matches each word and years like the member list', () => {
+    const ids = (q: string) => rankMembers(q, people).map((r) => r.member.id)
+    expect(ids('nguyen an')[0]).toBe('4')
+    expect(ids('an nguyen')[0]).toBe('4')
+    expect(ids('duc 1950')).toEqual(['2'])
+    expect(ids('nguyen 2020')).toEqual(['2'])
+  })
+
   it('finds accented names from an unaccented query, prefix first', () => {
     const ids = rankMembers('nguyen van', people).map((r) => r.member.id)
     expect(ids).toEqual(['4', '2', '3'])

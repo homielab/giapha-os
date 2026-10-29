@@ -73,8 +73,8 @@ export function pickerKeyNavigation(
 
 /**
  * People the tree-root / export-root selector lists: accent-insensitive and
- * ranked like `searchPersons`, matching the name plus the birth year
- * ("van a 1950"). Empty text lists the first `limit` people in given order.
+ * ranked like `searchPersons`, matching the name plus the birth or death
+ * year ("van a 1950"). Empty text lists the first `limit` people in given order.
  */
 export function filterRootPersons<
   T extends {
@@ -84,10 +84,5 @@ export function filterRootPersons<
   }
 >(persons: T[], query: string, limit: number = PICKER_LIMIT): T[] {
   if (!query.trim()) return persons.slice(0, limit)
-  const labelled = persons.map((person) => ({
-    person,
-    full_name: `${person.full_name} ${person.birth_year ?? ''}`.trim(),
-    other_names: person.other_names
-  }))
-  return searchPersons(labelled, query, limit).map((r) => r.person)
+  return searchPersons(persons, query, limit)
 }
