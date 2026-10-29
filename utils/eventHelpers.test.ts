@@ -6,6 +6,7 @@ import { vnToday } from './dateHelpers'
 import {
   computeEvents,
   defaultEventDate,
+  eventHref,
   filterVisibleEvents,
   formatLunarDateLabel,
   toRecurrence,
@@ -555,5 +556,26 @@ describe('computeEvents: past occurrences across the new year', () => {
       expect(past.length).toBeGreaterThan(0)
       for (const e of past) expect(e.daysUntil).toBeGreaterThanOrEqual(-365)
     }
+  })
+})
+
+describe('eventHref', () => {
+  test('birthday and death anniversary open the member profile', () => {
+    expect(eventHref({ type: 'birthday', personId: 'p1' })).toBe(
+      '/dashboard/members/p1'
+    )
+    expect(eventHref({ type: 'death_anniversary', personId: 'p2' })).toBe(
+      '/dashboard/members/p2'
+    )
+  })
+  test('custom event opens the events page, not a member', () => {
+    expect(eventHref({ type: 'custom_event', personId: 'e1' })).toBe(
+      '/dashboard/events'
+    )
+  })
+  test('missing person id falls back to the events page', () => {
+    expect(eventHref({ type: 'birthday', personId: null })).toBe(
+      '/dashboard/events'
+    )
   })
 })

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Upcoming event cards on the dashboard are now links: a birthday or death anniversary opens that person's profile, a custom event opens the events page. They can be reached and opened with the keyboard.
 - Data check now lists people older than 120: living with no date of death at all (common in old GEDCOM/CSV trees, where they still got a birthday every year and counted as living) or with more than 120 years between birth and death year.
 - Data check now lists people who have a date of death (solar or lunar) but are not marked deceased, which a CSV/JSON restore can leave behind: such a person had no death anniversary and counted as living in the statistics.
 - Data check now also lists a father who died more than 10 months before the child's birth (more than a year when a month or day is missing), a common entry mistake after a GEDCOM/CSV import, like the mother rule the member form already had; adopted children are skipped.

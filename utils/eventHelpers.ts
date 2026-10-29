@@ -413,3 +413,12 @@ export function formatLunarDateLabel(
     (lunar.leap ? t('leapMonth') : '')
   )
 }
+
+/** Where an event card links: the member's profile, or the events page for custom events. */
+export function eventHref(
+  event: Pick<FamilyEvent, 'type' | 'personId'>
+): string {
+  if (event.type === 'custom_event' || !event.personId)
+    return '/dashboard/events'
+  return `/dashboard/members/${event.personId}`
+}
