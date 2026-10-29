@@ -41,7 +41,7 @@ export default function Footer({
             </svg>
             Gia Phả OS
           </a>
-          by
+          {t('footerBy')}
           <a
             href='https://homielab.com'
             target='_blank'

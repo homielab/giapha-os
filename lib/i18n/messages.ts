@@ -423,6 +423,7 @@ export const messages = {
     logout: 'Đăng xuất',
     processing: 'Đang xử lý...',
     back: 'Quay lại',
+    footerBy: 'bởi',
     footerDisclaimer:
       'Nội dung có thể thiếu sót. Vui lòng đóng góp để gia phả chính xác hơn.',
     pendingTitle: 'Tài khoản chờ duyệt',
@@ -1648,6 +1649,7 @@ export const messages = {
     logout: 'Log out',
     processing: 'Processing...',
     back: 'Back',
+    footerBy: 'by',
     footerDisclaimer:
       'Content may contain omissions. Please contribute to make the family tree more accurate.',
     pendingTitle: 'Account pending approval',

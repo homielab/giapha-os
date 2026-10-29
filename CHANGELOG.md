@@ -78,6 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The footer credit "Gia Phả OS by HomieLab" now reads "bởi" in the Vietnamese interface.
+- The Deploy to Vercel button and the README steps now ask for `SITE_NAME` and `SHORT_NAME`, so the home-screen icon name can be set at deploy time.
 - Gallery photo captions (title and date) and the expand icon now show on phones and tablets, which have no mouse to hover, and when a photo is focused with the keyboard.
 - The account approval page title and the About page now use `SITE_NAME` instead of a hard-coded "Gia Phả OS".
 - Screen readers now name the icon-only buttons of the tree (zoom in/out, centre), the mind map (expand/collapse all, also on small screens where the text is hidden), the kinship swap button and the admin delete-user button instead of reading an empty "button". These buttons and the admin status toggle no longer submit a surrounding form on Enter.
