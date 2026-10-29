@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Large family trees (more than 1,000 members or relationships) open faster on the members list, tree, kinship, statistics, events and lineage pages, and back up faster: after the first 1,000 rows, the remaining rows are loaded four pages at a time instead of one after another. Trees under 1,000 rows load as before.
 - Pages load less JavaScript up front: the animation library's features now arrive after the first render instead of with every page. First load JS (gzip) drops by about 27 kB: home 226 → 198 kB, login 297 → 269 kB, members 347 → 320 kB.
 - Updated Next.js and eslint-config-next to 16.4.3, lucide-react to 1.63 and @types/node to 26.6.6.
 - A member page loads the person from the database once instead of twice (the page title and the page share one query).

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
+import { PARALLEL_PAGES } from '@/utils/supabase/fetchAll'
 import { fakeSupabase } from '@/utils/testing/fakeSupabase'
 
 import { loadAllPersons } from './useAllPersons'
@@ -16,7 +17,8 @@ describe('loadAllPersons', () => {
     const { data, error } = await loadAllPersons(client as never)
     expect(error).toBeNull()
     expect(data).toHaveLength(1005)
-    expect(calls).toHaveLength(2)
+    // The full first page, then one parallel batch.
+    expect(calls).toHaveLength(1 + PARALLEL_PAGES)
   })
 
   test('reports the error when a later page fails', async () => {

@@ -4,9 +4,12 @@
  * family trees easily exceed that, which breaks parent/child mapping.
  *
  * `fetchAllRows` pages through a query with `.range()` until every row has
- * been read. The query MUST have a deterministic order (end it with a unique
- * column such as `id`), otherwise rows can be skipped or duplicated between
- * pages.
+ * been read. The first page is read alone, so a tree that fits in one page
+ * costs one round trip; when it is full, the next pages are requested
+ * `PARALLEL_PAGES` at a time and joined in page order, stopping at the first
+ * short or empty page. The query MUST have a deterministic order (end it with
+ * a unique column such as `id`), otherwise rows can be skipped or duplicated
+ * between pages.
  *
  * @example
  * const { data, error } = await fetchAllRows((from, to) =>
@@ -21,34 +24,56 @@
 
 export const SUPABASE_PAGE_SIZE = 1000
 
+/** Pages requested at once after a full first page. */
+export const PARALLEL_PAGES = 4
+
 interface PageResult<T> {
   data: T[] | null
   error: { message: string } | null
 }
 
+function errorMessage(err: unknown) {
+  return err instanceof Error ? err.message : String(err)
+}
+
+async function loadPage<T>(
+  buildPage: (from: number, to: number) => PromiseLike<PageResult<T>>,
+  page: number,
+  pageSize: number
+): Promise<PageResult<T>> {
+  const from = page * pageSize
+  try {
+    return await buildPage(from, from + pageSize - 1)
+  } catch (err) {
+    return { data: null, error: { message: errorMessage(err) } }
+  }
+}
+
+/**
+ * Returns every row, or the rows of the pages before the first failed one
+ * together with that page's error.
+ */
 export async function fetchAllRows<T>(
   buildPage: (from: number, to: number) => PromiseLike<PageResult<T>>,
   pageSize: number = SUPABASE_PAGE_SIZE
 ): Promise<{ data: T[]; error: { message: string } | null }> {
   const rows: T[] = []
-  let from = 0
+  let batch: Promise<PageResult<T>>[] = [loadPage(buildPage, 0, pageSize)]
+  let nextPage = 1
 
-  try {
-    while (true) {
-      const { data, error } = await buildPage(from, from + pageSize - 1)
+  while (true) {
+    for (const { data, error } of await Promise.all(batch)) {
       if (error) return { data: rows, error }
-      if (!data || data.length === 0) break
-
+      if (!data || data.length === 0) return { data: rows, error: null }
       rows.push(...data)
-      if (data.length < pageSize) break
-      from += pageSize
+      if (data.length < pageSize) return { data: rows, error: null }
     }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    return { data: rows, error: { message } }
-  }
 
-  return { data: rows, error: null }
+    batch = Array.from({ length: PARALLEL_PAGES }, (_, i) =>
+      loadPage(buildPage, nextPage + i, pageSize)
+    )
+    nextPage += PARALLEL_PAGES
+  }
 }
 
 /**
