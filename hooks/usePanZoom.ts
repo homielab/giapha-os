@@ -16,10 +16,7 @@ import {
   pointerDistance,
   pointerMidpoint
 } from '@/utils/pinchZoom'
-import {
-  scrollAfterZoomAroundCenter,
-  treeKeyAction
-} from '@/utils/treeKeyboard'
+import { scrollAfterZoomAround, treeKeyAction } from '@/utils/treeKeyboard'
 
 export function usePanZoom(
   containerRef: React.RefObject<HTMLDivElement | null>
@@ -40,15 +37,43 @@ export function usePanZoom(
   const pinchRef = useRef<PinchStart | null>(null)
   const pendingScrollRef = useRef<{ left: number; top: number } | null>(null)
 
+  // Zoom to `next` keeping the content under `anchor` (container pixels;
+  // default: the centre of the viewport) where it is on screen. Several zooms
+  // before the next render (fast wheel events) chain on the pending scroll.
+  const zoomTo = useCallback(
+    (next: number, anchor?: Point) => {
+      const el = containerRef.current
+      const current = scaleRef.current
+      if (next === current) return
+      if (el) {
+        const point = anchor ?? {
+          x: el.clientWidth / 2,
+          y: el.clientHeight / 2
+        }
+        const base = pendingScrollRef.current ?? {
+          left: el.scrollLeft,
+          top: el.scrollTop
+        }
+        pendingScrollRef.current = {
+          left: scrollAfterZoomAround(base.left, point.x, current, next),
+          top: scrollAfterZoomAround(base.top, point.y, current, next)
+        }
+      }
+      scaleRef.current = next
+      setScale(next)
+    },
+    [containerRef]
+  )
+
   const handleZoomIn = useCallback(
-    () => setScale((s) => clampScale(s + 0.1)),
-    []
+    () => zoomTo(clampScale(scaleRef.current + 0.1)),
+    [zoomTo]
   )
   const handleZoomOut = useCallback(
-    () => setScale((s) => clampScale(s - 0.1)),
-    []
+    () => zoomTo(clampScale(scaleRef.current - 0.1)),
+    [zoomTo]
   )
-  const handleResetZoom = useCallback(() => setScale(1), [])
+  const handleResetZoom = useCallback(() => zoomTo(1), [zoomTo])
 
   // Scroll after the scaled canvas has its new size, otherwise the browser
   // clamps the offset to the old, smaller scroll area.
@@ -71,7 +96,11 @@ export function usePanZoom(
     const onWheel = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey) return
       e.preventDefault()
-      setScale((s) => clampScale(s * Math.exp(-e.deltaY * 0.01)))
+      const rect = el.getBoundingClientRect()
+      zoomTo(clampScale(scaleRef.current * Math.exp(-e.deltaY * 0.01)), {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      })
     }
     // Two fingers must not scroll the page or the canvas while pinching.
     const onTouchMove = (e: TouchEvent) => {
@@ -84,7 +113,7 @@ export function usePanZoom(
       el.removeEventListener('wheel', onWheel)
       el.removeEventListener('touchmove', onTouchMove)
     }
-  }, [containerRef])
+  }, [containerRef, zoomTo])
 
   const beginPinch = (el: HTMLElement) => {
     const rect = el.getBoundingClientRect()
@@ -185,24 +214,7 @@ export function usePanZoom(
       el.scrollBy({ left: action.dx, top: action.dy })
       return
     }
-    const next = action.type === 'zoom' ? action.scale : 1
-    const current = scaleRef.current
-    if (next === current) return
-    pendingScrollRef.current = {
-      left: scrollAfterZoomAroundCenter(
-        el.scrollLeft,
-        el.clientWidth,
-        current,
-        next
-      ),
-      top: scrollAfterZoomAroundCenter(
-        el.scrollTop,
-        el.clientHeight,
-        current,
-        next
-      )
-    }
-    setScale(next)
+    zoomTo(action.type === 'zoom' ? action.scale : 1)
   }
 
   const handleClickCapture = (e: React.MouseEvent<HTMLElement>) => {

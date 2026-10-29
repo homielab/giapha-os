@@ -50,16 +50,16 @@ export function treeKeyAction(
 }
 
 /**
- * Scroll offset along one axis that keeps the content point at the centre of
- * the viewport in place when the scale changes from `from` to `to`.
+ * Scroll offset along one axis that keeps the content point at `anchor`
+ * (viewport pixels from the container's top-left corner) in place when the
+ * scale changes from `from` to `to`.
  */
-export function scrollAfterZoomAroundCenter(
+export function scrollAfterZoomAround(
   scroll: number,
-  viewportSize: number,
+  anchor: number,
   from: number,
   to: number
 ): number {
   if (from <= 0) return scroll
-  const center = scroll + viewportSize / 2
-  return Math.max(0, (center * to) / from - viewportSize / 2)
+  return Math.max(0, ((scroll + anchor) * to) / from - anchor)
 }
