@@ -1,10 +1,14 @@
 import type { TranslationKey } from '@/lib/i18n/messages'
 import { Person, Relationship } from '@/types'
-import { getZodiacAnimal, getZodiacSign } from '@/utils/dateHelpers'
+import {
+  calculateAge,
+  getZodiacAnimal,
+  getZodiacSign
+} from '@/utils/dateHelpers'
 
 /** Person columns the stats need; select only these to keep the query small. */
 export const STATS_PERSON_COLUMNS =
-  'id, gender, is_in_law, is_deceased, birth_order, generation, birth_year, birth_month, birth_day'
+  'id, gender, is_in_law, is_deceased, birth_order, generation, birth_year, birth_month, birth_day, death_year, death_month, death_day, full_name'
 
 /** Relationship columns the stats need (only marriages are counted). */
 export const STATS_RELATIONSHIP_COLUMNS = 'type, person_a, person_b'
@@ -20,6 +24,10 @@ export type StatsPerson = Pick<
   | 'birth_year'
   | 'birth_month'
   | 'birth_day'
+  | 'death_year'
+  | 'death_month'
+  | 'death_day'
+  | 'full_name'
 >
 
 export type StatsRelationship = Pick<
@@ -40,11 +48,101 @@ export interface FamilyStatsResult {
   generationBreakdown: { gen: number; count: number }[]
   zodiacBreakdown: { name: TranslationKey; count: number }[]
   chineseZodiacBreakdown: { name: TranslationKey; count: number }[]
+  lifespan: LifespanStats
+}
+
+export interface LifespanPerson {
+  id: string
+  name: string
+  age: number
+}
+
+export interface LifespanStats {
+  /** Deceased people with both a birth and a death year. */
+  counted: number
+  /** Average age at death, one decimal; null when nobody is counted. */
+  average: number | null
+  longestLived: LifespanPerson | null
+  oldestLiving: LifespanPerson | null
+  /** Average age at death by birth decade (1920 = born 1920–1929). */
+  byDecade: { decade: number; average: number; count: number }[]
+}
+
+/** A living person older than this most likely lacks a death date. */
+const MAX_LIVING_AGE = 120
+
+const round1 = (n: number) => Math.round(n * 10) / 10
+
+export function computeLifespan(
+  persons: StatsPerson[],
+  now: Date = new Date()
+): LifespanStats {
+  let sum = 0
+  let counted = 0
+  let longestLived: LifespanPerson | null = null
+  let oldestLiving: LifespanPerson | null = null
+  const decades = new Map<number, { sum: number; count: number }>()
+
+  for (const p of persons) {
+    if (!p.birth_year) continue
+    if (p.death_year) {
+      const result = calculateAge(
+        p.birth_year,
+        p.birth_month,
+        p.birth_day,
+        p.death_year,
+        p.death_month,
+        p.death_day,
+        true
+      )
+      if (!result || result.age < 0) continue
+      sum += result.age
+      counted++
+      if (!longestLived || result.age > longestLived.age) {
+        longestLived = { id: p.id, name: p.full_name, age: result.age }
+      }
+      const decade = Math.floor(p.birth_year / 10) * 10
+      const d = decades.get(decade) ?? { sum: 0, count: 0 }
+      d.sum += result.age
+      d.count++
+      decades.set(decade, d)
+    } else if (!p.is_deceased) {
+      const result = calculateAge(
+        p.birth_year,
+        p.birth_month,
+        p.birth_day,
+        null,
+        null,
+        null,
+        false,
+        now
+      )
+      if (!result || result.age < 0 || result.age > MAX_LIVING_AGE) continue
+      if (!oldestLiving || result.age > oldestLiving.age) {
+        oldestLiving = { id: p.id, name: p.full_name, age: result.age }
+      }
+    }
+  }
+
+  return {
+    counted,
+    average: counted > 0 ? round1(sum / counted) : null,
+    longestLived,
+    oldestLiving,
+    byDecade: Array.from(decades.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([decade, { sum, count }]) => ({
+        decade,
+        average: round1(sum / count),
+        count
+      }))
+  }
 }
 
 export function computeFamilyStats(
   persons: StatsPerson[],
-  relationships: StatsRelationship[]
+  relationships: StatsRelationship[],
+  now: Date = new Date()
 ): FamilyStatsResult {
   const total = persons.length
 
@@ -132,6 +230,7 @@ export function computeFamilyStats(
     unmarried,
     generationBreakdown,
     zodiacBreakdown,
-    chineseZodiacBreakdown
+    chineseZodiacBreakdown,
+    lifespan: computeLifespan(persons, now)
   }
 }

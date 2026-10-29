@@ -359,6 +359,17 @@ export const messages = {
     totalMembers: 'Tổng thành viên',
     married: 'Đã kết hôn',
     unmarried: 'Chưa kết hôn',
+    lifespanTitle: 'Tuổi thọ',
+    lifespanAverage: 'Tuổi thọ trung bình',
+    lifespanLongestLived: 'Người thọ nhất',
+    lifespanOldestLiving: 'Người còn sống cao tuổi nhất',
+    lifespanByDecade: 'Tuổi thọ trung bình theo thập niên sinh',
+    lifespanDecade: '{decade}s',
+    lifespanAge: '{age} tuổi',
+    lifespanCountedHint:
+      'Tính trên {count} người đã mất có đủ năm sinh và năm mất; người thiếu năm không được tính.',
+    lifespanCountedHint_one:
+      'Tính trên {count} người đã mất có đủ năm sinh và năm mất; người thiếu năm không được tính.',
     generationDistribution: 'Phân bố theo thế hệ',
     generationAssignedHint: '* Chỉ tính các thành viên đã được gán số thế hệ',
     genderRatio: 'Tỉ lệ giới tính',
@@ -1626,6 +1637,17 @@ export const messages = {
     totalMembers: 'Total members',
     married: 'Married',
     unmarried: 'Unmarried',
+    lifespanTitle: 'Lifespan',
+    lifespanAverage: 'Average lifespan',
+    lifespanLongestLived: 'Longest-lived',
+    lifespanOldestLiving: 'Oldest living member',
+    lifespanByDecade: 'Average lifespan by birth decade',
+    lifespanDecade: '{decade}s',
+    lifespanAge: '{age} years',
+    lifespanCountedHint:
+      'Based on {count} deceased people with both a birth and a death year; people missing either are left out.',
+    lifespanCountedHint_one:
+      'Based on {count} deceased person with both a birth and a death year; people missing either are left out.',
     generationDistribution: 'Distribution by generation',
     generationAssignedHint:
       '* Only members with an assigned generation are included',
