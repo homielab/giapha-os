@@ -89,22 +89,24 @@ const byBirth = compareBirth
 
 /**
  * The lunar death date shown in the book: the stored death_lunar_* wins;
- * otherwise it is derived from the solar death date. The leap flag is always
- * derived from the solar date (the database does not store it).
+ * otherwise it is derived from a complete solar death date (year, month and
+ * day). A year alone gives null, so no day is made up. The leap flag is derived
+ * from the solar date and only kept when its lunar day and month match the
+ * stored ones (the database does not store it), like the events list.
  */
 export function deathLunarDate(
   person: LineageBookPerson
 ): BookEntry['deathLunar'] {
   if (!person.is_deceased) return null
-  const solar = person.death_year
-    ? solarToLunar(
-        person.death_year,
-        person.death_month ?? 1,
-        person.death_day ?? 1
-      )
-    : null
-  const leap = solar?.leap === true
+  const solar =
+    person.death_year && person.death_month && person.death_day
+      ? solarToLunar(person.death_year, person.death_month, person.death_day)
+      : null
   if (person.death_lunar_month != null && person.death_lunar_day != null) {
+    const leap =
+      solar?.leap === true &&
+      solar.month === person.death_lunar_month &&
+      solar.day === person.death_lunar_day
     return {
       day: person.death_lunar_day,
       month: person.death_lunar_month,
@@ -112,7 +114,7 @@ export function deathLunarDate(
       leap
     }
   }
-  if (solar) return { ...solar, leap }
+  if (solar) return { ...solar, leap: solar.leap === true }
   return null
 }
 

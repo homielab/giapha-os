@@ -293,6 +293,47 @@ describe('deathLunarDate', () => {
     expect(deathLunarDate(p)).toEqual(lunar)
   })
 
+  test('a year alone gives none, a partial date too', () => {
+    expect(
+      deathLunarDate(person({ is_deceased: true, death_year: 2020 }))
+    ).toBeNull()
+    expect(
+      deathLunarDate(
+        person({ is_deceased: true, death_year: 2020, death_month: 3 })
+      )
+    ).toBeNull()
+  })
+
+  test('the leap flag needs the stored day and month to match the solar date', () => {
+    const p = person({
+      is_deceased: true,
+      death_year: 2023,
+      death_month: 4,
+      death_day: 5,
+      death_lunar_year: 2023,
+      death_lunar_month: 10,
+      death_lunar_day: 3
+    })
+    expect(deathLunarDate(p)).toEqual({
+      day: 3,
+      month: 10,
+      year: 2023,
+      leap: false
+    })
+  })
+
+  test('a stored lunar date without a solar one is kept', () => {
+    expect(
+      deathLunarDate(
+        person({
+          is_deceased: true,
+          death_lunar_month: 7,
+          death_lunar_day: 9
+        })
+      )
+    ).toMatchObject({ day: 9, month: 7, leap: false })
+  })
+
   test('a living member or a member without dates has none', () => {
     expect(deathLunarDate(person({}))).toBeNull()
     expect(deathLunarDate(person({ is_deceased: true }))).toBeNull()
