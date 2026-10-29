@@ -44,6 +44,10 @@ function deceased(extra: Partial<PersonInput>): PersonInput {
 
 const day = (y: number, m: number, d: number) => new Date(y, m - 1, d)
 
+/** Events from today on (computeEvents also lists recent past ones). */
+const fromToday = <T extends { daysUntil: number }>(events: T[]) =>
+  events.filter((e) => e.daysUntil >= 0)
+
 function deathEvents(person: PersonInput, now: Date) {
   return computeEvents([person], [], now).filter(
     (e) => e.type === 'death_anniversary'
@@ -123,7 +127,7 @@ describe('computeEvents: death anniversaries (giỗ)', () => {
 
   test('a regular-month death ignores that year’s leap month', () => {
     const person = deceased({ death_lunar_month: 6, death_lunar_day: 1 })
-    const [event] = deathEvents(person, day(2025, 6, 1))
+    const [event] = fromToday(deathEvents(person, day(2025, 6, 1)))
     expect(event.nextOccurrence).toEqual(day(2025, 6, 25))
   })
 
@@ -193,7 +197,7 @@ describe('computeEvents: birthdays and custom events', () => {
       birth_month: 3,
       birth_day: 8
     })
-    const [event] = computeEvents([person], [], day(2025, 3, 1))
+    const [event] = fromToday(computeEvents([person], [], day(2025, 3, 1)))
     expect(event.type).toBe('birthday')
     expect(event.daysUntil).toBe(7)
     expect(event.eventDateLabel).toBe('08/03')
@@ -235,7 +239,9 @@ describe('computeEvents: Vietnam day, estimates and 29/2', () => {
       birth_month: 3,
       birth_day: 8
     })
-    const [event] = computeEvents([person], [], vnToday(earlyMorning))
+    const [event] = fromToday(
+      computeEvents([person], [], vnToday(earlyMorning))
+    )
     expect(event.daysUntil).toBe(0)
   })
 
@@ -248,7 +254,7 @@ describe('computeEvents: Vietnam day, estimates and 29/2', () => {
       death_month: 1,
       death_day: 1
     })
-    const [event] = deathEvents(person, vnToday(earlyMorning))
+    const [event] = fromToday(deathEvents(person, vnToday(earlyMorning)))
     expect(event.daysUntil).toBe(0)
   })
 
@@ -280,10 +286,10 @@ describe('computeEvents: Vietnam day, estimates and 29/2', () => {
       birth_month: 2,
       birth_day: 29
     })
-    const common = computeEvents([person], [], day(2025, 2, 1))[0]
+    const common = fromToday(computeEvents([person], [], day(2025, 2, 1)))[0]
     expect(common.nextOccurrence).toEqual(day(2025, 2, 28))
     expect(common.daysUntil).toBe(27)
-    const leap = computeEvents([person], [], day(2028, 2, 1))[0]
+    const leap = fromToday(computeEvents([person], [], day(2028, 2, 1)))[0]
     expect(leap.nextOccurrence).toEqual(day(2028, 2, 29))
     // After 28/2 of a common year, the next one is in the following year.
     const after = computeEvents([person], [], day(2027, 3, 1)).find(
@@ -374,9 +380,8 @@ describe('computeEvents: repeating custom events', () => {
   })
 
   test('yearly_solar comes back on the same day and month', () => {
-    const [next] = customEvents(
-      custom('2020-04-02', 'yearly_solar'),
-      day(2026, 3, 1)
+    const [next] = fromToday(
+      customEvents(custom('2020-04-02', 'yearly_solar'), day(2026, 3, 1))
     )
     expect(next.nextOccurrence).toEqual(day(2026, 4, 2))
     expect(next.daysUntil).toBe(32)
@@ -397,9 +402,8 @@ describe('computeEvents: repeating custom events', () => {
   })
 
   test('yearly_solar on 29/2 falls on 28/2 in a common year', () => {
-    const [next] = customEvents(
-      custom('2024-02-29', 'yearly_solar'),
-      day(2026, 1, 1)
+    const [next] = fromToday(
+      customEvents(custom('2024-02-29', 'yearly_solar'), day(2026, 1, 1))
     )
     expect(next.nextOccurrence).toEqual(day(2026, 2, 28))
   })
@@ -472,5 +476,84 @@ describe('defaultEventDate', () => {
     expect(defaultEventDate(new Date('2026-10-27T16:59:00Z'))).toBe(
       '2026-10-27'
     )
+  })
+})
+
+describe('computeEvents: past occurrences across the new year', () => {
+  const pastOf = (events: ReturnType<typeof computeEvents>) =>
+    events.filter((e) => e.daysUntil < 0)
+
+  test('early January lists the December birthday just gone', () => {
+    const person = { ...deceased({ birth_month: 12, birth_day: 28 }) }
+    person.is_deceased = false
+    const past = pastOf(computeEvents([person], [], day(2027, 1, 5)))
+    expect(past).toHaveLength(1)
+    expect(past[0].daysUntil).toBe(-8)
+    expect(past[0].nextOccurrence).toEqual(day(2026, 12, 28))
+  })
+
+  test('lists last lunar year’s giỗ after Tết, from the year after death', () => {
+    // 20/12 of lunar 2026 falls in late January 2027; Tết 2027 is before 20/2.
+    const date = lunarToSolar(2026, 12, 20)!
+    const occurred = new Date(date.year, date.month - 1, date.day)
+    const now = day(2027, 2, 20)
+    const kept = pastOf(
+      deathEvents(
+        deceased({
+          death_lunar_year: 2025,
+          death_lunar_month: 12,
+          death_lunar_day: 20
+        }),
+        now
+      )
+    )
+    expect(kept).toHaveLength(1)
+    expect(kept[0].nextOccurrence).toEqual(occurred)
+    // Died in lunar 2026: no giỗ in that lunar year.
+    const none = pastOf(
+      deathEvents(
+        deceased({
+          death_lunar_year: 2026,
+          death_lunar_month: 12,
+          death_lunar_day: 20
+        }),
+        now
+      )
+    )
+    expect(none).toHaveLength(0)
+  })
+
+  test('a repeating custom event is never listed before its start', () => {
+    const event = (event_date: string): CustomEventRecord => ({
+      id: 'e1',
+      name: 'Họp họ',
+      content: null,
+      event_date,
+      location: null,
+      created_by: null,
+      recurrence: 'yearly_solar'
+    })
+    const now = day(2027, 1, 5)
+    const after = pastOf(computeEvents([], [event('2025-12-30')], now))
+    expect(after.map((e) => e.nextOccurrence)).toEqual([day(2026, 12, 30)])
+    const before = pastOf(computeEvents([], [event('2027-01-02')], now))
+    expect(before.map((e) => e.nextOccurrence)).toEqual([day(2027, 1, 2)])
+  })
+
+  test('never lists an occurrence more than 365 days ago', () => {
+    const people = Array.from({ length: 12 }, (_, i) =>
+      deceased({
+        id: `p${i}`,
+        birth_month: i + 1,
+        birth_day: 6,
+        death_lunar_month: i + 1,
+        death_lunar_day: 6
+      })
+    )
+    for (const now of [day(2027, 1, 5), day(2027, 2, 20), day(2028, 3, 1)]) {
+      const past = pastOf(computeEvents(people, [], now))
+      expect(past.length).toBeGreaterThan(0)
+      for (const e of past) expect(e.daysUntil).toBeGreaterThanOrEqual(-365)
+    }
   })
 })

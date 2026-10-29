@@ -9,7 +9,7 @@ export interface FamilyEvent {
   type: EventType
   /** Solar date of the next occurrence */
   nextOccurrence: Date
-  /** Days until the next occurrence (negative = already passed this year, shown for context) */
+  /** Days until the next occurrence (negative = a past occurrence within the last year) */
   daysUntil: number
   /** Plain label for the date of the event ("12/03" solar, "05/02" lunar day/month). */
   eventDateLabel: string
@@ -80,6 +80,25 @@ function solarDate(year: number, month: number, day: number): Date {
   return new Date(year, month - 1, Math.min(day, lastDay))
 }
 
+/** Whole calendar days from `from` to `to` (negative when `to` is earlier). */
+export function daysBetween(from: Date, to: Date): number {
+  return Math.round((to.getTime() - from.getTime()) / 86_400_000)
+}
+
+/**
+ * The latest occurrence before today, if it is less than 365 days ago: this
+ * year's once it has passed, otherwise last year's (early January shows the
+ * December birthdays and anniversaries just gone).
+ */
+function pastOccurrence(
+  thisYear: Date | null,
+  lastYear: Date | null,
+  today: Date
+): Date | null {
+  const past = thisYear && thisYear < today ? thisYear : lastYear
+  return past && past < today && daysBetween(today, past) > -365 ? past : null
+}
+
 function pad2(n: number): string {
   return n.toString().padStart(2, '0')
 }
@@ -140,9 +159,7 @@ export function computeEvents(
         ? thisYearDate
         : solarDate(thisYear + 1, p.birth_month, p.birth_day)
 
-      const daysUntil = Math.round(
-        (next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-      )
+      const daysUntil = daysBetween(today, next)
 
       const baseEvent: FamilyEvent = {
         personId: p.id,
@@ -158,15 +175,17 @@ export function computeEvents(
       }
       events.push(baseEvent)
 
-      // Past occurrence (already happened this year)
-      if (!isUpcoming) {
-        const pastDaysUntil = Math.round(
-          (thisYearDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-        )
+      // Latest past occurrence, this year's or last year's
+      const past = pastOccurrence(
+        thisYearDate,
+        solarDate(thisYear - 1, p.birth_month, p.birth_day),
+        today
+      )
+      if (past) {
         events.push({
           ...baseEvent,
-          nextOccurrence: thisYearDate,
-          daysUntil: pastDaysUntil
+          nextOccurrence: past,
+          daysUntil: daysBetween(today, past)
         })
       }
     }
@@ -237,9 +256,7 @@ export function computeEvents(
       const next = thisYear && thisYear >= today ? thisYear : nextYear
       if (!next) continue
 
-      const daysUntil = Math.round(
-        (next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-      )
+      const daysUntil = daysBetween(today, next)
 
       const deathEvent: FamilyEvent = {
         personId: p.id,
@@ -261,13 +278,16 @@ export function computeEvents(
       }
       events.push(deathEvent)
 
-      if (thisYear && thisYear < today) {
+      const past = pastOccurrence(
+        thisYear,
+        anniversaryIn(currentLunarYear - 1),
+        today
+      )
+      if (past) {
         events.push({
           ...deathEvent,
-          nextOccurrence: thisYear,
-          daysUntil: Math.round(
-            (thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-          )
+          nextOccurrence: past,
+          daysUntil: daysBetween(today, past)
         })
       }
     }
@@ -302,9 +322,7 @@ export function computeEvents(
         : {}),
       ...base,
       nextOccurrence: date,
-      daysUntil: Math.round(
-        (date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-      ),
+      daysUntil: daysBetween(today, date),
       eventDateLabel
     })
     const label = lunar
@@ -321,6 +339,7 @@ export function computeEvents(
 
     let thisYear: Date | null
     let nextYear: Date | null
+    let lastYear: Date | null
     if (lunar) {
       const currentLunarYear = solarToLunar(
         today.getFullYear(),
@@ -340,17 +359,23 @@ export function computeEvents(
         lunar.day,
         lunar.leap
       )
+      lastYear = anniversaryDate(
+        currentLunarYear - 1,
+        lunar.month,
+        lunar.day,
+        lunar.leap
+      )
     } else {
       const year = today.getFullYear()
       thisYear = solarDate(year, m, d)
       nextYear = solarDate(year + 1, m, d)
+      lastYear = solarDate(year - 1, m, d)
     }
 
     const next = thisYear && thisYear >= today ? thisYear : nextYear
     if (next) events.push(occurrence(next, label))
-    if (thisYear && thisYear < today && thisYear >= start) {
-      events.push(occurrence(thisYear, label))
-    }
+    const past = pastOccurrence(thisYear, lastYear, today)
+    if (past && past >= start) events.push(occurrence(past, label))
   }
 
   // Sort: soonest first
