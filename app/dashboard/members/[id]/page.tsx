@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 
 import DeleteMemberButton from '@/components/DeleteMemberButton'
 import PrintButton from '@/components/PrintButton'
+import ViewOnTreeLink from '@/components/ViewOnTreeLink'
 import MemberDetailContent from '@/context/MemberDetailContent'
 import { getServerTranslations } from '@/lib/i18n/server'
 import { memberPrintTitle } from '@/utils/memberPrint'
@@ -78,7 +79,11 @@ export default async function MemberDetailPage({ params }: PageProps) {
           </Link>
           <h1 className='title'>{t('memberDetails')}</h1>
         </div>
-        <div className='flex w-full items-center gap-2.5 sm:w-auto'>
+        <div className='flex w-full flex-wrap items-center gap-2.5 sm:w-auto sm:flex-nowrap'>
+          <ViewOnTreeLink
+            personId={id}
+            className='btn flex flex-1 items-center justify-center gap-2 sm:flex-none'
+          />
           <PrintButton title={memberPrintTitle(person)} />
           {canEdit && (
             <>

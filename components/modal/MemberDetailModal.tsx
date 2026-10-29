@@ -20,6 +20,7 @@ import {
   LoadingPanel
 } from '@/components/modal/MemberDetailModalPanels'
 import { useUser } from '@/components/UserProvider'
+import ViewOnTreeLink from '@/components/ViewOnTreeLink'
 import { useMemberListView } from '@/context/useMemberListView'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
@@ -28,7 +29,7 @@ import { createLatestGuard } from '@/utils/latestOnly'
 import { shouldCloseMemberModalOnEscape } from '@/utils/memberModalEscape'
 import { fetchPrivateDetails } from '@/utils/privateDetails'
 
-function ModalHeaderActions({
+export function ModalHeaderActions({
   isEditing,
   canEdit,
   person,
@@ -55,19 +56,28 @@ function ModalHeaderActions({
           <span className='hidden sm:inline'>{t('backToPrevious')}</span>
         </button>
       ) : (
-        canEdit &&
         person && (
           <>
-            <Link
-              href={`/dashboard/members/${person.id}`}
-              className='btn-amber text-sm'>
-              <ExternalLink className='size-4' />
-              <span className='hidden sm:inline'>{t('view')}</span>
-            </Link>
-            <button onClick={onStartEdit} className='btn-amber text-sm'>
-              <Edit2 className='size-4' />
-              <span className='hidden sm:inline'>{t('editMember')}</span>
-            </button>
+            {/* Every role; the new URL has no memberModalId, so the modal closes */}
+            <ViewOnTreeLink
+              personId={person.id}
+              className='btn-amber text-sm'
+              compact
+            />
+            {canEdit && (
+              <>
+                <Link
+                  href={`/dashboard/members/${person.id}`}
+                  className='btn-amber text-sm'>
+                  <ExternalLink className='size-4' />
+                  <span className='hidden sm:inline'>{t('view')}</span>
+                </Link>
+                <button onClick={onStartEdit} className='btn-amber text-sm'>
+                  <Edit2 className='size-4' />
+                  <span className='hidden sm:inline'>{t('editMember')}</span>
+                </button>
+              </>
+            )}
           </>
         )
       )}
