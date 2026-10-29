@@ -33,6 +33,7 @@ export interface DataCheckRelationship {
 export const DATA_CHECK_KINDS = [
   'deathBeforeBirth',
   'bornAfterMotherDeath',
+  'fatherDiedBeforeBirth',
   'parentTooYoung',
   'parentTooOld',
   'futureDate',
@@ -83,9 +84,11 @@ const ref = (p: DataCheckPerson) => ({ id: p.id, name: p.full_name })
  * death year of the deceased, gender) in the whole tree. Pure: reads nothing,
  * writes nothing. A date or year that is missing is never part of a date check,
  * and adopted children are left out of the parent checks (as in the member
- * form). People that cannot be reached from the root are not reported here
- * (the Lineage page lists them). A link from a person to themselves is only
- * reported as `selfLink`; parent–child loops are listed once each, as the
+ * form): a mother who died before the birth is reported, and so is a father
+ * who died more than ten months before it (more than a year when a month or
+ * day is unknown). People that cannot be reached from the root are not reported
+ * here (the Lineage page lists them). A link from a person to themselves is
+ * only reported as `selfLink`; parent–child loops are listed once each, as the
  * people along the loop. Findings are sorted by kind, then name
  * (Vietnamese order), then id.
  */
@@ -195,13 +198,25 @@ export function runDataChecks(
     links.push(r)
 
     if (r.type === 'biological_child' && a && b) {
-      if (checkParentDeath(a, b) === 'motherDiedBeforeBirth') {
+      const parentIssue = checkParentDeath(a, b)
+      if (parentIssue === 'motherDiedBeforeBirth') {
         findings.push({
           kind: 'bornAfterMotherDeath',
           people: [ref(b), ref(a)],
           params: {
             child: b.full_name,
             mother: a.full_name,
+            birth: birthOf(b),
+            death: deathOf(a)
+          }
+        })
+      } else if (parentIssue === 'fatherDiedLongBeforeBirth') {
+        findings.push({
+          kind: 'fatherDiedBeforeBirth',
+          people: [ref(b), ref(a)],
+          params: {
+            child: b.full_name,
+            father: a.full_name,
             birth: birthOf(b),
             death: deathOf(a)
           }

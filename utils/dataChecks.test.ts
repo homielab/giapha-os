@@ -125,13 +125,52 @@ describe('runDataChecks', () => {
     expect(kinds(persons, [child('f', 'k')])).toEqual([])
   })
 
+  test('a father who died long before the birth, but not one who died near it', () => {
+    const persons = [
+      person('f', { gender: 'male', birth_year: 1870, death_year: 1900 }),
+      person('k', { birth_year: 1950 }),
+      person('f2', {
+        gender: 'male',
+        birth_year: 1900,
+        death_year: 1950,
+        death_month: 3,
+        death_day: 1
+      }),
+      person('k2', { birth_year: 1950, birth_month: 5, birth_day: 1 })
+    ]
+    const found = runDataChecks(persons, [child('f', 'k')], TODAY).filter(
+      (f) => f.kind === 'fatherDiedBeforeBirth'
+    )
+    expect(found).toHaveLength(1)
+    expect(found[0]).toEqual({
+      kind: 'fatherDiedBeforeBirth',
+      people: [
+        { id: 'k', name: 'Person k' },
+        { id: 'f', name: 'Person f' }
+      ],
+      params: {
+        child: 'Person k',
+        father: 'Person f',
+        birth: '1950',
+        death: '1900'
+      }
+    })
+    // two months between the death and the birth: within the grace period
+    expect(kinds(persons, [child('f2', 'k2')])).toEqual([])
+  })
+
   test('adopted children are left out of the parent checks', () => {
     const persons = [
       person('m', { gender: 'female', birth_year: 1960, death_year: 1969 }),
+      person('f', { gender: 'male', birth_year: 1900, death_year: 1900 }),
       person('k', { birth_year: 1970 })
     ]
-    const adopted = { ...child('m', 'k'), type: 'adopted_child' }
-    expect(kinds(persons, [adopted])).toEqual([])
+    expect(
+      kinds(persons, [
+        { ...child('m', 'k'), type: 'adopted_child' },
+        { ...child('f', 'k'), type: 'adopted_child' }
+      ])
+    ).toEqual([])
   })
 
   test('parent younger than 12 or older than 70 at the birth', () => {

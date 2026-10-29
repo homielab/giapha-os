@@ -14,6 +14,7 @@ import { DATA_CHECK_KINDS, type DataCheckFinding } from '@/utils/dataChecks'
 const KIND_TITLES = {
   deathBeforeBirth: 'dataCheckKindDeathBeforeBirth',
   bornAfterMotherDeath: 'dataCheckKindBornAfterMotherDeath',
+  fatherDiedBeforeBirth: 'dataCheckKindFatherDiedBeforeBirth',
   parentTooYoung: 'dataCheckKindParentTooYoung',
   parentTooOld: 'dataCheckKindParentTooOld',
   futureDate: 'dataCheckKindFutureDate',
@@ -32,6 +33,8 @@ function messageKey(f: DataCheckFinding): TranslationKey {
       return 'dataCheckDeathBeforeBirth'
     case 'bornAfterMotherDeath':
       return 'dataCheckBornAfterMotherDeath'
+    case 'fatherDiedBeforeBirth':
+      return 'dataCheckFatherDiedBeforeBirth'
     case 'parentTooYoung':
     case 'parentTooOld':
       return 'dataCheckParentAge'
