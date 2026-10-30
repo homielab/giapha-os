@@ -1633,3 +1633,56 @@ describe('GEDCOM marriage notes', () => {
     })
   })
 })
+
+describe('GEDCOM marriage and divorce events', () => {
+  const fam = (...lines: string[]) =>
+    [
+      '0 HEAD',
+      '0 @I1@ INDI',
+      '1 NAME /Lê/ Văn Bình',
+      '0 @I2@ INDI',
+      '1 NAME /Trần/ Thị Mai',
+      '0 @F1@ FAM',
+      '1 HUSB @I1@',
+      '1 WIFE @I2@',
+      ...lines,
+      '0 TRLR'
+    ].join('\n')
+  const marriageNote = (ged: string) =>
+    parseGedcom(ged).relationships.find((r) => r.type === 'marriage')?.note
+
+  test('keeps MARR date and place and DIV as note lines', () => {
+    expect(
+      marriageNote(
+        fam(
+          '1 NOTE Cưới ở quê',
+          '1 MARR',
+          '2 DATE 12 MAR 1950',
+          '2 PLAC Huế',
+          '1 DIV Y'
+        )
+      )
+    ).toBe('Cưới ở quê\n\nKết hôn: 12 MAR 1950, Huế\nLy hôn')
+    expect(marriageNote(fam('1 DIV', '2 DATE 1970'))).toBe('Ly hôn: 1970')
+  })
+
+  test('a bare MARR adds nothing', () => {
+    expect(marriageNote(fam('1 MARR Y'))).toBeUndefined()
+  })
+
+  test('export then import does not repeat the lines', () => {
+    const first = parseGedcom(
+      fam('1 MARR', '2 DATE 1950', '2 PLAC Huế', '1 DIV Y')
+    )
+    const note = first.relationships.find((r) => r.type === 'marriage')?.note
+    expect(note).toBe('Kết hôn: 1950, Huế\nLy hôn')
+    const ged = exportToGedcom(first)
+    expect(marriageNote(ged)).toBe(note)
+    // A program that kept the note and wrote the events again: no duplicate.
+    const edited = ged.replace(
+      '1 WIFE @I2@',
+      '1 WIFE @I2@\n1 MARR\n2 DATE 1950\n2 PLAC Huế\n1 DIV Y'
+    )
+    expect(marriageNote(edited)).toBe(note)
+  })
+})

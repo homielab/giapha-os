@@ -91,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- GEDCOM import from Gramps, MyHeritage and similar programs keeps a family's marriage date and place and its divorce as "Kết hôn: …" / "Ly hôn" lines in the marriage note instead of dropping them.
 - The kinship finder names relatives by marriage on both sides with the usual terms, such as "Mợ", "Thím", "Cháu dâu" or "Em rể", instead of "Vợ của Cậu" or "Chồng của Em gái".
 - The member list's "Eldest child" filter no longer lists daughters- or sons-in-law, and member cards and the member detail header no longer show a birth order badge next to "In-law".
 - The kinship finder calls the wife or husband of a great-grandchild and later generations "Chắt dâu" / "Chắt rể", "Chít dâu"… and of a cousin's child "Cháu dâu (họ)" / "Cháu rể (họ)", instead of "Vợ của Chắt".

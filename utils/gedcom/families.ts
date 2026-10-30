@@ -8,7 +8,9 @@ import type { GedcomRelationship } from './types'
 // the family's NOTEs and cited sources as its note) and a parent link from
 // each of them to every CHIL. `ctx.adoptedLinks` holds `${indiXref}
 // ${famXref}` of FAMC links marked PEDI ADOPTED. Members missing from `idMap`
-// are skipped. A family without both spouses has no marriage, so its notes
+// are skipped. MARR (DATE, PLAC) and DIV become "Kết hôn: …" / "Ly hôn: …"
+// lines of the note, unless the note already has that line (a file this app
+// exported). A family without both spouses has no marriage, so its notes
 // and sources are dropped and counted in `ctx.stats.droppedFamilyNotes`.
 export function readFamilies(
   records: ParseRecord[],
@@ -22,6 +24,8 @@ export function readFamilies(
     const children: { uuid: string; xref: string }[] = []
     const noteReader = createNoteReader(ctx.noteTexts, ctx.stats)
     let inNote = false
+    let event: { label: string; parts: string[] } | null = null
+    const events: { label: string; parts: string[] }[] = []
 
     for (const line of record.lines) {
       const noteMatch = line.match(/^(1|2)\s+(NOTE|CONC|CONT)(?:\s(.*))?$/)
@@ -34,7 +38,25 @@ export function readFamilies(
         noteReader.continue(noteMatch[2], noteMatch[3] ?? '')
         continue
       }
-      if (line.startsWith('1 ')) inNote = false
+      if (line.startsWith('1 ')) {
+        inNote = false
+        const tag = line.split(/\s+/)[1]
+        event =
+          tag === 'MARR'
+            ? { label: 'Kết hôn', parts: [] }
+            : tag === 'DIV'
+              ? { label: 'Ly hôn', parts: [] }
+              : null
+        if (event) {
+          events.push(event)
+          continue
+        }
+      }
+      const detail = line.match(/^2\s+(DATE|PLAC)\s+(.+)$/)
+      if (event && detail && detail[2].trim()) {
+        event.parts.push(detail[2].trim())
+        continue
+      }
 
       const match = line.match(/^1\s+(HUSB|WIFE|CHIL)\s+@([^@]+)@/)
       if (match) {
@@ -49,12 +71,20 @@ export function readFamilies(
       }
     }
 
-    const note = [
+    const baseNote = [
       ...noteReader.notes,
       ...sourceNotes(record.lines, ctx.sourTexts)
     ]
       .filter((n) => n.trim())
       .join('\n\n')
+    const noteLines = new Set(baseNote.split('\n'))
+    const eventLines = events
+      .filter((e) => e.label === 'Ly hôn' || e.parts.length > 0)
+      .map((e) =>
+        e.parts.length > 0 ? `${e.label}: ${e.parts.join(', ')}` : e.label
+      )
+      .filter((l, i, all) => !noteLines.has(l) && all.indexOf(l) === i)
+    const note = [baseNote, eventLines.join('\n')].filter(Boolean).join('\n\n')
     if (husb && wife && husb !== wife) {
       relationships.push({
         type: 'marriage',
