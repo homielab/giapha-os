@@ -4,13 +4,32 @@ import { revalidatePath } from 'next/cache'
 
 import { getServerTranslations } from '@/lib/i18n/server'
 import { UserRole } from '@/types'
-import { getIsAdmin, getSupabase } from '@/utils/supabase/queries'
+import { notifyAdminIfPending } from '@/utils/approval-notification'
+import {
+  getIsAdmin,
+  getProfile,
+  getSupabase,
+  getUser
+} from '@/utils/supabase/queries'
 import {
   knownUserAdminErrorKey,
   UserAdminAction,
   UserAdminDatabaseError,
   userAdminErrorKey
 } from '@/utils/userAdminErrors'
+
+// Called by the login page after a password sign-in or a sign-up that returns a
+// session (Supabase "Confirm email" off): those never pass through
+// /auth/callback, so this is where the administrators hear about the account.
+// Does nothing for active accounts; never fails the sign-in.
+export async function notifyAdminIfAccountPending(): Promise<void> {
+  try {
+    const [user, profile] = await Promise.all([getUser(), getProfile()])
+    await notifyAdminIfPending(user, profile)
+  } catch (error) {
+    console.error('Cannot notify administrators of a pending account:', error)
+  }
+}
 
 // Same minimum as public.admin_create_user in docs/schema.sql.
 const MIN_PASSWORD_LENGTH = 8

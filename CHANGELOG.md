@@ -101,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Administrators now get the approval email when Supabase "Confirm email" is off: it is sent when the new account signs up or signs in with a password, not only after an email confirmation or SSO login. The email is always in the app's default language (Vietnamese) instead of the new user's.
 - The gallery accepts phone photos up to 20 MB (GIFs up to 10 MB) and shrinks them before upload, instead of refusing anything over 10 MB; deleting a photo keeps its file while another gallery entry still uses it.
 - Tree and mind map PNG/PDF exports no longer show the +/- branch buttons, and multi-page A4/A3 PDFs use portrait pages when that takes fewer sheets (a tall, narrow tree on A3: 9 sheets instead of 13).
 - The backup page says more clearly that JSON/CSV/GEDCOM backups hold no profile or gallery photos, nor photo titles and descriptions.

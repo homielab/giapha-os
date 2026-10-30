@@ -256,7 +256,13 @@ Image đã có sẵn `docs/schema.sql` và `docs/migrations/`, nên trang `/setu
 
 ### Thông báo và duyệt tài khoản mới
 
-Sau khi người dùng xác nhận email, tài khoản vẫn giữ trạng thái **chờ duyệt**. Hệ thống gửi email cho admin kèm liên kết duyệt một lần, có hiệu lực 7 ngày. Admin cũng có thể đăng nhập ứng dụng và duyệt tại **Quản lý người dùng**.
+Tài khoản mới giữ trạng thái **chờ duyệt** cho tới khi admin duyệt. Hệ thống gửi email cho admin kèm liên kết duyệt một lần, có hiệu lực 7 ngày, ngay khi tài khoản đăng nhập lần đầu:
+
+- **Supabase bật "Confirm email"** (mặc định): sau khi người dùng bấm liên kết xác nhận trong email.
+- **Supabase tắt "Confirm email"**: ngay khi đăng ký xong, vì người dùng được đăng nhập luôn.
+- **SSO**: khi quay về từ Google/Facebook.
+
+Mỗi tài khoản chỉ gửi một email khi liên kết còn hiệu lực; tài khoản còn chờ duyệt đăng nhập lại sau khi liên kết hết hạn thì admin nhận email mới. Email luôn viết bằng tiếng Việt (ngôn ngữ mặc định của ứng dụng), không theo ngôn ngữ người đăng ký đang chọn. Admin cũng có thể đăng nhập ứng dụng và duyệt tại **Quản lý người dùng**.
 
 Để bật email thông báo trên Vercel, khai báo `APP_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY` và `RESEND_FROM_EMAIL`. `ADMIN_NOTIFICATION_EMAIL` là tuỳ chọn; nếu không khai báo, hệ thống sẽ tự lấy email từ các tài khoản admin đang hoạt động. Secret key/service role key có thể bỏ qua Row Level Security (RLS), vì vậy chỉ được lưu ở server và không được đưa vào source code, trình duyệt hoặc Git. Xem thêm [hướng dẫn API keys của Supabase](https://supabase.com/docs/guides/getting-started/api-keys).
 

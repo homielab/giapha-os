@@ -4,9 +4,9 @@ import {
   translateWith,
   type TranslationValues
 } from './interpolate'
-import { getLocale, locales, type Locale } from './locales'
+import { defaultLocale, getLocale, locales, type Locale } from './locales'
 
-export { getLocale, interpolate, locales }
+export { defaultLocale, getLocale, interpolate, locales }
 export type { Locale, TranslationValues }
 
 export const messages = {

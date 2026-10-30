@@ -246,7 +246,13 @@ The image includes `docs/schema.sql` and `docs/migrations/`, so `/setup` and `/d
 
 ### Notifications and approving new accounts
 
-After a user confirms their email, the account remains **pending approval**. The system sends administrators a one-time approval link that is valid for 7 days. Administrators can also sign in and approve the account from **Manage users**.
+A new account stays **pending approval** until an administrator approves it. The system emails administrators a one-time approval link, valid for 7 days, as soon as the account first signs in:
+
+- **Supabase "Confirm email" on** (the default): after the user clicks the confirmation link in their email.
+- **Supabase "Confirm email" off**: right after signing up, because the user is signed in at once.
+- **SSO**: when the user comes back from Google/Facebook.
+
+Each account gets one email while its link is valid; a pending account that signs in again after the link expired sends administrators a new one. The email is always in Vietnamese (the app's default language), not in the language the new user picked. Administrators can also sign in and approve the account from **Manage users**.
 
 To enable email notifications on Vercel, configure `APP_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, and `RESEND_FROM_EMAIL`. `ADMIN_NOTIFICATION_EMAIL` is optional; when omitted, the system uses the email addresses of active administrators. Secret/service-role keys can bypass Row Level Security (RLS), so store them only on the server and never put them in source code, the browser, or Git. See the [Supabase API keys guide](https://supabase.com/docs/guides/getting-started/api-keys).
 

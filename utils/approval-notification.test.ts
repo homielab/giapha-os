@@ -8,6 +8,8 @@ import {
   test
 } from 'bun:test'
 
+import { defaultLocale } from '@/lib/i18n/messages'
+
 import {
   fakeSupabase,
   type FakeCall,
@@ -39,7 +41,8 @@ mock.module('@/utils/supabase/admin', () => ({
   }
 }))
 
-const { notifyAdminOfPendingUser } = await import('./approval-notification')
+const { notifyAdminIfPending, notifyAdminOfPendingUser } =
+  await import('./approval-notification')
 
 const ENV_KEYS = [
   'RESEND_API_KEY',
@@ -279,20 +282,16 @@ describe('notifyAdminOfPendingUser request handling', () => {
 })
 
 describe('notifyAdminOfPendingUser content', () => {
-  test('is Vietnamese by default and English on request', async () => {
+  test('is always in the default language of the app', async () => {
+    // The recipient is an administrator, so the sign-up's language does not
+    // matter: no locale is taken from the caller.
     await notifyAdminOfPendingUser(user)
-    await notifyAdminOfPendingUser({ ...user, locale: 'en' })
+    expect(defaultLocale).toBe('vi')
     expect(sent[0].body.subject).toBe(
       'Có tài khoản mới đang chờ duyệt: new@example.com'
     )
-    expect(sent[1].body.subject).toBe(
-      'A new account is waiting for approval: new@example.com'
-    )
     expect(String(sent[0].body.html)).toContain('Xem và duyệt tài khoản')
-    expect(String(sent[1].body.html)).toContain(
-      'Review and approve the account'
-    )
-    expect(String(sent[1].body.text)).toContain('new@example.com')
+    expect(String(sent[0].body.text)).toContain('new@example.com')
   })
 
   test('escapes the email address in the HTML body', async () => {
@@ -303,5 +302,56 @@ describe('notifyAdminOfPendingUser content', () => {
     const html = String(sent[0].body.html)
     expect(html).not.toContain('<script>')
     expect(html).toContain('&lt;script&gt;')
+  })
+})
+
+describe('notifyAdminIfPending', () => {
+  const pending = { role: 'member', is_active: false }
+
+  test('mails once for a member waiting for approval, not on later sign-ins', async () => {
+    // A database that remembers the approval request created by the first call.
+    let stored: Record<string, unknown> | null = null
+    respond = (call) => {
+      if (call.table === 'profiles') return { data: [{ id: 'a1' }] }
+      if (call.op === 'select' && !stored) return { data: null }
+      if (call.op === 'select') return { data: stored }
+      if (call.op === 'upsert') {
+        stored = { ...(call.payload as object), id: 'req1' }
+        return { data: { id: 'req1' } }
+      }
+      return { data: [{ id: 'req1' }] }
+    }
+    expect(await notifyAdminIfPending(user, pending)).toEqual({
+      sent: true,
+      configured: true
+    })
+    expect(await notifyAdminIfPending(user, pending)).toEqual({
+      sent: false,
+      configured: true,
+      reason: 'already_notified'
+    })
+    expect(sent).toHaveLength(1)
+    expect(sent[0].body.to).toEqual(['one@example.com'])
+  })
+
+  test('does nothing for admins, active accounts or a missing profile or email', async () => {
+    for (const [who, profile] of [
+      [user, { role: 'admin', is_active: false }],
+      [user, { role: 'admin', is_active: true }],
+      [user, { role: 'member', is_active: true }],
+      [user, { role: 'editor', is_active: false }],
+      [user, null],
+      [{ id: 'u1', email: null }, pending],
+      [null, pending]
+    ] as const) {
+      calls = []
+      expect(await notifyAdminIfPending(who, profile)).toEqual({
+        sent: false,
+        configured: true,
+        reason: 'not_pending'
+      })
+      expect(calls).toHaveLength(0)
+    }
+    expect(sent).toHaveLength(0)
   })
 })

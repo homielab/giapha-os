@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useSyncExternalStore } from 'react'
 
+import { notifyAdminIfAccountPending } from '@/app/actions/user'
 import config from '@/app/config'
 import {
   AuthAlerts,
@@ -88,6 +89,12 @@ export default function LoginPage() {
   const nextPath = () =>
     safeNextPath(new URLSearchParams(window.location.search).get('next'))
 
+  // Mails the administrators when this account still waits for approval (the
+  // password sign-in and a sign-up without email confirmation skip
+  // /auth/callback). A failure never blocks the sign-in.
+  const notifyIfPending = () =>
+    notifyAdminIfAccountPending().catch((err: unknown) => console.error(err))
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -105,6 +112,7 @@ export default function LoginPage() {
         if (error) {
           setError(error.message)
         } else {
+          await notifyIfPending()
           router.push(nextPath())
           router.refresh()
         }
@@ -137,6 +145,7 @@ export default function LoginPage() {
           setError(error.message)
         } else {
           if (data.session) {
+            await notifyIfPending()
             router.push(nextPath())
             router.refresh()
           } else {
@@ -148,6 +157,7 @@ export default function LoginPage() {
               })
 
             if (!signInError && signInData.session) {
+              await notifyIfPending()
               router.push(nextPath())
               router.refresh()
             } else {

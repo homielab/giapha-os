@@ -1,4 +1,4 @@
-import { getLocale, Locale, translate } from '@/lib/i18n/messages'
+import { defaultLocale, translate } from '@/lib/i18n/messages'
 import { parseSiteOrigin } from '@/lib/siteUrl'
 import {
   APPROVAL_TOKEN_TTL_DAYS,
@@ -11,8 +11,16 @@ import { getAdminSupabase } from '@/utils/supabase/admin'
 interface PendingUser {
   id: string
   email: string
-  // Language of the email; defaults to Vietnamese.
-  locale?: Locale
+}
+
+interface SignedInUser {
+  id: string
+  email?: string | null
+}
+
+interface ProfileStatus {
+  role: string
+  is_active: boolean
 }
 
 interface NotificationResult {
@@ -66,12 +74,25 @@ async function getAdminEmails(supabase: ReturnType<typeof getAdminSupabase>) {
     .filter((email): email is string => Boolean(email))
 }
 
+// Mails the administrators when a signed-in user still waits for approval:
+// a member whose account is not active yet. Called after every way an account
+// can sign in (email confirmation or SSO callback, password sign-in, sign-up
+// without email confirmation); notifyAdminOfPendingUser keeps it to one email
+// per open approval request.
+export async function notifyAdminIfPending(
+  user: SignedInUser | null,
+  profile: ProfileStatus | null
+): Promise<NotificationResult> {
+  if (!user?.email || profile?.role !== 'member' || profile.is_active) {
+    return { sent: false, configured: true, reason: 'not_pending' }
+  }
+  return notifyAdminOfPendingUser({ id: user.id, email: user.email })
+}
+
 export async function notifyAdminOfPendingUser({
   id,
-  email,
-  locale: requestedLocale
+  email
 }: PendingUser): Promise<NotificationResult> {
-  const locale = getLocale(requestedLocale)
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.RESEND_FROM_EMAIL
   // Never derive an approval URL from the request Host header. APP_URL must be
@@ -154,7 +175,7 @@ export async function notifyAdminOfPendingUser({
   const t = (
     key: Parameters<typeof translate>[1],
     values?: Record<string, string | number>
-  ) => translate(locale, key, values)
+  ) => translate(defaultLocale, key, values)
   const subject = t('approvalEmailSubject', { email })
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#292524;max-width:640px">
