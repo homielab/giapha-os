@@ -1,4 +1,6 @@
 export { InvalidAvatarError, LaterStepError } from './errors'
+export { isFormDirty } from './dirty'
+export type { MemberFormValues } from './dirty'
 export { finishMemberSave } from './finish'
 export { loadSavedRelatives } from './relatives'
 export type { SavedRelatives } from './relatives'

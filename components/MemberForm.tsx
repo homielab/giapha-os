@@ -5,6 +5,7 @@ import { User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import DiscardChangesDialog from '@/components/member/DiscardChangesDialog'
 import MemberAvatarField from '@/components/member/MemberAvatarField'
 import MemberDeathFields from '@/components/member/MemberDeathFields'
 import MemberFormFooter from '@/components/member/MemberFormFooter'
@@ -17,6 +18,7 @@ import { useI18n } from '@/lib/i18n/useI18n'
 import { Gender, Person } from '@/types'
 import {
   finishMemberSave,
+  isFormDirty,
   MemberSaveWarning,
   submitMemberForm
 } from '@/utils/memberForm'
@@ -136,6 +138,55 @@ export default function MemberForm({
     init.currentResidence
   )
 
+  const dirty = isFormDirty(
+    init,
+    {
+      fullName,
+      otherNames,
+      gender,
+      birthYear,
+      birthMonth,
+      birthDay,
+      deathYear: death.deathYear,
+      deathMonth: death.deathMonth,
+      deathDay: death.deathDay,
+      deathLunarYear: death.deathLunarYear,
+      deathLunarMonth: death.deathLunarMonth,
+      deathLunarDay: death.deathLunarDay,
+      isDeceased,
+      burialPlace,
+      isInLaw,
+      birthOrder,
+      generation,
+      note,
+      phoneNumber,
+      occupation,
+      currentResidence
+    },
+    avatarFile !== null || removeExistingAvatar
+  )
+  // Set once a save finished, so leaving afterwards is not questioned.
+  const [saved, setSaved] = useState(false)
+  const [askDiscard, setAskDiscard] = useState(false)
+  const guardLeave = dirty && !saved
+
+  // Ask the browser to confirm reload / tab close while there are changes.
+  useEffect(() => {
+    if (!guardLeave) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [guardLeave])
+
+  const handleSuccess = (personId: string) => {
+    setSaved(true)
+    finishMemberSave({ router, onSuccess }, personId)
+  }
+  const leave = () => (onCancel ? onCancel() : router.back())
+
   const submit = (confirmed: boolean) => {
     void submitMemberForm({
       confirmed,
@@ -187,7 +238,7 @@ export default function MemberForm({
       setWarning,
       setConfirmation,
       setChanged,
-      onSuccess,
+      onSuccess: handleSuccess,
       onCreated: setCreatedPerson,
       onUpdated: setSavedUpdatedAt
     })
@@ -294,7 +345,7 @@ export default function MemberForm({
         onContinue={() => {
           if (!warning) return
           setWarning(null)
-          finishMemberSave({ router, onSuccess }, warning.personId)
+          handleSuccess(warning.personId)
         }}
         confirmation={confirmation}
         onConfirm={() => submit(true)}
@@ -302,8 +353,18 @@ export default function MemberForm({
         loading={loading}
         processingAvatar={processingAvatar}
         isEditing={isEditing}
-        onCancel={() => (onCancel ? onCancel() : router.back())}
+        onCancel={() => (guardLeave ? setAskDiscard(true) : leave())}
       />
+      {askDiscard && (
+        <DiscardChangesDialog
+          onKeepEditing={() => setAskDiscard(false)}
+          onDiscard={() => {
+            setAskDiscard(false)
+            setSaved(true)
+            leave()
+          }}
+        />
+      )}
     </form>
   )
 }

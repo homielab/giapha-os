@@ -90,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The member form asks "Discard changes?" before Cancel throws away what you typed, and the browser asks before a reload or tab close while there are unsaved changes.
 - Screen readers now name the gallery's Timeline/Grid buttons on narrow screens and hear which one is on, and they announce an error when deleting a member fails.
 - Ctrl+K search and the person pickers match each typed word and the birth or death year like the member list: `nguyen an` finds Nguyễn Văn An and `tran 1950` finds Trần born or died in 1950.
 - Screen readers read each person's name once on member cards, the mind map, the tree, the relationship list and the person picker (the photo next to the name no longer repeats it), and now say the gender (Nam/Nữ) on member cards and in the person picker.
