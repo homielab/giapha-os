@@ -285,8 +285,9 @@ The login screen supports Google and Facebook through Supabase Auth. To enable t
 2. Create the corresponding OAuth app in Google Cloud Console or Facebook Developers.
 3. In the OAuth app configuration, set the Supabase callback URL, which looks like:
    `https://<project-ref>.supabase.co/auth/v1/callback`
-4. In Supabase → **Authentication → URL Configuration**, add the application callback:
-   `https://<your-domain>/auth/callback`
+4. In Supabase → **Authentication → URL Configuration**, set **Site URL** to `https://<your-domain>`. If the app also runs on another domain (a preview, `localhost`…), add that domain to **Redirect URLs** as:
+   `https://<other-domain>/**`
+   The callback carries the page to open (`/auth/callback?next=…`, when someone signs in from a shared member link), so an exact `https://<domain>/auth/callback` entry does not match; when nothing matches, Supabase sends the user to the Site URL instead of that page.
 
 Accounts registered through SSO are also created as **pending admin approval**, just like email registrations. See the official guides for [Google](https://supabase.com/docs/guides/auth/social-login/auth-google) and [Facebook](https://supabase.com/docs/guides/auth/social-login/auth-facebook).
 

@@ -101,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Signing in with Google or Facebook from a shared member link now opens that page, as password sign-in already did, instead of the dashboard home. Self-hosted apps on a domain other than the Supabase Site URL need `https://<domain>/**` in Redirect URLs (see README).
 - A first visit without a saved language now opens in English when the browser prefers English (Vietnamese otherwise); a language picked in the app still wins.
 - `.env.example` no longer quotes values, so `docker run --env-file` no longer keeps the quotes in the site name, sender email or app URL (which broke approval emails and the sitemap).
 - Member page: parents are listed father first, spouses and children in the same order as the tree (children with the same birth order by birth date); kinship path lines such as "is the husband of …" end with a period and no longer capitalise mid-sentence; the family book title picks a surname when two are equally common (earliest generation, then by name) instead of leaving it empty.

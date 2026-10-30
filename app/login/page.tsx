@@ -21,7 +21,7 @@ import SsoButtons from '@/components/auth/SsoButtons'
 import Footer from '@/components/Footer'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useI18n } from '@/lib/i18n/useI18n'
-import { safeNextPath } from '@/utils/safeNextPath'
+import { oauthRedirectTo, safeNextPath } from '@/utils/safeNextPath'
 import { createClient } from '@/utils/supabase/client'
 
 export default function LoginPage() {
@@ -66,7 +66,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: oauthRedirectTo(window.location.origin, nextPath())
         }
       })
 

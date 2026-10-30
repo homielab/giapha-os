@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import { notifyAdminIfPending } from '@/utils/approval-notification'
+import { safeNextPath } from '@/utils/safeNextPath'
 import { createClient } from '@/utils/supabase/server'
 
 export async function GET(request: Request) {
@@ -41,5 +42,8 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+  // The page a shared link pointed to (?next= set by /login), same-site
+  // dashboard pages only; otherwise /dashboard.
+  const next = safeNextPath(requestUrl.searchParams.get('next'))
+  return NextResponse.redirect(new URL(next, requestUrl.origin))
 }

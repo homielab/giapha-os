@@ -295,8 +295,9 @@ Màn hình đăng nhập đã hỗ trợ Google và Facebook thông qua Supabase
 2. Tạo OAuth app tương ứng trên Google Cloud Console/Facebook Developers.
 3. Trong cấu hình OAuth app, đặt callback URL do Supabase cung cấp, có dạng:
    `https://<project-ref>.supabase.co/auth/v1/callback`
-4. Trong Supabase → **Authentication → URL Configuration**, thêm callback của ứng dụng:
-   `https://<domain-cua-ban>/auth/callback`
+4. Trong Supabase → **Authentication → URL Configuration**, đặt **Site URL** là `https://<domain-cua-ban>`. Nếu ứng dụng chạy ở domain khác Site URL (bản preview, `localhost`…), thêm domain đó vào **Redirect URLs** dạng:
+   `https://<domain-khac>/**`
+   Callback mang theo trang cần mở (`/auth/callback?next=…`, khi người dùng đăng nhập từ link thành viên được chia sẻ), nên mục chính xác `https://<domain>/auth/callback` không khớp; khi không khớp, Supabase đưa người dùng về Site URL thay vì trang đó.
 
 Tài khoản đăng ký bằng SSO cũng được tạo ở trạng thái **chờ admin duyệt**, giống đăng ký bằng email. Xem thêm hướng dẫn chính thức cho [Google](https://supabase.com/docs/guides/auth/social-login/auth-google) và [Facebook](https://supabase.com/docs/guides/auth/social-login/auth-facebook).
 

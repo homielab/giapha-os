@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { nextParamFor, safeNextPath } from './safeNextPath'
+import { nextParamFor, oauthRedirectTo, safeNextPath } from './safeNextPath'
 
 describe('safeNextPath', () => {
   test('keeps dashboard pages with their query and hash', () => {
@@ -73,5 +73,34 @@ describe('nextParamFor', () => {
 
   test('leaves out the dashboard home', () => {
     expect(nextParamFor('/dashboard', '')).toBeNull()
+  })
+})
+
+describe('oauthRedirectTo', () => {
+  const origin = 'https://giapha.example'
+
+  test('carries a shared dashboard page to the callback', () => {
+    expect(oauthRedirectTo(origin, '/dashboard/members/abc-123')).toBe(
+      'https://giapha.example/auth/callback?next=%2Fdashboard%2Fmembers%2Fabc-123'
+    )
+    expect(oauthRedirectTo(origin, '/dashboard/events?view=list#today')).toBe(
+      'https://giapha.example/auth/callback?next=%2Fdashboard%2Fevents%3Fview%3Dlist%23today'
+    )
+  })
+
+  test('keeps the plain callback for the dashboard home or no next', () => {
+    for (const next of [null, undefined, '', '/dashboard']) {
+      expect(oauthRedirectTo(origin, next)).toBe(
+        'https://giapha.example/auth/callback'
+      )
+    }
+  })
+
+  test('drops pages on other sites', () => {
+    for (const next of ['//evil.com', 'https://evil.com', '/\\evil.com']) {
+      expect(oauthRedirectTo(origin, next)).toBe(
+        'https://giapha.example/auth/callback'
+      )
+    }
   })
 })

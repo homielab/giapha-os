@@ -45,3 +45,19 @@ export function nextParamFor(pathname: string, search: string): string | null {
   const path = pathname + search
   return path === DEFAULT_NEXT_PATH ? null : path
 }
+
+/**
+ * Where Supabase sends the browser back after Google/Facebook sign-in:
+ * /auth/callback, carrying `next` so the callback can open the page a shared
+ * link pointed to. The dashboard home adds nothing, so that URL is unchanged.
+ */
+export function oauthRedirectTo(
+  origin: string,
+  next: string | null | undefined
+): string {
+  const path = safeNextPath(next)
+  const callback = `${origin}/auth/callback`
+  return path === DEFAULT_NEXT_PATH
+    ? callback
+    : `${callback}?next=${encodeURIComponent(path)}`
+}
