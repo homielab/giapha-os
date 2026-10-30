@@ -77,4 +77,29 @@ describe('kinship text', () => {
       describeKinship({ kind: 'siblings', commonAncestor: 'Ann' }, en)
     ).toBe('Siblings (Common ancestor: Ann)')
   })
+
+  test('every path line is a sentence: a period, no capital mid-sentence', () => {
+    const steps = [
+      { kind: 'generations', name: 'Bo', ancestor: 'Cy', depth: 2 },
+      { kind: 'spouses', nameA: 'Bo', nameB: 'Cy' },
+      { kind: 'childOf', name: 'Bo', parent: 'Cy' },
+      { kind: 'spouseOf', name: 'Bo', spouse: 'Cy', spouseRole: 'husband' },
+      { kind: 'spouseOf', name: 'Bo', spouse: 'Cy', spouseRole: 'wife' },
+      { kind: 'spouseOf', name: 'Bo', spouse: 'Cy', spouseRole: 'spouse' }
+    ] as const
+    for (const t of [en, vi]) {
+      for (const step of steps) {
+        const text = describePathStep(step, t)
+        expect(text).toEndWith('.')
+        const rest = text.replace(/^Bo /, '').replace(/Bo|Cy/g, '')
+        expect(rest).not.toMatch(/\p{Lu}/u)
+      }
+    }
+    expect(
+      describePathStep(
+        { kind: 'spouseOf', name: 'Bình', spouse: 'An', spouseRole: 'husband' },
+        vi
+      )
+    ).toBe('Bình là chồng của An.')
+  })
 })

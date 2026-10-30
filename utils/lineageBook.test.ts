@@ -87,15 +87,28 @@ describe('mostCommonSurname', () => {
     ).toBe('Nguyễn')
   })
 
-  test('a tie with no generation gives no surname', () => {
+  test('a tie with no generation goes to the first surname by name', () => {
     expect(
       mostCommonSurname([
-        person({ full_name: 'Nguyễn A' }),
-        person({ full_name: 'Nguyễn B' }),
         person({ full_name: 'Trần C' }),
-        person({ full_name: 'Trần D' })
+        person({ full_name: 'Trần D' }),
+        person({ full_name: 'Nguyễn A' }),
+        person({ full_name: 'Nguyễn B' })
       ])
-    ).toBeNull()
+    ).toBe('Nguyễn')
+  })
+
+  test('a tie within the earliest generation goes to the first surname by name', () => {
+    expect(
+      mostCommonSurname([
+        person({ full_name: 'Trần A', generation: 1 }),
+        person({ full_name: 'Trần B', generation: 2 }),
+        person({ full_name: 'Lê C', generation: 1 }),
+        person({ full_name: 'Lê D', generation: 2 }),
+        person({ full_name: 'Đỗ E', generation: 3 }),
+        person({ full_name: 'Đỗ F', generation: 3 })
+      ])
+    ).toBe('Lê')
   })
 })
 

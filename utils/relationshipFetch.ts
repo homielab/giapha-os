@@ -13,10 +13,11 @@ import { PERSON_LIST_COLUMNS } from './personColumns'
 
 type Translate = (key: TranslationKey, values?: TranslationValues) => string
 
-// Relationship columns read here: the link and its note. The other person is
+// Relationship columns read here: the link, its note and when it was added
+// (spouse order). The other person is
 // embedded with the list columns only (no `note`, `created_at`), which is all
 // the relationship list, the bulk-add form and the stats read.
-const LINK_COLUMNS = 'id, type, note'
+const LINK_COLUMNS = 'id, type, note, created_at'
 const targetColumns = (side: 'person_a' | 'person_b') =>
   `${LINK_COLUMNS}, target:persons!${side}(${PERSON_LIST_COLUMNS})`
 // The embedded person carries only PERSON_LIST_COLUMNS.
@@ -24,6 +25,7 @@ interface LinkRow {
   id: string
   type: RelationshipType
   note: string | null
+  created_at?: string | null
   target: Person
 }
 interface MarriageRow extends Omit<LinkRow, 'target'> {
@@ -76,7 +78,8 @@ export async function fetchRelationshipData(
       type: r.type,
       direction,
       targetPerson: r.target,
-      note: r.note
+      note: r.note,
+      createdAt: r.created_at
     })
   })
 
@@ -92,7 +95,8 @@ export async function fetchRelationshipData(
       type: r.type,
       direction,
       targetPerson: r.target,
-      note: r.note
+      note: r.note,
+      createdAt: r.created_at
     })
   })
 

@@ -6,6 +6,8 @@ export interface EnrichedRelationship {
   direction: 'parent' | 'child' | 'spouse' | 'child_in_law'
   targetPerson: import('@/types').Person
   note: string | null
+  /** When the link was added; orders spouses like the tree. */
+  createdAt?: string | null
 }
 
 export interface RelationshipStats {

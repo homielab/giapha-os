@@ -6,6 +6,7 @@ import DefaultAvatar from '@/components/DefaultAvatar'
 import { EnrichedRelationship } from '@/components/relationship/relationshipTypes'
 import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { sortRelationshipGroup } from '@/utils/relationshipOrder'
 import { getAvatarBg } from '@/utils/styleHelpers'
 
 interface RelationshipListProps {
@@ -28,31 +29,11 @@ export default function RelationshipList({
   const avatarUrl = useAvatarUrl()
   const { t } = useI18n()
 
-  const groupByType = (type: string) => {
-    const items = relationships.filter((r) => r.direction === type)
-
-    // Nếu là nhóm con cái → sắp xếp theo birth_order
-    if (type === 'child') {
-      return items.sort((a, b) => {
-        const orderA = a.targetPerson.birth_order
-        const orderB = b.targetPerson.birth_order
-
-        if (orderA != null && orderB != null) {
-          return orderA - orderB
-        }
-
-        if (orderA != null) return -1
-        if (orderB != null) return 1
-
-        return (
-          (a.targetPerson.birth_year ?? 9999) -
-          (b.targetPerson.birth_year ?? 9999)
-        )
-      })
-    }
-
-    return items
-  }
+  const groupByType = (type: (typeof GROUP_ORDER)[number]) =>
+    sortRelationshipGroup(
+      type,
+      relationships.filter((r) => r.direction === type)
+    )
 
   return (
     <>

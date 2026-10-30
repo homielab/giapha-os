@@ -147,7 +147,9 @@ export function mostCommonSurname(persons: LineageBookPerson[]): string | null {
   if (bestCount < 2) return null
   const leaders = [...counts].filter(([, c]) => c === bestCount).map(([n]) => n)
   if (leaders.length === 1) return leaders[0]
-  // Tie: the surname of the earliest generation (the founder's line) wins.
+  // Tie: the surnames in the earliest generation that has any of them win;
+  // still tied (or no generation known) → the first by name.
+  let candidates = leaders
   const ranked = blood
     .filter((person) => person.generation != null)
     .sort((a, b) => (a.generation as number) - (b.generation as number))
@@ -155,13 +157,13 @@ export function mostCommonSurname(persons: LineageBookPerson[]): string | null {
     const first = surnameOf(person)
     if (first && leaders.includes(first)) {
       const sameGen = ranked.filter((p) => p.generation === person.generation)
-      const names = new Set(
-        sameGen.map(surnameOf).filter((n) => n && leaders.includes(n))
+      candidates = leaders.filter((n) =>
+        sameGen.some((p) => surnameOf(p) === n)
       )
-      return names.size === 1 ? first : null
+      break
     }
   }
-  return null
+  return [...candidates].sort((a, b) => a.localeCompare(b, 'vi'))[0]
 }
 
 /**
