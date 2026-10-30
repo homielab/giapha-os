@@ -140,12 +140,12 @@ describe('great-uncles and great-aunts', () => {
     }
   )
 
-  test('maternal side uses Cậu', () => {
+  test('grandmother’s brother is Ông Cậu, on the father’s (paternal) side', () => {
     const r = greatUncle('male', 1, 2, 'female')
     expect([r.aCallsB, r.bCallsA]).toEqual(['Ông Cậu', 'Chắt'])
     expect(r.description).toMatchObject({
       kind: 'upperBranch',
-      side: 'maternal'
+      side: 'paternal'
     })
   })
 
@@ -340,5 +340,56 @@ describe('spouses of uncles and aunts', () => {
   ])('the nephew calls %s "%s" and is called Cháu', (id, term) => {
     expect(terms('chau', id, persons, rels)).toEqual([term, 'Cháu'])
     expect(terms(id, 'chau', persons, rels)).toEqual(['Cháu', term])
+  })
+})
+
+describe('paternal or maternal side follows the younger person’s own parent', () => {
+  // cụ → ông/bà → bố/mẹ → B
+  function line(
+    g1: PersonNode['gender'],
+    g2: PersonNode['gender'],
+    g3: PersonNode['gender']
+  ) {
+    const persons = [
+      person('C', g1),
+      person('O', g2),
+      person('M', g3),
+      person('B', 'male')
+    ]
+    const rels = [child('C', 'O'), child('O', 'M'), child('M', 'B')]
+    return { persons, rels }
+  }
+
+  test('father of the maternal grandfather is ngoại, both directions', () => {
+    const { persons, rels } = line('male', 'male', 'female')
+    expect(terms('B', 'C', persons, rels)[0]).toBe('Cụ ông (ông cố) ngoại')
+    expect(terms('C', 'B', persons, rels)[1]).toBe('Cụ ông (ông cố) ngoại')
+  })
+
+  test('mother of the paternal grandfather is nội, both directions', () => {
+    const { persons, rels } = line('female', 'male', 'male')
+    expect(terms('B', 'C', persons, rels)[0]).toBe('Cụ bà (bà cố) nội')
+    expect(terms('C', 'B', persons, rels)[1]).toBe('Cụ bà (bà cố) nội')
+  })
+
+  test('great-uncle through the mother is on the maternal side', () => {
+    const persons = [
+      person('G', 'male'),
+      person('X', 'male', { birth_order: 1 }),
+      person('M', 'female'),
+      person('A', 'male'),
+      person('U', 'male', { birth_order: 2 })
+    ]
+    const rels = [
+      child('G', 'X'),
+      child('X', 'M'),
+      child('M', 'A'),
+      child('G', 'U')
+    ]
+    const r = computeKinship(persons[3], persons[4], persons, rels)!
+    expect(r.description).toMatchObject({
+      kind: 'upperBranch',
+      side: 'maternal'
+    })
   })
 })
