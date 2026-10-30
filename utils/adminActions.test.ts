@@ -83,7 +83,8 @@ mock.module('@/lib/i18n/server', () => ({
 mock.module('next/cache', () => ({ revalidatePath }))
 mock.module('postgres', () => ({ default: postgres }))
 
-const { exportData, importData } = await import('@/app/actions/data')
+const { appendImportData, exportData, importData } =
+  await import('@/app/actions/data')
 const { checkTreeData } = await import('@/app/actions/dataCheck')
 const { scanPossibleDuplicates } = await import('@/app/actions/duplicateScan')
 const { applyLunarRecompute, previewLunarRecompute } =
@@ -150,6 +151,7 @@ afterEach(() => {
 const adminActions = {
   exportData: () => exportData(),
   importData: () => importData(backup()),
+  appendImportData: () => appendImportData(backup()),
   checkTreeData: () => checkTreeData(),
   scanPossibleDuplicates: () => scanPossibleDuplicates(),
   previewLunarRecompute: () => previewLunarRecompute(),
@@ -264,6 +266,91 @@ describe('importData', () => {
     const result = await importData(backup())
     expect(result).toEqual({
       error: `${vi.importPersonsError} ${vi.restoreUpgradeDatabase}`
+    })
+    expect(revalidatePath).not.toHaveBeenCalled()
+  })
+})
+
+describe('appendImportData', () => {
+  beforeEach(() => {
+    isAdmin = true
+  })
+
+  function branch() {
+    const file = backup()
+    file.persons.push({
+      ...file.persons[0],
+      id: B,
+      full_name: 'Nguyễn Văn Bình',
+      avatar_url: `${B}/a.jpg`
+    })
+    file.relationships.push({
+      type: 'biological_child',
+      person_a: A,
+      person_b: B
+    })
+    return file
+  }
+
+  test('refuses an invalid file before the database', async () => {
+    const result = await appendImportData({ persons: [] } as never)
+    expect('error' in result).toBe(true)
+    expect(getSupabase).not.toHaveBeenCalled()
+  })
+
+  test('inserts the file with new ids through append_import only', async () => {
+    const counts = { persons: 2, relationships: 1 }
+    respond = () => ({ data: counts })
+    const result = await appendImportData(branch())
+    expect(result).toMatchObject({ success: true, imported: counts })
+    expect(calls.map((c) => `${c.op}:${c.table}`)).toEqual([
+      'rpc:rpc:append_import'
+    ])
+    const { payload } = calls[0].payload as {
+      payload: {
+        persons: { id: string; avatar_url: string | null }[]
+        relationships: { person_a: string; person_b: string }[]
+      }
+    }
+    const ids = payload.persons.map((p) => p.id)
+    expect(ids).not.toContain(A)
+    expect(ids).not.toContain(B)
+    expect(payload.persons.every((p) => p.avatar_url === null)).toBe(true)
+    expect(payload.relationships).toMatchObject([
+      { person_a: ids[0], person_b: ids[1] }
+    ])
+    expect(revalidatePath).toHaveBeenCalledWith('/dashboard/members')
+  })
+
+  test('two imports of one file get different ids', async () => {
+    respond = () => ({ data: { persons: 2, relationships: 1 } })
+    await appendImportData(branch())
+    const first = (
+      calls[0].payload as { payload: { persons: { id: string }[] } }
+    ).payload.persons
+    await appendImportData(branch())
+    const second = (
+      calls[0].payload as { payload: { persons: { id: string }[] } }
+    ).payload.persons
+    expect(second.some((p) => first.some((q) => q.id === p.id))).toBe(false)
+  })
+
+  test('asks for the upgrade instead of deleting when the function is missing', async () => {
+    respond = (call) =>
+      call.op === 'rpc'
+        ? { error: { message: 'not found', code: 'PGRST202' } }
+        : { data: [] }
+    expect(await appendImportData(branch())).toEqual({
+      error: vi.appendImportUpgradeDatabase
+    })
+    expect(calls.map((c) => c.op)).toEqual(['rpc'])
+    expect(revalidatePath).not.toHaveBeenCalled()
+  })
+
+  test('reports a failed import', async () => {
+    respond = () => ({ error: { message: 'boom', code: '23505' } })
+    expect(await appendImportData(branch())).toEqual({
+      error: vi.appendImportError
     })
     expect(revalidatePath).not.toHaveBeenCalled()
   })

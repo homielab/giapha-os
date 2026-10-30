@@ -2,7 +2,7 @@
 
 import { CopyCheck } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 
 import {
   scanPossibleDuplicates,
@@ -13,6 +13,7 @@ import DataCard from '@/components/DataCard'
 import ImportStatusMessage from '@/components/ImportStatusMessage'
 import MergePersonsModal from '@/components/MergePersonsModal'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { onDuplicateScanRequest } from '@/utils/duplicateScanTrigger'
 import { deathYearOf } from '@/utils/memberSearch'
 
 export default function DuplicateScan() {
@@ -22,6 +23,7 @@ export default function DuplicateScan() {
   const [error, setError] = useState<string | null>(null)
   const [mergingIds, setMergingIds] = useState<string[] | null>(null)
   const [mergedNotice, setMergedNotice] = useState<string | null>(null)
+  const scanButtonRef = useRef<HTMLButtonElement>(null)
 
   const handleScan = async () => {
     setIsScanning(true)
@@ -42,6 +44,15 @@ export default function DuplicateScan() {
       setIsScanning(false)
     }
   }
+
+  // "Scan for duplicates now" after adding a file to the tree.
+  const onScanRequest = useEffectEvent(() => {
+    const button = scanButtonRef.current
+    button?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    button?.focus({ preventScroll: true })
+    if (!isScanning) void handleScan()
+  })
+  useEffect(() => onDuplicateScanRequest(() => onScanRequest()), [])
 
   /** Drops the merged pair from the list; the keeper gets a fresh count on the next scan. */
   const handleMerged = (ids: string[], summary: MergeSummary) => {
@@ -75,6 +86,7 @@ export default function DuplicateScan() {
       description={t('duplicateScanDescription')}
       accent='amber'>
       <button
+        ref={scanButtonRef}
         onClick={handleScan}
         disabled={isScanning}
         className='btn w-full sm:w-auto'>

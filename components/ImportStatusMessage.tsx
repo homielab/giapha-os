@@ -2,6 +2,7 @@
 
 import { AnimatePresence, m } from 'framer-motion'
 import { AlertTriangle, CheckCircle2 } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 import { noticeAria } from '@/utils/a11y'
 
@@ -11,9 +12,12 @@ interface ImportStatus {
 }
 
 export default function ImportStatusMessage({
-  status
+  status,
+  action
 }: {
   status: ImportStatus | null
+  /** A follow-up button shown after the message. */
+  action?: ReactNode
 }) {
   return (
     <AnimatePresence>
@@ -36,6 +40,7 @@ export default function ImportStatusMessage({
           <p className='text-sm font-medium whitespace-pre-line'>
             {status.message}
           </p>
+          {action ? <div className='ml-auto shrink-0'>{action}</div> : null}
         </m.div>
       )}
     </AnimatePresence>

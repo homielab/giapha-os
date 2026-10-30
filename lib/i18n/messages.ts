@@ -767,8 +767,9 @@ export const messages = {
     exportCsv: 'Xuất CSV (Zip)',
     restoreData: 'Phục hồi dữ liệu',
     restoreDataDescription:
-      'Khôi phục cây gia phả từ file đã sao lưu (.json, .ged, hoặc .zip).',
-    restoreWarning: 'Cảnh báo: Tác vụ này sẽ xoá toàn bộ dữ liệu hiện tại!',
+      'Khôi phục cây gia phả từ file đã sao lưu (.json, .ged, hoặc .zip), hoặc thêm nhánh trong file vào cây hiện tại.',
+    restoreWarning:
+      'Cảnh báo: chế độ "Thay toàn bộ cây" sẽ xoá toàn bộ dữ liệu hiện tại!',
     chooseRestoreFile: 'Chọn file phục hồi',
     restoreConfirmTitle: 'Xác nhận phục hồi',
     restoreConfirmText:
@@ -1302,6 +1303,23 @@ export const messages = {
       '{count} người trong file không có tên; họ sẽ được lưu với tên "{name}", sửa lại sau khi nhập.',
     restoreGedcomDropped:
       'File GEDCOM có {sources} bản ghi nguồn/kho lưu trữ (SOUR/REPO), {missingNotes} ghi chú trỏ tới bản ghi không có trong file và {droppedFamilyNotes} gia đình thiếu vợ hoặc chồng có ghi chú/nguồn. Ứng dụng không lưu nguồn: chỉ tên nguồn được chép vào ghi chú ("Nguồn: …"); ghi chú không tìm thấy và ghi chú/nguồn của gia đình thiếu vợ hoặc chồng sẽ bị bỏ qua.',
+    importModeLegend: 'Cách nhập',
+    importModeReplace: 'Thay toàn bộ cây (xoá dữ liệu hiện tại)',
+    importModeAppend: 'Thêm vào cây hiện tại (giữ dữ liệu cũ)',
+    appendConfirmTitle: 'Thêm vào cây hiện tại',
+    appendConfirmText:
+      'Thành viên, quan hệ, thông tin riêng tư và sự kiện trong file {file} sẽ được thêm vào cây; dữ liệu hiện có giữ nguyên.',
+    appendFileContains:
+      'Sẽ thêm {persons} thành viên, {relationships} quan hệ, {events} sự kiện.',
+    appendNotes:
+      'Ảnh đại diện và thư viện ảnh không được nhập. Người có cả trong file lẫn trong cây sẽ thành hai hồ sơ: sau khi thêm, dùng "Người có thể trùng" để gộp họ, cũng là cách nối nhánh mới vào cây.',
+    appendConfirm: 'Thêm vào cây',
+    appending: 'Đang thêm...',
+    appendSuccess: 'Đã thêm {persons} người, {relationships} quan hệ.',
+    appendImportError: 'Không thêm được, dữ liệu hiện tại giữ nguyên: {error}',
+    appendImportUpgradeDatabase:
+      'Database chưa được nâng cấp nên chưa thêm được vào cây hiện tại. Chạy migration ở trang Nâng cấp hệ thống (/dashboard/upgrade) rồi thử lại.',
+    scanDuplicatesNow: 'Rà trùng ngay',
     memberPossibleDuplicate:
       'Có {count} người trùng tên và năm sinh: {names}. Vẫn tạo thêm người mới?',
     memberMotherDiedBeforeBirth:
@@ -2105,8 +2123,9 @@ export const messages = {
     exportCsv: 'Export CSV (Zip)',
     restoreData: 'Restore data',
     restoreDataDescription:
-      'Restore the family tree from a backup file (.json, .ged, or .zip).',
-    restoreWarning: 'Warning: This will delete all current data!',
+      'Restore the family tree from a backup file (.json, .ged, or .zip), or add the branch in the file to the current tree.',
+    restoreWarning:
+      'Warning: "Replace the whole tree" deletes all current data!',
     chooseRestoreFile: 'Choose restore file',
     restoreConfirmTitle: 'Confirm restore',
     restoreConfirmText:
@@ -2647,6 +2666,24 @@ export const messages = {
       '{count} people in the file have no name; they are saved as "{name}", rename them after the import.',
     restoreGedcomDropped:
       'The GEDCOM file has {sources} source/repository records (SOUR/REPO), {missingNotes} notes pointing to records missing from the file and {droppedFamilyNotes} families without both spouses that have notes or sources. The app does not store sources: only source titles are copied into notes ("Nguồn: …"); missing notes and the notes/sources of families without both spouses are skipped.',
+    importModeLegend: 'How to import',
+    importModeReplace: 'Replace the whole tree (deletes the current data)',
+    importModeAppend: 'Add to the current tree (keeps the current data)',
+    appendConfirmTitle: 'Add to the current tree',
+    appendConfirmText:
+      'The members, relationships, private details and events in {file} will be added to the tree; the current data stays as it is.',
+    appendFileContains:
+      'Adds {persons} members, {relationships} relationships, {events} events.',
+    appendNotes:
+      'Profile photos and the gallery are not imported. People who are both in the file and in the tree end up as two profiles: after adding, use "Possible duplicates" to merge them, which also links the new branch to the tree.',
+    appendConfirm: 'Add to tree',
+    appending: 'Adding...',
+    appendSuccess: 'Added {persons} people and {relationships} relationships.',
+    appendImportError:
+      'Nothing was added, the current data is unchanged: {error}',
+    appendImportUpgradeDatabase:
+      'The database is not upgraded, so the file cannot be added to the current tree yet. Run the migrations on the System upgrade page (/dashboard/upgrade), then try again.',
+    scanDuplicatesNow: 'Scan for duplicates now',
     memberPossibleDuplicate:
       '{count} existing people have the same name and birth year: {names}. Create another one anyway?',
     memberMotherDiedBeforeBirth:

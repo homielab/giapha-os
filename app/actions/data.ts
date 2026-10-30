@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 
 import type { TranslationKey } from '@/lib/i18n/messages'
 import { getServerTranslations } from '@/lib/i18n/server'
+import { remapImportIds } from '@/utils/appendImport'
 import {
   BACKUP_VERSION,
   buildRestorePayload,
@@ -169,6 +170,45 @@ export async function importData(importPayload: ImportPayload) {
   revalidatePath('/dashboard/data')
 
   return { success: true, imported, warning }
+}
+
+/**
+ * Adds an import file (JSON backup, GEDCOM or CSV) to the current tree: every
+ * member and event gets a new id, then the `append_import` database function
+ * inserts the rows in one transaction. Nothing existing is deleted or
+ * changed; people in both the file and the tree end up twice, for the
+ * duplicate scan and merge to handle.
+ */
+export async function appendImportData(importPayload: ImportPayload) {
+  const [{ t }, isAdmin] = await Promise.all([
+    getServerTranslations(),
+    getIsAdmin()
+  ])
+  if (!isAdmin) {
+    return { error: t('dataAccessDenied') }
+  }
+
+  const validationError = validateImportPayload(importPayload, t)
+  if (validationError) return { error: validationError }
+
+  const supabase = await getSupabase()
+  const payload = buildRestorePayload(remapImportIds(importPayload))
+
+  const { data, error } = await supabase.rpc('append_import', { payload })
+  if (error) {
+    // No non-atomic fallback: half an import would be hard to undo by hand.
+    return {
+      error: isMissingRestoreFunction(error)
+        ? t('appendImportUpgradeDatabase')
+        : t('appendImportError', { error: error.message })
+    }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/members')
+  revalidatePath('/dashboard/data')
+
+  return { success: true, imported: data as RestoreCounts }
 }
 
 /**

@@ -1,12 +1,13 @@
 'use client'
 
 import { AnimatePresence, m } from 'framer-motion'
-import { AlertTriangle, Download } from 'lucide-react'
+import { AlertTriangle, Download, UserPlus } from 'lucide-react'
 import { useId } from 'react'
 
 import { useModalA11y } from '@/hooks/useModalA11y'
 import type { Locale } from '@/lib/i18n/messages'
 import { useI18n } from '@/lib/i18n/useI18n'
+import type { ImportMode } from '@/utils/appendImport'
 import {
   formatExportedAt,
   type BackupSummary,
@@ -17,6 +18,9 @@ import type { GedcomImportStats } from '@/utils/gedcom'
 interface ImportConfirmModalProps {
   fileName: string
   summary: BackupSummary
+  /** Replace the whole tree (default) or add the file to it. */
+  mode?: ImportMode
+  onModeChange?: (mode: ImportMode) => void
   warning?: RestoreWarning
   /** Values of the file cut to the length limits. */
   truncated?: number
@@ -38,6 +42,8 @@ interface ImportConfirmModalProps {
 export default function ImportConfirmModal({
   fileName,
   summary,
+  mode = 'replace',
+  onModeChange,
   warning,
   truncated,
   gedcom,
@@ -54,6 +60,7 @@ export default function ImportConfirmModal({
 }: ImportConfirmModalProps) {
   const { t } = useI18n()
   const titleId = useId()
+  const append = mode === 'append'
   const exportedDate = formatExportedAt(summary.exportedAt, locale)
   const dialogRef = useModalA11y(() => {
     if (!isImporting) onCancel()
@@ -80,23 +87,63 @@ export default function ImportConfirmModal({
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           className='relative z-10 w-full max-w-md rounded-2xl border border-stone-200/60 bg-white p-6'>
           <div className='mb-5 flex items-start gap-4'>
-            <div className='mt-1 shrink-0 rounded-full bg-rose-100/50 p-3 text-rose-600'>
-              <AlertTriangle className='size-6' />
+            <div
+              className={`mt-1 shrink-0 rounded-full p-3 ${
+                append
+                  ? 'bg-amber-100/50 text-amber-700'
+                  : 'bg-rose-100/50 text-rose-600'
+              }`}>
+              {append ? (
+                <UserPlus className='size-6' aria-hidden='true' />
+              ) : (
+                <AlertTriangle className='size-6' aria-hidden='true' />
+              )}
             </div>
             <div>
               <h3 id={titleId} className='text-lg font-semibold text-stone-800'>
-                {t('restoreConfirmTitle')}
+                {t(append ? 'appendConfirmTitle' : 'restoreConfirmTitle')}
               </h3>
+              {onModeChange ? (
+                <fieldset className='mt-3' disabled={isImporting}>
+                  <legend className='text-sm font-medium text-stone-800'>
+                    {t('importModeLegend')}
+                  </legend>
+                  {(['replace', 'append'] as const).map((value) => (
+                    <label
+                      key={value}
+                      className='mt-1 flex items-center gap-2 text-sm text-stone-700'>
+                      <input
+                        type='radio'
+                        name={`${titleId}-mode`}
+                        checked={mode === value}
+                        onChange={() => onModeChange(value)}
+                      />
+                      {t(
+                        value === 'append'
+                          ? 'importModeAppend'
+                          : 'importModeReplace'
+                      )}
+                    </label>
+                  ))}
+                </fieldset>
+              ) : null}
               <p className='mt-2 text-sm leading-relaxed text-stone-600'>
-                {t('restoreConfirmText', { file: fileName })}
+                {t(append ? 'appendConfirmText' : 'restoreConfirmText', {
+                  file: fileName
+                })}
               </p>
               <p className='mt-3 text-sm font-medium text-stone-800'>
-                {t('restoreFileContains', {
+                {t(append ? 'appendFileContains' : 'restoreFileContains', {
                   persons: summary.persons,
                   relationships: summary.relationships,
                   events: summary.events
                 })}
               </p>
+              {append && (
+                <p className='mt-3 rounded-lg bg-stone-100 p-2 text-sm text-stone-700'>
+                  {t('appendNotes')}
+                </p>
+              )}
               {warning && (
                 <p
                   role='alert'
@@ -185,9 +232,11 @@ export default function ImportConfirmModal({
                   {downloadError}
                 </p>
               )}
-              <p className='mt-3 text-sm font-medium text-rose-600'>
-                {t('restoreIrreversible')}
-              </p>
+              {!append && (
+                <p className='mt-3 text-sm font-medium text-rose-600'>
+                  {t('restoreIrreversible')}
+                </p>
+              )}
             </div>
           </div>
 
@@ -201,8 +250,14 @@ export default function ImportConfirmModal({
             <button
               onClick={onConfirm}
               disabled={isImporting || isReadingFile}
-              className='rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-rose-700 disabled:opacity-50'>
-              {isImporting ? t('restoring') : t('restoreContinue')}
+              className={`rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors disabled:opacity-50 ${
+                append
+                  ? 'bg-amber-700 hover:bg-amber-800'
+                  : 'bg-rose-600 hover:bg-rose-700'
+              }`}>
+              {append
+                ? t(isImporting ? 'appending' : 'appendConfirm')
+                : t(isImporting ? 'restoring' : 'restoreContinue')}
             </button>
           </div>
         </m.div>

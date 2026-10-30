@@ -4,13 +4,14 @@ import { AnimatePresence, m } from 'framer-motion'
 import { AlertTriangle, Download, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
 
-import { exportData, importData } from '@/app/actions/data'
+import { appendImportData, exportData, importData } from '@/app/actions/data'
 import DataCard from '@/components/DataCard'
 import ExportActions from '@/components/ExportActions'
 import ImportConfirmModal from '@/components/ImportConfirmModal'
 import ImportStatusMessage from '@/components/ImportStatusMessage'
 import { useAllPersons } from '@/hooks/useAllPersons'
 import { useI18n } from '@/lib/i18n/useI18n'
+import type { ImportMode } from '@/utils/appendImport'
 import {
   validateImportPayload,
   type ImportPayload
@@ -24,6 +25,7 @@ import {
 } from '@/utils/backupSummary'
 import { CsvParseError, CsvZipInvalidError } from '@/utils/csvErrors'
 import { formatIsoDay } from '@/utils/dateHelpers'
+import { requestDuplicateScan } from '@/utils/duplicateScanTrigger'
 import type { GedcomImportStats } from '@/utils/gedcom'
 import { memberSearchCache } from '@/utils/memberSearchCache'
 
@@ -43,7 +45,11 @@ export default function DataImportExport() {
   const [importStatus, setImportStatus] = useState<{
     type: 'success' | 'error'
     message: string | undefined
+    /** Set after adding a file to the tree: offer the duplicate scan. */
+    appended?: boolean
   } | null>(null)
+  // Replace the whole tree (restore) or add the file to it; chosen per file.
+  const [importMode, setImportMode] = useState<ImportMode>('replace')
   const [showConfirm, setShowConfirm] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [parsedBackup, setParsedBackup] = useState<{
@@ -126,6 +132,7 @@ export default function DataImportExport() {
 
   const resetFile = () => {
     setShowConfirm(false)
+    setImportMode('replace')
     setSelectedFile(null)
     setParsedBackup(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
@@ -214,8 +221,9 @@ export default function DataImportExport() {
       setImportStatus(null)
 
       const payload = parsedBackup.payload
+      const append = importMode === 'append'
 
-      const result = await importData({
+      const result = await (append ? appendImportData : importData)({
         version: payload.version,
         persons: payload.persons,
         relationships: payload.relationships,
@@ -233,17 +241,19 @@ export default function DataImportExport() {
       }
 
       memberSearchCache.clear()
+      const counts = {
+        persons: result.imported?.persons || 0,
+        relationships: result.imported?.relationships || 0
+      }
       setImportStatus({
         type: 'success',
         message: [
-          t('restoreSuccess', {
-            persons: result.imported?.persons || 0,
-            relationships: result.imported?.relationships || 0
-          }),
-          result.warning
+          t(append ? 'appendSuccess' : 'restoreSuccess', counts),
+          'warning' in result ? result.warning : undefined
         ]
           .filter(Boolean)
-          .join(' ')
+          .join(' '),
+        appended: append
       })
       resetFile()
     } catch (error: unknown) {
@@ -354,6 +364,8 @@ export default function DataImportExport() {
         <ImportConfirmModal
           fileName={selectedFile?.name || ''}
           summary={parsedBackup.summary}
+          mode={importMode}
+          onModeChange={setImportMode}
           warning={parsedBackup.warning}
           truncated={parsedBackup.truncated}
           gedcom={parsedBackup.gedcom}
@@ -370,7 +382,19 @@ export default function DataImportExport() {
         />
       )}
 
-      <ImportStatusMessage status={importStatus} />
+      <ImportStatusMessage
+        status={importStatus}
+        action={
+          importStatus?.appended ? (
+            <button
+              type='button'
+              onClick={() => requestDuplicateScan()}
+              className='btn whitespace-nowrap'>
+              {t('scanDuplicatesNow')}
+            </button>
+          ) : null
+        }
+      />
     </div>
   )
 }
