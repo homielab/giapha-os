@@ -15,8 +15,8 @@ const people = [
 describe('filterPickerPersons', () => {
   test('matches without accents', () => {
     expect(filterPickerPersons(people, 'nguyen').map((p) => p.id)).toEqual([
-      '2',
-      '1'
+      '1',
+      '2'
     ])
     expect(filterPickerPersons(people, 'duc')[0].id).toBe('3')
   })

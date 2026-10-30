@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Member list: "Given name (A-Z)" sorts by the given name (last word) first, then the whole name, so a one-surname family no longer sorts by middle name; search results with equal rank follow the same order.
 - The gallery remembers the Timeline/Grid choice across pages and visits.
 - Expanding or collapsing a branch, filtering or resizing the window on a large family tree is smoother: lining up the card heights of each generation now makes the browser lay out the page once instead of once per generation (20 times on a 20-generation tree).
 - Large family trees (more than 1,000 members or relationships) open faster on the members list, tree, kinship, statistics, events and lineage pages, and back up faster: after the first 1,000 rows, the remaining rows are loaded four pages at a time instead of one after another. Trees under 1,000 rows load as before.

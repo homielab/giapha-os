@@ -53,8 +53,8 @@ describe('searchPersons', () => {
   it('matches every word anywhere in the name, in any order', () => {
     const list = [p('Nguyễn Văn An'), p('Trần An'), p('An Nguyễn Bình')]
     expect(searchPersons(list, 'nguyen an').map((x) => x.full_name)).toEqual([
-      'An Nguyễn Bình',
-      'Nguyễn Văn An'
+      'Nguyễn Văn An',
+      'An Nguyễn Bình'
     ])
     expect(searchPersons(list, 'an nguyen')[0].full_name).toBe('An Nguyễn Bình')
     expect(searchPersons(list, 'nguyen xuan')).toEqual([])
@@ -68,8 +68,8 @@ describe('searchPersons', () => {
       { full_name: 'Lê Văn Sáu', birth_year: 1950 }
     ]
     expect(searchPersons(list, 'tran 1950').map((x) => x.full_name)).toEqual([
-      'Trần Thị Tư',
-      'Trần Văn Ba'
+      'Trần Văn Ba',
+      'Trần Thị Tư'
     ])
     expect(searchPersons(list, '1960').map((x) => x.full_name)).toEqual([
       'Trần Văn Năm'

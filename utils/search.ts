@@ -1,3 +1,5 @@
+import { compareByGivenName } from './givenName'
+
 /**
  * Normalizes text for accent-insensitive Vietnamese search:
  * "Nguyễn Văn Đức" -> "nguyen van duc".
@@ -55,7 +57,7 @@ export function searchPersons<
   ranked.sort(
     (a, b) =>
       a.rank - b.rank ||
-      a.person.full_name.localeCompare(b.person.full_name, 'vi')
+      compareByGivenName(a.person.full_name, b.person.full_name)
   )
   return ranked.slice(0, limit).map((r) => r.person)
 }

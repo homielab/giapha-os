@@ -123,6 +123,25 @@ describe('groupIntoCoupleGroups', () => {
 })
 
 describe('sortPersonsFlat', () => {
+  test('name sorts go by given name, then the full name', () => {
+    const names = [
+      'Nguyễn Văn An',
+      'Nguyễn Thị Hoa',
+      'Nguyễn Đức Bình',
+      'Nguyễn Văn Cường'
+    ]
+    const list = names.map((n) => person(n, 'male'))
+    const asc = sortPersonsFlat(list, 'name_asc').map((p) => p.full_name)
+    expect(asc).toEqual([
+      'Nguyễn Văn An',
+      'Nguyễn Đức Bình',
+      'Nguyễn Văn Cường',
+      'Nguyễn Thị Hoa'
+    ])
+    const desc = sortPersonsFlat(list, 'name_desc').map((p) => p.full_name)
+    expect(desc).toEqual([...asc].reverse())
+  })
+
   const list = [
     person('Bình', 'male', { birth_year: 1990 }),
     person('An', 'male', { birth_year: null }),
