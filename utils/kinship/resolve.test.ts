@@ -166,10 +166,63 @@ describe('great-uncles and great-aunts', () => {
       child('G', 'B'),
       marriage('A', 'W')
     ]
-    // W's "Bà Cô" is "Bà Cô vợ" for A; "Chắt" has no in-law entry.
+    // W's "Bà Cô" is "Bà Cô vợ" for A; the husband of her "Chắt" is "Chắt rể".
     const [aCallsB, bCallsA] = terms('A', 'B', persons, rels)
     expect(aCallsB).toBe('Bà Cô vợ')
-    expect(bCallsA).toBe('Chồng của Chắt')
+    expect(bCallsA).toBe('Chắt rể')
+  })
+})
+
+describe('spouses of descendants', () => {
+  test('great-grandchildren and later generations get dâu/rể', () => {
+    const persons = [
+      person('A', 'male'),
+      person('B', 'male'),
+      person('C', 'female'),
+      person('D', 'male'),
+      person('W', 'female'),
+      person('E', 'female'),
+      person('H', 'male'),
+      person('F', 'male'),
+      person('V', 'female')
+    ]
+    const rels = [
+      child('A', 'B'),
+      child('B', 'C'),
+      child('C', 'D'),
+      marriage('D', 'W'),
+      child('C', 'E'),
+      marriage('E', 'H'),
+      child('D', 'F'),
+      marriage('F', 'V')
+    ]
+    expect(terms('A', 'W', persons, rels)[0]).toBe('Chắt dâu')
+    expect(terms('A', 'H', persons, rels)[0]).toBe('Chắt rể')
+    expect(terms('A', 'V', persons, rels)[0]).toBe('Chít dâu')
+    // Through a daughter (bên ngoại): C's son D is a grandchild of B.
+    expect(terms('B', 'W', persons, rels)[0]).toBe('Cháu dâu')
+  })
+
+  test("the spouse of a cousin's child is Cháu dâu (họ)", () => {
+    const persons = [
+      person('G', 'male'),
+      person('X', 'male', { birth_order: 1 }),
+      person('Y', 'male', { birth_order: 2 }),
+      person('P', 'male'),
+      person('Z', 'male'),
+      person('K', 'male'),
+      person('W', 'female')
+    ]
+    const rels = [
+      child('G', 'X'),
+      child('G', 'Y'),
+      child('X', 'P'),
+      child('Y', 'Z'),
+      child('Z', 'K'),
+      marriage('K', 'W')
+    ]
+    expect(terms('P', 'K', persons, rels)[0]).toBe('Cháu họ')
+    expect(terms('P', 'W', persons, rels)[0]).toBe('Cháu dâu (họ)')
   })
 })
 

@@ -144,8 +144,11 @@ type GenderTerms = ReturnType<typeof byGender>
 const KEEP = (term: string) => byGender(term, term)
 
 const IN_LAW_COMMON = new Map<string, GenderTerms>([
-  ['Con', byGender('Con rể', 'Con dâu')],
-  ['Cháu', byGender('Cháu rể', 'Cháu dâu')],
+  // Descendants: "Con dâu", "Cháu rể", "Chắt dâu", … "Chẹt rể".
+  ...DESCENDANTS.filter(Boolean).map(
+    (term) => [term, byGender(`${term} rể`, `${term} dâu`)] as const
+  ),
+  ['Cháu họ', byGender('Cháu rể (họ)', 'Cháu dâu (họ)')],
   ['Em gái', byGender('Em rể', 'Em dâu')],
   ['Em trai', byGender('Em rể', 'Em dâu')],
   ['Em họ', byGender('Em rể (họ)', 'Em dâu (họ)')],

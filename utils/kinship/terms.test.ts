@@ -103,8 +103,20 @@ describe('calling the person who married in', () => {
     expect(termForSpouseOfRelative('Bác họ', 'female')).toBe('Vợ của Bác họ')
   })
 
+  test('descendants and cousins keep the dâu/rể form', () => {
+    expect(termForSpouseOfRelative('Chắt', 'female')).toBe('Chắt dâu')
+    expect(termForSpouseOfRelative('Chắt', 'male')).toBe('Chắt rể')
+    expect(termForSpouseOfRelative('Chít', 'female')).toBe('Chít dâu')
+    expect(termForSpouseOfRelative('Chẹt', 'male')).toBe('Chẹt rể')
+    expect(termRelativeCallsInLaw('Chút', 'female')).toBe('Chút dâu')
+    expect(termForSpouseOfRelative('Cháu họ', 'female')).toBe('Cháu dâu (họ)')
+    expect(termForSpouseOfRelative('Cháu họ', 'male')).toBe('Cháu rể (họ)')
+  })
+
   test('terms without an entry fall back to husband/wife of', () => {
-    expect(termRelativeCallsInLaw('Chắt', 'male')).toBe('Chồng của Chắt')
+    expect(termRelativeCallsInLaw('Cháu đời 9', 'male')).toBe(
+      'Chồng của Cháu đời 9'
+    )
     expect(termRelativeCallsInLaw('constructor', 'female')).toBe(
       'Vợ của constructor'
     )

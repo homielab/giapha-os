@@ -91,6 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The kinship finder calls the wife or husband of a great-grandchild and later generations "Chắt dâu" / "Chắt rể", "Chít dâu"… and of a cousin's child "Cháu dâu (họ)" / "Cháu rể (họ)", instead of "Vợ của Chắt".
+
 - Editing a gallery photo opens with its title, description, date and current image filled in, so saving no longer wipes them; opening and closing it without changes no longer asks to discard.
 - The statistics page no longer counts daughters- or sons-in-law with birth order 1 as eldest children.
 - Pressing Esc, clicking outside or Close in the Add/Edit event and gallery upload dialogs now asks "Discard changes?" when something was typed or a photo chosen, instead of losing it.
