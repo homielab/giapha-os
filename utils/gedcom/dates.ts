@@ -63,30 +63,39 @@ const CALENDAR_ESCAPE = /^@#D[^@]*@\s*/i
 const DATE_QUALIFIER = /^(ABT|EST|AFT|BEF|CAL|INT)\s+/i
 
 /**
- * Reads a GEDCOM date value. Qualifiers (ABT, EST, AFT, BEF, CAL, INT) and
- * calendar escapes (`@#DJULIAN@`) are ignored; for a range (`BET a AND b`,
+ * Reads a GEDCOM date value. Calendar escapes (`@#DJULIAN@`) are ignored. A
+ * qualifier (ABT, EST, AFT, BEF, CAL, INT) is dropped from the date and the
+ * original text is returned in `rangeText`, so an estimate stays visible; for a range (`BET a AND b`,
  * `FROM a TO b`, `TO b`) the first date is kept and the original text is
  * returned in `rangeText`. A day that does not exist in that month and year
  * (`31 APR 1850`, `29 FEB 1900`) is dropped, keeping month and year, and the
  * original text is returned in `rangeText` too.
  */
 export function parseGedcomDate(raw: string): ParsedDate {
+  let qualified = false
   const clean = (v: string) => {
     let out = v.replace(/\(.*\)/, ' ').trim()
     for (;;) {
-      const next = out.replace(CALENDAR_ESCAPE, '').replace(DATE_QUALIFIER, '')
+      const unescaped = out.replace(CALENDAR_ESCAPE, '')
+      const next = unescaped.replace(DATE_QUALIFIER, '')
+      if (next !== unescaped) qualified = true
       if (next === out) return out.trim()
       out = next
     }
   }
   let value = clean(raw)
-  let rangeText: string | null = null
+  let rangeText: string | null = qualified
+    ? raw
+        .replace(/@#D[^@]*@\s*/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+    : null
   const between = value.match(/^BET\s+(.+?)\s+AND\s+(.+)$/i)
   const from = value.match(/^FROM\s+(.+?)(?:\s+TO\s+(.+))?$/i)
   const to = value.match(/^TO\s+(.+)$/i)
   const first = between?.[1] ?? from?.[1] ?? to?.[1]
   if (first !== undefined) {
-    rangeText = value
+    rangeText ??= value
     value = clean(first)
   }
   const parts = value.split(/\s+/).filter(Boolean)

@@ -95,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- GEDCOM import: estimated dates (`ABT`, `BEF`, `AFT`, `EST`, `CAL`) are no longer taken as exact; the original text goes into the note (`BIRT: ABT 1950`). Foster, step and sealing children (`PEDI FOSTER`/`STEP`/`SEALING`) become adopted children with a note line, instead of biological children.
 - GEDCOM import: a person without a name is saved as "Chưa rõ tên" ("Unknown" in English) in the interface language instead of always "Unknown", and the import confirmation says how many such people the file has.
 - Merge preview rejects profile IDs that are not UUIDs before querying.
 - Members with several spouses: the tree, mind map and family book list the spouses by the spouse's birth year, then by when the marriage was added, so the order no longer looks random. A restore keeps when each relationship was added, so the order survives a backup and restore (migration `20261030120000_restore_relationship_created_at.sql`; older backups restore with the restore time).

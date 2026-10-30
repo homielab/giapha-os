@@ -6,13 +6,16 @@ import type { ParseRecord } from './records'
 import { sourceNotes } from './sources'
 import type { GedcomImportStats, GedcomPerson } from './types'
 
+// FAMC pedigrees read as adopted_child; any other (BIRTH, none) is biological.
+const ADOPTED_PEDIGREES = new Set(['ADOPTED', 'FOSTER', 'STEP', 'SEALING'])
+
 export type PersonContext = {
   // Shared note records, resolved when an INDI points at them.
   noteTexts: Map<string, string>
   // Source records, cited as "Nguồn: <title>" in notes.
   sourTexts: Map<string, string>
   stats: GedcomImportStats
-  // Receives `${indiXref} ${famXref}` of FAMC links marked PEDI ADOPTED.
+  // Receives `${indiXref} ${famXref}` of FAMC links marked PEDI ADOPTED, FOSTER, STEP or SEALING.
   adoptedLinks: Set<string>
   // Names in Vietnamese order (surname first), see `readName`.
   surnameFirst?: boolean
@@ -94,6 +97,7 @@ export function readPerson(
   let isInLaw = false
   const otherNames: string[] = []
   const rangeNotes: string[] = []
+  const pedigreeNotes: string[] = []
   // Places of birth/death and occupations have no column: kept as note lines.
   const birthPlaces: string[] = []
   const deathPlaces: string[] = []
@@ -146,8 +150,13 @@ export function readPerson(
       } else if (currentTag === 'NAME' && tag === 'GIVN') {
         givenName = val.trim() || null
       } else if (currentTag === 'FAMC' && tag === 'PEDI') {
-        if (famc && val.trim().toUpperCase() === 'ADOPTED') {
+        const pedi = val.trim().toUpperCase()
+        if (famc && ADOPTED_PEDIGREES.has(pedi)) {
           ctx.adoptedLinks.add(`${record.id} ${famc}`)
+          // Foster, step and sealing children are stored as adopted; the
+          // note keeps which kind they were.
+          if (pedi !== 'ADOPTED')
+            pedigreeNotes.push(`Con nuôi (${pedi.toLowerCase()})`)
         }
       } else if (currentTag === 'NOTE') {
         noteReader.continue(tag, val)
@@ -212,12 +221,14 @@ export function readPerson(
   // elsewhere) is not added twice.
   const noteLines = new Set(note.split('\n'))
   const factNotes = [
+    ...new Set(rangeNotes),
+    ...new Set(pedigreeNotes),
     ...labelled('Nơi sinh', birthPlaces),
     ...labelled('Nơi mất', deathPlaces),
     ...labelled('Nghề nghiệp', occupations)
   ].filter((line) => !noteLines.has(line))
-  if (rangeNotes.length > 0 || factNotes.length > 0) {
-    note = [note, ...rangeNotes, ...factNotes].filter(Boolean).join('\n')
+  if (factNotes.length > 0) {
+    note = [note, ...factNotes].filter(Boolean).join('\n')
   }
 
   birth = withDayMonth(birth, birthDayMonth)

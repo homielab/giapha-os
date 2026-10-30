@@ -642,7 +642,64 @@ describe('GEDCOM notes, dates and other names from other programs', () => {
     const p = persons[0]
     expect([p.birth_day, p.birth_month, p.birth_year]).toEqual([5, 1, 1700])
     expect([p.death_month, p.death_year]).toEqual([3, 1790])
-    expect(p.note).toBeNull()
+    expect(p.note).toBe('DEAT: ABT MAR 1790')
+  })
+
+  test('keeps estimated dates in the note, once on re-import', () => {
+    const quals = [
+      'ABT 1950',
+      'BEF 1950',
+      'AFT 5 JUN 1950',
+      'EST 1950',
+      'CAL 1950'
+    ]
+    for (const q of quals) {
+      const [p] = parseGedcom(
+        indi('1 BIRT', `2 DATE ${q}`, '1 DEAT', `2 DATE ${q}`)
+      ).persons
+      expect(p.birth_year).toBe(1950)
+      expect(p.note).toBe(`BIRT: ${q}\nDEAT: ${q}`)
+      const [again] = parseGedcom(
+        indi(
+          '1 BIRT',
+          `2 DATE ${q}`,
+          '1 NOTE BIRT: ' + q,
+          '2 CONT DEAT: ' + q,
+          '1 DEAT',
+          `2 DATE ${q}`
+        )
+      ).persons
+      expect(again.note).toBe(`BIRT: ${q}\nDEAT: ${q}`)
+    }
+    const [p] = parseGedcom(indi('1 BIRT', '2 DATE AFT 5 JUN 1950')).persons
+    expect([p.birth_day, p.birth_month]).toEqual([5, 6])
+  })
+
+  test('reads PEDI foster, step and sealing as adopted with a note', () => {
+    for (const pedi of ['foster', 'STEP', 'Sealing']) {
+      const ged = [
+        '0 @I1@ INDI',
+        '0 @I2@ INDI',
+        '1 FAMC @F1@',
+        `2 PEDI ${pedi}`,
+        '0 @F1@ FAM',
+        '1 HUSB @I1@',
+        '1 CHIL @I2@'
+      ].join('\n')
+      const { persons, relationships } = parseGedcom(ged)
+      expect(relationships).toEqual([
+        {
+          type: 'adopted_child',
+          person_a: persons[0].id,
+          person_b: persons[1].id
+        }
+      ])
+      expect(persons[1].note).toBe(`Con nuôi (${pedi.toLowerCase()})`)
+      const again = parseGedcom(
+        ged.replace('0 @F1@', `1 NOTE Con nuôi (${pedi.toLowerCase()})\n0 @F1@`)
+      )
+      expect(again.persons[1].note).toBe(`Con nuôi (${pedi.toLowerCase()})`)
+    }
   })
 
   test('reads later NAME records as other names', () => {

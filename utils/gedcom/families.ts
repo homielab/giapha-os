@@ -7,7 +7,8 @@ import type { GedcomRelationship } from './types'
 // Relationships of the FAM records: a marriage between HUSB and WIFE (with
 // the family's NOTEs and cited sources as its note) and a parent link from
 // each of them to every CHIL. `ctx.adoptedLinks` holds `${indiXref}
-// ${famXref}` of FAMC links marked PEDI ADOPTED. Members missing from `idMap`
+// ${famXref}` of FAMC links marked PEDI ADOPTED, FOSTER, STEP
+// or SEALING. Members missing from `idMap`
 // are skipped. MARR (DATE, PLAC) and DIV become "Kết hôn: …" / "Ly hôn: …"
 // lines of the note, unless the note already has that line (a file this app
 // exported). A family without both spouses has no marriage, so its notes
