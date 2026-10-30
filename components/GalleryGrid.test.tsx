@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { afterEach, describe, expect, test } from 'bun:test'
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
@@ -9,10 +9,12 @@ import {
 import GalleryGrid from '@/components/GalleryGrid'
 import GalleryLightbox from '@/components/GalleryLightbox'
 import GalleryViewSwitcher from '@/components/GalleryViewSwitcher'
+import { useGalleryView } from '@/hooks/useGalleryView'
 import { interpolate } from '@/lib/i18n/interpolate'
 import { messages } from '@/lib/i18n/messages'
 import { I18nContext } from '@/lib/i18n/useI18n'
 import type { GalleryItem } from '@/types'
+import { GALLERY_VIEW_KEY, readGalleryView } from '@/utils/galleryView'
 
 const noop = () => {}
 
@@ -119,5 +121,36 @@ describe('GalleryViewSwitcher', () => {
     expect(html).toContain(
       `aria-label="${messages.vi.timelineView}" aria-pressed="false"`
     )
+  })
+})
+
+describe('saved gallery view before and after hydration', () => {
+  const original = globalThis.localStorage
+  afterEach(() => {
+    globalThis.localStorage = original
+  })
+
+  test('the server renders no view, so neither one flashes', () => {
+    let seen: string | null | undefined
+    function Probe() {
+      seen = useGalleryView()
+      return null
+    }
+    render(<Probe />)
+    expect(seen).toBeNull()
+    expect(
+      render(<GalleryViewSwitcher value={null} onChange={noop} />)
+    ).not.toContain('aria-pressed="true"')
+  })
+
+  test('on the client a saved grid renders only grid cards', () => {
+    globalThis.localStorage = {
+      getItem: (key: string) => (key === GALLERY_VIEW_KEY ? 'grid' : null)
+    } as Storage
+    const html = render(
+      <GalleryGrid items={[item]} viewMode={readGalleryView()} />
+    )
+    expect(html).toContain('columns-1')
+    expect(html).not.toContain('space-y-12')
   })
 })

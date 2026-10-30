@@ -91,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The gallery no longer shows the timeline for a moment after a reload when Grid is the chosen view.
 - Kinship: from great-grandparents up, the paternal or maternal side (nội/ngoại) now follows the younger person's own father or mother, so the maternal grandfather's father is "Cụ ông (ông cố) ngoại", not nội.
 - Opening a shared link to a member, event or other dashboard page while signed out now returns to that page after signing in (email and password), instead of the dashboard home. Only pages of this site's dashboard are followed, so a crafted link cannot send anyone to another site.
 - The member form asks "Discard changes?" before Cancel throws away what you typed, and the browser asks before a reload or tab close while there are unsaved changes.

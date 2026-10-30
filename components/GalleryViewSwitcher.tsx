@@ -10,7 +10,8 @@ export default function GalleryViewSwitcher({
   value,
   onChange
 }: {
-  value: GalleryView
+  /** null until hydrated: no button shows as pressed. */
+  value: GalleryView | null
   onChange: (view: GalleryView) => void
 }) {
   const { t } = useI18n()

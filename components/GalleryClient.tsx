@@ -3,15 +3,12 @@
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState, useSyncExternalStore } from 'react'
+import { useState } from 'react'
 
+import { useGalleryView } from '@/hooks/useGalleryView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { GalleryItem } from '@/types'
-import {
-  readGalleryView,
-  subscribeGalleryView,
-  writeGalleryView
-} from '@/utils/galleryView'
+import { writeGalleryView } from '@/utils/galleryView'
 
 import GalleryGrid from './GalleryGrid'
 import GalleryViewSwitcher from './GalleryViewSwitcher'
@@ -33,11 +30,7 @@ export default function GalleryClient({
   // Hide deleted items right away; router.refresh() then brings the new page.
   const [deletedIds, setDeletedIds] = useState<Set<string>>(() => new Set())
   const items = pageItems.filter((item) => !deletedIds.has(item.id))
-  const viewMode = useSyncExternalStore(
-    subscribeGalleryView,
-    readGalleryView,
-    () => 'timeline' as const
-  )
+  const viewMode = useGalleryView()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null)
   const router = useRouter()
@@ -92,13 +85,18 @@ export default function GalleryClient({
         </div>
       </div>
 
-      <GalleryGrid
-        items={items}
-        isAdmin={isAdmin}
-        viewMode={viewMode}
-        onEdit={handleEdit}
-        onDeleteSuccess={handleDeleteSuccess}
-      />
+      {viewMode ? (
+        <GalleryGrid
+          items={items}
+          isAdmin={isAdmin}
+          viewMode={viewMode}
+          onEdit={handleEdit}
+          onDeleteSuccess={handleDeleteSuccess}
+        />
+      ) : (
+        // Holds the space until the saved view is known, so no wrong view flashes.
+        <div aria-hidden='true' className='min-h-[60vh]' />
+      )}
 
       {pageCount > 1 && (
         <nav
