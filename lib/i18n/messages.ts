@@ -159,6 +159,9 @@ export const messages = {
       'Liên kết duyệt tài khoản không tồn tại hoặc đã hết hạn.',
     approvalProcessedTitle: 'Đã xử lý',
     approvalProcessedText: 'Yêu cầu duyệt tài khoản này đã được sử dụng.',
+    approvalRevokedTitle: 'Yêu cầu đã bị thu hồi',
+    approvalRevokedText:
+      'Tài khoản này đã bị khoá trong mục Quản lý người dùng nên liên kết duyệt không còn dùng được. Muốn mở lại, hãy đăng nhập ứng dụng và mở khoá tài khoản ở đó.',
     approvalPendingText:
       'Tài khoản sau đang chờ được cấp quyền truy cập dữ liệu gia phả:',
     approvalConfirm: 'Xác nhận duyệt',
@@ -1538,6 +1541,9 @@ export const messages = {
     approvalProcessedTitle: 'Already processed',
     approvalProcessedText:
       'This account approval request has already been used.',
+    approvalRevokedTitle: 'Request revoked',
+    approvalRevokedText:
+      'This account was locked in Manage users, so the approval link no longer works. To restore access, sign in to the app and unlock the account there.',
     approvalPendingText:
       'The following account is waiting for access to family tree data:',
     approvalConfirm: 'Confirm approval',

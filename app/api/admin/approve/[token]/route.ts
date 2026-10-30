@@ -120,16 +120,44 @@ function processedResponse(locale: Locale, t: Translator) {
   )
 }
 
+type AdminSupabase = ReturnType<typeof getAdminSupabase>
+
+// A used link whose account is inactive was revoked: locking a user in
+// Manage users closes their open approval link. Answer 410 so the old email
+// cannot be mistaken for a working approval.
+async function usedRequestResponse(
+  supabase: AdminSupabase,
+  userId: string,
+  locale: Locale,
+  t: Translator
+) {
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('is_active')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (error) throw error
+  if (profile && !profile.is_active) {
+    return htmlResponse(
+      `<h1 style="margin-top:0;color:#991b1b">${t('approvalRevokedTitle')}</h1><p>${t('approvalRevokedText')}</p>`,
+      410,
+      locale
+    )
+  }
+  return processedResponse(locale, t)
+}
+
 export async function GET(_request: Request, { params }: RouteContext) {
   const { locale, t } = getRequestTranslations(_request)
   try {
     const { token } = await params
-    const { request } = await getRequest(token)
+    const { supabase, request } = await getRequest(token)
 
-    if (!request) return invalidRequestResponse(locale, t)
+    if (!request || !supabase) return invalidRequestResponse(locale, t)
 
     if (request.used_at) {
-      return processedResponse(locale, t)
+      return usedRequestResponse(supabase, request.user_id, locale, t)
     }
 
     if (new Date(request.expires_at).getTime() <= Date.now()) {
@@ -183,7 +211,7 @@ export async function POST(_request: Request, { params }: RouteContext) {
     if (!request || !supabase) return invalidRequestResponse(locale, t)
 
     if (request.used_at) {
-      return processedResponse(locale, t)
+      return usedRequestResponse(supabase, request.user_id, locale, t)
     }
 
     if (new Date(request.expires_at).getTime() <= Date.now()) {

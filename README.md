@@ -264,6 +264,8 @@ Tài khoản mới giữ trạng thái **chờ duyệt** cho tới khi admin duy
 
 Mỗi tài khoản chỉ gửi một email khi liên kết còn hiệu lực; tài khoản còn chờ duyệt đăng nhập lại sau khi liên kết hết hạn thì admin nhận email mới. Email luôn viết bằng tiếng Việt (ngôn ngữ mặc định của ứng dụng), không theo ngôn ngữ người đăng ký đang chọn. Admin cũng có thể đăng nhập ứng dụng và duyệt tại **Quản lý người dùng**.
 
+Khoá một tài khoản ở **Quản lý người dùng** cũng thu hồi liên kết duyệt còn hiệu lực của tài khoản đó: bấm liên kết trong email cũ (hoặc bản được chuyển tiếp) chỉ hiện "Yêu cầu đã bị thu hồi" và không mở lại tài khoản. Muốn mở lại, admin mở khoá ngay trong ứng dụng. Cần migration `20261031120000_revoke_approval_link_on_lock.sql`; khi chưa chạy, liên kết còn hạn vẫn kích hoạt lại được tài khoản đã khoá.
+
 Để bật email thông báo trên Vercel, khai báo `APP_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY` và `RESEND_FROM_EMAIL`. `ADMIN_NOTIFICATION_EMAIL` là tuỳ chọn; nếu không khai báo, hệ thống sẽ tự lấy email từ các tài khoản admin đang hoạt động. Secret key/service role key có thể bỏ qua Row Level Security (RLS), vì vậy chỉ được lưu ở server và không được đưa vào source code, trình duyệt hoặc Git. Xem thêm [hướng dẫn API keys của Supabase](https://supabase.com/docs/guides/getting-started/api-keys).
 
 ## Xử lý lỗi khi đăng ký
@@ -318,6 +320,8 @@ Admin có thể mở mục **Nâng cấp hệ thống** trong menu quản trị 
 **Thêm file vào cây hiện tại cần migration `20261030180000_add_append_import.sql`.** Migration chỉ thêm hàm `append_import` (chỉ chèn, không xoá/sửa dòng nào), không đổi bảng. Trang **Nâng cấp hệ thống** tự liệt kê migration này. Khi chưa chạy, chế độ "Thêm vào cây hiện tại" báo cần nâng cấp và không thêm gì; phục hồi (thay toàn bộ cây) vẫn như cũ.
 
 **Nơi an táng cần migration `20261028120000_add_burial_place.sql`.** Migration thêm cột `burial_place` (văn bản, có thể để trống) vào bảng `persons` để ghi nơi an táng của thành viên. Cột công khai như ngày mất: mọi thành viên đã được duyệt đều xem được, quyền (RLS) không đổi. Migration cũng cập nhật hàm `restore_backup` (phục hồi giữ nơi an táng; bản sao lưu cũ không có trường này thì để trống) và `merge_persons` (gộp hồ sơ điền nơi an táng còn trống của hồ sơ giữ từ hồ sơ bị gộp). Sao lưu JSON (định dạng v5) và CSV có thêm cột `burial_place`. Trang **Nâng cấp hệ thống** tự liệt kê migration này. Khi chưa chạy migration, ứng dụng vẫn hoạt động như cũ, chỉ chưa lưu được nơi an táng.
+
+**Khoá tài khoản thu hồi liên kết duyệt cần migration `20261031120000_revoke_approval_link_on_lock.sql`.** Migration chỉ định nghĩa lại hàm khoá/mở khoá tài khoản (`set_user_active_status`): khi khoá, yêu cầu duyệt chưa dùng của tài khoản đó được đánh dấu đã dùng. Không đổi bảng, không xoá dữ liệu; sao lưu/phục hồi không đổi. Trang **Nâng cấp hệ thống** tự liệt kê migration này.
 
 ### Hướng dẫn cập nhật source code
 

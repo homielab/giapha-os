@@ -80,7 +80,7 @@ mock.module('@/utils/supabase/admin', () => ({
   getAdminSupabase: () => fakeSupabase(respond).client
 }))
 
-const { POST } = await import('./route')
+const { GET, POST } = await import('./route')
 
 const token = createApprovalToken()
 
@@ -88,6 +88,25 @@ function post() {
   return POST(
     new Request(`https://tree.example.com/api/admin/approve/${token}`, {
       method: 'POST'
+    }),
+    { params: Promise.resolve({ token }) }
+  )
+}
+
+function get(cookie?: string) {
+  return GET(
+    new Request(`https://tree.example.com/api/admin/approve/${token}`, {
+      headers: cookie ? { cookie } : {}
+    }),
+    { params: Promise.resolve({ token }) }
+  )
+}
+
+function postWithCookie(cookie: string) {
+  return POST(
+    new Request(`https://tree.example.com/api/admin/approve/${token}`, {
+      method: 'POST',
+      headers: { cookie }
     }),
     { params: Promise.resolve({ token }) }
   )
@@ -144,6 +163,7 @@ describe('POST /api/admin/approve/[token]', () => {
 
   test('a used link reports it was already processed', async () => {
     approvalRow.used_at = new Date().toISOString()
+    profile = { id: 'u1', is_active: true }
 
     const response = await post()
 
@@ -151,6 +171,40 @@ describe('POST /api/admin/approve/[token]', () => {
     expect(await title(response)).toBe('Đã xử lý')
     expect(activations).toBe(0)
     expect(calls.some((call) => call.op === 'update')).toBe(false)
+  })
+
+  test('a link revoked by locking the user does not turn the account back on', async () => {
+    // set_user_active_status(user, false) closes the open request.
+    approvalRow.used_at = new Date().toISOString()
+    profile = { id: 'u1', is_active: false }
+
+    const response = await post()
+
+    expect(response.status).toBe(410)
+    expect(await title(response)).toBe('Yêu cầu đã bị thu hồi')
+    expect(profile.is_active).toBe(false)
+    expect(activations).toBe(0)
+    expect(calls.some((call) => call.op === 'update')).toBe(false)
+  })
+
+  test('the revoked page is in English for an English locale', async () => {
+    approvalRow.used_at = new Date().toISOString()
+
+    const response = await postWithCookie('locale=en')
+
+    expect(response.status).toBe(410)
+    expect(await title(response)).toBe('Request revoked')
+  })
+
+  test('a user unlocked by hand after the revoke stays active', async () => {
+    approvalRow.used_at = new Date().toISOString()
+    profile = { id: 'u1', is_active: true }
+
+    const response = await post()
+
+    expect(response.status).toBe(200)
+    expect(await title(response)).toBe('Đã xử lý')
+    expect(profile.is_active).toBe(true)
   })
 
   test('a failed activation keeps the link usable for a second click', async () => {
@@ -204,5 +258,35 @@ describe('POST /api/admin/approve/[token]', () => {
     expect(titles).toEqual(['Duyệt thành công', 'Đã xử lý'].sort())
     expect(activations).toBe(1)
     expect(approvalRow.used_at).not.toBeNull()
+  })
+})
+
+describe('GET /api/admin/approve/[token]', () => {
+  test('an open link shows the confirm button', async () => {
+    const response = await get()
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toContain('<form method="post">')
+  })
+
+  test('a revoked link says so and offers no confirm button', async () => {
+    approvalRow.used_at = new Date().toISOString()
+
+    const response = await get('locale=en')
+    const html = await response.text()
+
+    expect(response.status).toBe(410)
+    expect(html).toContain('Request revoked')
+    expect(html).not.toContain('<form')
+  })
+
+  test('a link used for an active account reports it was processed', async () => {
+    approvalRow.used_at = new Date().toISOString()
+    profile = { id: 'u1', is_active: true }
+
+    const response = await get()
+
+    expect(response.status).toBe(200)
+    expect(await title(response)).toBe('Đã xử lý')
   })
 })

@@ -254,6 +254,8 @@ A new account stays **pending approval** until an administrator approves it. The
 
 Each account gets one email while its link is valid; a pending account that signs in again after the link expired sends administrators a new one. The email is always in Vietnamese (the app's default language), not in the language the new user picked. Administrators can also sign in and approve the account from **Manage users**.
 
+Locking an account in **Manage users** also revokes its open approval link: the link in the old email (or a forwarded copy) only shows "Request revoked" and does not turn the account back on. To restore access, unlock the account in the app. Needs the migration `20261031120000_revoke_approval_link_on_lock.sql`; until it is run, a link that has not expired can still reactivate a locked account.
+
 To enable email notifications on Vercel, configure `APP_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, and `RESEND_FROM_EMAIL`. `ADMIN_NOTIFICATION_EMAIL` is optional; when omitted, the system uses the email addresses of active administrators. Secret/service-role keys can bypass Row Level Security (RLS), so store them only on the server and never put them in source code, the browser, or Git. See the [Supabase API keys guide](https://supabase.com/docs/guides/getting-started/api-keys).
 
 ## Troubleshooting registration
@@ -308,6 +310,8 @@ Administrators can open **System upgrade** from the administration menu to check
 **Adding a file to the current tree needs the migration `20261030180000_add_append_import.sql`.** It only adds the `append_import` function (insert only, never deletes or updates a row); no table changes. The **System upgrade** page lists it automatically. Until it is run, "Add to the current tree" asks for the upgrade and adds nothing; restore (replace the whole tree) works as before.
 
 **Burial places need the migration `20261028120000_add_burial_place.sql`.** It adds a nullable text column `burial_place` to `persons` to record where a member is buried. Like the dates of death it is public: every approved member can read it, and the Row Level Security is unchanged. It also updates `restore_backup` (a restore keeps the burial place; older backups without it restore it empty) and `merge_persons` (a merge fills the kept profile's empty burial place from the merged-away one). JSON backups (format v5) and CSV exports gain a `burial_place` column. The **System upgrade** page lists it automatically. Until it is run, the app works as before; burial places just cannot be stored yet.
+
+**Locking an account revokes its approval link with the migration `20261031120000_revoke_approval_link_on_lock.sql`.** It only redefines the lock/unlock function (`set_user_active_status`): locking marks the account's unused approval request as used. No table changes and no data removed; backup and restore are unchanged. The **System upgrade** page lists it automatically.
 
 ### Source code updates
 

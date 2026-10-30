@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Locking a user in Manage users now revokes their emailed approval link: the old link (valid 7 days) shows "Request revoked" (HTTP 410) instead of turning the account back on. Needs the migration `20261031120000_revoke_approval_link_on_lock.sql`.
 - Kinship finder: the wife of a grandfather (or of an older ancestor) who is not recorded as the mother of his child on the line, when that child has only one parent recorded, is now "Bà nội" / "Cụ bà" with a note that she may be a later wife and a link to the child's profile to add the parent, instead of "Wife of Ông nội".
 - Docker: `robots.txt`, `sitemap.xml` and the web manifest now use `SITE_NAME` / `APP_URL` set when the container starts, instead of `localhost` and the default name baked in at build time.
 - Gallery images no longer break in a tab left open over an hour: the page fetches fresh image links before they expire or when an image fails to load.
