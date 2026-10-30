@@ -395,6 +395,20 @@ export function filterVisibleEvents<
 }
 
 /**
+ * Days ahead the upcoming tabs look. A lunar year with a leap month has 383–385
+ * days, so the next death anniversary can be more than 365 days away; every
+ * yearly event's next occurrence fits in this window.
+ */
+export const UPCOMING_WINDOW_DAYS = 400
+
+/** Events of the upcoming tabs: from today until the next occurrence. */
+export function isUpcomingEvent(
+  event: Pick<FamilyEvent, 'daysUntil'>
+): boolean {
+  return event.daysUntil >= 0 && event.daysUntil <= UPCOMING_WINDOW_DAYS
+}
+
+/**
  * Date label of an event in the interface language. Lunar dates carry the
  * lunar marker and the leap-month word ("10/04 ÂL nhuận" / "10/04 L leap");
  * with `withMarker` false only the leap word is kept, for text that already

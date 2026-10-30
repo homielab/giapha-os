@@ -1,7 +1,7 @@
 import { solarToLunar } from '../lunarCalendar'
 import { formatDate } from './dates'
 import { formatName, splitOtherNames } from './names'
-import { noteLines } from './notes'
+import { escapeValue, noteLines } from './notes'
 import type { GedcomPerson, GedcomRelationship } from './types'
 
 /** The database keeps no leap flag: read it off the solar date of death. */
@@ -217,7 +217,7 @@ export function exportToGedcom(data: {
       .filter(Boolean)
       .join(', ')
       .trim()
-    if (burialPlace) gedcom += `1 BURI\n2 PLAC ${burialPlace}\n`
+    if (burialPlace) gedcom += `1 BURI\n2 PLAC ${escapeValue(burialPlace)}\n`
 
     // Custom tags (valid in GEDCOM 5.5.1 and 7.0, other programs ignore them):
     // generation, birth order and the in-law flag, only when set.
@@ -227,7 +227,7 @@ export function exportToGedcom(data: {
 
     // Other names
     for (const other of splitOtherNames(person.other_names)) {
-      gedcom += `1 NAME ${other}\n2 TYPE aka\n`
+      gedcom += `1 NAME ${escapeValue(other)}\n2 TYPE aka\n`
     }
 
     // Family Links

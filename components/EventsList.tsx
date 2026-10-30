@@ -15,7 +15,8 @@ import {
   computeEvents,
   CustomEventRecord,
   FamilyEvent,
-  filterVisibleEvents
+  filterVisibleEvents,
+  isUpcomingEvent
 } from '@/utils/eventHelpers'
 import { buildIcs, icsLastYear } from '@/utils/icsExport'
 import { solarToLunar } from '@/utils/lunarCalendar'
@@ -158,7 +159,7 @@ export default function EventsList({
       result = result.filter((e) => e.type === filter)
     }
     // Only show upcoming events (daysUntil >= 0) for non-past tabs
-    return result.filter((e) => e.daysUntil >= 0 && e.daysUntil <= 365)
+    return result.filter(isUpcomingEvent)
   }, [visibleEvents, filter])
 
   const visible = filtered.slice(0, showCount)

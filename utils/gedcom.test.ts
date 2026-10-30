@@ -1245,6 +1245,44 @@ describe('decodeGedcom', () => {
   })
 })
 
+describe("GEDCOM '@@' escape", () => {
+  const file = (...lines: string[]) => ['0 HEAD', ...lines, '0 TRLR'].join('\n')
+
+  test("writes a note starting with '@' as '@@' and reads it back", () => {
+    const ged = exportToGedcom({
+      persons: [person('a', 'male', { note: '@home\n@office' })],
+      relationships: []
+    })
+    expect(ged).toContain('1 NOTE @@home\n2 CONT @@office\n')
+    expect(parseGedcom(ged).persons[0].note).toBe('@home\n@office')
+  })
+
+  test('keeps a note that looks like a pointer as text', () => {
+    const ged = exportToGedcom({
+      persons: [person('a', 'male', { note: '@N1@' })],
+      relationships: []
+    })
+    expect(ged).toContain('1 NOTE @@N1@\n')
+    const { persons, stats } = parseGedcom(ged)
+    expect(persons[0].note).toBe('@N1@')
+    expect(stats.missingNotes).toBe(0)
+  })
+
+  test("reads '@@' inside a value as '@'", () => {
+    const { persons } = parseGedcom(
+      file(
+        '0 @I1@ INDI',
+        '1 NAME /Lê/ Văn Bình',
+        '1 NOTE Email a@@b.com',
+        '2 CONT Nhà @@ Huế',
+        '1 NOTE @N1@',
+        '0 @N1@ NOTE Liên hệ c@@d.vn'
+      )
+    )
+    expect(persons[0].note).toBe('Email a@b.com\nNhà @ Huế\n\nLiên hệ c@d.vn')
+  })
+})
+
 describe('GEDCOM pointer notes', () => {
   const file = (...lines: string[]) => ['0 HEAD', ...lines, '0 TRLR'].join('\n')
   const indi = (...lines: string[]) => [

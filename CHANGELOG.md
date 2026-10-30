@@ -96,6 +96,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- GEDCOM: a note, name or burial place starting with '@' is exported as '@@' so other programs no longer read it as a pointer, and '@@' in imported files (e.g. 'a@@b.com' from Gramps) becomes '@'.
+- Events: a death anniversary more than 365 days away (after a lunar year with a leap month) now shows in the upcoming tabs instead of only under 'Past'.
 - Kinship finder: half siblings (same father, different mothers) are ranked by birth year before birth order, so a child born in 1953 no longer calls a 1965-born half brother "Anh trai" when each mother's children are numbered on their own.
 - Data check compares birth orders only between children of the same pair of parents, so half siblings numbered per mother are no longer reported as sharing an order or being numbered against their birth dates.
 - Kinship finder: a person whose gender is "Other" is no longer called as a man ("Chồng", "Bố", "Anh trai"): terms list both forms ("Vợ/Chồng", "Bố/Mẹ", "Ông/Bà nội", "Anh/Chị", "Chú/Cô", "Con dâu/Con rể"), with a note that the gender is Other; a parent of gender Other leaves Nội or Ngoại open ("Ông nội/ngoại").

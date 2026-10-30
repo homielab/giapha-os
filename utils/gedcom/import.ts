@@ -1,5 +1,5 @@
 import { readFamilies } from './families'
-import { readNoteRecord } from './notes'
+import { readNoteRecord, unescapeLine } from './notes'
 import { readPerson, type PersonContext } from './persons'
 import { readRecords } from './records'
 import { dedupeRelationships } from './relationships'
@@ -41,6 +41,7 @@ export function parseGedcom(
     .replace(/^﻿/, '')
     .split(/\r\n|\r|\n/)
     .filter((line) => line.trim().length > 0)
+    .map(unescapeLine)
   const records = readRecords(lines)
   const ownExport = lines.some((line) => /^1 SOUR Giapha_OS\s*$/.test(line))
 

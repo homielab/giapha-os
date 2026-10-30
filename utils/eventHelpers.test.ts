@@ -9,6 +9,7 @@ import {
   eventHref,
   filterVisibleEvents,
   formatLunarDateLabel,
+  isUpcomingEvent,
   toRecurrence,
   type CustomEventRecord
 } from './eventHelpers'
@@ -297,6 +298,25 @@ describe('computeEvents: Vietnam day, estimates and 29/2', () => {
       (e) => e.daysUntil >= 0
     )!
     expect(after.nextOccurrence).toEqual(day(2028, 2, 29))
+  })
+})
+
+describe('isUpcomingEvent', () => {
+  test('keeps a death anniversary 383 days away after a leap-month year', () => {
+    // Lunar 2025 has a leap 6th month: Tết 2025-01-29, next Tết 2026-02-17.
+    const upcoming = computeEvents(
+      [deceased({ death_lunar_month: 1, death_lunar_day: 1 })],
+      [],
+      day(2025, 1, 30)
+    ).filter(isUpcomingEvent)
+    expect(upcoming).toHaveLength(1)
+    expect(upcoming[0].nextOccurrence).toEqual(day(2026, 2, 17))
+    expect(upcoming[0].daysUntil).toBe(383)
+  })
+
+  test('drops past events', () => {
+    expect(isUpcomingEvent({ daysUntil: -1 })).toBe(false)
+    expect(isUpcomingEvent({ daysUntil: 0 })).toBe(true)
   })
 })
 
