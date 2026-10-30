@@ -54,7 +54,40 @@ describe('mostCommonSurname', () => {
     expect(mostCommonSurname([person({ full_name: 'Nguyễn A' })])).toBeNull()
   })
 
-  test('a tie gives no surname', () => {
+  test('in-laws are not counted', () => {
+    expect(
+      mostCommonSurname([
+        person({ full_name: 'Nguyễn A' }),
+        person({ full_name: 'Nguyễn B' }),
+        person({ full_name: 'Trần C', is_in_law: true }),
+        person({ full_name: 'Trần D', is_in_law: true }),
+        person({ full_name: 'Trần E', is_in_law: true })
+      ])
+    ).toBe('Nguyễn')
+  })
+
+  test('NFC and NFD spellings count as one surname', () => {
+    expect(
+      mostCommonSurname([
+        person({ full_name: 'Nguyễn A'.normalize('NFC') }),
+        person({ full_name: 'Nguyễn B'.normalize('NFD') }),
+        person({ full_name: 'Trần C' })
+      ])
+    ).toBe('Nguyễn')
+  })
+
+  test('a tie goes to the earliest generation', () => {
+    expect(
+      mostCommonSurname([
+        person({ full_name: 'Trần A', generation: 2 }),
+        person({ full_name: 'Trần B', generation: 3 }),
+        person({ full_name: 'Nguyễn C', generation: 1 }),
+        person({ full_name: 'Nguyễn D', generation: 2 })
+      ])
+    ).toBe('Nguyễn')
+  })
+
+  test('a tie with no generation gives no surname', () => {
     expect(
       mostCommonSurname([
         person({ full_name: 'Nguyễn A' }),

@@ -101,6 +101,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The lineage book title uses the family's own surname: in-laws are no longer counted, accented names typed in different Unicode forms count as one, and a tie goes to the earliest generation.
+- The age card on a member page no longer shows negative ages, and shows the age when only a lunar death date is known.
 - The member form refuses two-digit years (85 instead of 1985) and decimal days, months, years, birth orders and generations with a clear message, instead of saving them or showing a database error.
 - GEDCOM: a note, name or burial place starting with '@' is exported as '@@' so other programs no longer read it as a pointer, and '@@' in imported files (e.g. 'a@@b.com' from Gramps) becomes '@'.
 - Events: a death anniversary more than 365 days away (after a lunar year with a leap month) now shows in the upcoming tabs instead of only under 'Past'.

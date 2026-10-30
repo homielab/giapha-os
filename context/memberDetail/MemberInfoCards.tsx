@@ -178,7 +178,13 @@ function AgeCard({
     person.death_year,
     person.death_month,
     person.death_day,
-    isDeceased
+    isDeceased,
+    undefined,
+    {
+      year: person.death_lunar_year,
+      month: person.death_lunar_month,
+      day: person.death_lunar_day
+    }
   )
   if (!ageData) return null
   return (

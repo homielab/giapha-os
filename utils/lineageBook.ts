@@ -127,29 +127,41 @@ export function burialPlaceOf(person: LineageBookPerson): string | null {
 }
 
 /**
- * The most common first token of the members' names, used as the book title.
- * A tie or a single bearer gives null (the page falls back to a plain title).
+ * The most common first token of the blood members' names (in-laws skipped,
+ * NFC-normalised), used as the book title. A tie goes to the surname of the
+ * earliest generation; a single bearer or an unresolved tie gives null (the
+ * page falls back to a plain title).
  */
 export function mostCommonSurname(persons: LineageBookPerson[]): string | null {
   const counts = new Map<string, number>()
-  for (const person of persons) {
-    const first = person.full_name.trim().split(/\s+/)[0]
+  const surnameOf = (person: LineageBookPerson) =>
+    person.full_name.normalize('NFC').trim().split(/\s+/)[0] || null
+  const blood = persons.filter((person) => !person.is_in_law)
+  for (const person of blood) {
+    const first = surnameOf(person)
     if (!first) continue
     counts.set(first, (counts.get(first) ?? 0) + 1)
   }
-  let best: string | null = null
   let bestCount = 0
-  let tie = false
-  for (const [name, count] of counts) {
-    if (count > bestCount) {
-      best = name
-      bestCount = count
-      tie = false
-    } else if (count === bestCount) {
-      tie = true
+  for (const count of counts.values()) bestCount = Math.max(bestCount, count)
+  if (bestCount < 2) return null
+  const leaders = [...counts].filter(([, c]) => c === bestCount).map(([n]) => n)
+  if (leaders.length === 1) return leaders[0]
+  // Tie: the surname of the earliest generation (the founder's line) wins.
+  const ranked = blood
+    .filter((person) => person.generation != null)
+    .sort((a, b) => (a.generation as number) - (b.generation as number))
+  for (const person of ranked) {
+    const first = surnameOf(person)
+    if (first && leaders.includes(first)) {
+      const sameGen = ranked.filter((p) => p.generation === person.generation)
+      const names = new Set(
+        sameGen.map(surnameOf).filter((n) => n && leaders.includes(n))
+      )
+      return names.size === 1 ? first : null
     }
   }
-  return !tie && bestCount >= 2 ? best : null
+  return null
 }
 
 /**

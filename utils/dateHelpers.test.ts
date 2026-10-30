@@ -75,6 +75,36 @@ describe('calculateAge', () => {
     expect(calculateAge(null, null, null, null, null, null)).toBeNull()
   })
 
+  test('never returns a negative age', () => {
+    expect(calculateAge(1990, 5, 5, 1980, 1, 1, true)).toBeNull()
+    expect(
+      calculateAge(
+        2030,
+        null,
+        null,
+        null,
+        null,
+        null,
+        false,
+        new Date('2026-06-01')
+      )
+    ).toBeNull()
+  })
+
+  test('uses a lunar-only death date', () => {
+    const lunar = { year: 2020, month: 1, day: 15 }
+    expect(
+      calculateAge(1950, 6, 15, null, null, null, true, undefined, lunar)
+    ).toEqual({ age: 69, isDeceased: true })
+    expect(
+      calculateAge(1950, null, null, null, null, null, true, undefined, {
+        year: 2020,
+        month: null,
+        day: null
+      })
+    ).toEqual({ age: 70, isDeceased: true })
+  })
+
   test('uses the full death date when it is known', () => {
     expect(calculateAge(1950, 6, 15, 2020, 6, 14, true)).toEqual({
       age: 69,

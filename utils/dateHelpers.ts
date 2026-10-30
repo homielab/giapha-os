@@ -74,9 +74,32 @@ export function calculateAge(
   deathMonth: number | null,
   deathDay: number | null,
   isDeceased: boolean = false,
-  now: Date = new Date()
+  now: Date = new Date(),
+  deathLunar?: {
+    year: number | null
+    month: number | null
+    day: number | null
+  } | null
 ): { age: number; isDeceased: boolean } | null {
   if (!birthYear) return null
+
+  if (!deathYear && deathLunar?.year) {
+    // Only a lunar death date: convert it so the age still shows.
+    const solar =
+      deathLunar.month && deathLunar.day
+        ? lunarToSolar(deathLunar.year, deathLunar.month, deathLunar.day)
+        : null
+    if (solar) {
+      deathYear = solar.year
+      deathMonth = solar.month
+      deathDay = solar.day
+    } else {
+      // Lunar year N mostly falls in solar year N; month/day unknown.
+      deathYear = deathLunar.year
+      deathMonth = null
+      deathDay = null
+    }
+  }
 
   if (isDeceased || deathYear) {
     if (deathYear) {
@@ -89,7 +112,7 @@ export function calculateAge(
           age--
         }
       }
-      return { age, isDeceased: true }
+      return age < 0 ? null : { age, isDeceased: true }
     }
     return null
   }
@@ -110,7 +133,7 @@ export function calculateAge(
     }
   }
 
-  return { age, isDeceased: false }
+  return age < 0 ? null : { age, isDeceased: false }
 }
 
 // Returns a translation key (zodiacAries …); the caller translates it.
