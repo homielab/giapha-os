@@ -68,7 +68,11 @@ export async function addRelationshipWithTargetSync(
     candidate
   )
   if (invalid) throw new RelationshipValidationError(invalid)
-  const warning = relationshipWarning(context.persons, candidate)
+  const warning = relationshipWarning(
+    context.persons,
+    candidate,
+    context.relationships
+  )
   if (warning && !input.acceptWarnings)
     throw new RelationshipWarningError(warning)
 
@@ -110,14 +114,19 @@ async function loadRelationshipContext(
       .select('person_a, person_b, type')
       .in('person_a', pair)
       .in('person_b', pair),
-    // Existing biological parents of the child, for the two-parent check.
+    // Existing biological parents of the child, for the two-parent check;
+    // of both spouses for a marriage, for the sibling check.
     isParentLink
       ? supabase
           .from('relationships')
           .select('person_a, person_b, type')
           .eq('person_b', candidate.person_b)
           .eq('type', 'biological_child')
-      : Promise.resolve({ data: [], error: null })
+      : supabase
+          .from('relationships')
+          .select('person_a, person_b, type')
+          .in('person_b', pair)
+          .eq('type', 'biological_child')
   ])
   if (personsResult.error) throw personsResult.error
   if (betweenResult.error) throw betweenResult.error
@@ -129,6 +138,8 @@ async function loadRelationshipContext(
   // Other parents of the child: their gender decides a second same-gender one.
   const otherParents: string[] = []
   for (const row of parentsResult.data ?? []) {
+    // A link between the pair is already in betweenResult.
+    if (pair.includes(row.person_a) && pair.includes(row.person_b)) continue
     relationships.push(row)
     if (!pair.includes(row.person_a)) otherParents.push(row.person_a)
   }

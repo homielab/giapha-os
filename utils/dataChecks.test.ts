@@ -259,8 +259,11 @@ describe('runDataChecks', () => {
         { ...child('a', 'b'), type: 'adopted_child' }
       ])
     ).toEqual(['duplicateRelationship'])
-    // a marriage and a parent link between two people are different things
-    expect(kinds(persons, [marriage('a', 'b'), child('a', 'b')])).toEqual([])
+    // a marriage and a parent link between two people are not a repeat, but
+    // a parent married to their child
+    expect(kinds(persons, [marriage('a', 'b'), child('a', 'b')])).toEqual([
+      'marriageWithRelative'
+    ])
   })
 
   test('findings are listed by kind, then by name', () => {
@@ -811,5 +814,79 @@ describe('runDataChecks: birth order', () => {
   test('children of different parents may share an order', () => {
     const persons = [person('f1'), person('f2'), kid('A', 1), kid('B', 1)]
     expect(conflicts(persons, [child('f1', 'A'), child('f2', 'B')])).toEqual([])
+  })
+})
+
+describe('marriage checks', () => {
+  const marriage = (a: string, b: string): DataCheckRelationship => ({
+    type: 'marriage',
+    person_a: a,
+    person_b: b
+  })
+  const marriageKinds = (
+    persons: DataCheckPerson[],
+    relationships: DataCheckRelationship[]
+  ) =>
+    runDataChecks(persons, relationships, TODAY)
+      .filter((f) => f.kind.startsWith('marriage'))
+      .map((f) => [f.kind, f.params])
+
+  test('reports a parent married to their child and married siblings', () => {
+    const people = ['a', 'daughter', 'p', 'b', 'c'].map((id) =>
+      person(id, { birth_year: 1950 })
+    )
+    expect(
+      marriageKinds(people, [
+        child('a', 'daughter'),
+        marriage('a', 'daughter'),
+        child('p', 'b'),
+        child('p', 'c'),
+        marriage('c', 'b'),
+        marriage('b', 'c')
+      ])
+    ).toEqual([
+      [
+        'marriageWithRelative',
+        { a: 'Person a', b: 'Person daughter', relation: 'parent' }
+      ],
+      [
+        'marriageWithRelative',
+        { a: 'Person c', b: 'Person b', relation: 'sibling' }
+      ]
+    ])
+  })
+
+  test('reports a spouse who died before the other was born', () => {
+    const wife = person('wife', { birth_year: 1930, death_year: 1960 })
+    const husband = person('husband', { birth_year: 1965 })
+    expect(
+      marriageKinds([wife, husband], [marriage('husband', 'wife')])
+    ).toEqual([
+      [
+        'marriageAfterDeath',
+        {
+          dead: 'Person wife',
+          death: '1960',
+          other: 'Person husband',
+          birth: '1965'
+        }
+      ]
+    ])
+  })
+
+  test('a normal couple is not reported', () => {
+    const wife = person('wife', { birth_year: 1950, death_year: 2010 })
+    const husband = person('husband', { birth_year: 1948 })
+    const kid = person('kid', { birth_year: 1975 })
+    expect(
+      marriageKinds(
+        [wife, husband, kid],
+        [
+          marriage('husband', 'wife'),
+          child('husband', 'kid'),
+          child('wife', 'kid')
+        ]
+      )
+    ).toEqual([])
   })
 })

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Data check and the add-relationship form now flag a marriage between a parent and child, between siblings (sharing a biological parent), or with someone who died before the other was born; the form asks before saving it.
 - Kinship finder: spouses of grandparents' siblings and of parents' cousins get their own terms ("Bà Mợ", "Ông Dượng", "Ông Bác" / "Bà Bác", "Mợ họ", "Dượng họ", "Bác gái họ") instead of "Wife of Ông Cậu"; grandchildren and great-grandchildren of a grandparent's sibling are "Cháu", no longer "Chắt" / "Chít".
 - Kinship finder: children of two remarried parents (no parent in common) are now "Anh kế" / "Chị kế" / "Em kế" by birth year, and two wives of one husband (or two husbands of one wife) get a description naming that spouse, instead of "Unknown".
 - The calendar file (.ics) now holds death anniversaries and lunar events for this year and the next four instead of two; the file name, each event's description and a caption under the export button say until which year it reminds.
@@ -96,6 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The member form refuses two-digit years (85 instead of 1985) and decimal days, months, years, birth orders and generations with a clear message, instead of saving them or showing a database error.
 - GEDCOM: a note, name or burial place starting with '@' is exported as '@@' so other programs no longer read it as a pointer, and '@@' in imported files (e.g. 'a@@b.com' from Gramps) becomes '@'.
 - Events: a death anniversary more than 365 days away (after a lunar year with a leap month) now shows in the upcoming tabs instead of only under 'Past'.
 - Kinship finder: half siblings (same father, different mothers) are ranked by birth year before birth order, so a child born in 1953 no longer calls a 1965-born half brother "Anh trai" when each mother's children are numbered on their own.

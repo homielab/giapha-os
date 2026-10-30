@@ -119,6 +119,54 @@ test('comparePartialDates returns null without both years', () => {
 
 const emptyDeath = death('', '', '')
 
+describe('validateMemberForm whole numbers', () => {
+  const emptyDeath = death('', '', '')
+  test('refuses two-digit years and accepts four digits', () => {
+    expect(validateMemberForm('', '', 85, false, emptyDeath)).toBe(
+      'yearNotFourDigits'
+    )
+    expect(validateMemberForm('', '', 1930, true, death('', '', 85))).toBe(
+      'yearNotFourDigits'
+    )
+    expect(validateMemberForm('', '', 1985, false, emptyDeath)).toBeNull()
+  })
+
+  test('refuses decimal years, days and months', () => {
+    expect(validateMemberForm('', '', 1990.5, false, emptyDeath)).toBe(
+      'invalidBirthDate'
+    )
+    expect(validateMemberForm(3.5, 2, 1990, false, emptyDeath)).toBe(
+      'invalidBirthDate'
+    )
+    expect(validateMemberForm(3, 2.5, 1990, false, emptyDeath)).toBe(
+      'invalidBirthDate'
+    )
+    expect(validateMemberForm('', '', 1930, true, death(1.5, 1, 1990))).toBe(
+      'invalidDeathDate'
+    )
+  })
+
+  test('refuses a decimal birth order or generation', () => {
+    const check = (birthOrder: number | '', generation: number | '') =>
+      validateMemberForm(
+        '',
+        '',
+        1985,
+        false,
+        emptyDeath,
+        undefined,
+        undefined,
+        {
+          birthOrder,
+          generation
+        }
+      )
+    expect(check(1.5, '')).toBe('invalidWholeNumber')
+    expect(check('', 2.5)).toBe('invalidWholeNumber')
+    expect(check(2, 3)).toBeNull()
+  })
+})
+
 describe('normalizeDeathDates', () => {
   test('clears every death field when the person is alive', () => {
     const result = normalizeDeathDates(false, {

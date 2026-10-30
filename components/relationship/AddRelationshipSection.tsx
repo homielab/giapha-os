@@ -11,6 +11,7 @@ import { Person, RelationshipType } from '@/types'
 import { PERSON_PICKER_COLUMNS } from '@/utils/personColumns'
 import { addRelationshipWithTargetSync } from '@/utils/relationshipMutations'
 import {
+  RELATIONSHIP_WARNING_KEYS,
   relationshipErrorKey,
   RelationshipValidationError,
   RelationshipWarningError
@@ -142,7 +143,7 @@ export default function AddRelationshipSection({
       )
     } catch (err: unknown) {
       if (err instanceof RelationshipWarningError) {
-        setPendingWarning(t('relationshipFatherDiedLongBeforeBirth'))
+        setPendingWarning(t(RELATIONSHIP_WARNING_KEYS[err.issue]))
         return
       }
       if (err instanceof RelationshipValidationError) {

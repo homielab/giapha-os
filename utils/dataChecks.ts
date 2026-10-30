@@ -2,6 +2,7 @@ import { vnToday } from '@/utils/dateHelpers'
 import { comparePartialDates } from '@/utils/memberFormHelpers'
 import {
   checkParentDeath,
+  findMarriageIssue,
   findRelationshipIssues,
   isParentChildType
 } from '@/utils/relationshipValidation'
@@ -46,6 +47,8 @@ export const DATA_CHECK_KINDS = [
   'implausibleAge',
   'duplicateRelationship',
   'tooManyParents',
+  'marriageWithRelative',
+  'marriageAfterDeath',
   'parentChildLoop',
   'selfLink',
   'generationMismatch',
@@ -119,7 +122,9 @@ const ref = (p: DataCheckPerson) => ({ id: p.id, name: p.full_name })
  * generations are known and neither is an in-law; children of one parent must
  * not share a birth order, nor have it run against birth dates that are known
  * (adopted and in-law children left out). A link from a person to themselves is
- * only reported as `selfLink`; parent–child loops are listed once each, as the
+ * only reported as `selfLink`; a marriage between a parent and child, between
+ * children of a common biological parent, or with someone who died before the
+ * other was born is reported; parent–child loops are listed once each, as the
  * people along the loop. Findings are sorted by kind, then name
  * (Vietnamese order), then id.
  */
@@ -355,6 +360,52 @@ export function runDataChecks(
         parents: parents.map((p) => p.full_name).join(', ')
       }
     })
+  }
+
+  // Each marriage once, whichever way round it is stored.
+  const seenMarriages = new Set<string>()
+  const parentLinksOf = new Map<string, DataCheckRelationship[]>()
+  for (const r of links) {
+    if (!isParentChildType(r.type)) continue
+    const list = parentLinksOf.get(r.person_b)
+    if (list) list.push(r)
+    else parentLinksOf.set(r.person_b, [r])
+  }
+  for (const r of links) {
+    if (r.type !== 'marriage') continue
+    const key = [r.person_a, r.person_b].sort().join('|')
+    if (seenMarriages.has(key)) continue
+    seenMarriages.add(key)
+    const a = byId.get(r.person_a)
+    const b = byId.get(r.person_b)
+    if (!a || !b) continue
+    const issue = findMarriageIssue(
+      [a, b],
+      [...(parentLinksOf.get(a.id) ?? []), ...(parentLinksOf.get(b.id) ?? [])],
+      a.id,
+      b.id
+    )
+    if (!issue) continue
+    if (issue.code === 'marriageWithRelative') {
+      findings.push({
+        kind: 'marriageWithRelative',
+        people: [ref(a), ref(b)],
+        params: { a: a.full_name, b: b.full_name, relation: issue.relation }
+      })
+    } else {
+      const dead = byId.get(issue.died)!
+      const born = byId.get(issue.born)!
+      findings.push({
+        kind: 'marriageAfterDeath',
+        people: [ref(dead), ref(born)],
+        params: {
+          dead: dead.full_name,
+          death: deathOf(dead),
+          other: born.full_name,
+          birth: birthOf(born)
+        }
+      })
+    }
   }
 
   // Every loop is reported (the limit only bounds the search).

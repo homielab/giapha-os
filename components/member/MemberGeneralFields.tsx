@@ -162,6 +162,7 @@ export default function MemberGeneralFields({
         <input
           id='member-birth-order'
           type='number'
+          step='1'
           min='1'
           placeholder={t('birthOrderPlaceholder')}
           value={birthOrder}
@@ -184,6 +185,7 @@ export default function MemberGeneralFields({
         <input
           id='member-generation'
           type='number'
+          step='1'
           min='1'
           placeholder={t('generationPlaceholder')}
           value={generation}
@@ -245,6 +247,7 @@ export default function MemberGeneralFields({
           <input
             id='member-birth-day'
             type='number'
+            step='1'
             aria-label={t('day')}
             placeholder={t('day')}
             min='1'
@@ -257,6 +260,7 @@ export default function MemberGeneralFields({
           />
           <input
             type='number'
+            step='1'
             aria-label={t('month')}
             placeholder={t('month')}
             min='1'
@@ -269,7 +273,10 @@ export default function MemberGeneralFields({
           />
           <input
             type='number'
+            step='1'
             aria-label={t('year')}
+            min='1000'
+            max='9999'
             placeholder={t('year')}
             value={birthYear}
             onChange={(e) =>

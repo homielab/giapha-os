@@ -24,6 +24,9 @@ export function isValidDate(
   month: number | '',
   year: number | ''
 ) {
+  for (const v of [day, month, year]) {
+    if (v !== '' && !Number.isInteger(v)) return false
+  }
   if (day !== '' && (day < 1 || day > 31)) return false
   if (month !== '' && (month < 1 || month > 12)) return false
   if (year !== '' && year < 1) return false
@@ -68,10 +71,20 @@ export type MemberValidationError =
   | 'deathBeforeBirth'
   | 'birthInFuture'
   | 'deathInFuture'
+  | 'yearNotFourDigits'
+  | 'invalidWholeNumber'
   | null
 
+/** Smallest year the member form accepts: typing 85 for 1985 is refused. */
+export const MIN_FORM_YEAR = 1000
+
+const isShortYear = (year: number | '') =>
+  year !== '' && Number.isInteger(year) && year >= 1 && year < MIN_FORM_YEAR
+
 // Full submit-time validation for the member form. Returns a translation key
-// when validation fails, or null when everything is consistent.
+// when validation fails, or null when everything is consistent. Years must
+// have four digits; day, month, year, birth order and generation must be
+// whole numbers.
 export function validateMemberForm(
   birthDay: number | '',
   birthMonth: number | '',
@@ -79,11 +92,26 @@ export function validateMemberForm(
   isDeceased: boolean,
   deathValues: DeathDateValues,
   fullName?: string,
-  today: Date = vnToday()
+  today: Date = vnToday(),
+  counts: { birthOrder: number | ''; generation: number | '' } = {
+    birthOrder: '',
+    generation: ''
+  }
 ): MemberValidationError {
   // Only checked when given: a name of spaces passes the input's `required`.
   if (fullName !== undefined && fullName.trim() === '')
     return 'fullNameRequired'
+
+  if (
+    isShortYear(birthYear) ||
+    (isDeceased &&
+      (isShortYear(deathValues.year) || isShortYear(deathValues.lunarYear)))
+  )
+    return 'yearNotFourDigits'
+
+  for (const v of [counts.birthOrder, counts.generation]) {
+    if (v !== '' && !Number.isInteger(v)) return 'invalidWholeNumber'
+  }
 
   if (!isValidDate(birthDay, birthMonth, birthYear)) return 'invalidBirthDate'
 

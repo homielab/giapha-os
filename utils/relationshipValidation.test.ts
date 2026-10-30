@@ -467,6 +467,38 @@ describe('parent death checks', () => {
     ).toBeNull()
   })
 
+  test('relationshipWarning flags marriages to a parent, child or sibling', () => {
+    const marry = (a: string, b: string) => ({
+      type: 'marriage',
+      person_a: a,
+      person_b: b
+    })
+    const people = [person('a', 1950), person('kid', 1975), person('sib', 1952)]
+    const links = [child('a', 'kid'), child('p', 'a'), child('p', 'sib')]
+    expect(relationshipWarning(people, marry('a', 'kid'), links)).toBe(
+      'marriageWithRelative'
+    )
+    expect(relationshipWarning(people, marry('kid', 'a'), links)).toBe(
+      'marriageWithRelative'
+    )
+    expect(relationshipWarning(people, marry('sib', 'a'), links)).toBe(
+      'marriageWithRelative'
+    )
+    expect(relationshipWarning(people, marry('sib', 'kid'), links)).toBeNull()
+  })
+
+  test('relationshipWarning flags a spouse who died before the other was born', () => {
+    const wife = { ...person('wife', 1930), death_year: 1960 }
+    const husband = person('husband', 1965)
+    const marriage = { type: 'marriage', person_a: 'husband', person_b: 'wife' }
+    expect(relationshipWarning([wife, husband], marriage)).toBe(
+      'marriageAfterDeath'
+    )
+    expect(
+      relationshipWarning([{ ...wife, death_year: 1990 }, husband], marriage)
+    ).toBeNull()
+  })
+
   test('findParentDeathIssues skips adopted relatives and lists errors first', () => {
     const me = { ...person('me', 1980), full_name: 'Tôi', gender: 'female' }
     const named = (

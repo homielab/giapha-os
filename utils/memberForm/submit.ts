@@ -80,7 +80,9 @@ export async function submitMemberForm(ctx: MemberFormSubmitContext) {
     ctx.birthYear,
     ctx.isDeceased,
     normalized.values,
-    ctx.fields.fullName
+    ctx.fields.fullName,
+    undefined,
+    { birthOrder: ctx.fields.birthOrder, generation: ctx.fields.generation }
   )
   if (validationError) {
     setError(t(validationError))

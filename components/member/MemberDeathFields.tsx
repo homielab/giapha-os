@@ -91,6 +91,7 @@ export default function MemberDeathFields({
                   <input
                     id='member-lunar-death-day'
                     type='number'
+                    step='1'
                     aria-label={t('day')}
                     placeholder={t('day')}
                     min='1'
@@ -101,6 +102,7 @@ export default function MemberDeathFields({
                   />
                   <input
                     type='number'
+                    step='1'
                     aria-label={t('month')}
                     placeholder={t('month')}
                     min='1'
@@ -111,7 +113,10 @@ export default function MemberDeathFields({
                   />
                   <input
                     type='number'
+                    step='1'
                     aria-label={t('year')}
+                    min='1000'
+                    max='9999'
                     placeholder={t('year')}
                     value={deathLunarYear}
                     onChange={(e) => onLunarChange('year', e.target.value)}
@@ -146,6 +151,7 @@ export default function MemberDeathFields({
                   <input
                     id='member-death-day'
                     type='number'
+                    step='1'
                     aria-label={t('day')}
                     placeholder={t('day')}
                     min='1'
@@ -156,6 +162,7 @@ export default function MemberDeathFields({
                   />
                   <input
                     type='number'
+                    step='1'
                     aria-label={t('month')}
                     placeholder={t('month')}
                     min='1'
@@ -166,7 +173,10 @@ export default function MemberDeathFields({
                   />
                   <input
                     type='number'
+                    step='1'
                     aria-label={t('year')}
+                    min='1000'
+                    max='9999'
                     placeholder={t('year')}
                     value={deathYear}
                     onChange={(e) => onSolarChange('year', e.target.value)}

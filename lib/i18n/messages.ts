@@ -600,6 +600,8 @@ export const messages = {
     deathBeforeBirth: 'Ngày mất không được trước ngày sinh.',
     birthInFuture: 'Ngày sinh không được sau hôm nay. Kiểm tra lại năm.',
     deathInFuture: 'Ngày mất không được sau hôm nay. Kiểm tra lại năm.',
+    yearNotFourDigits: 'Năm phải có 4 chữ số (ví dụ 1985, không phải 85).',
+    invalidWholeNumber: 'Thứ tự sinh và đời phải là số nguyên.',
     saveIdError: 'Không lấy được ID thành viên sau khi lưu.',
     saveMemberError: 'Không thể lưu thành viên.',
     generalInfo: 'Thông tin chung',
@@ -831,7 +833,7 @@ export const messages = {
     lunarRecomputeFailed: 'Không thể tính lại ngày giỗ. Vui lòng thử lại.',
     dataCheckTitle: 'Kiểm tra dữ liệu',
     dataCheckDescription:
-      'Rà cả cây tìm mốc ngày vô lý, thường gặp ở dữ liệu nhập từ GEDCOM hoặc CSV: mất trước khi sinh, con sinh sau khi mẹ mất, cha mất hơn 10 tháng trước khi con sinh, cha/mẹ hơn con dưới 12 hoặc trên 70 tuổi (chỉ xét khi có đủ năm sinh; bỏ qua con nuôi), ngày sinh/mất trong tương lai, quan hệ bị lặp, con có quá nhiều cha mẹ ruột, vòng cha–con (một người vừa là tổ tiên vừa là con cháu của chính mình), người nối quan hệ với chính mình, các con cùng cặp cha mẹ trùng "con thứ" hoặc thứ tự ngược năm sinh (số thứ tự chỉ so trong cùng cặp cha mẹ, con các bà vợ khác nhau không so); và nhóm thiếu thông tin: chưa có năm sinh, đã mất nhưng thiếu năm mất, chưa rõ giới tính. Chỉ để xem; không có gì bị sửa. Mở từng hồ sơ để sửa.',
+      'Rà cả cây tìm mốc ngày vô lý, thường gặp ở dữ liệu nhập từ GEDCOM hoặc CSV: mất trước khi sinh, con sinh sau khi mẹ mất, cha mất hơn 10 tháng trước khi con sinh, cha/mẹ hơn con dưới 12 hoặc trên 70 tuổi (chỉ xét khi có đủ năm sinh; bỏ qua con nuôi), ngày sinh/mất trong tương lai, quan hệ bị lặp, con có quá nhiều cha mẹ ruột, vợ chồng là cha mẹ – con hoặc anh chị em (chung cha hoặc mẹ ruột), vợ chồng mà một người mất trước khi người kia sinh, vòng cha–con (một người vừa là tổ tiên vừa là con cháu của chính mình), người nối quan hệ với chính mình, các con cùng cặp cha mẹ trùng "con thứ" hoặc thứ tự ngược năm sinh (số thứ tự chỉ so trong cùng cặp cha mẹ, con các bà vợ khác nhau không so); và nhóm thiếu thông tin: chưa có năm sinh, đã mất nhưng thiếu năm mất, chưa rõ giới tính. Chỉ để xem; không có gì bị sửa. Mở từng hồ sơ để sửa.',
     dataCheckRun: 'Kiểm tra dữ liệu',
     dataCheckRunning: 'Đang kiểm tra...',
     dataCheckNone: 'Không phát hiện gì.',
@@ -868,6 +870,13 @@ export const messages = {
     dataCheckDiedTooOld: '{name}: sinh {birth}, mất {death}, thọ {age} tuổi.',
     dataCheckDuplicateMarriage: '{a} và {b} có hai quan hệ hôn nhân.',
     dataCheckDuplicateChild: '{a} và {b} có hai quan hệ cha/mẹ – con.',
+    dataCheckKindMarriageWithRelative:
+      'Kết hôn với cha mẹ, con hoặc anh chị em',
+    dataCheckKindMarriageAfterDeath: 'Vợ chồng mất trước khi người kia sinh',
+    dataCheckMarriageParent: '{a} và {b} vừa là vợ chồng vừa là cha/mẹ – con.',
+    dataCheckMarriageSibling: '{a} và {b} vừa là vợ chồng vừa là anh chị em.',
+    dataCheckMarriageAfterDeath:
+      '{dead} mất {death}, trước khi vợ/chồng {other} sinh ({birth}).',
     dataCheckTooManyParents:
       '{child} có {count} cha mẹ ruột (tối đa một cha và một mẹ): {parents}.',
     dataCheckKindParentChildLoop: 'Vòng cha–con',
@@ -1301,6 +1310,10 @@ export const messages = {
       'Cha {parent} mất hơn 10 tháng trước ngày sinh của {child}. Vẫn lưu?',
     relationshipMotherDiedBeforeBirth:
       'Không thể thêm: người mẹ mất trước ngày sinh của người con.',
+    relationshipMarriageWithRelative:
+      'Hai người này là cha/mẹ – con hoặc anh chị em. Vẫn thêm quan hệ vợ chồng?',
+    relationshipMarriageAfterDeath:
+      'Một người đã mất trước khi người kia sinh. Vẫn thêm quan hệ vợ chồng?',
     relationshipFatherDiedLongBeforeBirth:
       'Người cha mất hơn 10 tháng trước ngày sinh của người con. Vẫn thêm quan hệ này?',
     childNameRequired: 'Vui lòng nhập ít nhất tên của 1 người con.',
@@ -1926,6 +1939,9 @@ export const messages = {
     deathBeforeBirth: 'The death date cannot be before the birth date.',
     birthInFuture: 'The birth date cannot be after today. Check the year.',
     deathInFuture: 'The death date cannot be after today. Check the year.',
+    yearNotFourDigits:
+      'Years must have four digits (for example 1985, not 85).',
+    invalidWholeNumber: 'Birth order and generation must be whole numbers.',
     saveIdError: 'Could not get the member ID after saving.',
     saveMemberError: 'Could not save the member.',
     generalInfo: 'General information',
@@ -2153,7 +2169,7 @@ export const messages = {
     lunarRecomputeFailed: 'Could not recompute the dates. Please try again.',
     dataCheckTitle: 'Data check',
     dataCheckDescription:
-      'Looks through the whole tree for impossible dates, common in data imported from GEDCOM or CSV: death before birth, a child born after the mother died, a father who died more than 10 months before the child was born, a parent less than 12 or more than 70 years older than the child (only when both birth years are known; adopted children are skipped), birth or death dates in the future, repeated relationships, a child with too many biological parents, parent–child loops (someone who is both an ancestor and a descendant of themselves), people linked to themselves, children of the same parents sharing a birth order or numbered against their birth dates (birth orders are compared only within the same pair of parents, not between children of different wives); and a group of missing information: no birth year, deceased but no death year, gender unknown. View only; nothing is changed. Open each profile to fix it.',
+      'Looks through the whole tree for impossible dates, common in data imported from GEDCOM or CSV: death before birth, a child born after the mother died, a father who died more than 10 months before the child was born, a parent less than 12 or more than 70 years older than the child (only when both birth years are known; adopted children are skipped), birth or death dates in the future, repeated relationships, a child with too many biological parents, spouses who are parent and child or siblings (sharing a biological parent), spouses one of whom died before the other was born, parent–child loops (someone who is both an ancestor and a descendant of themselves), people linked to themselves, children of the same parents sharing a birth order or numbered against their birth dates (birth orders are compared only within the same pair of parents, not between children of different wives); and a group of missing information: no birth year, deceased but no death year, gender unknown. View only; nothing is changed. Open each profile to fix it.',
     dataCheckRun: 'Check the data',
     dataCheckRunning: 'Checking...',
     dataCheckNone: 'Nothing found.',
@@ -2191,6 +2207,13 @@ export const messages = {
     dataCheckDiedTooOld: '{name}: born {birth}, died {death}, aged {age}.',
     dataCheckDuplicateMarriage: '{a} and {b} have two marriage links.',
     dataCheckDuplicateChild: '{a} and {b} have two parent–child links.',
+    dataCheckKindMarriageWithRelative: 'Married to a parent, child or sibling',
+    dataCheckKindMarriageAfterDeath: 'Spouse died before the other was born',
+    dataCheckMarriageParent:
+      '{a} and {b} are both spouses and parent and child.',
+    dataCheckMarriageSibling: '{a} and {b} are both spouses and siblings.',
+    dataCheckMarriageAfterDeath:
+      '{dead} died {death}, before their spouse {other} was born ({birth}).',
     dataCheckTooManyParents:
       '{child} has {count} biological parents: {parents}.',
     dataCheckKindParentChildLoop: 'Parent–child loop',
@@ -2632,6 +2655,10 @@ export const messages = {
       'Father {parent} died more than 10 months before the birth of {child}. Save anyway?',
     relationshipMotherDiedBeforeBirth:
       'Cannot add: the mother died before the child was born.',
+    relationshipMarriageWithRelative:
+      'These two are parent and child or siblings. Add the marriage anyway?',
+    relationshipMarriageAfterDeath:
+      'One of them died before the other was born. Add the marriage anyway?',
     relationshipFatherDiedLongBeforeBirth:
       'The father died more than 10 months before the child was born. Add this relationship anyway?',
     childNameRequired: 'Please enter at least one child’s name.',

@@ -228,15 +228,83 @@ export function validateRelationship(
   return null
 }
 
+export type RelationshipWarningCode =
+  'fatherDiedLongBeforeBirth' | 'marriageWithRelative' | 'marriageAfterDeath'
+
+export type MarriageIssue =
+  | { code: 'marriageWithRelative'; relation: 'parent' | 'sibling' }
+  | { code: 'marriageAfterDeath'; died: string; born: string }
+
+/**
+ * Problems of a marriage between `a` and `b` that a family tree should not
+ * hold: one is a parent of the other (any parent link), they share a
+ * biological parent, or one died before the other was born (dates compared as
+ * far as both are known). Distant relatives are not checked. `relationships`
+ * needs the parent links of both people.
+ */
+export function findMarriageIssue(
+  persons: DatedPerson[],
+  relationships: RelationshipLink[],
+  a: string,
+  b: string
+): MarriageIssue | null {
+  const isParentOf = (p: string, c: string) =>
+    relationships.some(
+      (r) => isParentChildType(r.type) && r.person_a === p && r.person_b === c
+    )
+  if (isParentOf(a, b) || isParentOf(b, a))
+    return { code: 'marriageWithRelative', relation: 'parent' }
+
+  const parentsOf = (c: string) =>
+    relationships
+      .filter((r) => r.type === 'biological_child' && r.person_b === c)
+      .map((r) => r.person_a)
+  const parentsOfB = new Set(parentsOf(b))
+  if (parentsOf(a).some((p) => parentsOfB.has(p)))
+    return { code: 'marriageWithRelative', relation: 'sibling' }
+
+  const pa = persons.find((p) => p.id === a)
+  const pb = persons.find((p) => p.id === b)
+  if (!pa || !pb) return null
+  const diedBeforeBorn = (dead: DatedPerson, other: DatedPerson) => {
+    if (dead.death_year == null) return false
+    const order = compareBirthDates(
+      {
+        id: dead.id,
+        birth_year: dead.death_year,
+        birth_month: dead.death_month,
+        birth_day: dead.death_day
+      },
+      other
+    )
+    return order != null && order < 0
+  }
+  if (diedBeforeBorn(pa, pb))
+    return { code: 'marriageAfterDeath', died: a, born: b }
+  if (diedBeforeBorn(pb, pa))
+    return { code: 'marriageAfterDeath', died: b, born: a }
+  return null
+}
+
 /**
  * Problems of a candidate relationship that the user may accept: a father who
- * died long before the child's birth. Returns the issue, or null. Adopted
- * children and non-parent links are never checked.
+ * died long before the child's birth, or a marriage `findMarriageIssue`
+ * reports. Returns the issue, or null. Adopted children are never checked.
  */
 export function relationshipWarning(
   persons: DatedPerson[],
-  candidate: RelationshipLink
-): 'fatherDiedLongBeforeBirth' | null {
+  candidate: RelationshipLink,
+  relationships: RelationshipLink[] = []
+): RelationshipWarningCode | null {
+  if (candidate.type === 'marriage')
+    return (
+      findMarriageIssue(
+        persons,
+        relationships,
+        candidate.person_a,
+        candidate.person_b
+      )?.code ?? null
+    )
   if (candidate.type !== 'biological_child') return null
   const parent = persons.find((p) => p.id === candidate.person_a)
   const child = persons.find((p) => p.id === candidate.person_b)
@@ -388,6 +456,16 @@ export function findRelationshipIssues(
   return issues
 }
 
+/** Translation keys of the questions asked before saving a warned link. */
+export const RELATIONSHIP_WARNING_KEYS: Record<
+  RelationshipWarningCode,
+  TranslationKey
+> = {
+  fatherDiedLongBeforeBirth: 'relationshipFatherDiedLongBeforeBirth',
+  marriageWithRelative: 'relationshipMarriageWithRelative',
+  marriageAfterDeath: 'relationshipMarriageAfterDeath'
+}
+
 const ERROR_KEYS: Record<RelationshipValidationCode, TranslationKey> = {
   selfLink: 'relationshipSelfLink',
   duplicateSpouse: 'relationshipDuplicateSpouse',
@@ -428,9 +506,9 @@ export class RelationshipValidationError extends Error {
  * accepted.
  */
 export class RelationshipWarningError extends Error {
-  readonly issue: 'fatherDiedLongBeforeBirth'
+  readonly issue: RelationshipWarningCode
 
-  constructor(issue: 'fatherDiedLongBeforeBirth') {
+  constructor(issue: RelationshipWarningCode) {
     super(issue)
     this.name = 'RelationshipWarningError'
     this.issue = issue
