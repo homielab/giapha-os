@@ -10,6 +10,7 @@ import {
   isParentChildType,
   type RelationshipLink
 } from './relationshipValidation'
+import { isUuid } from './uuid'
 
 export interface MergePerson {
   id: string
@@ -310,3 +311,16 @@ export function canConfirmMerge(input: {
  * database without the burial_place column yet.
  */
 export const MERGE_PERSON_COLUMNS = '*'
+
+/**
+ * Checks the two ids before they go into a PostgREST filter string: both must
+ * be UUIDs (anything else could change the filter) and differ.
+ */
+export function mergeIdsProblem(
+  keepId: string,
+  dropId: string
+): 'same' | 'invalid' | null {
+  if (!keepId || !dropId || keepId === dropId) return 'same'
+  if (!isUuid(keepId) || !isUuid(dropId)) return 'invalid'
+  return null
+}

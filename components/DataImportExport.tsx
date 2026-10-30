@@ -157,7 +157,7 @@ export default function DataImportExport() {
     try {
       const { payload, warning, truncated, gedcom } = await readRestoreFile(
         file,
-        { surnameFirst }
+        { surnameFirst, unnamedName: t('gedcomUnnamedPerson') }
       )
       const summary = summarizeBackup(payload)
       if (!summary) return fail(t('invalidBackupFile'))
@@ -194,7 +194,8 @@ export default function DataImportExport() {
     setIsReadingFile(true)
     try {
       const { payload } = await readRestoreFile(selectedFile, {
-        surnameFirst: value
+        surnameFirst: value,
+        unnamedName: t('gedcomUnnamedPerson')
       })
       setParsedBackup({ ...parsedBackup, payload })
     } catch {

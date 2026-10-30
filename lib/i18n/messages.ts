@@ -964,6 +964,7 @@ export const messages = {
     mergeFailedGeneric:
       'Không thể gộp hồ sơ. Hãy kiểm tra kết nối rồi thử lại.',
     mergeSameMember: 'Hai hồ sơ cần gộp phải khác nhau.',
+    mergeInvalidMember: 'Mã hồ sơ cần gộp không hợp lệ.',
     mergeMemberMissing: 'Một trong hai hồ sơ không còn tồn tại. Hãy quét lại.',
     galleryTitle: 'Phòng trưng bày',
     galleryDescription: 'Lưu giữ những kỷ niệm và khoảnh khắc đáng nhớ',
@@ -1277,6 +1278,9 @@ export const messages = {
     restoreGedcomNameOrder: 'Thứ tự họ tên trong file GEDCOM',
     restoreGedcomSurnameFirst: 'Họ đứng đầu (Nguyễn Văn An)',
     restoreGedcomSurnameLast: 'Giữ như trong file (Văn An Nguyễn)',
+    gedcomUnnamedPerson: 'Chưa rõ tên',
+    restoreGedcomUnnamed:
+      '{count} người trong file không có tên; họ sẽ được lưu với tên "{name}", sửa lại sau khi nhập.',
     restoreGedcomDropped:
       'File GEDCOM có {sources} bản ghi nguồn/kho lưu trữ (SOUR/REPO), {missingNotes} ghi chú trỏ tới bản ghi không có trong file và {droppedFamilyNotes} gia đình thiếu vợ hoặc chồng có ghi chú/nguồn. Ứng dụng không lưu nguồn: chỉ tên nguồn được chép vào ghi chú ("Nguồn: …"); ghi chú không tìm thấy và ghi chú/nguồn của gia đình thiếu vợ hoặc chồng sẽ bị bỏ qua.',
     memberPossibleDuplicate:
@@ -2277,6 +2281,7 @@ export const messages = {
     mergeFailedGeneric:
       'Could not merge the profiles. Check your connection and try again.',
     mergeSameMember: 'The two profiles to merge must be different.',
+    mergeInvalidMember: 'The profile IDs to merge are not valid.',
     mergeMemberMissing:
       'One of the two profiles no longer exists. Please scan again.',
     galleryTitle: 'Gallery',
@@ -2594,6 +2599,9 @@ export const messages = {
     restoreGedcomNameOrder: 'Name order in the GEDCOM file',
     restoreGedcomSurnameFirst: 'Surname first (Nguyễn Văn An)',
     restoreGedcomSurnameLast: 'As written in the file (Văn An Nguyễn)',
+    gedcomUnnamedPerson: 'Unknown',
+    restoreGedcomUnnamed:
+      '{count} people in the file have no name; they are saved as "{name}", rename them after the import.',
     restoreGedcomDropped:
       'The GEDCOM file has {sources} source/repository records (SOUR/REPO), {missingNotes} notes pointing to records missing from the file and {droppedFamilyNotes} families without both spouses that have notes or sources. The app does not store sources: only source titles are copied into notes ("Nguồn: …"); missing notes and the notes/sources of families without both spouses are skipped.',
     memberPossibleDuplicate:

@@ -40,4 +40,6 @@ export interface GedcomImportStats {
   sources: number
   /** FAM records with a NOTE or SOUR but without both spouses (no marriage to keep it). */
   droppedFamilyNotes: number
+  /** INDI records without a name, saved under the placeholder name. */
+  unnamed: number
 }

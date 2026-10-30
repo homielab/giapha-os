@@ -65,8 +65,11 @@ export interface RestoreFile {
  */
 export async function readRestoreFile(
   file: Pick<RestoreFile, 'name'> & Partial<RestoreFile>,
-  /** GEDCOM only: full names surname first (default true). */
-  options: { surnameFirst?: boolean } = {}
+  /**
+   * GEDCOM only: full names surname first (default true) and the name of a
+   * person without one (default 'Unknown').
+   */
+  options: { surnameFirst?: boolean; unnamedName?: string } = {}
 ): Promise<{
   payload: ImportPayload
   warning?: RestoreWarning

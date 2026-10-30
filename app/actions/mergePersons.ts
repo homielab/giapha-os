@@ -6,6 +6,7 @@ import { getServerTranslations } from '@/lib/i18n/server'
 import { removeMergedAvatar } from '@/utils/mergeAvatarCleanup'
 import {
   MERGE_PERSON_COLUMNS,
+  mergeIdsProblem,
   previewMerge,
   type MergePerson,
   type MergePreview,
@@ -40,8 +41,9 @@ export async function loadMergePreview(
     getIsAdmin()
   ])
   if (!isAdmin) return { error: t('dataAccessDenied') }
-  if (!keepId || !dropId || keepId === dropId)
-    return { error: t('mergeSameMember') }
+  const problem = mergeIdsProblem(keepId, dropId)
+  if (problem === 'same') return { error: t('mergeSameMember') }
+  if (problem === 'invalid') return { error: t('mergeInvalidMember') }
 
   const supabase = await getSupabase()
   const [persons, relationships, privates] = await Promise.all([

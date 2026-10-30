@@ -16,6 +16,8 @@ export type PersonContext = {
   adoptedLinks: Set<string>
   // Names in Vietnamese order (surname first), see `readName`.
   surnameFirst?: boolean
+  // Full name of a person whose record has no name.
+  unnamedName: string
 }
 
 type SolarDate = {
@@ -118,7 +120,7 @@ export function readPerson(
         if (nameValue !== null) {
           currentTag = 'NAME_OTHER'
           const other = readName(val, null, null, ctx.surnameFirst)
-          if (other !== 'Unknown') otherNames.push(other)
+          if (other) otherNames.push(other)
         } else nameValue = val
       } else if (tag === 'FAMC') {
         famc = val.match(/^@([^@]+)@/)?.[1] ?? ''
@@ -222,9 +224,15 @@ export function readPerson(
   death = withDayMonth(death, deathDayMonth)
   death = leapDeathDate(death, deathLunar, deathLunarLeap)
 
+  let fullName = readName(nameValue, surname, givenName, ctx.surnameFirst)
+  if (!fullName) {
+    ctx.stats.unnamed++
+    fullName = ctx.unnamedName
+  }
+
   return {
     id,
-    full_name: readName(nameValue, surname, givenName, ctx.surnameFirst),
+    full_name: fullName,
     gender,
     is_deceased,
     birth_day: nullIfNaN(birth.day),

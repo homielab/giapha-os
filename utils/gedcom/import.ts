@@ -25,11 +25,13 @@ export type ParseGedcomOptions = {
    * in the right order.
    */
   surnameFirst?: boolean
+  /** Full name for a person without NAME; default 'Unknown'. */
+  unnamedName?: string
 }
 
 export function parseGedcom(
   gedcom: string,
-  { surnameFirst = true }: ParseGedcomOptions = {}
+  { surnameFirst = true, unnamedName = 'Unknown' }: ParseGedcomOptions = {}
 ): {
   persons: GedcomPerson[]
   relationships: GedcomRelationship[]
@@ -45,9 +47,10 @@ export function parseGedcom(
   const ctx: PersonContext = {
     noteTexts: new Map(),
     sourTexts: new Map(),
-    stats: { missingNotes: 0, sources: 0, droppedFamilyNotes: 0 },
+    stats: { missingNotes: 0, sources: 0, droppedFamilyNotes: 0, unnamed: 0 },
     adoptedLinks: new Set(),
-    surnameFirst: surnameFirst && !ownExport
+    surnameFirst: surnameFirst && !ownExport,
+    unnamedName
   }
   for (const record of records) {
     if (record.type === 'NOTE') {

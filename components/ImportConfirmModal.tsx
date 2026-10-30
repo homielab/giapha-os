@@ -129,6 +129,16 @@ export default function ImportConfirmModal({
                   })}
                 </p>
               ) : null}
+              {gedcom && gedcom.unnamed > 0 ? (
+                <p
+                  role='alert'
+                  className='mt-3 rounded-lg bg-amber-50 p-2 text-sm text-amber-800'>
+                  {t('restoreGedcomUnnamed', {
+                    count: gedcom.unnamed,
+                    name: t('gedcomUnnamedPerson')
+                  })}
+                </p>
+              ) : null}
               {gedcom && onSurnameFirstChange ? (
                 <fieldset
                   className='mt-3'

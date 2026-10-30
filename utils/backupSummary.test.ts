@@ -174,7 +174,8 @@ describe('readRestoreFile GEDCOM stats', () => {
     expect(gedcom).toEqual({
       missingNotes: 1,
       sources: 2,
-      droppedFamilyNotes: 0
+      droppedFamilyNotes: 0,
+      unnamed: 0
     })
     expect(payload).not.toHaveProperty('stats')
     expect(payload.persons[0].note).toBe('Nguồn: Gia phả')

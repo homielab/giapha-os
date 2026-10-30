@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import {
   canConfirmMerge,
+  mergeIdsProblem,
   previewMerge,
   splitOtherNames,
   type MergePerson,
@@ -313,5 +314,24 @@ describe('canConfirmMerge', () => {
     const preview = { warnings: ['loop' as const] }
     expect(canConfirmMerge({ ...ok, preview, acknowledged: false })).toBe(false)
     expect(canConfirmMerge({ ...ok, preview, acknowledged: true })).toBe(true)
+  })
+})
+
+describe('mergeIdsProblem', () => {
+  const a = '3b241101-e2bb-4255-8caf-4136c566a962'
+  const b = '9f1c2d3e-4b5a-4c6d-8e7f-0a1b2c3d4e5f'
+
+  test('two different UUIDs pass', () => {
+    expect(mergeIdsProblem(a, b)).toBeNull()
+  })
+
+  test('the same or an empty id is the same-member error', () => {
+    expect(mergeIdsProblem(a, a)).toBe('same')
+    expect(mergeIdsProblem('', b)).toBe('same')
+  })
+
+  test('a string that is not a UUID is blocked before the filter', () => {
+    expect(mergeIdsProblem(`${a}),id.neq.(x`, b)).toBe('invalid')
+    expect(mergeIdsProblem(a, 'abc')).toBe('invalid')
   })
 })

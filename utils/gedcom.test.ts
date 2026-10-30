@@ -1343,7 +1343,8 @@ describe('GEDCOM sources and missing notes', () => {
     expect(stats).toEqual({
       missingNotes: 1,
       sources: 0,
-      droppedFamilyNotes: 0
+      droppedFamilyNotes: 0,
+      unnamed: 0
     })
   })
 
@@ -1387,7 +1388,8 @@ describe('GEDCOM sources and missing notes', () => {
     expect(stats).toEqual({
       missingNotes: 0,
       sources: 3,
-      droppedFamilyNotes: 0
+      droppedFamilyNotes: 0,
+      unnamed: 0
     })
   })
 
@@ -1407,7 +1409,8 @@ describe('GEDCOM sources and missing notes', () => {
     expect(stats).toEqual({
       missingNotes: 0,
       sources: 0,
-      droppedFamilyNotes: 0
+      droppedFamilyNotes: 0,
+      unnamed: 0
     })
   })
 
@@ -1423,7 +1426,8 @@ describe('GEDCOM sources and missing notes', () => {
     expect(stats).toEqual({
       missingNotes: 0,
       sources: 0,
-      droppedFamilyNotes: 0
+      droppedFamilyNotes: 0,
+      unnamed: 0
     })
     expect(persons[0].note).toBe('Tiểu sử')
     expect(relationships[0]).not.toHaveProperty('note')
@@ -1586,7 +1590,8 @@ describe('GEDCOM marriage notes', () => {
     expect(stats).toEqual({
       missingNotes: 0,
       sources: 0,
-      droppedFamilyNotes: 0
+      droppedFamilyNotes: 0,
+      unnamed: 0
     })
   })
 
@@ -1629,7 +1634,8 @@ describe('GEDCOM marriage notes', () => {
     expect(stats).toEqual({
       missingNotes: 1,
       sources: 0,
-      droppedFamilyNotes: 0
+      droppedFamilyNotes: 0,
+      unnamed: 0
     })
   })
 })
@@ -1684,5 +1690,27 @@ describe('GEDCOM marriage and divorce events', () => {
       '1 WIFE @I2@\n1 MARR\n2 DATE 1950\n2 PLAC Huế\n1 DIV Y'
     )
     expect(marriageNote(edited)).toBe(note)
+  })
+})
+
+describe('GEDCOM person without a name', () => {
+  const ged = '0 @I1@ INDI\n1 SEX M\n0 @I2@ INDI\n1 NAME /Lê/ Hoa\n'
+
+  test('gets the placeholder passed in and is counted', () => {
+    const { persons, stats } = parseGedcom(ged, { unnamedName: 'Chưa rõ tên' })
+    expect(persons.map((p) => p.full_name)).toEqual(['Chưa rõ tên', 'Lê Hoa'])
+    expect(stats.unnamed).toBe(1)
+  })
+
+  test('defaults to Unknown', () => {
+    expect(parseGedcom(ged).persons[0].full_name).toBe('Unknown')
+  })
+
+  test('an empty other name is not kept', () => {
+    const { persons, stats } = parseGedcom(
+      '0 @I1@ INDI\n1 NAME /An/\n1 NAME //\n'
+    )
+    expect(persons[0].other_names).toBeNull()
+    expect(stats.unnamed).toBe(0)
   })
 })

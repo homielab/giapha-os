@@ -33,6 +33,8 @@ export function formatName(fullName: string | null | undefined): string {
  * Without it: SURN/GIVN in the order the NAME writes them (surname first for
  * `/Nguyễn/ Văn An`), otherwise the NAME without its slashes (`Văn /An/` →
  * `Văn An`, as older exports wrote it).
+ *
+ * Returns '' when the record has no name; the caller picks the placeholder.
  */
 export function readName(
   nameValue: string | null,
@@ -46,7 +48,7 @@ export function readName(
     const match = value.match(/\/([^/]*)\//)
     const surn = surname ?? match?.[1] ?? ''
     const given = givenName ?? (match ? value.replace(match[0], ' ') : value)
-    return clean(`${surn} ${given}`) || 'Unknown'
+    return clean(`${surn} ${given}`)
   }
   if (surname || givenName) {
     const surnameFirstInName = value === '' || value.startsWith('/')
@@ -55,5 +57,5 @@ export function readName(
       : [givenName, surname]
     return clean(parts.filter(Boolean).join(' '))
   }
-  return clean(value) || 'Unknown'
+  return clean(value)
 }
