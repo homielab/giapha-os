@@ -101,6 +101,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A first visit without a saved language now opens in English when the browser prefers English (Vietnamese otherwise); a language picked in the app still wins.
+- `.env.example` no longer quotes values, so `docker run --env-file` no longer keeps the quotes in the site name, sender email or app URL (which broke approval emails and the sitemap).
 - Member page: parents are listed father first, spouses and children in the same order as the tree (children with the same birth order by birth date); kinship path lines such as "is the husband of …" end with a period and no longer capitalise mid-sentence; the family book title picks a surname when two are equally common (earliest generation, then by name) instead of leaving it empty.
 - Administrators now get the approval email when Supabase "Confirm email" is off: it is sent when the new account signs up or signs in with a password, not only after an email confirmation or SSO login. The email is always in the app's default language (Vietnamese) instead of the new user's.
 - The gallery accepts phone photos up to 20 MB (GIFs up to 10 MB) and shrinks them before upload, instead of refusing anything over 10 MB; deleting a photo keeps its file while another gallery entry still uses it.

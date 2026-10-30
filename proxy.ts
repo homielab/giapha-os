@@ -1,9 +1,29 @@
 import { type NextRequest } from 'next/server'
 
+import { localeFromAcceptLanguage } from '@/lib/i18n/locales'
 import { updateSession } from '@/utils/supabase/middleware'
 
+const LOCALE_COOKIE = 'locale'
+
 export async function proxy(request: NextRequest) {
-  return await updateSession(request)
+  // First visit: pick the language from the browser once. The request cookie
+  // makes this very page render in it; the response cookie keeps it. A
+  // language chosen later in the app overwrites the cookie.
+  const firstLocale = request.cookies.has(LOCALE_COOKIE)
+    ? null
+    : localeFromAcceptLanguage(request.headers.get('accept-language'))
+  if (firstLocale) request.cookies.set(LOCALE_COOKIE, firstLocale)
+
+  const response = await updateSession(request)
+
+  if (firstLocale) {
+    response.cookies.set(LOCALE_COOKIE, firstLocale, {
+      path: '/',
+      maxAge: 31536000,
+      sameSite: 'lax'
+    })
+  }
+  return response
 }
 
 export const config = {
