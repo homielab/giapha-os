@@ -37,7 +37,9 @@ export function getAvatarUrl(value: string | null | undefined) {
   return path ? `/api/avatar?path=${encodeURIComponent(path)}` : null
 }
 
-export const AVATAR_SIGNED_URL_TTL_SECONDS = 60 * 60
+// Signed avatar URLs live a day; the server reuses each one for its first
+// half (`signAvatarUrls`), so the browser can cache the image meanwhile.
+export const AVATAR_SIGNED_URL_TTL_SECONDS = 24 * 60 * 60
 // Signed URLs are dropped this long before they expire, so an image that
 // mounts late (view switch, modal) never gets an already-dead link.
 const SIGNED_URL_EXPIRY_MARGIN_MS = 5 * 60 * 1000
@@ -52,18 +54,6 @@ export interface SignedAvatarUrls {
 export const NO_SIGNED_AVATAR_URLS: SignedAvatarUrls = {
   urls: {},
   expiresAt: 0
-}
-
-/** Unique storage paths of the given avatar values (invalid ones dropped). */
-export function collectAvatarPaths(
-  values: Iterable<string | null | undefined>
-) {
-  const paths = new Set<string>()
-  for (const value of values) {
-    const path = getAvatarStoragePath(value)
-    if (path) paths.add(path)
-  }
-  return [...paths]
 }
 
 /**

@@ -1,13 +1,12 @@
-import { describe, expect, test } from 'bun:test'
+import { beforeEach, describe, expect, test } from 'bun:test'
 
 import {
   AVATAR_SIGNED_URL_TTL_SECONDS,
-  collectAvatarPaths,
   getAvatarStoragePath,
   NO_SIGNED_AVATAR_URLS,
   resolveAvatarUrl
 } from '@/utils/avatar'
-import { signAvatarUrls } from '@/utils/avatarSigning'
+import { clearSignedAvatarCache, signAvatarUrls } from '@/utils/avatarSigning'
 import { fakeSupabase } from '@/utils/testing/fakeSupabase'
 
 const LEGACY_PUBLIC =
@@ -31,21 +30,6 @@ describe('getAvatarStoragePath', () => {
     ).toBeNull()
     expect(getAvatarStoragePath('../secret')).toBeNull()
     expect(getAvatarStoragePath(null)).toBeNull()
-  })
-})
-
-describe('collectAvatarPaths', () => {
-  test('returns each valid path once', () => {
-    expect(
-      collectAvatarPaths([
-        LEGACY_PUBLIC,
-        'p1_an.jpg',
-        null,
-        '',
-        'https://evil.example/a.png',
-        'p3_chi.webp'
-      ])
-    ).toEqual(['p1_an.jpg', 'p3_chi.webp'])
   })
 })
 
@@ -83,6 +67,10 @@ describe('resolveAvatarUrl', () => {
 })
 
 describe('signAvatarUrls', () => {
+  beforeEach(clearSignedAvatarCache)
+  const refs = (values: (string | null)[]) =>
+    values.map((avatar_url) => ({ avatar_url }))
+
   test('signs all avatars of a page in one storage request', async () => {
     const { client, calls } = fakeSupabase((call) => {
       const [paths] = call.payload as [string[]]
@@ -97,7 +85,7 @@ describe('signAvatarUrls', () => {
 
     const result = await signAvatarUrls(
       client,
-      [LEGACY_PUBLIC, 'p1_an.jpg', 'p3_chi.webp', null],
+      refs([LEGACY_PUBLIC, 'p1_an.jpg', 'p3_chi.webp', null]),
       1000
     )
 
@@ -119,7 +107,9 @@ describe('signAvatarUrls', () => {
 
   test('makes no request without avatars', async () => {
     const { client, calls } = fakeSupabase(() => ({}))
-    expect(await signAvatarUrls(client, [null, ''])).toBe(NO_SIGNED_AVATAR_URLS)
+    expect(await signAvatarUrls(client, refs([null, '']))).toBe(
+      NO_SIGNED_AVATAR_URLS
+    )
     expect(calls).toEqual([])
   })
 
@@ -130,11 +120,14 @@ describe('signAvatarUrls', () => {
         { path: 'gone.png', signedUrl: null, error: 'Object not found' }
       ]
     }))
-    const partial = await signAvatarUrls(missing.client, ['a.png', 'gone.png'])
+    const partial = await signAvatarUrls(
+      missing.client,
+      refs(['a.png', 'gone.png'])
+    )
     expect(partial.urls).toEqual({ 'a.png': 'https://signed/a' })
 
     const denied = fakeSupabase(() => ({ error: { message: 'denied' } }))
-    const none = await signAvatarUrls(denied.client, ['a.png'])
+    const none = await signAvatarUrls(denied.client, refs(['b.png']))
     expect(none.urls).toEqual({})
   })
 })

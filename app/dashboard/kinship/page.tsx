@@ -25,7 +25,7 @@ export default async function KinshipPage() {
       supabase
         .from('persons')
         .select(
-          'id, full_name, gender, birth_year, birth_month, birth_day, birth_order, generation, is_in_law, avatar_url'
+          'id, full_name, gender, birth_year, birth_month, birth_day, birth_order, generation, is_in_law, avatar_url, updated_at'
         )
         .order('birth_year', { ascending: true, nullsFirst: false })
         .order('id')
@@ -41,10 +41,7 @@ export default async function KinshipPage() {
   ])
 
   const signedAvatarUrls = profile?.is_active
-    ? await signAvatarUrls(
-        supabase,
-        (persons ?? []).map((p) => p.avatar_url)
-      )
+    ? await signAvatarUrls(supabase, persons ?? [])
     : NO_SIGNED_AVATAR_URLS
 
   return (

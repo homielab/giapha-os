@@ -70,12 +70,10 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
 
   // One storage request signs every avatar of the tree/list/mindmap instead
   // of one /api/avatar round trip per member. Storage RLS only lets active
-  // users sign, the same rule the /api/avatar route applies.
+  // users sign, the same rule the /api/avatar route applies; the same URLs
+  // come back on the next load, so the browser serves the photos from cache.
   const signedAvatarUrls = profile?.is_active
-    ? await signAvatarUrls(
-        supabase,
-        persons.map((p) => p.avatar_url)
-      )
+    ? await signAvatarUrls(supabase, persons)
     : NO_SIGNED_AVATAR_URLS
 
   // Prepare map and roots for tree views

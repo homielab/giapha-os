@@ -111,7 +111,7 @@ Xuất/nhập GEDCOM (7.0) để mở gia phả trong Gramps, MyHeritage… ho�
 
 ### Ảnh đại diện
 
-- Ảnh đại diện nằm trong bucket riêng tư `avatars`, chỉ tài khoản đã kích hoạt mới xem được. Trang thành viên (cây, danh sách, sơ đồ tư duy, bong bóng) và trang Xưng hô ký đường dẫn cho mọi ảnh của trang trong một lần gọi Supabase Storage trên server, hiệu lực 1 giờ; ảnh vừa đổi, trang khác hoặc tab mở quá hạn thì tải qua `/api/avatar`.
+- Ảnh đại diện nằm trong bucket riêng tư `avatars`, chỉ tài khoản đã kích hoạt mới xem được. Trang thành viên (cây, danh sách, sơ đồ tư duy, bong bóng) và trang Xưng hô ký đường dẫn cho mọi ảnh của trang trong một lần gọi Supabase Storage trên server, hiệu lực 24 giờ. Server dùng lại mỗi đường dẫn trong 12 giờ (tới khi ảnh đổi) nên trình duyệt giữ ảnh trong cache khi chuyển trang; bộ nhớ đệm nằm trong RAM của server và chỉ dùng sau khi đã kiểm tài khoản đang hoạt động. Ảnh vừa đổi, trang khác hoặc tab mở quá hạn thì tải qua `/api/avatar`. Đường dẫn bị sao chép ra ngoài vẫn mở được ảnh tới khi hết hạn, như trước nhưng tới 24 giờ thay vì 1 giờ.
 - Khi chọn ảnh, ứng dụng đọc phần đầu file để biết đúng loại (JPG, PNG, GIF, WEBP; file chữ đổi đuôi thành `.jpg` bị từ chối) và lưu phần mở rộng theo loại đó, không theo tên file.
 
 ## Demo

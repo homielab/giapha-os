@@ -103,7 +103,7 @@ Export and import GEDCOM (7.0) to open the family tree in Gramps, MyHeritage… 
 
 ### Profile photos
 
-- Profile photos live in the private `avatars` bucket and only activated accounts can see them. The members page (tree, list, mindmap, bubble view) and the kinship page sign the links of every photo on the page in one Supabase Storage call on the server, valid for 1 hour; a photo changed since, other pages and tabs left open past that time load through `/api/avatar`.
+- Profile photos live in the private `avatars` bucket and only activated accounts can see them. The members page (tree, list, mindmap, bubble view) and the kinship page sign the links of every photo on the page in one Supabase Storage call on the server, valid for 24 hours. The server reuses each link for 12 hours (until the photo changes), so the browser keeps the photos in its cache when moving between pages; the cache sits in the server's memory and is used only after checking that the account is active. A photo changed since, other pages and tabs left open past that time load through `/api/avatar`. A copied link opens the photo until it expires, as before but for up to 24 hours instead of 1.
 - When you pick a photo, the app reads the start of the file to find its real type (JPG, PNG, GIF, WEBP; a text file renamed to `.jpg` is refused) and stores it with that extension, not the one in the file name.
 
 ## Demo

@@ -1,8 +1,9 @@
-import { describe, expect, test } from 'bun:test'
+import { beforeEach, describe, expect, test } from 'bun:test'
 
 import type { Person } from '@/types'
 
 import { NO_SIGNED_AVATAR_URLS } from './avatar'
+import { clearSignedAvatarCache } from './avatarSigning'
 import { PERSON_LIST_COLUMNS } from './personColumns'
 import {
   fetchRelationshipData,
@@ -328,6 +329,8 @@ describe('fetchRelationshipData', () => {
 })
 
 describe('signRelationshipAvatars', () => {
+  beforeEach(clearSignedAvatarCache)
+
   const relative = (id: string, avatar_url: string | null) => ({
     id: `r-${id}`,
     type: 'biological_child' as const,

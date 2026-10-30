@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Profile photos on the members (tree, list, mind map, bubbles), kinship and member pages keep the same link between page loads for 12 hours (signed links now last 24 hours instead of 1), so the browser shows them from its cache instead of downloading hundreds of photos again on every visit. A changed photo gets a new link right away.
 - Member list: "Given name (A-Z)" sorts by the given name (last word) first, then the whole name, so a one-surname family no longer sorts by middle name; search results with equal rank follow the same order.
 - The gallery remembers the Timeline/Grid choice across pages and visits.
 - Expanding or collapsing a branch, filtering or resizing the window on a large family tree is smoother: lining up the card heights of each generation now makes the browser lay out the page once instead of once per generation (20 times on a 20-generation tree).

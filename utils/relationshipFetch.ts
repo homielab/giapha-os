@@ -228,7 +228,7 @@ export async function signRelationshipAvatars(
   try {
     return await signAvatarUrls(
       supabase,
-      relationships.map((r) => r.targetPerson.avatar_url)
+      relationships.map((r) => r.targetPerson)
     )
   } catch (err) {
     console.error('Cannot sign relative avatars:', err)
