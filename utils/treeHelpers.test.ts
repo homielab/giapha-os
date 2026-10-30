@@ -7,6 +7,7 @@ import {
   buildNodeChildrenMap,
   childrenOffPath,
   computeAutoCollapsed,
+  equalizeNodeHeights,
   extendPath,
   getFilteredTreeData,
   TreeFilterOptions
@@ -273,5 +274,108 @@ describe('mind map path guard', () => {
     const parent = new Set(['a'])
     expect([...extendPath(parent, 'b')]).toEqual(['a', 'b'])
     expect([...parent]).toEqual(['a'])
+  })
+})
+
+describe('equalizeNodeHeights', () => {
+  type LogEntry = { op: 'read' | 'write'; id: string; value?: string }
+
+  /**
+   * A container of `.node-container` nodes whose inner element logs every
+   * `offsetHeight` read and `style.minHeight` write, in order.
+   */
+  function fakeTree(levels: Record<string, Record<string, number>>) {
+    const log: LogEntry[] = []
+    const inner = new Map<string, { style: { minHeight: string } }>()
+    const nodes = Object.entries(levels).flatMap(([level, heights]) =>
+      Object.entries(heights).map(([id, height]) => {
+        let minHeight = ''
+        const el = {
+          style: {
+            get minHeight() {
+              return minHeight
+            },
+            set minHeight(value: string) {
+              log.push({ op: 'write', id, value })
+              minHeight = value
+            }
+          },
+          get offsetHeight() {
+            log.push({ op: 'read', id })
+            return Math.max(height, parseFloat(minHeight) || 0)
+          }
+        }
+        inner.set(id, el)
+        return {
+          getAttribute: (name: string) =>
+            name === 'data-level' ? level : null,
+          firstElementChild: el
+        }
+      })
+    )
+    const container = {
+      querySelectorAll: (selector: string) => {
+        expect(selector).toBe('.node-container')
+        return nodes
+      }
+    } as unknown as HTMLElement
+    const minHeight = (id: string) => inner.get(id)?.style.minHeight
+    return { container, log, minHeight }
+  }
+
+  const threeLevels = {
+    '0': { a: 80, b: 120 },
+    '1': { c: 60, d: 90, e: 75 },
+    '2': { f: 100 }
+  }
+
+  test('reads only after all writes of the reset: one layout per call', () => {
+    const { container, log } = fakeTree(threeLevels)
+    equalizeNodeHeights(container)
+
+    // A read right after a write forces a layout; there must be only one.
+    const forcedLayouts = log.filter(
+      (entry, i) => entry.op === 'read' && log[i - 1]?.op === 'write'
+    )
+    expect(forcedLayouts).toHaveLength(1)
+
+    const firstRead = log.findIndex((entry) => entry.op === 'read')
+    const lastRead = log.findLastIndex((entry) => entry.op === 'read')
+    expect(log.slice(0, firstRead).every((e) => e.value === '0px')).toBe(true)
+    expect(
+      log.slice(firstRead, lastRead + 1).every((e) => e.op === 'read')
+    ).toBe(true)
+    expect(log.slice(lastRead + 1).every((e) => e.op === 'write')).toBe(true)
+  })
+
+  test('measures each node exactly once', () => {
+    const { container, log } = fakeTree(threeLevels)
+    equalizeNodeHeights(container)
+
+    const reads = log.filter((entry) => entry.op === 'read').map((e) => e.id)
+    expect(reads.sort()).toEqual(['a', 'b', 'c', 'd', 'e', 'f'])
+  })
+
+  test('sets every node to the tallest natural height of its level', () => {
+    const { container, minHeight } = fakeTree(threeLevels)
+    equalizeNodeHeights(container)
+    // A second run starts from the stretched heights and must not grow them.
+    equalizeNodeHeights(container)
+
+    expect(['a', 'b'].map(minHeight)).toEqual(['120px', '120px'])
+    expect(['c', 'd', 'e'].map(minHeight)).toEqual(['90px', '90px', '90px'])
+    expect(minHeight('f')).toBe('100px')
+  })
+
+  test('leaves a level of zero height reset, not stretched', () => {
+    const { container, minHeight } = fakeTree({
+      '0': { a: 50 },
+      '1': { hidden1: 0, hidden2: 0 }
+    })
+    equalizeNodeHeights(container)
+
+    expect(minHeight('a')).toBe('50px')
+    expect(minHeight('hidden1')).toBe('0px')
+    expect(minHeight('hidden2')).toBe('0px')
   })
 })

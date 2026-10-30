@@ -189,41 +189,47 @@ export function computeAutoCollapsed(
 /**
  * Normalizes each tree level's node heights so rows align. The resize/zoom
  * wiring lives in the component; this is the pure DOM pass.
+ *
+ * Runs in three passes over all levels (reset every node, measure every node,
+ * then write every max) so the browser lays out once per call instead of once
+ * per level: reading `offsetHeight` right after a style write forces a reflow.
  */
 export function equalizeNodeHeights(container: HTMLElement) {
   const nodes = container.querySelectorAll('.node-container')
-  const levelMap: Record<string, HTMLElement[]> = {}
+  const levelMap = new Map<string, HTMLElement[]>()
 
   nodes.forEach((node) => {
     const level = node.getAttribute('data-level')
-    if (level != null) {
-      if (!levelMap[level]) levelMap[level] = []
-      levelMap[level].push(node as HTMLElement)
-    }
+    const innerFlex = node.firstElementChild as HTMLElement | null
+    if (level == null || !innerFlex) return
+    const levelNodes = levelMap.get(level)
+    if (levelNodes) levelNodes.push(innerFlex)
+    else levelMap.set(level, [innerFlex])
   })
 
-  Object.values(levelMap).forEach((levelNodes) => {
-    // Reset min-height first to get natural height
-    levelNodes.forEach((node) => {
-      const innerFlex = node.firstElementChild as HTMLElement
-      if (innerFlex) innerFlex.style.minHeight = '0px'
+  // Pass 1: reset min-height everywhere to get natural heights
+  levelMap.forEach((levelNodes) => {
+    levelNodes.forEach((el) => {
+      el.style.minHeight = '0px'
     })
+  })
 
+  // Pass 2: measure every node (one layout for the whole tree)
+  const maxHeights = new Map<string, number>()
+  levelMap.forEach((levelNodes, level) => {
     let maxHeight = 0
-    // Find the maximum height in this level
-    levelNodes.forEach((node) => {
-      const innerFlex = node.firstElementChild as HTMLElement
-      if (innerFlex) {
-        maxHeight = Math.max(maxHeight, innerFlex.offsetHeight)
-      }
+    levelNodes.forEach((el) => {
+      maxHeight = Math.max(maxHeight, el.offsetHeight)
     })
+    maxHeights.set(level, maxHeight)
+  })
 
-    // Apply max height to all nodes in this level
-    levelNodes.forEach((node) => {
-      const innerFlex = node.firstElementChild as HTMLElement
-      if (innerFlex && maxHeight > 0) {
-        innerFlex.style.minHeight = `${maxHeight}px`
-      }
+  // Pass 3: apply each level's max height
+  levelMap.forEach((levelNodes, level) => {
+    const maxHeight = maxHeights.get(level) ?? 0
+    if (maxHeight <= 0) return
+    levelNodes.forEach((el) => {
+      el.style.minHeight = `${maxHeight}px`
     })
   })
 }
