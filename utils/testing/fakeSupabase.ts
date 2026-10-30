@@ -4,7 +4,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 // awaited query is recorded as a FakeCall and answered by `respond`, which
 // returns `{ data, error }` like PostgREST does (Supabase never throws).
 // Storage calls are recorded too, with `table` = `storage:<bucket>` and `op`
-// = the storage method; `payload` holds its arguments.
+// = the storage method; `payload` holds its arguments. Array data of a query
+// with `.range(from, to)` is cut to that range.
 
 export type FakeOp =
   | 'select'
@@ -26,6 +27,8 @@ export interface FakeCall {
   /** Arguments of the last `.select(columns, options)`, if any. */
   columns?: string
   selectOptions?: { count?: string; head?: boolean }
+  /** Arguments of `.range(from, to)`, if any. */
+  range?: [number, number]
 }
 
 export interface FakeResult {
@@ -103,7 +106,10 @@ export function fakeSupabase(
       },
       limit: () => builder,
       order: () => builder,
-      range: () => builder,
+      range: (from: number, to: number) => {
+        call.range = [from, to]
+        return builder
+      },
       single: () => {
         call.single = true
         return builder
@@ -121,9 +127,14 @@ export function fakeSupabase(
         reject?: (reason: unknown) => T
       ) => {
         calls.push(call)
+        // Like PostgREST, a paged query gets only the rows of its range.
+        const page = (data: unknown) =>
+          call.range && Array.isArray(data)
+            ? data.slice(call.range[0], call.range[1] + 1)
+            : data
         const settle = (result: FakeResult) =>
           resolve({
-            data: result.data ?? null,
+            data: page(result.data ?? null),
             count: result.count ?? null,
             error: result.error ?? null
           })

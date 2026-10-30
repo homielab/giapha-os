@@ -10,10 +10,8 @@ const rows = (n: number) =>
 
 describe('loadAllPersons', () => {
   test('pages past 1000 rows', async () => {
-    let page = 0
-    const { client, calls } = fakeSupabase(() => ({
-      data: page++ === 0 ? rows(1000) : rows(5)
-    }))
+    // the fake answers each page with its range of the 1005 rows
+    const { client, calls } = fakeSupabase(() => ({ data: rows(1005) }))
     const { data, error } = await loadAllPersons(client as never)
     expect(error).toBeNull()
     expect(data).toHaveLength(1005)

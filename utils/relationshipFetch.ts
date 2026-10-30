@@ -8,6 +8,7 @@ import type { TranslationKey, TranslationValues } from '@/lib/i18n/messages'
 import type { Person, RelationshipType } from '@/types'
 import { NO_SIGNED_AVATAR_URLS, type SignedAvatarUrls } from '@/utils/avatar'
 import { signAvatarUrls } from '@/utils/avatarSigning'
+import { fetchAllRows, fetchInChunks } from '@/utils/supabase/fetchAll'
 
 import { PERSON_LIST_COLUMNS } from './personColumns'
 
@@ -158,17 +159,26 @@ async function fetchChildrenMarriages(
   supabase: SupabaseClient,
   childrenIds: string[]
 ): Promise<MarriageRow[]> {
-  if (childrenIds.length === 0) return []
-  const ids = childrenIds.join(',')
-  const { data, error } = await supabase
-    .from('relationships')
-    .select(CHILD_MARRIAGE_COLUMNS)
-    .eq('type', 'marriage')
-    .or(`person_a.in.(${ids}),person_b.in.(${ids})`)
-    .overrideTypes<MarriageRow[], { merge: false }>()
+  // Chunked so the .or() list stays within the URL limit, each chunk paged
+  // past the response row cap. A marriage between two children in different
+  // chunks comes back twice and is kept once.
+  const { data, error } = await fetchInChunks(childrenIds, (chunk) => {
+    const ids = chunk.join(',')
+    return fetchAllRows<MarriageRow>((from, to) =>
+      supabase
+        .from('relationships')
+        .select(CHILD_MARRIAGE_COLUMNS)
+        .eq('type', 'marriage')
+        .or(`person_a.in.(${ids}),person_b.in.(${ids})`)
+        .order('id')
+        .range(from, to)
+        .overrideTypes<MarriageRow[], { merge: false }>()
+    )
+  })
 
   if (error) throw error
-  return data ?? []
+  const seen = new Set<string>()
+  return data.filter((m) => !seen.has(m.id) && !!seen.add(m.id))
 }
 
 // Counts the child links (biological or adopted) whose parent is one of

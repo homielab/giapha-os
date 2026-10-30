@@ -6,6 +6,7 @@ import DataImportExport from '@/components/DataImportExport'
 import DuplicateScan from '@/components/DuplicateScan'
 import LunarRecompute from '@/components/LunarRecompute'
 import { getServerTranslations } from '@/lib/i18n/server'
+import { restoreMaxBytes } from '@/utils/restoreLimit'
 import { getProfile } from '@/utils/supabase/queries'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -41,7 +42,7 @@ export default async function DataManagementPage() {
         </div>
 
         <div className='space-y-6'>
-          <DataImportExport />
+          <DataImportExport restoreMaxBytes={restoreMaxBytes()} />
           <LunarRecompute />
           <DuplicateScan />
           <DataCheck />

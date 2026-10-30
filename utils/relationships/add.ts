@@ -9,6 +9,7 @@ import {
   RelationshipWarningError,
   validateRelationship
 } from '@/utils/relationshipValidation'
+import { fetchAllRows } from '@/utils/supabase/fetchAll'
 import {
   PersonNotUpdatedError,
   RelationshipNotDeletedError
@@ -158,13 +159,20 @@ async function loadRelationshipContext(
     while (frontier.length > 0 && !seen.has(candidate.person_a)) {
       const next: string[] = []
       for (let i = 0; i < frontier.length; i += LOOKUP_CHUNK) {
-        const { data, error } = await supabase
-          .from('relationships')
-          .select('person_a, person_b, type')
-          .in('person_a', frontier.slice(i, i + LOOKUP_CHUNK))
-          .in('type', ['biological_child', 'adopted_child'])
+        const parents = frontier.slice(i, i + LOOKUP_CHUNK)
+        // 200 parents can have more than one response page of children.
+        const { data, error } = await fetchAllRows<RelationshipLink>(
+          (from, to) =>
+            supabase
+              .from('relationships')
+              .select('person_a, person_b, type')
+              .in('person_a', parents)
+              .in('type', ['biological_child', 'adopted_child'])
+              .order('id')
+              .range(from, to)
+        )
         if (error) throw error
-        for (const row of data ?? []) {
+        for (const row of data) {
           relationships.push(row)
           if (!seen.has(row.person_b)) {
             seen.add(row.person_b)

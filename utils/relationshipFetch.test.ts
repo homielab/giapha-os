@@ -390,3 +390,95 @@ describe('signRelationshipAvatars', () => {
     expect(signed).toBe(NO_SIGNED_AVATAR_URLS)
   })
 })
+
+describe('fetchRelationshipData children in-law', () => {
+  test('300 children with 1200 marriages load in chunks and pages', async () => {
+    const children = Array.from({ length: 300 }, (_, i) =>
+      person(`c${i}`, 'male')
+    )
+    const marriages = Array.from({ length: 1200 }, (_, i) => ({
+      id: `m${i}`,
+      type: 'marriage',
+      note: null,
+      person_a: `c${i % 300}`,
+      person_b: `s${i}`,
+      person_a_data: children[i % 300],
+      person_b_data: person(`s${i}`, 'female')
+    }))
+    const { client, calls } = fakeSupabase((call) => {
+      if (filter(call, 'person_a')?.[0] === 'eq') {
+        return {
+          data: children.map((c, i) => ({
+            id: `r${i}`,
+            type: 'biological_child',
+            note: null,
+            target: c
+          }))
+        }
+      }
+      if (filter(call, 'person_b')?.[0] === 'eq') return { data: [] }
+      const or = call.filters.find(([op]) => op === 'or')
+      if (or) {
+        const ids = new Set(
+          String(or[2])
+            .match(/person_a\.in\.\(([^)]*)\)/)![1]
+            .split(',')
+        )
+        // the fake cuts the rows to the requested range (≤ 1000)
+        return { data: marriages.filter((m) => ids.has(m.person_a)) }
+      }
+      return { count: 0 }
+    })
+
+    const result = await fetchRelationshipData(client, me, t)
+    const inLaws = result.relationships.filter(
+      (r) => r.direction === 'child_in_law'
+    )
+    expect(inLaws).toHaveLength(1200)
+    expect(result.stats.daughterInLaw).toBe(1200)
+    const orCalls = calls.filter((c) => c.filters.some(([op]) => op === 'or'))
+    // 200 + 100 children per chunk; every .or() list stays short.
+    expect(orCalls.length).toBeGreaterThanOrEqual(2)
+    for (const c of orCalls) {
+      const expr = String(c.filters.find(([op]) => op === 'or')?.[2])
+      expect(expr.split(',').length).toBeLessThanOrEqual(400)
+    }
+  })
+
+  test('a marriage between two children is listed once', async () => {
+    const a = person('ca', 'male')
+    const b = person('cb', 'female')
+    const marriage = {
+      id: 'm1',
+      type: 'marriage',
+      note: null,
+      person_a: 'ca',
+      person_b: 'cb',
+      person_a_data: a,
+      person_b_data: b
+    }
+    const kids = Array.from({ length: 250 }, (_, i) => person(`k${i}`, 'male'))
+    const all = [a, ...kids, b]
+    const { client } = fakeSupabase((call) => {
+      if (filter(call, 'person_a')?.[0] === 'eq') {
+        return {
+          data: all.map((c, i) => ({
+            id: `r${i}`,
+            type: 'biological_child',
+            note: null,
+            target: c
+          }))
+        }
+      }
+      if (filter(call, 'person_b')?.[0] === 'eq') return { data: [] }
+      if (call.filters.some(([op]) => op === 'or')) {
+        return { data: [marriage] }
+      }
+      return { count: 0 }
+    })
+    const result = await fetchRelationshipData(client, me, t)
+    expect(
+      result.relationships.filter((r) => r.direction === 'child_in_law')
+    ).toHaveLength(1)
+  })
+})

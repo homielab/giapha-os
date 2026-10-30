@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Quick search (⌘K) finds a spouse or children right after they are added, and logging out clears it, so the next account on the same browser no longer sees the previous tree's names.
+- Large trees: the in-law list of a member with hundreds of children and the parent/child loop check no longer miss rows past 1000; a self-hosted server with `max_rows` below 1000 no longer cuts lists at the first page.
+- Restoring a backup larger than 4.5 MB on Vercel now explains the host limit instead of failing with a bare 413.
 - Member form: a lunar death date with day 31, month 13, or day 30 of a 29-day month is now refused ("invalid death date") instead of being saved with no death anniversary ever shown.
 - Names are saved in one Unicode form (NFC) with single spaces, and a note of only spaces or blank lines is no longer saved.
 - Statistics: the gender bar and legend now include Other, so the parts add up to the total; ages use today's date in Vietnam time.

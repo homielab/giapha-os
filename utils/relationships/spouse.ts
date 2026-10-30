@@ -2,6 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 
 import { Person } from '@/types'
 import { checkTextLength, MAX_NAME, MAX_NOTE } from '@/utils/limits'
+import { memberSearchCache } from '@/utils/memberSearchCache'
 import { RelationshipValidationError } from '@/utils/relationshipValidation'
 import { PersonNotCreatedError, PersonOrphanedError } from '@/utils/writeErrors'
 
@@ -73,6 +74,8 @@ export async function createSpouseWithMarriage(
   if (!newPersonData) throw new PersonNotCreatedError()
 
   const newSpouseId = newPersonData.id
+  // The ⌘K search must find the new person now, not after its cache expires.
+  memberSearchCache.clear()
 
   // 2. Insert Marriage Relationship
   const { error: relError } = await supabase.from('relationships').insert({

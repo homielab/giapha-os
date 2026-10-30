@@ -3,6 +3,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import { BulkChildRow } from '@/components/relationship/relationshipTypes'
 import { vnToday } from '@/utils/dateHelpers'
 import { checkTextLength, MAX_NAME } from '@/utils/limits'
+import { memberSearchCache } from '@/utils/memberSearchCache'
 import {
   DatedPerson,
   RelationshipValidationCode,
@@ -121,6 +122,8 @@ async function createChildWithParents(
     }
 
     const newChildId: string = newPersonData.id
+    // The ⌘K search must find the new child now, not after its cache expires.
+    memberSearchCache.clear()
     const parentIds = [parentId]
     if (otherParentId && otherParentId !== 'unknown') {
       parentIds.push(otherParentId)

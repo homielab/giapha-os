@@ -28,6 +28,7 @@ import { formatIsoDay } from '@/utils/dateHelpers'
 import { requestDuplicateScan } from '@/utils/duplicateScanTrigger'
 import type { GedcomImportStats } from '@/utils/gedcom'
 import { memberSearchCache } from '@/utils/memberSearchCache'
+import { restorePayloadTooLarge } from '@/utils/restoreLimit'
 
 import PersonSelector from './PersonSelector'
 
@@ -37,7 +38,12 @@ const CSV_PROBLEM_MESSAGES = {
   brokenQuotes: 'csvBrokenQuotes'
 } as const
 
-export default function DataImportExport() {
+export default function DataImportExport({
+  restoreMaxBytes = null
+}: {
+  /** Largest restore payload the host accepts (Vercel), or null. */
+  restoreMaxBytes?: number | null
+} = {}) {
   const { t, locale } = useI18n()
   const [isExporting, setIsExporting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
@@ -170,6 +176,9 @@ export default function DataImportExport() {
       if (!summary) return fail(t('invalidBackupFile'))
       const invalid = validateImportPayload(payload, t)
       if (invalid) return fail(invalid)
+      if (restorePayloadTooLarge(payload, restoreMaxBytes)) {
+        return fail(t('restoreTooLargeForHost'))
+      }
       setSelectedFile(file)
       setParsedBackup({ payload, summary, warning, truncated, gedcom })
       setShowConfirm(true)

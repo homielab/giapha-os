@@ -56,12 +56,29 @@ function trackedPages(total: number, failAt = -1) {
 }
 
 describe('fetchAllRows paging', () => {
-  test('a short first page takes one request', async () => {
+  test('a short first page takes one more request to confirm the end', async () => {
     const src = trackedPages(1)
     const { data, error } = await fetchAllRows(src.build, 2)
     expect(data).toEqual([0])
     expect(error).toBeNull()
-    expect(src.calls).toEqual([0])
+    expect(src.calls).toEqual([0, 0])
+  })
+
+  test('a server capped at 500 rows per page still returns all 1200 rows', async () => {
+    const all = Array.from({ length: 1200 }, (_, i) => i)
+    const ranges: [number, number][] = []
+    const build = async (from: number, to: number) => {
+      ranges.push([from, to])
+      return {
+        data: all.slice(from, Math.min(to + 1, from + 500)),
+        error: null
+      }
+    }
+    const { data, error } = await fetchAllRows(build, 1000)
+    expect(error).toBeNull()
+    expect(data).toEqual(all)
+    expect(ranges[0]).toEqual([0, 999])
+    expect(ranges[1]).toEqual([500, 999])
   })
 
   test('a full first page and a short second page take two rounds', async () => {

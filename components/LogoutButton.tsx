@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { useI18n } from '@/lib/i18n/useI18n'
+import { memberSearchCache } from '@/utils/memberSearchCache'
 import { createClient } from '@/utils/supabase/client'
 
 export default function LogoutButton() {
@@ -21,6 +22,8 @@ export default function LogoutButton() {
       // signOut reports failure in `error` instead of throwing
       const { error: signOutError } = await supabase.auth.signOut()
       if (signOutError) throw signOutError
+      // The next account on this browser must not see this tree's names.
+      memberSearchCache.clear()
       router.push('/login')
       router.refresh() // Refresh to clear any cached Server Component data
     } catch (err) {

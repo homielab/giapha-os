@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import { emptyBulkChildRow } from '@/components/relationship/relationshipTypes'
 import { Person } from '@/types'
 import { MAX_NAME, MAX_NOTE, TextTooLongError } from '@/utils/limits'
+import { memberSearchCache } from '@/utils/memberSearchCache'
 import {
   addRelationshipWithTargetSync,
   bulkCreateChildren,
@@ -414,5 +415,63 @@ describe('createSpouseWithMarriage', () => {
     const insert = calls.find((c) => c.table === 'persons')
     expect(insert?.payload).toMatchObject({ full_name: 'Lan' })
     expect((insert?.payload as { birth_year?: number }).birth_year).toBe(saved)
+  })
+})
+
+describe('member search cache', () => {
+  const cached = () => memberSearchCache.set([{ id: 'old' } as never])
+
+  test('adding a spouse clears it', async () => {
+    cached()
+    const { client } = fakeSupabase(() => ({ data: { id: 's1' } }))
+    await createSpouseWithMarriage(client, {
+      person: { id: 'p1', gender: 'male' } as Person,
+      name: 'Lan',
+      birthYear: '',
+      note: ''
+    })
+    expect(memberSearchCache.get()).toBeNull()
+  })
+
+  test('adding several children clears it', async () => {
+    cached()
+    const { client } = fakeSupabase(respondWith())
+    const result = await bulkCreateChildren(client, bulkInput(['An', 'Bình']))
+    expect(result.created).toBe(2)
+    expect(memberSearchCache.get()).toBeNull()
+  })
+})
+
+describe('cycle check on a large tree', () => {
+  test('finds the person among more than 1000 descendants of one parent', async () => {
+    const rows = Array.from({ length: 1500 }, (_, i) => ({
+      person_a: 'target',
+      person_b: i === 1200 ? 'me' : `c${i}`,
+      type: 'biological_child'
+    }))
+    const { client } = fakeSupabase((call) => {
+      const parents = call.filters.find(
+        ([op, col]) => op === 'in' && col === 'person_a'
+      )?.[2] as string[] | undefined
+      if (call.table === 'relationships' && call.range && parents) {
+        // the fake cuts the rows to the requested range (≤ 1000)
+        return { data: rows.filter((r) => parents.includes(r.person_a)) }
+      }
+      if (call.table === 'persons' && call.single) {
+        return { data: { generation: null, is_in_law: null } }
+      }
+      if (call.op === 'update') return { data: [{ id: 'target' }] }
+      return { data: [] }
+    })
+    await expect(
+      addRelationshipWithTargetSync(client, {
+        personId: 'me',
+        selectedTargetId: 'target',
+        direction: 'child',
+        relType: 'biological_child',
+        note: '',
+        person: { id: 'me', generation: 4, is_in_law: false } as Person
+      })
+    ).rejects.toBeInstanceOf(RelationshipValidationError)
   })
 })

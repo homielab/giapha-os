@@ -822,6 +822,8 @@ export const messages = {
       'Phục hồi thành công! Đã nhập {persons} thành viên, {relationships} quan hệ.',
     restoreFailed: 'Quá trình phục hồi đã xảy ra lỗi.',
     fileTooLarge: 'File phục hồi không được vượt quá 25MB.',
+    restoreTooLargeForHost:
+      'Dữ liệu phục hồi lớn hơn 4,5 MB, mức tối đa máy chủ Vercel nhận (như bản demo). Bản tự host (Docker, máy chủ riêng) không giới hạn này.',
     csvRestoreZipOnly:
       'Vui lòng phục hồi bằng file .zip được tạo ra từ chức năng Xuất CSV.',
     invalidRestoreFile: 'Vui lòng chọn file .json, .ged, hoặc .zip hợp lệ.',
@@ -2205,6 +2207,8 @@ export const messages = {
       'Restore successful! Imported {persons} members and {relationships} relationships.',
     restoreFailed: 'The restore process failed.',
     fileTooLarge: 'The restore file must not exceed 25MB.',
+    restoreTooLargeForHost:
+      'The restore data is larger than 4.5 MB, the most a Vercel server accepts (like the demo). A self-hosted copy (Docker, your own server) has no such limit.',
     csvRestoreZipOnly:
       'Please restore using the .zip file created by the CSV export function.',
     invalidRestoreFile: 'Please choose a valid .json, .ged, or .zip file.',
