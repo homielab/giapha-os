@@ -15,15 +15,15 @@ import { usePopupMenu } from '@/hooks/usePopupMenu'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { noticeAria } from '@/utils/a11y'
 import { formatIsoDay } from '@/utils/dateHelpers'
+import { keepInExport } from '@/utils/exportFilter'
 import {
   canvasLimitsFor,
   ExportTooLargeError,
   safePixelRatio
 } from '@/utils/exportScale'
 import {
-  chooseTileScale,
+  choosePdfLayout,
   PDF_OVERLAP_PT,
-  PDF_PAGE_SIZES_PT,
   planPdfTiles,
   type PdfPageFormat
 } from '@/utils/pdfTiles'
@@ -115,6 +115,7 @@ export default function ExportButton() {
     const url = await toPng(element, {
       backgroundColor: '#f5f5f4',
       cacheBust: true,
+      filter: keepInExport,
       height,
       pixelRatio,
       style: {
@@ -142,6 +143,7 @@ export default function ExportButton() {
     const imgData = await toPng(element, {
       backgroundColor: '#f5f5f4',
       cacheBust: true,
+      filter: keepInExport,
       height: cssHeight,
       pixelRatio,
       style: {
@@ -176,16 +178,11 @@ export default function ExportButton() {
     const filename = `giapha-sodo-${formatIsoDay()}.pdf`
 
     if (format !== 'single') {
-      const page = PDF_PAGE_SIZES_PT[format]
-      // Points per bitmap pixel so the tree is legible on paper.
-      const scale = chooseTileScale(
-        cssWidth,
-        cssHeight,
-        page.width,
-        page.height,
-        PDF_OVERLAP_PT
-      )
-      const ptPerPx = scale / pixelRatio
+      // Portrait or landscape, whichever takes fewer sheets; the scale keeps
+      // the tree legible on paper.
+      const page = choosePdfLayout(cssWidth, cssHeight, format)
+      // Points per bitmap pixel.
+      const ptPerPx = page.scale / pixelRatio
       const plan = planPdfTiles(
         imgWidth * ptPerPx,
         imgHeight * ptPerPx,
@@ -196,7 +193,7 @@ export default function ExportButton() {
       const tiled = new jsPDF({
         compress: true,
         format: [page.width, page.height],
-        orientation: 'landscape',
+        orientation: page.orientation,
         unit: 'pt'
       })
       const canvas = document.createElement('canvas')
@@ -204,7 +201,9 @@ export default function ExportButton() {
       if (!ctx) throw new Error('canvas')
       const total = plan.tiles.length
       plan.tiles.forEach((tile, index) => {
-        if (index > 0) tiled.addPage([page.width, page.height], 'landscape')
+        if (index > 0) {
+          tiled.addPage([page.width, page.height], page.orientation)
+        }
         const sx = Math.round(tile.x / ptPerPx)
         const sy = Math.round(tile.y / ptPerPx)
         const sw = Math.min(Math.round(tile.w / ptPerPx), imgWidth - sx)

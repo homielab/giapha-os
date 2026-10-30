@@ -101,6 +101,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The gallery accepts phone photos up to 20 MB (GIFs up to 10 MB) and shrinks them before upload, instead of refusing anything over 10 MB; deleting a photo keeps its file while another gallery entry still uses it.
+- Tree and mind map PNG/PDF exports no longer show the +/- branch buttons, and multi-page A4/A3 PDFs use portrait pages when that takes fewer sheets (a tall, narrow tree on A3: 9 sheets instead of 13).
+- The backup page says more clearly that JSON/CSV/GEDCOM backups hold no profile or gallery photos, nor photo titles and descriptions.
 - The lineage book title uses the family's own surname: in-laws are no longer counted, accented names typed in different Unicode forms count as one, and a tie goes to the earliest generation.
 - The age card on a member page no longer shows negative ages, and shows the age when only a lunar death date is known.
 - The member form refuses two-digit years (85 instead of 1985) and decimal days, months, years, birth orders and generations with a clear message, instead of saving them or showing a database error.

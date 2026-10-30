@@ -8,6 +8,7 @@ import { memo, useMemo, useState } from 'react'
 import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
+import { EXPORT_IGNORE_PROPS } from '@/utils/exportFilter'
 import { lifeYearsLabel } from '@/utils/memberSearch'
 import { getAvatarBg } from '@/utils/styleHelpers'
 import {
@@ -253,6 +254,7 @@ export function ExpandToggle({
     <button
       onClick={onToggle}
       type='button'
+      {...EXPORT_IGNORE_PROPS}
       className='flex size-5 items-center justify-center rounded border border-stone-200 bg-white text-stone-500 transition-colors hover:bg-amber-50 hover:text-amber-600'
       title={isExpanded ? t('collapse') : t('expand')}
       aria-label={t('branchOf', { name })}

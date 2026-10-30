@@ -5,6 +5,7 @@ import React from 'react'
 
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
+import { EXPORT_IGNORE_PROPS } from '@/utils/exportFilter'
 
 import FamilyNodeCard from './FamilyNodeCard'
 
@@ -40,6 +41,7 @@ export function TreeExpandToggle({
   return (
     <button
       type='button'
+      {...EXPORT_IGNORE_PROPS}
       onClick={(e) => {
         e.stopPropagation()
         e.preventDefault()

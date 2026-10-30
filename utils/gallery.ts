@@ -126,8 +126,10 @@ export class GalleryItemNotDeletedError extends Error {
  * Deletes a gallery item: the row first, the stored file second. Row-level
  * security hides rows from a delete without an error, so `.select('id')` is
  * used and zero rows throw `GalleryItemNotDeletedError` with the file left
- * untouched. A failed file removal after the row is gone only leaves an
- * orphan file, so it is logged and reported as `fileRemoved: false`.
+ * untouched. The file stays while another row still points at it (rows
+ * created or imported by other means can share one). A failed file removal
+ * after the row is gone only leaves an orphan file, so it is logged and
+ * reported as `fileRemoved: false`.
  */
 export async function deleteGalleryItem(
   supabase: SupabaseClient,
@@ -144,7 +146,38 @@ export async function deleteGalleryItem(
   const storagePath = item.storage_path || getGalleryStoragePath(item.image_url)
   if (!storagePath) return { fileRemoved: true }
 
-  return { fileRemoved: await removeGalleryFile(supabase, storagePath) }
+  return {
+    fileRemoved: await removeUnusedGalleryFile(
+      supabase,
+      storagePath,
+      'Gallery file was not removed'
+    )
+  }
+}
+
+/**
+ * Removes a file from the `gallery` bucket unless a `gallery_items` row still
+ * points at it. Never throws: a failed lookup or removal is logged and
+ * reported as `false`; a file kept because it is in use also gives `false`.
+ */
+async function removeUnusedGalleryFile(
+  supabase: SupabaseClient,
+  storagePath: string,
+  logMessage: string
+): Promise<boolean> {
+  try {
+    const { data: stillUsed, error } = await supabase
+      .from('gallery_items')
+      .select('id')
+      .like('image_url', `%${escapeLike(storagePath)}%`)
+      .limit(1)
+    if (error) throw error
+    if (stillUsed && stillUsed.length > 0) return false
+  } catch (err) {
+    console.error(logMessage, storagePath, err)
+    return false
+  }
+  return removeGalleryFile(supabase, storagePath)
 }
 
 /**
@@ -226,17 +259,9 @@ export async function saveGalleryItem(
     initialData.storage_path || getGalleryStoragePath(initialData.image_url)
   if (!oldPath || oldPath === imagePath) return
 
-  try {
-    const { data: stillUsed, error } = await supabase
-      .from('gallery_items')
-      .select('id')
-      .like('image_url', `%${escapeLike(oldPath)}%`)
-      .limit(1)
-    if (error) throw error
-    if (stillUsed && stillUsed.length > 0) return
-  } catch (err) {
-    console.error('Old gallery file was not removed', oldPath, err)
-    return
-  }
-  await removeGalleryFile(supabase, oldPath)
+  await removeUnusedGalleryFile(
+    supabase,
+    oldPath,
+    'Old gallery file was not removed'
+  )
 }

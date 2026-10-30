@@ -178,8 +178,37 @@ describe('deleteGalleryItem', () => {
     await expect(deleteGalleryItem(client, item)).resolves.toEqual({
       fileRemoved: true
     })
-    expect(calls.map((c) => c.op)).toEqual(['delete', 'remove'])
-    expect(calls[1].payload).toEqual([['a/b.jpg']])
+    expect(calls.map((c) => c.op)).toEqual(['delete', 'select', 'remove'])
+    expect(calls[1].filters).toContainEqual(['like', 'image_url', '%a/b.jpg%'])
+    expect(calls[2].payload).toEqual([['a/b.jpg']])
+  })
+
+  test('keeps the file while another row points at it', async () => {
+    const { client, calls } = fakeClient((call) =>
+      call.op === 'delete' ? { data: [{ id: 'g1' }] } : { data: [{ id: 'g2' }] }
+    )
+    await expect(deleteGalleryItem(client, item)).resolves.toEqual({
+      fileRemoved: false
+    })
+    expect(calls.map((c) => c.op)).toEqual(['delete', 'select'])
+  })
+
+  test('a failed lookup keeps the file', async () => {
+    const { client, calls } = fakeClient((call) =>
+      call.op === 'delete'
+        ? { data: [{ id: 'g1' }] }
+        : { error: { message: 'db down' } }
+    )
+    const log = console.error
+    console.error = () => {}
+    try {
+      await expect(deleteGalleryItem(client, item)).resolves.toEqual({
+        fileRemoved: false
+      })
+    } finally {
+      console.error = log
+    }
+    expect(calls.map((c) => c.op)).toEqual(['delete', 'select'])
   })
 
   test('zero rows (RLS) throws and keeps the file', async () => {

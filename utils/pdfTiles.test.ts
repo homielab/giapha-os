@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'bun:test'
 
-import { chooseTileScale, planPdfTiles } from './pdfTiles'
+import {
+  choosePdfLayout,
+  chooseTileScale,
+  PDF_OVERLAP_PT,
+  PDF_PAGE_SIZES_PT,
+  planPdfTiles
+} from './pdfTiles'
 
 describe('planPdfTiles', () => {
   it('gives one tile when the image fits on a page', () => {
@@ -48,5 +54,75 @@ describe('chooseTileScale', () => {
 
   it('does not blow up a small tree', () => {
     expect(chooseTileScale(300, 200, 842, 595, 28)).toBe(1.5)
+  })
+})
+
+describe('choosePdfLayout', () => {
+  it('prints a tall, narrow tree on portrait pages when that saves sheets', () => {
+    const a3 = choosePdfLayout(1200, 20000, 'a3')
+    expect(a3.orientation).toBe('portrait')
+    expect(a3.width).toBe(PDF_PAGE_SIZES_PT.a3.height)
+    expect(a3.height).toBe(PDF_PAGE_SIZES_PT.a3.width)
+    // Landscape A3 needs 13 sheets for the same tree.
+    expect(a3.pages).toBe(9)
+
+    const a4 = choosePdfLayout(1000, 1300, 'a4')
+    expect(a4.orientation).toBe('portrait')
+    expect(a4.pages).toBe(1)
+  })
+
+  it('never takes more sheets than landscape alone', () => {
+    for (const [w, h] of [
+      [1200, 20000],
+      [20000, 1200],
+      [3000, 2000],
+      [1500, 2500],
+      [800, 600]
+    ]) {
+      for (const format of ['a4', 'a3'] as const) {
+        const page = PDF_PAGE_SIZES_PT[format]
+        const scale = chooseTileScale(
+          w,
+          h,
+          page.width,
+          page.height,
+          PDF_OVERLAP_PT
+        )
+        const landscape = planPdfTiles(
+          w * scale,
+          h * scale,
+          page.width,
+          page.height,
+          PDF_OVERLAP_PT
+        ).tiles.length
+        expect(choosePdfLayout(w, h, format).pages).toBeLessThanOrEqual(
+          landscape
+        )
+      }
+    }
+  })
+
+  it('keeps a 1200 px wide tree on one column of A4 landscape', () => {
+    // A4 portrait is 595 pt wide: 1200 px only fits below the legible
+    // minimum scale, so it would need two columns and more sheets.
+    const a4 = choosePdfLayout(1200, 20000, 'a4')
+    expect(a4.orientation).toBe('landscape')
+    expect(a4.pages).toBe(18)
+  })
+
+  it('a wide tree stays landscape', () => {
+    expect(choosePdfLayout(20000, 1200, 'a3').orientation).toBe('landscape')
+    expect(choosePdfLayout(800, 600, 'a4').orientation).toBe('landscape')
+  })
+
+  it('on a tie the orientation follows the tree shape', () => {
+    expect(choosePdfLayout(1000, 1300, 'a3')).toMatchObject({
+      orientation: 'portrait',
+      pages: 1
+    })
+    expect(choosePdfLayout(1300, 1000, 'a3')).toMatchObject({
+      orientation: 'landscape',
+      pages: 1
+    })
   })
 })

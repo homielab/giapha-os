@@ -15,7 +15,7 @@ import type { GalleryItem } from '@/types'
 import { isUploadFormDirty, uploadFormValuesFrom } from '@/utils/formDirty'
 import { saveGalleryItem } from '@/utils/gallery'
 import { resizeGalleryImage } from '@/utils/image'
-import { validateImageFile } from '@/utils/imageUpload'
+import { validateGallerySource } from '@/utils/imageUpload'
 import { createClient } from '@/utils/supabase/client'
 import { InvalidImageError, uploadGalleryImage } from '@/utils/supabase/storage'
 import { getGalleryStoragePath } from '@/utils/supabase/storage-path'
@@ -52,13 +52,14 @@ export default function UploadModal({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Both the file picker and drag-and-drop go through the same checks:
-  // size, reported MIME type and the file's own signature.
+  // size, reported MIME type and the file's own signature. Photos up to 20 MB
+  // are accepted here because they are resized before the upload.
   const acceptFile = async (selected: File) => {
-    const validation = await validateImageFile(selected)
+    const validation = await validateGallerySource(selected)
     if (!validation.ok) {
       setError(
         validation.reason === 'too-large'
-          ? t('fileTooLarge10')
+          ? t('galleryImageTooLarge')
           : t('unsupportedImageType')
       )
       if (fileInputRef.current) fileInputRef.current.value = ''

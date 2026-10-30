@@ -171,6 +171,15 @@ describe('branch expand/collapse toggles', () => {
       expect(mapShut.attrs).toContain('aria-expanded="false"')
     }
   )
+
+  test('both toggles are left out of PNG/PDF exports', () => {
+    for (const html of [
+      renderTree('Nguyễn Văn An', false, 'vi'),
+      renderMindmap('Nguyễn Văn An', true, 'vi')
+    ]) {
+      expect(buttons(html)[0].attrs).toContain('data-export-ignore="true"')
+    }
+  })
 })
 
 describe('admin user row', () => {

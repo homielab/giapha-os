@@ -558,8 +558,8 @@ export const messages = {
     exporting: 'Đang xuất...',
     saveAsImage: 'Lưu thành ảnh (PNG)',
     saveAsPdf: 'PDF một trang',
-    saveAsPdfA4: 'PDF nhiều trang A4 ngang',
-    saveAsPdfA3: 'PDF nhiều trang A3 ngang',
+    saveAsPdfA4: 'PDF nhiều trang A4',
+    saveAsPdfA3: 'PDF nhiều trang A3',
     pdfPageLabel: 'Trang',
     exportError: 'Đã xảy ra lỗi khi xuất file. Vui lòng thử lại.',
     exportTooLarge:
@@ -760,7 +760,7 @@ export const messages = {
     backupDataDescription:
       'Tải xuống định dạng file JSON, GEDCOM hoặc CSV (Zip). Chọn một điểm gốc bên dưới để chỉ sao lưu nhánh gia đình đó, hoặc chọn "Toàn bộ" để xuất toàn bộ cây.',
     backupPhotosNote:
-      'Ảnh (avatars, gallery) không nằm trong JSON/CSV/GEDCOM; sao chép bucket Supabase Storage avatars và gallery riêng.',
+      'Bản sao lưu JSON/CSV/GEDCOM không chứa ảnh đại diện và thư viện ảnh (cả tiêu đề, mô tả ảnh); tải riêng các bucket avatars và gallery từ Supabase Storage.',
     exportRoot: 'Điểm gốc (Root) để xuất dữ liệu',
     exportPersonsLoadError:
       'Không tải được danh sách thành viên để chọn điểm gốc: {error}. Tải lại trang để thử lại; có thể vẫn xuất toàn bộ dữ liệu.',
@@ -1050,6 +1050,7 @@ export const messages = {
     eventNotAllowed:
       'Bạn chỉ có thể sửa hoặc xoá sự kiện do chính mình tạo (quản trị viên sửa được mọi sự kiện).',
     fileTooLarge10: 'Kích thước file phải nhỏ hơn 10MB.',
+    galleryImageTooLarge: 'Ảnh phải nhỏ hơn 20MB (ảnh GIF nhỏ hơn 10MB).',
     unsupportedImageType: 'Chỉ hỗ trợ ảnh JPG, PNG, GIF hoặc WEBP.',
     galleryPagination: 'Phân trang phòng trưng bày',
     galleryImageUnavailable: 'Không tải được ảnh',
@@ -1063,7 +1064,7 @@ export const messages = {
     previousPage: 'Trang trước',
     nextPage: 'Trang sau',
     chooseImage: 'Kéo thả ảnh vào đây, hoặc click để chọn',
-    imageUploadHint: 'Hỗ trợ JPG, PNG, GIF, WEBP (tối đa 10MB)',
+    imageUploadHint: 'Hỗ trợ JPG, PNG, GIF, WEBP (tối đa 20MB, GIF 10MB)',
     chooseImageError: 'Vui lòng chọn ảnh.',
     enterImageTitle: 'Vui lòng nhập tiêu đề.',
     imagePreview: 'Xem trước ảnh',
@@ -1918,8 +1919,8 @@ export const messages = {
     exporting: 'Exporting...',
     saveAsImage: 'Save as image (PNG)',
     saveAsPdf: 'PDF, single page',
-    saveAsPdfA4: 'PDF, multi-page A4 landscape',
-    saveAsPdfA3: 'PDF, multi-page A3 landscape',
+    saveAsPdfA4: 'PDF, multi-page A4',
+    saveAsPdfA3: 'PDF, multi-page A3',
     pdfPageLabel: 'Page',
     exportError: 'An error occurred while exporting. Please try again.',
     exportTooLarge:
@@ -2119,7 +2120,7 @@ export const messages = {
     backupDataDescription:
       'Download JSON, GEDCOM, or CSV (Zip) files. Choose a root below to back up only that family branch, or choose "All data" to export the entire tree.',
     backupPhotosNote:
-      'Photos (avatars, gallery) are not included in JSON/CSV/GEDCOM; copy Supabase Storage buckets avatars and gallery separately.',
+      'JSON/CSV/GEDCOM backups do not include profile photos or the photo gallery (nor photo titles and descriptions); download the avatars and gallery buckets from Supabase Storage separately.',
     exportRoot: 'Root for data export',
     exportPersonsLoadError:
       'Could not load the member list for choosing a root: {error}. Reload the page to retry; you can still export all data.',
@@ -2413,6 +2414,8 @@ export const messages = {
     eventNotAllowed:
       'You can only edit or delete events you created (admins can change any event).',
     fileTooLarge10: 'The file must be smaller than 10MB.',
+    galleryImageTooLarge:
+      'The photo must be smaller than 20MB (GIFs smaller than 10MB).',
     unsupportedImageType: 'Only JPG, PNG, GIF or WEBP images are supported.',
     galleryPagination: 'Gallery pages',
     galleryImageUnavailable: 'Image could not be loaded',
@@ -2426,7 +2429,7 @@ export const messages = {
     previousPage: 'Previous page',
     nextPage: 'Next page',
     chooseImage: 'Drag an image here, or click to choose',
-    imageUploadHint: 'JPG, PNG, GIF and WEBP supported (up to 10MB)',
+    imageUploadHint: 'JPG, PNG, GIF and WEBP supported (up to 20MB, GIF 10MB)',
     chooseImageError: 'Please choose an image.',
     enterImageTitle: 'Please enter a title.',
     imagePreview: 'Image preview',

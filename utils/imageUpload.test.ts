@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, mock, test } from 'bun:test'
 import {
   detectImageType,
   MAX_IMAGE_BYTES,
+  MAX_SOURCE_IMAGE_BYTES,
   readImageType,
+  validateGallerySource,
   validateImageFile
 } from './imageUpload'
 
@@ -80,6 +82,47 @@ describe('validateImageFile', () => {
     })
     const limit = fileOf(JPEG, 'ok.jpg', 'image/jpeg', MAX_IMAGE_BYTES)
     expect((await validateImageFile(limit)).ok).toBe(true)
+  })
+})
+
+describe('validateGallerySource', () => {
+  const MB = 1024 * 1024
+
+  test('accepts a 15 MB phone photo before it is resized', async () => {
+    const photo = fileOf(JPEG, 'IMG_0001.jpg', 'image/jpeg', 15 * MB)
+    expect(await validateGallerySource(photo)).toEqual({
+      ok: true,
+      type: 'image/jpeg',
+      extension: 'jpg'
+    })
+    const limit = fileOf(PNG, 'a.png', 'image/png', MAX_SOURCE_IMAGE_BYTES)
+    expect((await validateGallerySource(limit)).ok).toBe(true)
+  })
+
+  test('rejects photos over 20 MB', async () => {
+    const big = fileOf(JPEG, 'big.jpg', 'image/jpeg', 21 * MB)
+    expect(await validateGallerySource(big)).toEqual({
+      ok: false,
+      reason: 'too-large'
+    })
+  })
+
+  test('GIFs are stored unchanged, so they keep the 10 MB limit', async () => {
+    const gif = fileOf(GIF, 'a.gif', 'image/gif', 12 * MB)
+    expect(await validateGallerySource(gif)).toEqual({
+      ok: false,
+      reason: 'too-large'
+    })
+    const small = fileOf(GIF, 'b.gif', 'image/gif', MAX_IMAGE_BYTES)
+    expect((await validateGallerySource(small)).ok).toBe(true)
+  })
+
+  test('still checks the content', async () => {
+    const renamed = new File(['plain text'], 'x.jpg', { type: 'image/jpeg' })
+    expect(await validateGallerySource(renamed)).toEqual({
+      ok: false,
+      reason: 'unsupported-type'
+    })
   })
 })
 

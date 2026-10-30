@@ -1,5 +1,9 @@
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
+// Largest photo the gallery accepts before it is resized in the browser. Phone
+// photos are often 12-20 MB; after resizing they fit in MAX_IMAGE_BYTES.
+export const MAX_SOURCE_IMAGE_BYTES = 20 * 1024 * 1024
+
 export const IMAGE_EXTENSIONS = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -56,8 +60,11 @@ export function isAllowedImageType(type: string): type is ImageMimeType {
 
 // Checks size, the reported MIME type and the file signature. The returned
 // type comes from the signature and decides the stored file extension.
-export async function validateImageFile(file: Blob): Promise<ImageValidation> {
-  if (file.size > MAX_IMAGE_BYTES) return { ok: false, reason: 'too-large' }
+export async function validateImageFile(
+  file: Blob,
+  maxBytes = MAX_IMAGE_BYTES
+): Promise<ImageValidation> {
+  if (file.size > maxBytes) return { ok: false, reason: 'too-large' }
   if (!isAllowedImageType(file.type)) {
     return { ok: false, reason: 'unsupported-type' }
   }
@@ -66,4 +73,20 @@ export async function validateImageFile(file: Blob): Promise<ImageValidation> {
   if (!type) return { ok: false, reason: 'unsupported-type' }
 
   return { ok: true, type, extension: IMAGE_EXTENSIONS[type] }
+}
+
+// Checks a photo chosen for the gallery, before it is resized. GIFs are stored
+// as they are, so they must already fit the stored limit.
+export async function validateGallerySource(
+  file: Blob
+): Promise<ImageValidation> {
+  const validation = await validateImageFile(file, MAX_SOURCE_IMAGE_BYTES)
+  if (
+    validation.ok &&
+    validation.type === 'image/gif' &&
+    file.size > MAX_IMAGE_BYTES
+  ) {
+    return { ok: false, reason: 'too-large' }
+  }
+  return validation
 }

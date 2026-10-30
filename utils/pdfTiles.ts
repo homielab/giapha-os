@@ -103,3 +103,49 @@ export function chooseTileScale(
   }
   return best
 }
+
+export type PdfPageLayout = {
+  height: number
+  orientation: 'landscape' | 'portrait'
+  /** Number of sheets the tree takes. */
+  pages: number
+  /** Points per CSS px, from `chooseTileScale`. */
+  scale: number
+  width: number
+}
+
+/**
+ * Page orientation and scale for printing a tree of cssW x cssH on A4/A3:
+ * the orientation that needs fewer sheets, and on a tie the one matching the
+ * tree's shape (portrait for a tree taller than it is wide).
+ */
+export function choosePdfLayout(
+  cssW: number,
+  cssH: number,
+  format: Exclude<PdfPageFormat, 'single'>,
+  overlap = PDF_OVERLAP_PT
+): PdfPageLayout {
+  const landscape = PDF_PAGE_SIZES_PT[format]
+  const preferred = cssH > cssW ? 'portrait' : 'landscape'
+  const layouts = (['landscape', 'portrait'] as const).map((orientation) => {
+    const width =
+      orientation === 'landscape' ? landscape.width : landscape.height
+    const height =
+      orientation === 'landscape' ? landscape.height : landscape.width
+    const scale = chooseTileScale(cssW, cssH, width, height, overlap)
+    const pages = planPdfTiles(
+      cssW * scale,
+      cssH * scale,
+      width,
+      height,
+      overlap
+    ).tiles.length
+    return { height, orientation, pages, scale, width }
+  })
+  layouts.sort(
+    (a, b) =>
+      a.pages - b.pages ||
+      Number(b.orientation === preferred) - Number(a.orientation === preferred)
+  )
+  return layouts[0]
+}
