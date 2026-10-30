@@ -4,6 +4,7 @@ import { AnimatePresence, m } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 
+import DiscardChangesDialog from '@/components/member/DiscardChangesDialog'
 import UploadDropzone from '@/components/modal/UploadDropzone'
 import UploadFormFields from '@/components/modal/UploadFormFields'
 import UploadModalActions from '@/components/modal/UploadModalActions'
@@ -11,6 +12,7 @@ import { useFilePreview } from '@/hooks/useFilePreview'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import type { GalleryItem } from '@/types'
+import { isUploadFormDirty } from '@/utils/formDirty'
 import { saveGalleryItem } from '@/utils/gallery'
 import { resizeGalleryImage } from '@/utils/image'
 import { validateImageFile } from '@/utils/imageUpload'
@@ -39,6 +41,7 @@ export default function UploadModal({
   const [eventDate, setEventDate] = useState('')
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [askDiscard, setAskDiscard] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -157,14 +160,29 @@ export default function UploadModal({
   }
 
   const handleClose = () => {
+    setAskDiscard(false)
     resetForm()
     onClose()
   }
 
+  // Esc, the backdrop and the close buttons ask first when a photo was chosen
+  // or a field typed.
+  const requestClose = () => {
+    if (isUploading) return
+    if (
+      isUploadFormDirty({
+        hasFile: Boolean(file),
+        title,
+        description,
+        eventDate
+      })
+    )
+      setAskDiscard(true)
+    else handleClose()
+  }
+
   const titleId = useId()
-  const dialogRef = useModalA11y(() => {
-    if (!isUploading) handleClose()
-  }, isOpen)
+  const dialogRef = useModalA11y(requestClose, isOpen)
 
   return (
     <AnimatePresence>
@@ -186,7 +204,7 @@ export default function UploadModal({
             aria-label={t('close')}
             disabled={isUploading}
             className='absolute inset-0 cursor-pointer'
-            onClick={handleClose}
+            onClick={requestClose}
           />
 
           <m.div
@@ -199,7 +217,7 @@ export default function UploadModal({
             {/* Sticky Header Actions */}
             <div className='absolute top-4 right-4 z-20 flex items-center gap-2 sm:top-5 sm:right-5'>
               <button
-                onClick={handleClose}
+                onClick={requestClose}
                 disabled={isUploading}
                 className='flex size-10 items-center justify-center rounded-full border border-stone-200/50 bg-stone-100/80 text-stone-600 transition-colors hover:bg-stone-200 hover:text-stone-900 disabled:cursor-not-allowed disabled:opacity-50'
                 aria-label={t('close')}>
@@ -250,11 +268,17 @@ export default function UploadModal({
                     (Boolean(initialData) || Boolean(file)) && Boolean(title)
                   }
                   isEdit={Boolean(initialData)}
-                  onClose={handleClose}
+                  onClose={requestClose}
                 />
               </form>
             </div>
           </m.div>
+          {askDiscard && (
+            <DiscardChangesDialog
+              onKeepEditing={() => setAskDiscard(false)}
+              onDiscard={handleClose}
+            />
+          )}
         </m.div>
       )}
     </AnimatePresence>

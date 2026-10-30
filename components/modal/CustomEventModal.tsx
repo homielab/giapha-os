@@ -3,6 +3,7 @@
 import { AnimatePresence, m, Variants } from 'framer-motion'
 import { useEffect, useId, useMemo, useState } from 'react'
 
+import DiscardChangesDialog from '@/components/member/DiscardChangesDialog'
 import EventDateFields from '@/components/modal/EventDateFields'
 import EventErrorBanner from '@/components/modal/EventErrorBanner'
 import EventHeaderActions from '@/components/modal/EventHeaderActions'
@@ -24,6 +25,7 @@ import {
   defaultEventDate,
   toRecurrence
 } from '@/utils/eventHelpers'
+import { isCustomEventFormDirty } from '@/utils/formDirty'
 import { TextTooLongError } from '@/utils/limits'
 import { createClient } from '@/utils/supabase/client'
 
@@ -42,8 +44,8 @@ export default function CustomEventModal({
 }: CustomEventModalProps) {
   const { t } = useI18n()
   const titleId = useId()
-  const dialogRef = useModalA11y(onClose, isOpen)
   const [loading, setLoading] = useState(false)
+  const [askDiscard, setAskDiscard] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [name, setName] = useState(eventToEdit?.name || '')
@@ -80,6 +82,28 @@ export default function CustomEventModal({
       ? t('lunarDateInvalid')
       : null
 
+  const isDirty = isCustomEventFormDirty(
+    {
+      name,
+      eventDate,
+      location,
+      content,
+      recurrence,
+      dateMode,
+      lunarDay,
+      lunarMonth,
+      lunarYear
+    },
+    eventToEdit
+  )
+  // Esc, the backdrop and the close buttons ask first when there are changes.
+  const requestClose = () => {
+    if (loading) return
+    if (isDirty) setAskDiscard(true)
+    else onClose()
+  }
+  const dialogRef = useModalA11y(requestClose, isOpen)
+
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       if (!isOpen) return
@@ -97,6 +121,7 @@ export default function CustomEventModal({
         setRecurrence('none')
       }
       setError(null)
+      setAskDiscard(false)
       setDateMode('solar')
       setLunarDay('')
       setLunarMonth('')
@@ -210,7 +235,7 @@ export default function CustomEventModal({
             type='button'
             aria-label={t('close')}
             className='absolute inset-0 cursor-pointer'
-            onClick={onClose}
+            onClick={requestClose}
           />
 
           {/* Modal Content */}
@@ -220,7 +245,7 @@ export default function CustomEventModal({
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
             transition={{ type: 'spring', stiffness: 350, damping: 25 }}
             className='relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-stone-200 bg-white/95 backdrop-blur-2xl'>
-            <EventHeaderActions onClose={onClose} />
+            <EventHeaderActions onClose={requestClose} />
 
             <div className='custom-scrollbar flex-1 overflow-y-auto px-4 pt-16 pb-8 sm:px-8'>
               <h2
@@ -287,11 +312,20 @@ export default function CustomEventModal({
                   isEdit={Boolean(eventToEdit)}
                   loading={loading}
                   onDelete={handleDelete}
-                  onClose={onClose}
+                  onClose={requestClose}
                 />
               </form>
             </div>
           </m.div>
+          {askDiscard && (
+            <DiscardChangesDialog
+              onKeepEditing={() => setAskDiscard(false)}
+              onDiscard={() => {
+                setAskDiscard(false)
+                onClose()
+              }}
+            />
+          )}
         </m.div>
       )}
     </AnimatePresence>
