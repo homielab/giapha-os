@@ -4,6 +4,7 @@ import {
   callSpouseRelative,
   getDirectAncestorTerm,
   getDirectDescendantTerm,
+  termForSpouseOfAncestor,
   termForSpouseOfRelative,
   termRelativeCallsInLaw
 } from './terms'
@@ -154,6 +155,26 @@ describe('calling the person who married in', () => {
     expect(termRelativeCallsInLaw('constructor', 'female')).toBe(
       'Vợ của constructor'
     )
+  })
+})
+
+describe('termForSpouseOfAncestor', () => {
+  test('gives the direct term for the spouse’s gender', () => {
+    expect(termForSpouseOfAncestor('Ông nội', 'female')).toBe('Bà nội')
+    expect(termForSpouseOfAncestor('Bà ngoại', 'male')).toBe('Ông ngoại')
+    expect(termForSpouseOfAncestor('Ông nội', 'other')).toBe('Ông/Bà nội')
+    expect(termForSpouseOfAncestor('Ông/Bà nội', 'female')).toBe('Bà nội')
+    expect(termForSpouseOfAncestor('Cụ ông (ông cố) ngoại', 'female')).toBe(
+      'Cụ bà (bà cố) ngoại'
+    )
+    expect(termForSpouseOfAncestor('Kỵ', 'female')).toBe('Kỵ')
+    expect(termForSpouseOfAncestor('Tổ đời 12', 'male')).toBe('Tổ đời 12')
+  })
+
+  test('is null for parents and other relatives', () => {
+    expect(termForSpouseOfAncestor('Bố', 'female')).toBeNull()
+    expect(termForSpouseOfAncestor('Ông Chú', 'female')).toBeNull()
+    expect(termForSpouseOfAncestor('Cháu', 'female')).toBeNull()
   })
 })
 

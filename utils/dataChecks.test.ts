@@ -99,6 +99,62 @@ describe('runDataChecks: parents of one child', () => {
   })
 })
 
+describe('runDataChecks: one parent with a spouse', () => {
+  const people = [
+    person('f', { gender: 'male', full_name: 'Father' }),
+    person('m', { gender: 'female', full_name: 'Mother' }),
+    person('m2', { gender: 'female', full_name: 'Another wife' }),
+    person('k', { full_name: 'Kid' })
+  ]
+  const marriage = (a: string, b: string): DataCheckRelationship => ({
+    type: 'marriage',
+    person_a: a,
+    person_b: b
+  })
+  const found = (relationships: DataCheckRelationship[]) =>
+    runDataChecks(people, relationships, TODAY).filter(
+      (f) => f.kind === 'singleParentWithSpouse'
+    )
+
+  test('names the child, the parent and the spouses as candidates', () => {
+    const list = found([
+      child('f', 'k'),
+      marriage('f', 'm'),
+      marriage('m2', 'f')
+    ])
+    expect(list).toHaveLength(1)
+    expect(list[0].people.map((p) => p.id)).toEqual(['k', 'f', 'm2', 'm'])
+    expect(list[0].params).toEqual({
+      child: 'Kid',
+      parent: 'Father',
+      spouses: 'Another wife, Mother'
+    })
+  })
+
+  test('counts an adoptive parent as a parent too', () => {
+    expect(
+      found([
+        child('f', 'k'),
+        { type: 'adopted_child', person_a: 'm', person_b: 'k' },
+        marriage('f', 'm')
+      ])
+    ).toEqual([])
+  })
+
+  test('skips a child with both parents, or whose parent has no spouse', () => {
+    expect(
+      found([child('f', 'k'), child('m', 'k'), marriage('f', 'm')])
+    ).toEqual([])
+    expect(found([child('f', 'k')])).toEqual([])
+  })
+
+  test('ignores the child as the parent’s spouse and self-marriages', () => {
+    expect(
+      found([child('f', 'k'), marriage('f', 'k'), marriage('f', 'f')])
+    ).toEqual([])
+  })
+})
+
 describe('runDataChecks', () => {
   test('a clean tree reports nothing', () => {
     const persons = [

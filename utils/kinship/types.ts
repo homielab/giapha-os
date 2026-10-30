@@ -41,6 +41,19 @@ export type KinshipDescription = (
   | { kind: 'stepParent'; name: string }
   /** B is the child of A's spouse `name`, not A's own: Con riêng. */
   | { kind: 'stepChild'; name: string }
+  /**
+   * `spouse` is married to the grandparent or older ancestor `ancestor`, whose
+   * child on the line, `child`, has no other parent recorded: `spouse` gets the
+   * direct term ("Bà nội"), but may be a second spouse rather than the
+   * unlinked parent of `child`.
+   */
+  | {
+      kind: 'spouseOfAncestor'
+      ancestor: string
+      spouse: string
+      role: 'wife' | 'husband' | 'spouse'
+      child: KinshipPersonRef
+    }
   | { kind: 'viaBothSpouses'; nameA: string; nameB: string }
   /** A's child `childA` is married to B's child `childB`: thông gia. */
   | { kind: 'coParentsInLaw'; childA: string; childB: string }

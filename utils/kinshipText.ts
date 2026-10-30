@@ -27,6 +27,11 @@ const CO_SPOUSE_KEYS = {
   husbands: 'kinshipDescCoHusbands',
   spouses: 'kinshipDescCoSpouses'
 } as const
+const SPOUSE_OF_ANCESTOR_KEYS = {
+  wife: 'kinshipDescWifeOfAncestor',
+  husband: 'kinshipDescHusbandOfAncestor',
+  spouse: 'kinshipDescSpouseOfAncestor'
+} as const
 const SPOUSE_OF_KEYS = {
   husband: 'kinshipPathHusbandOf',
   wife: 'kinshipPathWifeOf',
@@ -69,6 +74,13 @@ export function describeKinship(
       break
     case 'stepChild':
       text = t('kinshipDescStepChild', { name: description.name })
+      break
+    case 'spouseOfAncestor':
+      text = t(SPOUSE_OF_ANCESTOR_KEYS[description.role], {
+        spouse: description.spouse,
+        ancestor: description.ancestor,
+        child: description.child.name
+      })
       break
     case 'viaBothSpouses':
       text = t('kinshipDescViaBothSpouses', {

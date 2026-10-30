@@ -1,7 +1,8 @@
 import { compareSeniority, findBloodKinship } from './blood'
-import { buildKinshipGraph, type KinshipGraph } from './graph'
+import { buildKinshipGraph, getAncestryData, type KinshipGraph } from './graph'
 import {
   callSpouseRelative,
+  termForSpouseOfAncestor,
   termForSpouseOfRelative,
   termRelativeCallsInLaw
 } from './terms'
@@ -73,6 +74,42 @@ function stepTerms(stepParent: PersonNode, parent: PersonNode) {
   }
 }
 
+/**
+ * `person` is married to `ancestor`, a grandparent or older ancestor of
+ * `descendant`, and the ancestor's child on the line has no other parent
+ * recorded: old trees often link a child to the father only. `person` then
+ * gets the direct term ("Bà nội"), marked as a guess. With the other parent
+ * recorded, `person` is a step-grandparent and keeps "Vợ của …".
+ */
+function spouseOfAncestor(
+  person: PersonNode,
+  ancestor: PersonNode,
+  descendant: PersonNode,
+  ancestorTerm: string,
+  graph: KinshipGraph
+): { term: string; description: KinshipDescription } | null {
+  const line = getAncestryData(
+    descendant.id,
+    graph.parentMap,
+    graph.personsMap
+  ).get(ancestor.id)
+  if (!line || line.depth < 2) return null
+  const child = line.path[line.path.length - 1]
+  if (new Set(graph.parentMap.get(child.id)).size !== 1) return null
+  const term = termForSpouseOfAncestor(ancestorTerm, person.gender)
+  if (!term) return null
+  return {
+    term,
+    description: {
+      kind: 'spouseOfAncestor',
+      ancestor: ancestor.full_name,
+      spouse: person.full_name,
+      role: byGenderOf(person.gender, 'husband', 'wife', 'spouse'),
+      child: { id: child.id, name: child.full_name }
+    }
+  }
+}
+
 /** A is married to someone related by blood to B. */
 function viaSpouseOfA(
   personA: PersonNode,
@@ -101,6 +138,22 @@ function viaSpouseOfA(
 
     // A gọi người trong họ của vợ/chồng mình; họ gọi A là dâu/rể.
     const suffix = spouseSuffix(personA, spouseA)
+    const ancestral = spouseOfAncestor(
+      personA,
+      spouseA,
+      personB,
+      res.bCallsA,
+      graph
+    )
+    if (ancestral) {
+      return {
+        ...res,
+        aCallsB: callSpouseRelative(res.aCallsB, suffix),
+        bCallsA: ancestral.term,
+        description: ancestral.description,
+        pathLabels
+      }
+    }
     return {
       ...res,
       aCallsB: callSpouseRelative(res.aCallsB, suffix),
@@ -142,6 +195,22 @@ function viaSpouseOfB(
     }
 
     const suffix = spouseSuffix(personB, spouseB)
+    const ancestral = spouseOfAncestor(
+      personB,
+      spouseB,
+      personA,
+      res.aCallsB,
+      graph
+    )
+    if (ancestral) {
+      return {
+        ...res,
+        aCallsB: ancestral.term,
+        bCallsA: callSpouseRelative(res.bCallsA, suffix),
+        description: ancestral.description,
+        pathLabels
+      }
+    }
     return {
       ...res,
       aCallsB: termForSpouseOfRelative(res.aCallsB, personB.gender),
@@ -180,6 +249,31 @@ function viaBothSpouses(
       // "Vợ của …" / "Chồng của …".
       let aCallsB = termForSpouseOfRelative(res.aCallsB, personB.gender)
       let bCallsA = termForSpouseOfRelative(res.bCallsA, personA.gender)
+      let description: KinshipDescription = {
+        kind: 'viaBothSpouses',
+        nameA: spouseA.full_name,
+        nameB: spouseB.full_name,
+        ...carryUncertain(res.description)
+      }
+
+      // One spouse is married to an ancestor of the other spouse ("Bà nội").
+      const ancestralB = spouseOfAncestor(
+        personB,
+        spouseB,
+        spouseA,
+        res.aCallsB,
+        graph
+      )
+      const ancestralA =
+        !ancestralB &&
+        spouseOfAncestor(personA, spouseA, spouseB, res.bCallsA, graph)
+      if (ancestralB) {
+        aCallsB = ancestralB.term
+        description = ancestralB.description
+      } else if (ancestralA) {
+        bCallsA = ancestralA.term
+        description = ancestralA.description
+      }
 
       // Đặc biệt: Anh em cột chèo / Chị em dâu (nếu spouseA và spouseB là anh chị em ruột)
       if (res.description.kind === 'siblings') {
@@ -206,12 +300,7 @@ function viaBothSpouses(
         ...res,
         aCallsB,
         bCallsA,
-        description: {
-          kind: 'viaBothSpouses',
-          nameA: spouseA.full_name,
-          nameB: spouseB.full_name,
-          ...carryUncertain(res.description)
-        },
+        description,
         pathLabels: [
           spouseStep(personA, spouseA),
           ...res.pathLabels,
@@ -415,7 +504,9 @@ export function computeKinship(
   const neutral = (gender: Gender) => genderBranch(gender) === 'neutral'
   return {
     ...terms,
-    hasAmbiguousTerm: isAmbiguousTerm(terms.aCallsB),
+    hasAmbiguousTerm:
+      isAmbiguousTerm(terms.aCallsB) ||
+      terms.description.kind === 'spouseOfAncestor',
     hasNeutralGender:
       (neutral(personA.gender) || neutral(personB.gender)) &&
       (isAmbiguousTerm(terms.aCallsB) || isAmbiguousTerm(terms.bCallsA))

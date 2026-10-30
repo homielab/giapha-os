@@ -21,6 +21,7 @@ const KIND_TITLES = {
   implausibleAge: 'dataCheckKindImplausibleAge',
   duplicateRelationship: 'dataCheckKindDuplicateRelationship',
   tooManyParents: 'dataCheckKindTooManyParents',
+  singleParentWithSpouse: 'dataCheckKindSingleParentWithSpouse',
   marriageWithRelative: 'dataCheckKindMarriageWithRelative',
   marriageAfterDeath: 'dataCheckKindMarriageAfterDeath',
   parentChildLoop: 'dataCheckKindParentChildLoop',
@@ -59,6 +60,8 @@ function messageKey(f: DataCheckFinding): TranslationKey {
         : 'dataCheckDuplicateChild'
     case 'tooManyParents':
       return 'dataCheckTooManyParents'
+    case 'singleParentWithSpouse':
+      return 'dataCheckSingleParentWithSpouse'
     case 'marriageWithRelative':
       return f.params.relation === 'parent'
         ? 'dataCheckMarriageParent'

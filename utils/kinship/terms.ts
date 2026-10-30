@@ -65,6 +65,35 @@ export function getDirectAncestorTerm(
 }
 
 /**
+ * Ancestor term → the same term for each gender ("Ông nội" → "Bà nội"), from
+ * the grandparents up; the spouse of a direct ancestor gets the direct term.
+ */
+const ANCESTOR_BY_GENDER = new Map<string, Record<Gender, string>>()
+for (let depth = 2; depth < ANCESTORS.length; depth++) {
+  for (const side of Object.keys(SIDE_SUFFIX) as KinshipSide[]) {
+    const forms: Record<Gender, string> = {
+      male: getDirectAncestorTerm(depth, 'male', side),
+      female: getDirectAncestorTerm(depth, 'female', side),
+      other: getDirectAncestorTerm(depth, 'other', side)
+    }
+    for (const term of Object.values(forms)) ANCESTOR_BY_GENDER.set(term, forms)
+  }
+}
+
+/**
+ * The direct term for the spouse of a grandparent or older ancestor, by the
+ * spouse's gender ("Ông nội" → "Bà nội", "Kỵ" → "Kỵ"); null for any other term.
+ */
+export function termForSpouseOfAncestor(
+  ancestorTerm: string,
+  gender: Gender
+): string | null {
+  const forms = ANCESTOR_BY_GENDER.get(ancestorTerm)
+  if (forms) return forms[gender]
+  return /^Tổ đời \d+$/.test(ancestorTerm) ? ancestorTerm : null
+}
+
+/**
  * Both alternatives of two terms, without repeats: "Bác/Chú" and "Cậu" give
  * "Bác/Chú/Cậu" (used when Nội or Ngoại is not known).
  */

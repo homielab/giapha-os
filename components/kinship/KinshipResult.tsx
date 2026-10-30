@@ -144,6 +144,19 @@ export default function KinshipResult({
               </p>
             )}
 
+          {/* Spouse of an ancestor, not linked as parent: where to fix it */}
+          {result.description.kind === 'spouseOfAncestor' && (
+            <p className='px-1 text-sm text-amber-700'>
+              {t('kinshipSpouseOfAncestorHint')}{' '}
+              <Link
+                href={`/dashboard/members/${result.description.child.id}`}
+                className='font-medium underline'>
+                {result.description.child.name}
+              </Link>
+              .
+            </p>
+          )}
+
           {/* Gender 'other': why the term lists both forms */}
           {result.hasNeutralGender && (
             <p className='px-1 text-sm text-stone-600'>

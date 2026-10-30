@@ -258,6 +258,14 @@ export const messages = {
     kinshipDescViaSpouse: 'Thông qua hôn nhân của {name}',
     kinshipDescStepParent: 'Bố dượng, mẹ kế (thông qua hôn nhân của {name})',
     kinshipDescStepChild: 'Con riêng (thông qua hôn nhân của {name})',
+    kinshipDescWifeOfAncestor:
+      '{spouse} là vợ của {ancestor} nhưng chưa được ghi là mẹ của {child}',
+    kinshipDescHusbandOfAncestor:
+      '{spouse} là chồng của {ancestor} nhưng chưa được ghi là cha của {child}',
+    kinshipDescSpouseOfAncestor:
+      '{spouse} là vợ/chồng của {ancestor} nhưng chưa được ghi là cha/mẹ của {child}',
+    kinshipSpouseOfAncestorHint:
+      'Có thể đây là vợ/chồng sau chứ không phải cha/mẹ ruột, nên cách gọi chỉ là phỏng đoán. Nếu đúng là cha/mẹ, thêm quan hệ ở hồ sơ của',
     kinshipDescViaBothSpouses: 'Thông qua hôn nhân của cả {nameA} và {nameB}',
     kinshipDescCoParentsInLaw:
       'Thông gia (còn gọi sui gia, ông sui/bà sui): con hai bên {childA} và {childB} là vợ chồng',
@@ -892,6 +900,10 @@ export const messages = {
       '{dead} mất {death}, trước khi vợ/chồng {other} sinh ({birth}).',
     dataCheckTooManyParents:
       '{child} có {count} cha mẹ ruột (tối đa một cha và một mẹ): {parents}.',
+    dataCheckKindSingleParentWithSpouse:
+      'Con chỉ ghi một cha/mẹ nhưng người đó có vợ/chồng',
+    dataCheckSingleParentWithSpouse:
+      '{child} chỉ ghi {parent} là cha/mẹ, nhưng {parent} có vợ/chồng: {spouses}. Nếu đúng là cha/mẹ của {child}, thêm quan hệ ở hồ sơ {child}.',
     dataCheckKindParentChildLoop: 'Vòng cha–con',
     dataCheckKindSelfLink: 'Quan hệ với chính mình',
     dataCheckParentChildLoop:
@@ -1626,6 +1638,14 @@ export const messages = {
     kinshipDescViaSpouse: 'Through the marriage of {name}',
     kinshipDescStepParent: 'Step-parent (through the marriage of {name})',
     kinshipDescStepChild: 'Stepchild (through the marriage of {name})',
+    kinshipDescWifeOfAncestor:
+      '{spouse} is the wife of {ancestor} but not recorded as the mother of {child}',
+    kinshipDescHusbandOfAncestor:
+      '{spouse} is the husband of {ancestor} but not recorded as the father of {child}',
+    kinshipDescSpouseOfAncestor:
+      '{spouse} is the spouse of {ancestor} but not recorded as a parent of {child}',
+    kinshipSpouseOfAncestorHint:
+      'This may be a later spouse rather than the parent, so the term is a guess. If they are the parent, add the link on the profile of',
     kinshipDescViaBothSpouses:
       'Through the marriages of both {nameA} and {nameB}',
     kinshipDescCoParentsInLaw:
@@ -2260,6 +2280,10 @@ export const messages = {
       '{dead} died {death}, before their spouse {other} was born ({birth}).',
     dataCheckTooManyParents:
       '{child} has {count} biological parents: {parents}.',
+    dataCheckKindSingleParentWithSpouse:
+      'Child with one parent recorded whose parent has a spouse',
+    dataCheckSingleParentWithSpouse:
+      '{child} has only {parent} as a parent, but {parent} has a spouse: {spouses}. If one is the other parent of {child}, add the link on the profile of {child}.',
     dataCheckKindParentChildLoop: 'Parent–child loop',
     dataCheckKindSelfLink: 'Linked to themselves',
     dataCheckParentChildLoop:

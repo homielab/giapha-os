@@ -114,4 +114,41 @@ describe('KinshipResult', () => {
     expect(html).toContain(dict.kinshipNeutralGenderHint)
     expect(html).not.toContain('>Chồng<')
   })
+  test('the grandfather’s unlinked wife is Bà nội, with a link to fix it', () => {
+    const persons = [
+      person('Ông An', 'male'),
+      person('Bà Ba', 'female'),
+      person('Bình', 'male'),
+      person('Chi', 'female')
+    ]
+    const rels = [
+      { type: 'biological_child', person_a: 'Ông An', person_b: 'Bình' },
+      { type: 'marriage', person_a: 'Ông An', person_b: 'Bà Ba' },
+      { type: 'biological_child', person_a: 'Bình', person_b: 'Chi' }
+    ]
+    const result = computeKinship(persons[3], persons[1], persons, rels)
+    const dict = messages.vi
+    const html = renderToStaticMarkup(
+      <I18nContext.Provider
+        value={{
+          locale: 'vi',
+          messages: dict,
+          setLocale: noop,
+          t: (key, values) => interpolate(dict[key], values)
+        }}>
+        <KinshipResult
+          personA={persons[3]}
+          personB={persons[1]}
+          result={result}
+        />
+      </I18nContext.Provider>
+    )
+    expect(html).toContain('Bà nội')
+    expect(html).toContain(
+      'Bà Ba là vợ của Ông An nhưng chưa được ghi là mẹ của Bình'
+    )
+    expect(html).toContain(dict.kinshipSpouseOfAncestorHint)
+    expect(html).toContain('href="/dashboard/members/Bình"')
+    expect(html).toContain(dict.kinshipDisclaimer)
+  })
 })

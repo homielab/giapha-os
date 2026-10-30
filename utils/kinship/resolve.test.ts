@@ -368,10 +368,11 @@ describe('relations through marriage', () => {
   })
 
   test('a relation without a special term is written as husband/wife of', () => {
-    // A is married to W; B is the wife of W's grandfather but not her blood
-    // relative, so both spouses' terms fall back to "Vợ của ...".
+    // A is married to W; B is the second wife of W's grandfather (his son
+    // has his mother recorded), so both spouses' terms fall back to "Vợ của ...".
     const p = [
       person('ong', 'male'),
+      person('ba', 'female'),
       person('cha', 'male'),
       person('w', 'female'),
       person('a', 'male'),
@@ -379,11 +380,121 @@ describe('relations through marriage', () => {
     ]
     const e = [
       child('ong', 'cha'),
+      child('ba', 'cha'),
       child('cha', 'w'),
       marriage('a', 'w'),
+      marriage('ong', 'ba'),
       marriage('ong', 'ke')
     ]
     expect(terms('a', 'ke', p, e)).toEqual(['Vợ của Ông nội', 'Cháu rể'])
+    expect(terms('w', 'ke', p, e)).toEqual(['Vợ của Ông nội', 'Cháu'])
+  })
+})
+
+describe('the spouse of an ancestor not linked as parent', () => {
+  // Old trees link a child to the father only: the grandfather's wife is
+  // not recorded as the father's mother.
+  const p = [
+    person('ong', 'male'),
+    person('ba', 'female'),
+    person('cha', 'male'),
+    person('me', 'female'),
+    person('toi', 'male'),
+    person('vo', 'female')
+  ]
+  const e = [
+    child('ong', 'cha'),
+    marriage('ong', 'ba'),
+    child('cha', 'toi'),
+    child('me', 'toi'),
+    marriage('toi', 'vo')
+  ]
+  function kinship(a: string, b: string, persons = p, rels = e) {
+    const find = (id: string) => persons.find((x) => x.id === id)!
+    return computeKinship(find(a), find(b), persons, rels)!
+  }
+
+  test('the grandfather’s wife is Bà nội, marked as a guess', () => {
+    const r = kinship('toi', 'ba')
+    expect([r.aCallsB, r.bCallsA]).toEqual(['Bà nội', 'Cháu'])
+    expect(r.hasAmbiguousTerm).toBe(true)
+    expect(r.description).toEqual({
+      kind: 'spouseOfAncestor',
+      ancestor: 'ong',
+      spouse: 'ba',
+      role: 'wife',
+      child: { id: 'cha', name: 'cha' }
+    })
+    const back = kinship('ba', 'toi')
+    expect([back.aCallsB, back.bCallsA]).toEqual(['Cháu', 'Bà nội'])
+    expect(back.hasAmbiguousTerm).toBe(true)
+    expect(back.description.kind).toBe('spouseOfAncestor')
+  })
+
+  test('the grandson’s wife calls her Bà nội too', () => {
+    const r = kinship('vo', 'ba')
+    expect([r.aCallsB, r.bCallsA]).toEqual(['Bà nội', 'Cháu dâu'])
+    expect(r.description.kind).toBe('spouseOfAncestor')
+    expect(terms('ba', 'vo', p, e)).toEqual(['Cháu dâu', 'Bà nội'])
+  })
+
+  test('the maternal side and the husband of a grandmother', () => {
+    const persons = [
+      person('ba', 'female'),
+      person('ong', 'male'),
+      person('me', 'female'),
+      person('toi', 'female')
+    ]
+    const rels = [child('ba', 'me'), marriage('ba', 'ong'), child('me', 'toi')]
+    const r = kinship('toi', 'ong', persons, rels)
+    expect([r.aCallsB, r.bCallsA]).toEqual(['Ông ngoại', 'Cháu'])
+    expect(r.description).toMatchObject({
+      role: 'husband',
+      child: { id: 'me' }
+    })
+  })
+
+  test('great-grandparents and older ones get the direct term', () => {
+    const persons = [
+      person('ky', 'male'),
+      person('kyBa', 'female'),
+      person('cu', 'male'),
+      person('cuBa', 'female'),
+      person('ong', 'male'),
+      person('cha', 'male'),
+      person('toi', 'male')
+    ]
+    const rels = [
+      child('ky', 'cu'),
+      marriage('ky', 'kyBa'),
+      child('cu', 'ong'),
+      marriage('cu', 'cuBa'),
+      child('ong', 'cha'),
+      child('cha', 'toi')
+    ]
+    expect(terms('toi', 'cuBa', persons, rels)).toEqual([
+      'Cụ bà (bà cố) nội',
+      'Chắt'
+    ])
+    expect(terms('toi', 'kyBa', persons, rels)).toEqual(['Kỵ', 'Chít'])
+  })
+
+  test('the father’s wife is still Mẹ kế', () => {
+    const persons = [
+      person('cha', 'male'),
+      person('ke', 'female'),
+      person('toi', 'male')
+    ]
+    const rels = [child('cha', 'toi'), marriage('cha', 'ke')]
+    expect(terms('toi', 'ke', persons, rels)).toEqual([
+      'Mẹ kế',
+      'Con riêng của chồng'
+    ])
+  })
+
+  test('the grandfather’s wife of gender other gets both forms', () => {
+    const persons = p.map((x) => (x.id === 'ba' ? person('ba', 'other') : x))
+    expect(terms('toi', 'ba', persons, e)).toEqual(['Ông/Bà nội', 'Cháu'])
   })
 })
 

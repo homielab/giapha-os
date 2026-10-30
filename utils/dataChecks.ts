@@ -47,6 +47,7 @@ export const DATA_CHECK_KINDS = [
   'implausibleAge',
   'duplicateRelationship',
   'tooManyParents',
+  'singleParentWithSpouse',
   'marriageWithRelative',
   'marriageAfterDeath',
   'parentChildLoop',
@@ -125,7 +126,9 @@ const ref = (p: DataCheckPerson) => ({ id: p.id, name: p.full_name })
  * only reported as `selfLink`; a marriage between a parent and child, between
  * children of a common biological parent, or with someone who died before the
  * other was born is reported; parent–child loops are listed once each, as the
- * people along the loop. Findings are sorted by kind, then name
+ * people along the loop. A child with one parent recorded whose parent has a
+ * spouse is listed with the spouses as possible missing parents
+ * (`singleParentWithSpouse`). Findings are sorted by kind, then name
  * (Vietnamese order), then id.
  */
 export function runDataChecks(
@@ -362,6 +365,8 @@ export function runDataChecks(
     })
   }
 
+  findings.push(...checkSingleParents(links, byId))
+
   // Each marriage once, whichever way round it is stored.
   const seenMarriages = new Set<string>()
   const parentLinksOf = new Map<string, DataCheckRelationship[]>()
@@ -454,6 +459,53 @@ export function runDataChecks(
       x.people[0].name.localeCompare(y.people[0].name, 'vi') ||
       x.people[0].id.localeCompare(y.people[0].id)
   )
+}
+
+/**
+ * A child with one parent recorded (birth or adoptive) while that parent has
+ * a spouse: old trees often link the child to the father only, so the spouse
+ * may be the missing parent. Only a hint: nothing is linked here.
+ */
+function checkSingleParents(
+  links: DataCheckRelationship[],
+  byId: Map<string, DataCheckPerson>
+): DataCheckFinding[] {
+  const parentsOf = new Map<string, Set<string>>()
+  const spousesOf = new Map<string, Set<string>>()
+  const add = (map: Map<string, Set<string>>, key: string, id: string) => {
+    const set = map.get(key)
+    if (set) set.add(id)
+    else map.set(key, new Set([id]))
+  }
+  for (const r of links) {
+    if (isParentChildType(r.type)) add(parentsOf, r.person_b, r.person_a)
+    else if (r.type === 'marriage') {
+      add(spousesOf, r.person_a, r.person_b)
+      add(spousesOf, r.person_b, r.person_a)
+    }
+  }
+  const findings: DataCheckFinding[] = []
+  for (const [childId, parentIds] of parentsOf) {
+    if (parentIds.size !== 1) continue
+    const child = byId.get(childId)
+    const parent = byId.get([...parentIds][0])
+    if (!child || !parent) continue
+    const spouses = [...(spousesOf.get(parent.id) ?? [])]
+      .filter((id) => id !== childId)
+      .flatMap((id) => byId.get(id) ?? [])
+      .sort((x, y) => x.full_name.localeCompare(y.full_name, 'vi'))
+    if (spouses.length === 0) continue
+    findings.push({
+      kind: 'singleParentWithSpouse',
+      people: [ref(child), ref(parent), ...spouses.map(ref)],
+      params: {
+        child: child.full_name,
+        parent: parent.full_name,
+        spouses: spouses.map((p) => p.full_name).join(', ')
+      }
+    })
+  }
+  return findings
 }
 
 /** Each biological parent → child link once, both people known. */
