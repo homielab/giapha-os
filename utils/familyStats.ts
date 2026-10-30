@@ -3,7 +3,8 @@ import { Person, Relationship } from '@/types'
 import {
   calculateAge,
   getZodiacAnimal,
-  getZodiacSign
+  getZodiacSign,
+  vnToday
 } from '@/utils/dateHelpers'
 
 /** Person columns the stats need; select only these to keep the query small. */
@@ -39,6 +40,8 @@ export interface FamilyStatsResult {
   total: number
   male: number
   female: number
+  /** Gender 'other'; male + female + other = total. */
+  other: number
   daughtersInLaw: number
   sonsInLaw: number
   deceased: number
@@ -75,7 +78,7 @@ const round1 = (n: number) => Math.round(n * 10) / 10
 
 export function computeLifespan(
   persons: StatsPerson[],
-  now: Date = new Date()
+  now: Date = vnToday()
 ): LifespanStats {
   let sum = 0
   let counted = 0
@@ -142,13 +145,14 @@ export function computeLifespan(
 export function computeFamilyStats(
   persons: StatsPerson[],
   relationships: StatsRelationship[],
-  now: Date = new Date()
+  now: Date = vnToday()
 ): FamilyStatsResult {
   const total = persons.length
 
   // Gender
   const male = persons.filter((p) => p.gender === 'male').length
   const female = persons.filter((p) => p.gender === 'female').length
+  const other = total - male - female
 
   // In-laws
   const daughtersInLaw = persons.filter(
@@ -224,6 +228,7 @@ export function computeFamilyStats(
     total,
     male,
     female,
+    other,
     daughtersInLaw,
     sonsInLaw,
     deceased,

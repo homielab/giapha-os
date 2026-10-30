@@ -146,6 +146,17 @@ describe('computeFamilyStats', () => {
   })
 })
 
+describe('computeFamilyStats gender', () => {
+  test('counts other so the three parts make the total', () => {
+    const s = computeFamilyStats(
+      [person('a', 'male'), person('b', 'female'), person('c', 'other')],
+      []
+    )
+    expect([s.male, s.female, s.other]).toEqual([1, 1, 1])
+    expect(s.male + s.female + s.other).toBe(s.total)
+  })
+})
+
 describe('computeLifespan', () => {
   const now = new Date('2026-06-15T12:00:00+07:00')
   const family = [

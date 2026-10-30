@@ -209,10 +209,19 @@ export default function FamilyStats({ stats }: FamilyStatsProps) {
                 className='flex items-center justify-center bg-pink-400'
                 title={`${t('female')}: ${stats.female}`}
               />
+              {stats.other > 0 && (
+                <m.div
+                  initial={{ flex: 0 }}
+                  animate={{ flex: stats.other }}
+                  transition={{ duration: 0.7, delay: 0.7 }}
+                  className='flex items-center justify-center bg-stone-400'
+                  title={`${t('otherGender')}: ${stats.other}`}
+                />
+              )}
             </>
           )}
         </div>
-        <div className='mt-3 flex gap-6 text-sm'>
+        <div className='mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm'>
           <span className='flex items-center gap-2 text-stone-600'>
             <span className='inline-block size-3 rounded-full bg-blue-400' />
             {t('male')} — {t('peopleCount', { count: stats.male })} (
@@ -227,6 +236,13 @@ export default function FamilyStats({ stats }: FamilyStatsProps) {
               : 0}
             %)
           </span>
+          {stats.other > 0 && (
+            <span className='flex items-center gap-2 text-stone-600'>
+              <span className='inline-block size-3 rounded-full bg-stone-400' />
+              {t('otherGender')} — {t('peopleCount', { count: stats.other })} (
+              {Math.round((stats.other / stats.total) * 100)}%)
+            </span>
+          )}
         </div>
       </m.div>
 

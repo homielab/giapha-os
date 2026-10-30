@@ -137,6 +137,42 @@ test('comparePartialDates returns null without both years', () => {
 
 const emptyDeath = death('', '', '')
 
+describe('validateMemberForm lunar death date', () => {
+  const lunar = (
+    lunarDay: number | '',
+    lunarMonth: number | '',
+    lunarYear: number | ''
+  ): DeathDateValues => ({
+    ...death('', '', ''),
+    lunarDay,
+    lunarMonth,
+    lunarYear
+  })
+  const check = (d: DeathDateValues) =>
+    validateMemberForm('', '', 1900, true, d, undefined, new Date(2026, 0, 1))
+
+  test('refuses a day or month that no lunar month has', () => {
+    expect(check(lunar(31, 5, ''))).toBe('invalidDeathDate')
+    expect(check(lunar(31, 2, 2000))).toBe('invalidDeathDate')
+    expect(check(lunar(15, 13, ''))).toBe('invalidDeathDate')
+    expect(check(lunar(0, 5, ''))).toBe('invalidDeathDate')
+  })
+
+  test('refuses day 30 of a 29-day month when the year is known', () => {
+    expect(check(lunar(30, 3, 2000))).toBe('invalidDeathDate')
+    expect(check(lunar(30, 2, 2000))).toBeNull()
+  })
+
+  test('accepts a day and month without a year', () => {
+    expect(check(lunar(15, 7, ''))).toBeNull()
+    expect(check(lunar(30, 3, ''))).toBeNull()
+  })
+
+  test('is only checked for a deceased member', () => {
+    expect(validateMemberForm('', '', 1900, false, lunar(31, 5, ''))).toBeNull()
+  })
+})
+
 describe('validateMemberForm whole numbers', () => {
   const emptyDeath = death('', '', '')
   test('refuses two-digit years and accepts four digits', () => {
@@ -380,6 +416,26 @@ describe('buildPersonData', () => {
     expect(data.generation).toBe(3)
   })
 
+  test('stores names in NFC with single spaces', () => {
+    const data = buildPersonData(
+      {
+        ...fields,
+        fullName: '  Nguyễn   Văn  A '.normalize('NFD'),
+        otherNames: ' Tí\t Tèo '.normalize('NFD')
+      },
+      null
+    )
+    expect(data.full_name).toBe('Nguyễn Văn A'.normalize('NFC'))
+    expect(data.other_names).toBe('Tí Tèo'.normalize('NFC'))
+  })
+
+  test('stores a note of only whitespace as null', () => {
+    expect(buildPersonData({ ...fields, note: '  \n ' }, null).note).toBeNull()
+    expect(buildPersonData({ ...fields, note: 'a\n b' }, null).note).toBe(
+      'a\n b'
+    )
+  })
+
   test('drops death fields for a living person', () => {
     const data = buildPersonData(fields, null)
     expect(data.death_year).toBeNull()
@@ -457,7 +513,7 @@ describe('member name', () => {
       },
       null
     )
-    expect(data.full_name).toBe('Nguyễn  Văn An')
+    expect(data.full_name).toBe('Nguyễn Văn An')
     expect(data.other_names).toBeNull()
   })
 })

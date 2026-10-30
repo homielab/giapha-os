@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Member form: a lunar death date with day 31, month 13, or day 30 of a 29-day month is now refused ("invalid death date") instead of being saved with no death anniversary ever shown.
+- Names are saved in one Unicode form (NFC) with single spaces, and a note of only spaces or blank lines is no longer saved.
+- Statistics: the gender bar and legend now include Other, so the parts add up to the total; ages use today's date in Vietnam time.
 - Locking a user in Manage users now revokes their emailed approval link: the old link (valid 7 days) shows "Request revoked" (HTTP 410) instead of turning the account back on. Needs the migration `20261031120000_revoke_approval_link_on_lock.sql`.
 - Kinship finder: the wife of a grandfather (or of an older ancestor) who is not recorded as the mother of his child on the line, when that child has only one parent recorded, is now "Bà nội" / "Cụ bà" with a note that she may be a later wife and a link to the child's profile to add the parent, instead of "Wife of Ông nội".
 - Docker: `robots.txt`, `sitemap.xml` and the web manifest now use `SITE_NAME` / `APP_URL` set when the container starts, instead of `localhost` and the default name baked in at build time.

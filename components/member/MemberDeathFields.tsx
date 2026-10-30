@@ -95,7 +95,7 @@ export default function MemberDeathFields({
                     aria-label={t('day')}
                     placeholder={t('day')}
                     min='1'
-                    max='31'
+                    max='30'
                     value={deathLunarDay}
                     onChange={(e) => onLunarChange('day', e.target.value)}
                     className={inputClasses}

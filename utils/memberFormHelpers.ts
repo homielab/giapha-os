@@ -130,6 +130,8 @@ export function validateMemberForm(
   )
     return 'invalidDeathDate'
 
+  if (isDeceased && !isValidLunarParts(deathValues)) return 'invalidDeathDate'
+
   // Typos such as 2062 for 1962. A date missing its month or day is only
   // compared as far as it is known. Death dates are already solar here: a
   // lunar-only date was converted by normalizeDeathDates.
@@ -234,6 +236,25 @@ export function solarToLunar(
     : null
 }
 
+/**
+ * A lunar day/month, complete or not, that can exist: day 1–30, month 1–12;
+ * with a year, the day must exist in that month (regular or leap).
+ */
+export function isValidLunarParts(v: {
+  lunarDay: number | ''
+  lunarMonth: number | ''
+  lunarYear: number | ''
+}): boolean {
+  const { lunarDay: d, lunarMonth: m, lunarYear: y } = v
+  if (d !== '' && (!Number.isInteger(d) || d < 1 || d > 30)) return false
+  if (m !== '' && (!Number.isInteger(m) || m < 1 || m > 12)) return false
+  if (d === '' || m === '' || y === '' || y <= 100) return true
+  return (
+    convertLunarToSolar(y, m, d, false) !== null ||
+    (hasLeapMonth(m, y) && convertLunarToSolar(y, m, d, true) !== null)
+  )
+}
+
 export function lunarToSolar(
   d: number | '',
   m: number | '',
@@ -331,6 +352,11 @@ export interface MemberFormFields {
   burialPlace: string
 }
 
+/** NFC, inner whitespace runs collapsed to one space, trimmed. */
+export function cleanName(name: string): string {
+  return name.normalize('NFC').replace(/\s+/g, ' ').trim()
+}
+
 const toNumberOrNull = (v: number | '') => (v === '' ? null : Number(v))
 
 /**
@@ -346,7 +372,7 @@ export function buildPersonData(
   const d = fields.isDeceased
   const burialPlace = d ? fields.burialPlace.trim() || null : null
   return {
-    full_name: fields.fullName.trim(),
+    full_name: cleanName(fields.fullName),
     gender: fields.gender,
     birth_year: toNumberOrNull(fields.birthYear),
     birth_month: toNumberOrNull(fields.birthMonth),
@@ -361,9 +387,9 @@ export function buildPersonData(
     is_in_law: fields.isInLaw,
     birth_order: toNumberOrNull(fields.birthOrder),
     generation: toNumberOrNull(fields.generation),
-    other_names: fields.otherNames.trim() || null,
+    other_names: cleanName(fields.otherNames) || null,
     avatar_url: url,
-    note: fields.note || null,
+    note: fields.note.trim() ? fields.note : null,
     ...(burialPlace !== null || hadBurialPlace
       ? { burial_place: burialPlace }
       : {})
