@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Kinship finder: children of two remarried parents (no parent in common) are now "Anh kế" / "Chị kế" / "Em kế" by birth year, and two wives of one husband (or two husbands of one wife) get a description naming that spouse, instead of "Unknown".
 - The calendar file (.ics) now holds death anniversaries and lunar events for this year and the next four instead of two; the file name, each event's description and a caption under the export button say until which year it reminds.
 - Kinship finder: the parents of a married couple are now "Ông thông gia" / "Bà thông gia" (sui gia) to each other, with the path through their children, instead of "Unknown".
 - The gallery photo viewer has Previous/Next buttons, Left/Right arrow keys and an "Image 3 of 12" counter, following the order on screen; deleting a photo moves on to the next one.

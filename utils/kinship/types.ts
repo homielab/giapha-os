@@ -22,6 +22,10 @@ export type KinshipDescription = (
   | { kind: 'viaBothSpouses'; nameA: string; nameB: string }
   /** A's child `childA` is married to B's child `childB`: thông gia. */
   | { kind: 'coParentsInLaw'; childA: string; childB: string }
+  /** A's parent `parent` married B's parent `stepParent`; no shared parent. */
+  | { kind: 'stepSiblings'; parent: string; stepParent: string }
+  /** A and B are both married to `name` (two wives or two husbands). */
+  | { kind: 'coSpouses'; name: string; role: 'wives' | 'husbands' }
   | { kind: 'none' }
 ) & {
   commonAncestor?: string | null

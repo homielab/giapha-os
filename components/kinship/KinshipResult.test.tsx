@@ -57,4 +57,36 @@ describe('KinshipResult', () => {
     expect(html).toContain('Bình là con của Ông An.')
     expect(html).not.toContain(dict.kinshipUnknownTerm)
   })
+
+  test('two wives of one husband show the description, not Chưa xác định', () => {
+    const persons = [
+      person('Ông Hải', 'male'),
+      person('Bà Lan', 'female'),
+      person('Bà Mai', 'female')
+    ]
+    const rels = [
+      { type: 'marriage', person_a: 'Ông Hải', person_b: 'Bà Lan' },
+      { type: 'marriage', person_a: 'Ông Hải', person_b: 'Bà Mai' }
+    ]
+    const result = computeKinship(persons[1], persons[2], persons, rels)
+    const dict = messages.vi
+    const html = renderToStaticMarkup(
+      <I18nContext.Provider
+        value={{
+          locale: 'vi',
+          messages: dict,
+          setLocale: noop,
+          t: (key, values) => interpolate(dict[key], values)
+        }}>
+        <KinshipResult
+          personA={persons[1]}
+          personB={persons[2]}
+          result={result}
+        />
+      </I18nContext.Provider>
+    )
+    expect(html).toContain('Cùng chồng: hai người vợ của Ông Hải')
+    expect(html).toContain(dict.kinshipNoTerm)
+    expect(html).not.toContain(dict.kinshipUnknownTerm)
+  })
 })

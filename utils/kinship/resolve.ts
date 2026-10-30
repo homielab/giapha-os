@@ -1,4 +1,4 @@
-import { findBloodKinship } from './blood'
+import { compareSeniority, findBloodKinship } from './blood'
 import { buildKinshipGraph, type KinshipGraph } from './graph'
 import {
   callSpouseRelative,
@@ -248,6 +248,93 @@ function viaChildInLaw(
   return null
 }
 
+/** Anh kế / Chị kế / Em kế: what A calls B, by who is older. */
+function stepSiblingTerm(personA: PersonNode, personB: PersonNode): string {
+  const seniority = compareSeniority(personB, personA)
+  if (seniority === 'junior') return 'Em kế'
+  const older =
+    personB.gender === 'male'
+      ? 'Anh'
+      : personB.gender === 'female'
+        ? 'Chị'
+        : 'Anh/Chị'
+  return seniority === 'senior' ? `${older} kế` : `${older}/Em kế`
+}
+
+/**
+ * A's parent is married to B's parent and the two share no parent: anh/chị/em
+ * kế (each is the stepchild of the other's parent).
+ */
+function viaStepParent(
+  personA: PersonNode,
+  personB: PersonNode,
+  graph: KinshipGraph
+): KinshipTerms | null {
+  const parentsA = graph.parentMap.get(personA.id) ?? []
+  const parentsB = graph.parentMap.get(personB.id) ?? []
+  if (parentsA.some((id) => parentsB.includes(id))) return null
+  for (const pId of parentsA) {
+    const parentA = graph.personsMap.get(pId)
+    if (!parentA) continue
+    for (const sId of graph.spouseMap.get(pId) ?? []) {
+      const parentB = graph.personsMap.get(sId)
+      if (!parentB || !parentsB.includes(sId)) continue
+      return {
+        aCallsB: stepSiblingTerm(personA, personB),
+        bCallsA: stepSiblingTerm(personB, personA),
+        description: {
+          kind: 'stepSiblings',
+          parent: parentA.full_name,
+          stepParent: parentB.full_name
+        },
+        distance: 3,
+        pathLabels: [
+          {
+            kind: 'childOf',
+            name: personA.full_name,
+            parent: parentA.full_name
+          },
+          spouseStep(parentA, parentB),
+          {
+            kind: 'childOf',
+            name: personB.full_name,
+            parent: parentB.full_name
+          }
+        ]
+      }
+    }
+  }
+  return null
+}
+
+/**
+ * A and B are married to the same person. There is no term without knowing
+ * who married first (vợ cả / vợ lẽ), so only the description names it.
+ */
+function viaSharedSpouse(
+  personA: PersonNode,
+  personB: PersonNode,
+  graph: KinshipGraph
+): KinshipTerms | null {
+  const spousesB = graph.spouseMap.get(personB.id) ?? []
+  for (const sId of graph.spouseMap.get(personA.id) ?? []) {
+    const spouse = graph.personsMap.get(sId)
+    if (!spouse || !spousesB.includes(sId)) continue
+    return {
+      aCallsB: UNKNOWN_TERM,
+      bCallsA: UNKNOWN_TERM,
+      description: {
+        kind: 'coSpouses',
+        name: spouse.full_name,
+        role: spouse.gender === 'female' ? 'husbands' : 'wives'
+      },
+      distance: 2,
+      pathLabels: [spouseStep(personA, spouse), spouseStep(personB, spouse)]
+    }
+  }
+  return null
+}
+
 function resolveKinship(
   personA: PersonNode,
   personB: PersonNode,
@@ -281,7 +368,11 @@ function resolveKinship(
     // 4. Thông qua cả hôn nhân của A và B
     viaBothSpouses(personA, personB, graph) ??
     // 5. Con của A lấy con của B: thông gia
-    viaChildInLaw(personA, personB, graph) ?? {
+    viaChildInLaw(personA, personB, graph) ??
+    // 6. Cha/mẹ của A lấy cha/mẹ của B: anh chị em kế
+    viaStepParent(personA, personB, graph) ??
+    // 7. Cùng lấy một người: hai vợ của một chồng, hai chồng của một vợ
+    viaSharedSpouse(personA, personB, graph) ?? {
       aCallsB: UNKNOWN_TERM,
       bCallsA: UNKNOWN_TERM,
       description: { kind: 'none' },

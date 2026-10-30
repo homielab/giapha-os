@@ -19,7 +19,7 @@ import type {
  * stops at the first part one of them lacks. When nothing tells them apart
  * (missing data, or the same date such as twins) the result is 'unknown'.
  */
-function compareSeniority(
+export function compareSeniority(
   a: PersonNode,
   b: PersonNode
 ): 'senior' | 'junior' | 'equal' | 'unknown' {

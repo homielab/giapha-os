@@ -65,6 +65,20 @@ export function describeKinship(
         childB: description.childB
       })
       break
+    case 'stepSiblings':
+      text = t('kinshipDescStepSiblings', {
+        parent: description.parent,
+        stepParent: description.stepParent
+      })
+      break
+    case 'coSpouses':
+      text = t(
+        description.role === 'wives'
+          ? 'kinshipDescCoWives'
+          : 'kinshipDescCoHusbands',
+        { name: description.name }
+      )
+      break
     case 'none':
       text = t('kinshipDescNone')
       break

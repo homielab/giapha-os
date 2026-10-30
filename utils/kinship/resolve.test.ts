@@ -698,3 +698,105 @@ describe('paternal or maternal side follows the younger person’s own parent', 
     })
   })
 })
+
+describe('step-siblings and co-spouses', () => {
+  function kinship(a: string, b: string, p: PersonNode[], e: RelEdge[]) {
+    const find = (id: string) => p.find((x) => x.id === id)!
+    return computeKinship(find(a), find(b), p, e)!
+  }
+
+  // M has a; F2 has b; M and F2 marry.
+  const blended = (yearA: number | null, yearB: number | null) => ({
+    p: [
+      person('M', 'male'),
+      person('F1', 'female'),
+      person('F2', 'female'),
+      person('M2', 'male'),
+      person('a', 'male', { birth_year: yearA }),
+      person('b', 'female', { birth_year: yearB })
+    ],
+    e: [
+      child('M', 'a'),
+      child('F1', 'a'),
+      child('F2', 'b'),
+      child('M2', 'b'),
+      marriage('M', 'F1'),
+      marriage('M', 'F2')
+    ]
+  })
+
+  test('children of a step-parent are anh/chị/em kế both ways', () => {
+    const { p, e } = blended(1990, 1985)
+    const r = kinship('a', 'b', p, e)
+    expect([r.aCallsB, r.bCallsA]).toEqual(['Chị kế', 'Em kế'])
+    expect(r.description).toEqual({
+      kind: 'stepSiblings',
+      parent: 'M',
+      stepParent: 'F2'
+    })
+    const back = kinship('b', 'a', p, e)
+    expect([back.aCallsB, back.bCallsA]).toEqual(['Em kế', 'Chị kế'])
+    expect(back.description).toEqual({
+      kind: 'stepSiblings',
+      parent: 'F2',
+      stepParent: 'M'
+    })
+  })
+
+  test('no birth year gives both terms', () => {
+    const { p, e } = blended(null, null)
+    expect(terms('a', 'b', p, e)).toEqual(['Chị/Em kế', 'Anh/Em kế'])
+  })
+
+  test('half-siblings with one shared father stay siblings', () => {
+    const p = [
+      person('M', 'male'),
+      person('F1', 'female'),
+      person('F2', 'female'),
+      person('a', 'male', { birth_year: 1980 }),
+      person('b', 'male', { birth_year: 1990 })
+    ]
+    const e = [
+      child('M', 'a'),
+      child('F1', 'a'),
+      child('M', 'b'),
+      child('F2', 'b'),
+      marriage('M', 'F1'),
+      marriage('M', 'F2')
+    ]
+    const r = kinship('a', 'b', p, e)
+    expect(r.description.kind).toBe('siblings')
+    expect(r.aCallsB).toBe('Em trai')
+  })
+
+  test('two wives of one husband get a description, no term', () => {
+    const p = [
+      person('H', 'male'),
+      person('w1', 'female'),
+      person('w2', 'female')
+    ]
+    const e = [marriage('H', 'w1'), marriage('H', 'w2')]
+    const r = kinship('w1', 'w2', p, e)
+    expect([r.aCallsB, r.bCallsA]).toEqual(['', ''])
+    expect(r.description).toEqual({
+      kind: 'coSpouses',
+      name: 'H',
+      role: 'wives'
+    })
+    expect(kinship('w2', 'w1', p, e).description.kind).toBe('coSpouses')
+  })
+
+  test('two husbands of one wife', () => {
+    const p = [
+      person('W', 'female'),
+      person('h1', 'male'),
+      person('h2', 'male')
+    ]
+    const e = [marriage('W', 'h1'), marriage('W', 'h2')]
+    expect(kinship('h1', 'h2', p, e).description).toEqual({
+      kind: 'coSpouses',
+      name: 'W',
+      role: 'husbands'
+    })
+  })
+})

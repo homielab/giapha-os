@@ -253,6 +253,11 @@ export const messages = {
     kinshipDescViaBothSpouses: 'Thông qua hôn nhân của cả {nameA} và {nameB}',
     kinshipDescCoParentsInLaw:
       'Thông gia (còn gọi sui gia, ông sui/bà sui): con hai bên {childA} và {childB} là vợ chồng',
+    kinshipDescStepSiblings:
+      'Anh chị em kế: con riêng của {stepParent} và con riêng của {parent}, hai người là vợ chồng',
+    kinshipDescCoWives: 'Cùng chồng: hai người vợ của {name}',
+    kinshipDescCoHusbands: 'Cùng vợ: hai người chồng của {name}',
+    kinshipNoTerm: 'Không có cách gọi riêng',
     kinshipDescNone: 'Không tìm thấy quan hệ trong phạm vi dữ liệu',
     kinshipCommonAncestor: '(Tổ tiên chung: {name})',
     kinshipCommonAncestorFallback: 'Tổ tiên chung',
@@ -1559,6 +1564,11 @@ export const messages = {
       'Through the marriages of both {nameA} and {nameB}',
     kinshipDescCoParentsInLaw:
       'Co-parents-in-law: their children {childA} and {childB} are married',
+    kinshipDescStepSiblings:
+      'Step-siblings: children of {stepParent} and of {parent}, who are married',
+    kinshipDescCoWives: 'Both are wives of {name}',
+    kinshipDescCoHusbands: 'Both are husbands of {name}',
+    kinshipNoTerm: 'No specific term',
     kinshipDescNone: 'No relationship found within the data',
     kinshipCommonAncestor: '(Common ancestor: {name})',
     kinshipCommonAncestorFallback: 'the common ancestor',

@@ -67,7 +67,9 @@ export default function KinshipResult({
                 })}
               </p>
               <p className='font-serif text-sm font-medium text-amber-600'>
-                {unknown ? t('kinshipUnknownTerm') : result.aCallsB}
+                {unknown
+                  ? t('kinshipUnknownTerm')
+                  : result.aCallsB || t('kinshipNoTerm')}
               </p>
             </m.div>
 
@@ -83,7 +85,9 @@ export default function KinshipResult({
                 })}
               </p>
               <p className='font-serif text-sm font-medium text-amber-600'>
-                {unknown ? t('kinshipUnknownTerm') : result.bCallsA}
+                {unknown
+                  ? t('kinshipUnknownTerm')
+                  : result.bCallsA || t('kinshipNoTerm')}
               </p>
             </m.div>
           </div>
