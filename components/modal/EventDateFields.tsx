@@ -3,6 +3,7 @@
 import { AlertCircle, CalendarIcon, Moon, Sun } from 'lucide-react'
 
 import { useI18n } from '@/lib/i18n/useI18n'
+import { hasLeapMonth } from '@/utils/memberFormHelpers'
 
 const inputClasses =
   'bg-white text-stone-900 placeholder-stone-500 block w-full rounded-xl border border-stone-300  focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:bg-white text-sm px-4 py-3 transition-colors outline-none!'
@@ -17,9 +18,13 @@ interface EventDateFieldsProps {
   lunarDay: number | ''
   lunarMonth: number | ''
   lunarYear: number | ''
+  lunarLeap: boolean
   onLunarDayChange: (value: number | '') => void
   onLunarMonthChange: (value: number | '') => void
   onLunarYearChange: (value: number | '') => void
+  onLunarLeapChange: (value: boolean) => void
+  /** Solar date (YYYY-MM-DD) of the lunar date, null while it has none. */
+  lunarSolarDate: string | null
   lunarConvertError: string | null
 }
 
@@ -31,9 +36,12 @@ export default function EventDateFields({
   lunarDay,
   lunarMonth,
   lunarYear,
+  lunarLeap,
   onLunarDayChange,
   onLunarMonthChange,
   onLunarYearChange,
+  onLunarLeapChange,
+  lunarSolarDate,
   lunarConvertError
 }: EventDateFieldsProps) {
   const { t } = useI18n()
@@ -122,18 +130,31 @@ export default function EventDateFields({
               className={inputClasses}
             />
           </div>
+          {hasLeapMonth(lunarMonth, lunarYear) && (
+            <label className='flex items-center gap-2 text-sm text-stone-600'>
+              <input
+                type='checkbox'
+                checked={lunarLeap}
+                onChange={(e) => onLunarLeapChange(e.target.checked)}
+                className='size-4 rounded border-stone-300'
+              />
+              {t('lunarLeapMonth')}
+            </label>
+          )}
           {lunarConvertError && (
-            <p className='flex items-center gap-1 text-sm font-medium text-rose-500'>
+            <p
+              role='alert'
+              className='flex items-center gap-1 text-sm font-medium text-rose-500'>
               <AlertCircle className='size-3' />
               {lunarConvertError}
             </p>
           )}
-          {eventDate && !lunarConvertError && (
+          {lunarSolarDate && (
             <p className='flex items-center gap-1.5 text-sm text-stone-500'>
               <Sun className='size-3 text-amber-500' />
               {t('solarDate')}:{' '}
               <span className='font-medium text-stone-700'>
-                {eventDate.split('-').reverse().join('/')}
+                {lunarSolarDate.split('-').reverse().join('/')}
               </span>
             </p>
           )}

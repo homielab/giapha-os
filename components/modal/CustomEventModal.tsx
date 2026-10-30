@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, m, Variants } from 'framer-motion'
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 
 import EventDateFields from '@/components/modal/EventDateFields'
 import EventErrorBanner from '@/components/modal/EventErrorBanner'
@@ -12,6 +12,7 @@ import EventRecurrenceField from '@/components/modal/EventRecurrenceField'
 import EventTextFields from '@/components/modal/EventTextFields'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { resolveLunarEventDate } from '@/utils/customEventLunar'
 import {
   CustomEventNotAllowedError,
   deleteCustomEvent,
@@ -24,7 +25,6 @@ import {
   toRecurrence
 } from '@/utils/eventHelpers'
 import { TextTooLongError } from '@/utils/limits'
-import { lunarToSolar } from '@/utils/lunarCalendar'
 import { createClient } from '@/utils/supabase/client'
 
 interface CustomEventModalProps {
@@ -59,9 +59,26 @@ export default function CustomEventModal({
   const [lunarDay, setLunarDay] = useState<number | ''>('')
   const [lunarMonth, setLunarMonth] = useState<number | ''>('')
   const [lunarYear, setLunarYear] = useState<number | ''>('')
-  const [lunarConvertError, setLunarConvertError] = useState<string | null>(
-    null
+  const [lunarLeap, setLunarLeap] = useState(false)
+  // An incomplete lunar date is only flagged after a save attempt.
+  const [lunarSubmitted, setLunarSubmitted] = useState(false)
+
+  const lunarResult = useMemo(
+    () =>
+      resolveLunarEventDate({
+        day: lunarDay,
+        month: lunarMonth,
+        year: lunarYear,
+        leap: lunarLeap
+      }),
+    [lunarDay, lunarMonth, lunarYear, lunarLeap]
   )
+  const lunarConvertError =
+    dateMode === 'lunar' &&
+    (lunarResult.status === 'invalid' ||
+      (lunarSubmitted && lunarResult.status === 'incomplete'))
+      ? t('lunarDateInvalid')
+      : null
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -84,42 +101,24 @@ export default function CustomEventModal({
       setLunarDay('')
       setLunarMonth('')
       setLunarYear('')
-      setLunarConvertError(null)
+      setLunarLeap(false)
+      setLunarSubmitted(false)
     })
 
     return () => cancelAnimationFrame(frame)
   }, [isOpen, eventToEdit])
 
-  // Auto-convert lunar → solar when all 3 fields are filled
-  useEffect(() => {
-    if (
-      dateMode === 'lunar' &&
-      lunarDay !== '' &&
-      lunarMonth !== '' &&
-      lunarYear !== '' &&
-      lunarYear > 100
-    ) {
-      const frame = requestAnimationFrame(() => {
-        const solar = lunarToSolar(
-          lunarYear as number,
-          lunarMonth as number,
-          lunarDay as number
-        )
-        if (solar) {
-          const m = String(solar.month).padStart(2, '0')
-          const d = String(solar.day).padStart(2, '0')
-          setEventDate(`${solar.year}-${m}-${d}`)
-          setLunarConvertError(null)
-        } else {
-          setLunarConvertError(t('lunarDateInvalid'))
-        }
-      })
-      return () => cancelAnimationFrame(frame)
-    }
-  }, [dateMode, lunarDay, lunarMonth, lunarYear, t])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    let date = eventDate
+    if (dateMode === 'lunar') {
+      // Never save today's default date for a missing or impossible lunar date.
+      if (lunarResult.status !== 'ok') {
+        setLunarSubmitted(true)
+        return
+      }
+      date = lunarResult.date
+    }
     setLoading(true)
     setError(null)
 
@@ -127,7 +126,7 @@ export default function CustomEventModal({
       const supabase = createClient()
       const payload = {
         name,
-        event_date: eventDate,
+        event_date: date,
         location: location || null,
         content: content || null,
         // Sent only when needed, so a database without the recurrence
@@ -243,17 +242,31 @@ export default function CustomEventModal({
                   <EventDateFields
                     dateMode={dateMode}
                     onToggleMode={() => {
+                      if (dateMode === 'lunar' && lunarResult.status === 'ok') {
+                        setEventDate(lunarResult.date)
+                      }
                       setDateMode(dateMode === 'solar' ? 'lunar' : 'solar')
-                      setLunarConvertError(null)
+                      setLunarSubmitted(false)
                     }}
                     eventDate={eventDate}
                     onEventDateChange={setEventDate}
                     lunarDay={lunarDay}
                     lunarMonth={lunarMonth}
                     lunarYear={lunarYear}
+                    lunarLeap={lunarLeap}
                     onLunarDayChange={setLunarDay}
-                    onLunarMonthChange={setLunarMonth}
-                    onLunarYearChange={setLunarYear}
+                    onLunarMonthChange={(value) => {
+                      setLunarMonth(value)
+                      setLunarLeap(false)
+                    }}
+                    onLunarYearChange={(value) => {
+                      setLunarYear(value)
+                      setLunarLeap(false)
+                    }}
+                    onLunarLeapChange={setLunarLeap}
+                    lunarSolarDate={
+                      lunarResult.status === 'ok' ? lunarResult.date : null
+                    }
                     lunarConvertError={lunarConvertError}
                   />
 
