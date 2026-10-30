@@ -17,7 +17,7 @@ import {
   FamilyEvent,
   filterVisibleEvents
 } from '@/utils/eventHelpers'
-import { buildIcs } from '@/utils/icsExport'
+import { buildIcs, icsLastYear } from '@/utils/icsExport'
 import { solarToLunar } from '@/utils/lunarCalendar'
 
 interface EventsListProps {
@@ -93,7 +93,7 @@ export default function EventsList({
     )
     const a = document.createElement('a')
     a.href = url
-    a.download = 'giapha-events.ics'
+    a.download = `giapha-events-${vnToday().getFullYear()}-${icsLastYear()}.ics`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -234,6 +234,9 @@ export default function EventsList({
             <CalendarPlus className='size-5' />
             <span>{t('addToCalendar')}</span>
           </button>
+          <p className='text-center text-xs text-stone-500'>
+            {t('addToCalendarUntil', { year: icsLastYear() })}
+          </p>
         </div>
       </m.div>
 

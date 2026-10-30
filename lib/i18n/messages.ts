@@ -673,7 +673,7 @@ export const messages = {
     addEvent: 'Thêm sự kiện',
     addToCalendar: 'Thêm vào lịch (.ics)',
     addToCalendarHint:
-      'Tải file lịch có sinh nhật (lặp hằng năm), ngày giỗ của năm nay và năm sau, và các sự kiện tuỳ chỉnh để nhập vào Google/Apple Calendar',
+      'Tải file lịch có sinh nhật (lặp hằng năm), ngày giỗ của năm nay và 4 năm tới, và các sự kiện tuỳ chỉnh để nhập vào Google/Apple Calendar',
     icsCalendarName: 'Gia phả: sinh nhật và ngày giỗ',
     icsBirthdaySummary: 'Sinh nhật {name}',
     icsDeathSummary: 'Giỗ {name}',
@@ -681,6 +681,9 @@ export const messages = {
     icsLunarDate: 'Ngày giỗ theo âm lịch: {date}',
     icsCustomLunarDate: 'Ngày âm lịch: {date}',
     icsApproximate: 'Ngày ước tính, chưa có năm mất hoặc ngày mất âm lịch.',
+    icsRemindUntil:
+      'Tạo bởi Giapha OS, nhắc đến hết {year}. Sau đó hãy xuất lại file lịch.',
+    addToCalendarUntil: 'Nhắc đến hết {year}',
     lunarCalendar: 'Âm lịch',
     weekdaySunday: 'Chủ nhật',
     weekdayMonday: 'Thứ hai',
@@ -1977,7 +1980,7 @@ export const messages = {
     addEvent: 'Add event',
     addToCalendar: 'Add to calendar (.ics)',
     addToCalendarHint:
-      'Download a calendar file with birthdays (repeating every year), death anniversaries for this and next year, and custom events, to import into Google/Apple Calendar',
+      'Download a calendar file with birthdays (repeating every year), death anniversaries for this year and the next four, and custom events, to import into Google/Apple Calendar',
     icsCalendarName: 'Family tree: birthdays and death anniversaries',
     icsBirthdaySummary: "{name}'s birthday",
     icsDeathSummary: 'Death anniversary of {name}',
@@ -1986,6 +1989,9 @@ export const messages = {
     icsCustomLunarDate: 'Lunar date: {date}',
     icsApproximate:
       'Estimated date: the death year or lunar death date is not recorded.',
+    icsRemindUntil:
+      'Created by Giapha OS, reminds until the end of {year}. Export the calendar again after that.',
+    addToCalendarUntil: 'Reminds until the end of {year}',
     lunarCalendar: 'Lunar calendar',
     weekdaySunday: 'Sunday',
     weekdayMonday: 'Monday',

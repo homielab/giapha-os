@@ -22,6 +22,14 @@ export interface IcsOptions {
 }
 
 const CRLF = '\r\n'
+
+/** Calendar years covered by one-off lunar events (this year and the next four). */
+export const ICS_YEARS = 5
+
+/** Last calendar year with lunar reminders in a file built on `today`. */
+export function icsLastYear(today: Date = vnToday()): number {
+  return today.getFullYear() + ICS_YEARS - 1
+}
 const encoder = new TextEncoder()
 
 /** Escapes a TEXT value (RFC 5545 section 3.3.11). */
@@ -120,11 +128,11 @@ function renderEvent(e: VEvent, stamp: string): string[] {
  * Builds a VCALENDAR with the family's events:
  * - living members' birthdays: one yearly repeating event each;
  * - death anniversaries: the lunar date has no RRULE, so one event per
- *   occurrence falling in this and next calendar year;
+ *   occurrence in this and the next four calendar years;
  * - custom events: once, on their own date; yearly_solar ones repeat every
  *   year from it (29/2 → last day of February, as on the page); yearly_lunar
- *   ones, like death anniversaries, one event per occurrence in this and
- *   next calendar year.
+ *   ones, like death anniversaries, one event per occurrence in the same years.
+ * Lunar one-off events say in their description until when they remind.
  * Dates are the same ones the Events page shows (computeEvents).
  */
 export function buildIcs({
@@ -141,11 +149,14 @@ export function buildIcs({
   const events: VEvent[] = []
 
   // A lunar date comes round every 354-384 days, so sampling the next
-  // occurrence every six months finds each one that falls in the two years.
-  const samples = [0, 6, 12, 18].map(
-    (months) => new Date(year, months, 1)
-  ) as Date[]
-  const rangeEnd = new Date(year + 2, 0, 1)
+  // occurrence every six months finds each one that falls in the range.
+  const lastYear = icsLastYear(today)
+  const samples = Array.from(
+    { length: ICS_YEARS * 2 },
+    (_, i) => new Date(year, i * 6, 1)
+  )
+  const rangeEnd = new Date(lastYear + 1, 0, 1)
+  const untilNote = t('icsRemindUntil', { year: lastYear })
   const seen = new Set<string>()
   const occurrences: FamilyEvent[] = []
   for (const sample of samples) {
@@ -189,6 +200,7 @@ export function buildIcs({
         t('icsLunarDate', { date: formatLunarDateLabel(event, t, false) })
       ]
       if (event.approximate) description.push(t('icsApproximate'))
+      description.push(untilNote)
       events.push({
         uid: `giapha-${event.personId}-death-${icsDate(event.nextOccurrence)}@${domain}`,
         start: event.nextOccurrence,
@@ -200,6 +212,7 @@ export function buildIcs({
         t('icsCustomLunarDate', { date: formatLunarDateLabel(event, t, false) })
       ]
       if (event.content) description.push(event.content)
+      description.push(untilNote)
       events.push({
         uid: `giapha-${event.personId}-custom-${icsDate(event.nextOccurrence)}@${domain}`,
         start: event.nextOccurrence,

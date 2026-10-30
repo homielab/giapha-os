@@ -108,7 +108,7 @@ describe('buildIcs', () => {
     expect(ev).not.toContain('RRULE:FREQ=YEARLY\r\n')
   })
 
-  test('lunar death anniversary: one event for each of this and next year', () => {
+  test('lunar death anniversary: one event for each of the five years', () => {
     const ics = build([
       person({
         id: 'p2',
@@ -119,20 +119,22 @@ describe('buildIcs', () => {
       })
     ])
     const evs = events(ics)
-    expect(evs).toHaveLength(2)
+    expect(evs).toHaveLength(5)
     const dates = evs.map((e) => /DTSTART;VALUE=DATE:(\d{8})/.exec(e)![1])
-    expect(dates[0].startsWith('2026')).toBe(true)
-    expect(dates[1].startsWith('2027')).toBe(true)
-    expect(new Set(evs.map((e) => /UID:(.*)\r/.exec(e)![1])).size).toBe(2)
+    expect(new Set(evs.map((e) => /UID:(.*)\r/.exec(e)![1])).size).toBe(5)
     for (const e of evs) {
       expect(e).not.toContain('RRULE')
       expect(e).toContain('SUMMARY:Giỗ Cụ\\, Tổ')
       expect(e).toContain('10/05')
+      expect(e.replace(/\r\n /g, '')).toContain('nhắc đến hết 2030')
     }
-    // Same solar date as the Events page
-    const solar = lunarToSolar(2026, 5, 10)!
-    expect(dates[0]).toBe(
-      `${solar.year}${String(solar.month).padStart(2, '0')}${String(solar.day).padStart(2, '0')}`
+    // Same solar date as the Events page, one per lunar year 2026-2030
+    const pad = (n: number) => String(n).padStart(2, '0')
+    expect(dates).toEqual(
+      [2026, 2027, 2028, 2029, 2030].map((y) => {
+        const s = lunarToSolar(y, 5, 10)!
+        return `${s.year}${pad(s.month)}${pad(s.day)}`
+      })
     )
   })
 
@@ -154,7 +156,7 @@ describe('buildIcs', () => {
     )
     const first = lunarToSolar(2027, 3, 10)!
     const pad = (n: number) => String(n).padStart(2, '0')
-    expect(evs).toHaveLength(1)
+    expect(evs).toHaveLength(4)
     expect(evs[0]).toContain(
       `DTSTART;VALUE=DATE:${first.year}${pad(first.month)}${pad(first.day)}`
     )
@@ -270,7 +272,7 @@ describe('buildIcs', () => {
   })
 
   test('yearly_lunar custom event: one event per occurrence, no RRULE', () => {
-    // 2/4/2020 = 10/3 âm lịch → 26/4/2026 and 16/4/2027.
+    // 2/4/2020 = 10/3 âm lịch → 26/4/2026, 16/4/2027, … to 2030.
     const ics = build(
       [],
       [
@@ -287,10 +289,14 @@ describe('buildIcs', () => {
     )
     const evs = events(ics)
     expect(ics).not.toContain('RRULE')
-    expect(evs.map((e) => e.match(/DTSTART;VALUE=DATE:(\d+)/)?.[1])).toEqual([
-      '20260426',
-      '20270416'
-    ])
+    const pad = (n: number) => String(n).padStart(2, '0')
+    expect(evs.map((e) => e.match(/DTSTART;VALUE=DATE:(\d+)/)?.[1])).toEqual(
+      [2026, 2027, 2028, 2029, 2030].map((y) => {
+        const s = lunarToSolar(y, 3, 10)!
+        return `${s.year}${pad(s.month)}${pad(s.day)}`
+      })
+    )
+    expect(evs[0]).toContain('20260426')
     expect(evs[0]).toContain('UID:giapha-e5-custom-20260426@giapha.example.com')
     expect(evs[0]).toContain('DESCRIPTION:Ngày âm lịch: 10/03\\nĂn cỗ')
   })
