@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Kinship finder: the parents of a married couple are now "Ông thông gia" / "Bà thông gia" (sui gia) to each other, with the path through their children, instead of "Unknown".
 - The gallery photo viewer has Previous/Next buttons, Left/Right arrow keys and an "Image 3 of 12" counter, following the order on screen; deleting a photo moves on to the next one.
 - Data check now lists three mistakes common after a GEDCOM/CSV import: people with no parent, spouse or child at all, a biological child whose generation is not the parent's plus one (in-laws and adopted children skipped), and children of one father or mother who share a birth order or whose birth order runs against their known birth dates.
 - The member list search finds people by birth or death year (e.g. `1950`); every name word must match the full name or the other names, so `an binh` no longer matches An whose other name is Bình.

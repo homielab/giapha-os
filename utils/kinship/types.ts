@@ -20,6 +20,8 @@ export type KinshipDescription = (
   /** B is the child of A's spouse `name`, not A's own: Con riêng. */
   | { kind: 'stepChild'; name: string }
   | { kind: 'viaBothSpouses'; nameA: string; nameB: string }
+  /** A's child `childA` is married to B's child `childB`: thông gia. */
+  | { kind: 'coParentsInLaw'; childA: string; childB: string }
   | { kind: 'none' }
 ) & {
   commonAncestor?: string | null
@@ -43,6 +45,7 @@ export type KinshipPathStep =
       depth: number
     }
   | { kind: 'spouses'; nameA: string; nameB: string }
+  | { kind: 'childOf'; name: string; parent: string }
   | {
       kind: 'spouseOf'
       name: string

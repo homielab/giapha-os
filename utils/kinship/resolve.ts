@@ -200,6 +200,54 @@ function viaBothSpouses(
   return null
 }
 
+/** Ông thông gia / Bà thông gia (miền Nam: ông sui / bà sui) by gender. */
+function coParentInLawTerm(person: PersonNode): string {
+  if (person.gender === 'male') return 'Ông thông gia'
+  if (person.gender === 'female') return 'Bà thông gia'
+  return 'Ông/Bà thông gia'
+}
+
+/** A child of A is married to a child of B: the two are thông gia. */
+function viaChildInLaw(
+  personA: PersonNode,
+  personB: PersonNode,
+  graph: KinshipGraph
+): KinshipTerms | null {
+  for (const [childId, parentIds] of graph.parentMap) {
+    if (!parentIds.includes(personA.id)) continue
+    const childA = graph.personsMap.get(childId)
+    if (!childA) continue
+    for (const sId of graph.spouseMap.get(childId) ?? []) {
+      const childB = graph.personsMap.get(sId)
+      if (!childB || !isParentOf(personB, childB, graph)) continue
+      return {
+        aCallsB: coParentInLawTerm(personB),
+        bCallsA: coParentInLawTerm(personA),
+        description: {
+          kind: 'coParentsInLaw',
+          childA: childA.full_name,
+          childB: childB.full_name
+        },
+        distance: 2,
+        pathLabels: [
+          {
+            kind: 'childOf',
+            name: childA.full_name,
+            parent: personA.full_name
+          },
+          {
+            kind: 'spouses',
+            nameA: childA.full_name,
+            nameB: childB.full_name
+          },
+          { kind: 'childOf', name: childB.full_name, parent: personB.full_name }
+        ]
+      }
+    }
+  }
+  return null
+}
+
 function resolveKinship(
   personA: PersonNode,
   personB: PersonNode,
@@ -231,7 +279,9 @@ function resolveKinship(
     // 3. Thông qua hôn nhân của B
     viaSpouseOfB(personA, personB, graph) ??
     // 4. Thông qua cả hôn nhân của A và B
-    viaBothSpouses(personA, personB, graph) ?? {
+    viaBothSpouses(personA, personB, graph) ??
+    // 5. Con của A lấy con của B: thông gia
+    viaChildInLaw(personA, personB, graph) ?? {
       aCallsB: UNKNOWN_TERM,
       bCallsA: UNKNOWN_TERM,
       description: { kind: 'none' },

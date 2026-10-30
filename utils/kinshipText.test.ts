@@ -19,6 +19,10 @@ describe('kinship text', () => {
       describeKinship({ kind: 'stepParent', name: 'Ann' }, en),
       describeKinship({ kind: 'stepChild', name: 'Ann' }, en),
       describeKinship({ kind: 'marriage' }, en),
+      describeKinship(
+        { kind: 'coParentsInLaw', childA: 'Bo', childB: 'Cy' },
+        en
+      ),
       describeKinship({ kind: 'none' }, en),
       describePathStep(
         { kind: 'generations', name: 'Bo', ancestor: null, depth: 2 },
@@ -28,7 +32,8 @@ describe('kinship text', () => {
       describePathStep(
         { kind: 'spouseOf', name: 'Bo', spouse: 'Cy', spouseRole: 'wife' },
         en
-      )
+      ),
+      describePathStep({ kind: 'childOf', name: 'Bo', parent: 'Cy' }, en)
     ]
     for (const text of texts) expect(text).not.toMatch(VIETNAMESE)
   })
@@ -46,6 +51,17 @@ describe('kinship text', () => {
         vi
       )
     ).toBe('Bình cách An 2 đời.')
+    expect(
+      describeKinship(
+        { kind: 'coParentsInLaw', childA: 'Bình', childB: 'Chi' },
+        vi
+      )
+    ).toBe(
+      'Thông gia (còn gọi sui gia, ông sui/bà sui): con hai bên Bình và Chi là vợ chồng'
+    )
+    expect(
+      describePathStep({ kind: 'childOf', name: 'Bình', parent: 'An' }, vi)
+    ).toBe('Bình là con của An.')
   })
 
   test('english names the common ancestor', () => {

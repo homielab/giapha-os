@@ -59,6 +59,12 @@ export function describeKinship(
         nameB: description.nameB
       })
       break
+    case 'coParentsInLaw':
+      text = t('kinshipDescCoParentsInLaw', {
+        childA: description.childA,
+        childB: description.childB
+      })
+      break
     case 'none':
       text = t('kinshipDescNone')
       break
@@ -82,6 +88,8 @@ export function describePathStep(step: KinshipPathStep, t: Translate): string {
       })
     case 'spouses':
       return t('kinshipPathSpouses', { nameA: step.nameA, nameB: step.nameB })
+    case 'childOf':
+      return t('kinshipPathChildOf', { name: step.name, parent: step.parent })
     case 'spouseOf':
       return t(
         step.spouseRole === 'husband'

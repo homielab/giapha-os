@@ -251,6 +251,8 @@ export const messages = {
     kinshipDescStepParent: 'Bố dượng, mẹ kế (thông qua hôn nhân của {name})',
     kinshipDescStepChild: 'Con riêng (thông qua hôn nhân của {name})',
     kinshipDescViaBothSpouses: 'Thông qua hôn nhân của cả {nameA} và {nameB}',
+    kinshipDescCoParentsInLaw:
+      'Thông gia (còn gọi sui gia, ông sui/bà sui): con hai bên {childA} và {childB} là vợ chồng',
     kinshipDescNone: 'Không tìm thấy quan hệ trong phạm vi dữ liệu',
     kinshipCommonAncestor: '(Tổ tiên chung: {name})',
     kinshipCommonAncestorFallback: 'Tổ tiên chung',
@@ -258,6 +260,7 @@ export const messages = {
     kinshipPathSpouses: '{nameA} và {nameB} là vợ chồng.',
     kinshipPathHusbandOf: '{name} là Chồng của {spouse}',
     kinshipPathWifeOf: '{name} là Vợ của {spouse}',
+    kinshipPathChildOf: '{name} là con của {parent}.',
     kinshipUnknownTerm: 'Chưa xác định',
     personNotUpdatedShort:
       'người này không còn tồn tại hoặc bạn không còn quyền sửa',
@@ -1551,6 +1554,8 @@ export const messages = {
     kinshipDescStepChild: 'Stepchild (through the marriage of {name})',
     kinshipDescViaBothSpouses:
       'Through the marriages of both {nameA} and {nameB}',
+    kinshipDescCoParentsInLaw:
+      'Co-parents-in-law: their children {childA} and {childB} are married',
     kinshipDescNone: 'No relationship found within the data',
     kinshipCommonAncestor: '(Common ancestor: {name})',
     kinshipCommonAncestorFallback: 'the common ancestor',
@@ -1558,6 +1563,7 @@ export const messages = {
     kinshipPathSpouses: '{nameA} and {nameB} are married.',
     kinshipPathHusbandOf: '{name} is the husband of {spouse}',
     kinshipPathWifeOf: '{name} is the wife of {spouse}',
+    kinshipPathChildOf: '{name} is the child of {parent}.',
     kinshipUnknownTerm: 'Undetermined',
     personNotUpdatedShort:
       'this person no longer exists or you may no longer edit them',

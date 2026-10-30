@@ -431,6 +431,101 @@ describe('step-parents and stepchildren', () => {
   })
 })
 
+describe('parents of a married couple are thông gia', () => {
+  // me + meChong → son; dauDad + dauMom → dau; son married dau.
+  const p = [
+    person('me', 'male'),
+    person('meChong', 'female'),
+    person('son', 'male'),
+    person('dau', 'female'),
+    person('dauDad', 'male'),
+    person('dauMom', 'female'),
+    person('stranger', 'male')
+  ]
+  const e = [
+    child('me', 'son'),
+    child('meChong', 'son'),
+    marriage('me', 'meChong'),
+    child('dauDad', 'dau'),
+    child('dauMom', 'dau'),
+    marriage('dauDad', 'dauMom'),
+    marriage('son', 'dau')
+  ]
+  const kinship = (a: string, b: string) => {
+    const find = (id: string) => p.find((x) => x.id === id)!
+    return computeKinship(find(a), find(b), p, e)!
+  }
+
+  test('father and father: Ông thông gia both ways, with path', () => {
+    const r = kinship('me', 'dauDad')
+    expect([r.aCallsB, r.bCallsA]).toEqual(['Ông thông gia', 'Ông thông gia'])
+    expect(r.description).toEqual({
+      kind: 'coParentsInLaw',
+      childA: 'son',
+      childB: 'dau'
+    })
+    expect(r.pathLabels).toEqual([
+      { kind: 'childOf', name: 'son', parent: 'me' },
+      { kind: 'spouses', nameA: 'son', nameB: 'dau' },
+      { kind: 'childOf', name: 'dau', parent: 'dauDad' }
+    ])
+    expect(r.hasAmbiguousTerm).toBe(false)
+    const back = kinship('dauDad', 'me')
+    expect([back.aCallsB, back.bCallsA]).toEqual([
+      'Ông thông gia',
+      'Ông thông gia'
+    ])
+    expect(back.description).toEqual({
+      kind: 'coParentsInLaw',
+      childA: 'dau',
+      childB: 'son'
+    })
+  })
+
+  test('father and mother: Bà thông gia / Ông thông gia', () => {
+    expect(terms('me', 'dauMom', p, e)).toEqual([
+      'Bà thông gia',
+      'Ông thông gia'
+    ])
+    expect(terms('dauMom', 'me', p, e)).toEqual([
+      'Ông thông gia',
+      'Bà thông gia'
+    ])
+  })
+
+  test('mother and mother: Bà thông gia both ways', () => {
+    expect(terms('meChong', 'dauMom', p, e)).toEqual([
+      'Bà thông gia',
+      'Bà thông gia'
+    ])
+  })
+
+  test('only one parent of the couple recorded is enough', () => {
+    const p2 = [
+      person('a', 'female'),
+      person('x', 'male'),
+      person('y', 'female'),
+      person('b', 'other')
+    ]
+    const e2 = [child('a', 'x'), child('b', 'y'), marriage('x', 'y')]
+    expect(terms('a', 'b', p2, e2)).toEqual([
+      'Ông/Bà thông gia',
+      'Bà thông gia'
+    ])
+  })
+
+  test('an unrelated person is still unknown', () => {
+    const r = kinship('me', 'stranger')
+    expect(r.description).toEqual({ kind: 'none' })
+    expect([r.aCallsB, r.bCallsA]).toEqual(['', ''])
+  })
+
+  test('the couple and their in-laws keep their terms', () => {
+    expect(terms('me', 'dau', p, e)).toEqual(['Con dâu', 'Bố chồng'])
+    expect(terms('son', 'dauDad', p, e)).toEqual(['Bố vợ', 'Con rể'])
+  })
+})
+
 describe('the spouse’s aunts and grandparents are called as the spouse calls them', () => {
   const persons = [
     person('ongNoi', 'male'),
