@@ -119,6 +119,50 @@ describe('updateSession', () => {
     expectSessionCookies(response)
   })
 
+  test('carries the page and its query to /login as ?next=', async () => {
+    refreshedCookies = SESSION_COOKIES
+    const response = await updateSession(
+      request('/dashboard/members/abc-123?tab=x')
+    )
+    expect(response.status).toBe(307)
+    const location = new URL(response.headers.get('location')!)
+    expect(location.pathname).toBe('/login')
+    expect(location.searchParams.get('next')).toBe(
+      '/dashboard/members/abc-123?tab=x'
+    )
+    expect([...location.searchParams.keys()]).toEqual(['next'])
+    expectSessionCookies(response)
+  })
+
+  test('sends a signed-in user from /login to a safe ?next= page', async () => {
+    user = { id: 'user-1' }
+    refreshedCookies = SESSION_COOKIES
+    const response = await updateSession(
+      request('/login?next=%2Fdashboard%2Fevents%3Fview%3Dlist')
+    )
+    expect(response.headers.get('location')).toBe(
+      'http://localhost:3000/dashboard/events?view=list'
+    )
+    expectSessionCookies(response)
+  })
+
+  for (const next of [
+    '//evil.com',
+    'https://evil.com',
+    '/\\evil.com',
+    '/login'
+  ]) {
+    test(`ignores an unsafe ?next= for a signed-in user (${next})`, async () => {
+      user = { id: 'user-1' }
+      const response = await updateSession(
+        request(`/login?next=${encodeURIComponent(next)}`)
+      )
+      expect(response.headers.get('location')).toBe(
+        'http://localhost:3000/dashboard'
+      )
+    })
+  }
+
   test('redirects a signed-in user from /login to /dashboard', async () => {
     user = { id: 'user-1' }
     refreshedCookies = SESSION_COOKIES

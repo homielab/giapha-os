@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { nextParamFor, safeNextPath } from '@/utils/safeNextPath'
+
 // A redirect is a new response: carry over the session cookies that
 // supabase.auth.getUser() may have just refreshed on supabaseResponse,
 // otherwise the browser keeps the old (already rotated) refresh token.
@@ -98,15 +100,23 @@ export async function updateSession(request: NextRequest) {
 
   if (isProtectedPath && !user) {
     // no user, potentially respond by redirecting the user to the login page
+    // ?next= brings them back to this page after signing in (a shared link
+    // to a member or event page).
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    url.search = ''
+    const next = nextParamFor(request.nextUrl.pathname, request.nextUrl.search)
+    if (next) url.searchParams.set('next', next)
     return redirectWithCookies(url, supabaseResponse)
   }
 
-  // Redirect users who are already logged in away from the login page
+  // Redirect users who are already logged in away from the login page, to
+  // the page in ?next= when it is a safe dashboard page
   if (isLoginPage && user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    const url = new URL(
+      safeNextPath(request.nextUrl.searchParams.get('next')),
+      request.nextUrl.origin
+    )
     return redirectWithCookies(url, supabaseResponse)
   }
 

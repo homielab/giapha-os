@@ -20,6 +20,7 @@ import SsoButtons from '@/components/auth/SsoButtons'
 import Footer from '@/components/Footer'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { safeNextPath } from '@/utils/safeNextPath'
 import { createClient } from '@/utils/supabase/client'
 
 export default function LoginPage() {
@@ -81,6 +82,12 @@ export default function LoginPage() {
     }
   }
 
+  // The page a shared link pointed to before the middleware sent the visitor
+  // here (?next=), or /dashboard. Read on submit, so no Suspense boundary is
+  // needed for useSearchParams.
+  const nextPath = () =>
+    safeNextPath(new URLSearchParams(window.location.search).get('next'))
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -98,7 +105,7 @@ export default function LoginPage() {
         if (error) {
           setError(error.message)
         } else {
-          router.push('/dashboard')
+          router.push(nextPath())
           router.refresh()
         }
       } else {
@@ -130,7 +137,7 @@ export default function LoginPage() {
           setError(error.message)
         } else {
           if (data.session) {
-            router.push('/dashboard')
+            router.push(nextPath())
             router.refresh()
           } else {
             // Attempt to sign in immediately (catches auto-confirmed first admin)
@@ -141,7 +148,7 @@ export default function LoginPage() {
               })
 
             if (!signInError && signInData.session) {
-              router.push('/dashboard')
+              router.push(nextPath())
               router.refresh()
             } else {
               setSuccessMessage(t('signupSuccess'))
