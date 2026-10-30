@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Running the `/setup` SQL bundle again on a database that already has the security hardening migration (20260901) no longer fails with "function already exists in schema private"; the README's re-run guidance is now accurate.
 - Quick search (⌘K) finds a spouse or children right after they are added, and logging out clears it, so the next account on the same browser no longer sees the previous tree's names.
 - Large trees: the in-law list of a member with hundreds of children and the parent/child loop check no longer miss rows past 1000; a self-hosted server with `max_rows` below 1000 no longer cuts lists at the first page.
 - Restoring a backup larger than 4.5 MB on Vercel now explains the host limit instead of failing with a bare 413.

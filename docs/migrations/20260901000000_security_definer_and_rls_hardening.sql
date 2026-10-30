@@ -10,6 +10,8 @@ CREATE SCHEMA IF NOT EXISTS private;
 REVOKE ALL ON SCHEMA private FROM PUBLIC, anon, authenticated;
 GRANT USAGE ON SCHEMA private TO authenticated;
 
+-- Re-running the setup bundle recreates the public functions (schema.sql), so
+-- a private copy left by an earlier run is dropped before the public one moves.
 DO $$
 BEGIN
   IF EXISTS (
@@ -19,6 +21,7 @@ BEGIN
     WHERE n.nspname = 'public'
       AND p.oid = to_regprocedure('public.handle_updated_at()')
   ) THEN
+    DROP FUNCTION IF EXISTS private.handle_updated_at();
     ALTER FUNCTION public.handle_updated_at() SET SCHEMA private;
   END IF;
 
@@ -30,6 +33,7 @@ BEGIN
       AND p.oid = to_regprocedure('public.is_admin()')
       AND p.prosecdef
   ) THEN
+    DROP FUNCTION IF EXISTS private.is_admin();
     ALTER FUNCTION public.is_admin() SET SCHEMA private;
   END IF;
 
@@ -41,6 +45,7 @@ BEGIN
       AND p.oid = to_regprocedure('public.is_active_user()')
       AND p.prosecdef
   ) THEN
+    DROP FUNCTION IF EXISTS private.is_active_user();
     ALTER FUNCTION public.is_active_user() SET SCHEMA private;
   END IF;
 
@@ -52,6 +57,7 @@ BEGIN
       AND p.oid = to_regprocedure('public.is_editor()')
       AND p.prosecdef
   ) THEN
+    DROP FUNCTION IF EXISTS private.is_editor();
     ALTER FUNCTION public.is_editor() SET SCHEMA private;
   END IF;
 
@@ -63,6 +69,7 @@ BEGIN
       AND p.oid = to_regprocedure('public.handle_new_user()')
       AND p.prosecdef
   ) THEN
+    DROP FUNCTION IF EXISTS private.handle_new_user();
     ALTER FUNCTION public.handle_new_user() SET SCHEMA private;
   END IF;
 
@@ -74,6 +81,7 @@ BEGIN
       AND p.oid = to_regprocedure('public.handle_first_user_confirmation()')
       AND p.prosecdef
   ) THEN
+    DROP FUNCTION IF EXISTS private.handle_first_user_confirmation();
     ALTER FUNCTION public.handle_first_user_confirmation() SET SCHEMA private;
   END IF;
 
@@ -85,6 +93,7 @@ BEGIN
       AND p.oid = to_regprocedure('public.get_admin_users()')
       AND p.prosecdef
   ) THEN
+    DROP FUNCTION IF EXISTS private.get_admin_users();
     ALTER FUNCTION public.get_admin_users() SET SCHEMA private;
   END IF;
 
@@ -96,6 +105,7 @@ BEGIN
       AND p.oid = to_regprocedure('public.set_user_role(uuid,text)')
       AND p.prosecdef
   ) THEN
+    DROP FUNCTION IF EXISTS private.set_user_role(uuid, text);
     ALTER FUNCTION public.set_user_role(uuid, text) SET SCHEMA private;
   END IF;
 
@@ -107,6 +117,7 @@ BEGIN
       AND p.oid = to_regprocedure('public.delete_user(uuid)')
       AND p.prosecdef
   ) THEN
+    DROP FUNCTION IF EXISTS private.delete_user(uuid);
     ALTER FUNCTION public.delete_user(uuid) SET SCHEMA private;
   END IF;
 
@@ -118,6 +129,7 @@ BEGIN
       AND p.oid = to_regprocedure('public.admin_create_user(text,text,text,boolean)')
       AND p.prosecdef
   ) THEN
+    DROP FUNCTION IF EXISTS private.admin_create_user(text, text, text, boolean);
     ALTER FUNCTION public.admin_create_user(text, text, text, boolean) SET SCHEMA private;
   END IF;
 
@@ -129,6 +141,7 @@ BEGIN
       AND p.oid = to_regprocedure('public.set_user_active_status(uuid,boolean)')
       AND p.prosecdef
   ) THEN
+    DROP FUNCTION IF EXISTS private.set_user_active_status(uuid, boolean);
     ALTER FUNCTION public.set_user_active_status(uuid, boolean) SET SCHEMA private;
   END IF;
 END;
