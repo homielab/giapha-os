@@ -286,6 +286,41 @@ describe('relations through marriage', () => {
     expect(terms('v1', 'v2', women, e)).toEqual(['Chị em dâu', 'Chị em dâu'])
   })
 
+  test('both spouses are blood relatives: in-law terms instead of "Vợ của"', () => {
+    const persons = [
+      person('ong', 'male'),
+      person('me', 'female', { birth_order: 1 }),
+      person('cau', 'male', { birth_order: 2 }),
+      person('mo', 'female'),
+      person('chong', 'male', { birth_order: 1 }),
+      person('vo', 'female'),
+      person('ongNoi', 'male'),
+      person('cha', 'male', { birth_order: 1 }),
+      person('chu', 'male', { birth_order: 2 }),
+      person('thim', 'female'),
+      person('emGai', 'female', { birth_order: 2 }),
+      person('reCuaEm', 'male')
+    ]
+    const rels = [
+      child('ong', 'me'),
+      child('ong', 'cau'),
+      child('ongNoi', 'cha'),
+      child('ongNoi', 'chu'),
+      child('me', 'chong'),
+      child('cha', 'chong'),
+      child('me', 'emGai'),
+      child('cha', 'emGai'),
+      marriage('cau', 'mo'),
+      marriage('chong', 'vo'),
+      marriage('chu', 'thim'),
+      marriage('reCuaEm', 'emGai')
+    ]
+    expect(terms('vo', 'mo', persons, rels)).toEqual(['Mợ', 'Cháu dâu'])
+    expect(terms('vo', 'thim', persons, rels)).toEqual(['Thím', 'Cháu dâu'])
+    expect(terms('mo', 'vo', persons, rels)).toEqual(['Cháu dâu', 'Mợ'])
+    expect(terms('vo', 'reCuaEm', persons, rels)).toEqual(['Em rể', 'Chị dâu'])
+  })
+
   test('a relation without a special term is written as husband/wife of', () => {
     // A is married to W; B is the wife of W's grandfather but not her blood
     // relative, so both spouses' terms fall back to "Vợ của ...".
@@ -302,7 +337,7 @@ describe('relations through marriage', () => {
       marriage('a', 'w'),
       marriage('ong', 'ke')
     ]
-    expect(terms('a', 'ke', p, e)).toEqual(['Vợ của Ông nội', 'Chồng của Cháu'])
+    expect(terms('a', 'ke', p, e)).toEqual(['Vợ của Ông nội', 'Cháu rể'])
   })
 })
 

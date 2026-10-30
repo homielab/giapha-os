@@ -106,12 +106,11 @@ function viaBothSpouses(
       const res = findBloodKinship(spouseA, spouseB, graph)
       if (!res) continue
 
-      // res trả về cách gọi người thân của vợ/chồng mình (spouse) nên đổi ngôi
-      const prefixA = personA.gender === 'male' ? 'Chồng' : 'Vợ'
-      const prefixB = personB.gender === 'male' ? 'Chồng' : 'Vợ'
-
-      let aCallsB = `${prefixB} của ${res.aCallsB}`
-      let bCallsA = `${prefixA} của ${res.bCallsA}`
+      // Each side calls the other's spouse as their own spouse does
+      // ("Cậu" → "Mợ", "Cháu" → "Cháu dâu"); unknown terms fall back to
+      // "Vợ của …" / "Chồng của …".
+      let aCallsB = termForSpouseOfRelative(res.aCallsB, personB.gender)
+      let bCallsA = termForSpouseOfRelative(res.bCallsA, personA.gender)
 
       // Đặc biệt: Anh em cột chèo / Chị em dâu (nếu spouseA và spouseB là anh chị em ruột)
       if (res.description.kind === 'siblings') {
