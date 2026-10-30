@@ -701,6 +701,9 @@ export const messages = {
     icsRemindUntil:
       'Tạo bởi Giapha OS, nhắc đến hết {year}. Sau đó hãy xuất lại file lịch.',
     addToCalendarUntil: 'Nhắc đến hết {year}',
+    icsRemindLabel: 'Nhắc trước',
+    icsRemindNone: 'Không nhắc',
+    icsRemindDays: '{days} ngày, lúc 8 giờ sáng',
     lunarCalendar: 'Âm lịch',
     weekdaySunday: 'Chủ nhật',
     weekdayMonday: 'Thứ hai',
@@ -2060,6 +2063,9 @@ export const messages = {
     icsRemindUntil:
       'Created by Giapha OS, reminds until the end of {year}. Export the calendar again after that.',
     addToCalendarUntil: 'Reminds until the end of {year}',
+    icsRemindLabel: 'Remind me',
+    icsRemindNone: 'No reminder',
+    icsRemindDays: '{days} day(s) before, 8 AM',
     lunarCalendar: 'Lunar calendar',
     weekdaySunday: 'Sunday',
     weekdayMonday: 'Monday',

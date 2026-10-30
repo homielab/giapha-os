@@ -68,6 +68,8 @@ Phù hợp với người Việt Nam.
 - **Ngày giỗ**: âm lịch không lặp hằng năm theo dương lịch được, nên mỗi năm là một sự kiện riêng — file có ngày giỗ của năm nay và năm sau (ngày dương đúng như trang Sự kiện, ghi chú "ước tính" nếu thiếu năm mất). Tải lại file khi sang năm.
 - **Sự kiện tuỳ chỉnh**: đúng ngày, địa điểm và ghi chú đã nhập. Sự kiện "Hằng năm theo dương lịch" là một sự kiện lặp hằng năm từ ngày đầu tiên (29/2 rơi vào ngày cuối tháng 2); sự kiện "Hằng năm theo âm lịch" giống ngày giỗ: mỗi lần là một sự kiện riêng của năm nay và năm sau.
 
+**Nhắc trước**: ô chọn cạnh nút (Không nhắc / 1 / 3 / 7 ngày, mặc định 1 ngày, trình duyệt nhớ lựa chọn) thêm vào mỗi sự kiện một lời nhắc lúc 8 giờ sáng, trước ngày đó N ngày, để kịp sắm lễ giỗ.
+
 Mỗi sự kiện có mã (UID) ổn định theo thành viên, nên nhập lại file vào cùng lịch sẽ cập nhật thay vì tạo trùng. File được tạo ngay trên trình duyệt, không cần máy chủ hay email; nhắc nhở do ứng dụng lịch của bạn đảm nhiệm.
 
 ### GEDCOM

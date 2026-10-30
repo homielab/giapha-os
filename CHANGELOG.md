@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Calendar export (.ics) adds a reminder at 8 AM 1, 3 or 7 days before each event (default 1 day, "No reminder" to turn off); the choice is remembered in the browser.
 - Import can add a file to the current tree instead of replacing it: choose "Add to the current tree" after picking a JSON backup, GEDCOM or CSV ZIP (e.g. a relative's branch). Members and events get new ids and are inserted in one transaction without touching existing data; photos are not imported. A "Scan for duplicates now" button then helps merge people who are in both. Needs the migration `20261030180000_add_append_import.sql`.
 
 - Data check and the add-relationship form now flag a marriage between a parent and child, between siblings (sharing a biological parent), or with someone who died before the other was born; the form asks before saving it.

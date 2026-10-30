@@ -1,10 +1,17 @@
 import { describe, expect, test } from 'bun:test'
+import ICAL from 'ical.js'
 
 import { messages } from '@/lib/i18n/messages'
 
 import { vnToday } from './dateHelpers'
 import { computeEvents } from './eventHelpers'
-import { buildIcs, escapeIcsText, foldIcsLine } from './icsExport'
+import {
+  buildIcs,
+  escapeIcsText,
+  foldIcsLine,
+  icsReminderTrigger,
+  parseIcsRemind
+} from './icsExport'
 import { lunarToSolar } from './lunarCalendar'
 
 type PersonInput = Parameters<typeof computeEvents>[0][number]
@@ -331,5 +338,79 @@ describe('leap-month anniversary description', () => {
 
   test('vietnamese calendar says nhuận', () => {
     expect(describeIn('vi')).toContain('Ngày giỗ theo âm lịch: 01/06 nhuận')
+  })
+})
+
+describe('reminders (VALARM)', () => {
+  const persons = [
+    person({ birth_month: 3, birth_day: 12 }),
+    person({
+      id: 'p2',
+      full_name: `Cụ ${'Nguyễn Thị Bích Ngọc '.repeat(4)}`,
+      is_deceased: true,
+      death_year: 2000,
+      death_lunar_year: 2000,
+      death_lunar_month: 3,
+      death_lunar_day: 10
+    })
+  ]
+  const withRemind = (remindDaysBefore: number) =>
+    buildIcs({ persons, t, today, now, remindDaysBefore })
+
+  test('trigger is 08:00 N days before the all-day start', () => {
+    expect(icsReminderTrigger(1)).toBe('-PT16H')
+    expect(icsReminderTrigger(3)).toBe('-P2DT16H')
+    expect(icsReminderTrigger(7)).toBe('-P6DT16H')
+  })
+
+  test('N=1 → exactly one VALARM per VEVENT', () => {
+    const evs = events(withRemind(1))
+    expect(evs.length).toBeGreaterThan(1)
+    for (const ev of evs) {
+      expect(ev.split('BEGIN:VALARM').length - 1).toBe(1)
+      expect(ev).toContain('TRIGGER:-PT16H')
+      expect(ev).toContain('ACTION:DISPLAY')
+    }
+  })
+
+  test('N=0 (default) → no VALARM', () => {
+    expect(withRemind(0)).not.toContain('VALARM')
+    expect(build(persons)).not.toContain('VALARM')
+  })
+
+  test('parses with ical.js, long folded lines intact', () => {
+    const ics = withRemind(3)
+    for (const line of ics.split('\r\n')) {
+      expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75)
+    }
+    const cal = new ICAL.Component(ICAL.parse(ics))
+    const vevents = cal.getAllSubcomponents('vevent')
+    expect(vevents.length).toBe(events(ics).length)
+    for (const ev of vevents) {
+      const alarms = ev.getAllSubcomponents('valarm')
+      expect(alarms.length).toBe(1)
+      const trigger = alarms[0].getFirstPropertyValue(
+        'trigger'
+      ) as ICAL.Duration
+      expect(trigger.toSeconds()).toBe(-(3 * 24 - 8) * 3600)
+      expect(alarms[0].getFirstPropertyValue('description')).toBe(
+        ev.getFirstPropertyValue('summary')
+      )
+    }
+    expect(
+      vevents.some((e) =>
+        String(e.getFirstPropertyValue('summary')).includes(
+          'Nguyễn Thị Bích Ngọc Nguyễn Thị Bích Ngọc Nguyễn'
+        )
+      )
+    ).toBe(true)
+  })
+
+  test('saved choice: only known values, default 1', () => {
+    expect(parseIcsRemind(null)).toBe(1)
+    expect(parseIcsRemind('0')).toBe(0)
+    expect(parseIcsRemind('7')).toBe(7)
+    expect(parseIcsRemind('5')).toBe(1)
+    expect(parseIcsRemind('abc')).toBe(1)
   })
 })

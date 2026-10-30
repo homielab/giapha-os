@@ -3,7 +3,7 @@
 import { m } from 'framer-motion'
 import { CalendarDays, CalendarPlus, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 
 import EventCard from '@/components/events/EventCard'
 import CustomEventModal from '@/components/modal/CustomEventModal'
@@ -18,8 +18,17 @@ import {
   filterVisibleEvents,
   isUpcomingEvent
 } from '@/utils/eventHelpers'
-import { buildIcs, icsLastYear } from '@/utils/icsExport'
+import {
+  buildIcs,
+  ICS_REMIND_CHOICES,
+  ICS_REMIND_DEFAULT,
+  icsLastYear,
+  readIcsRemind,
+  writeIcsRemind
+} from '@/utils/icsExport'
 import { solarToLunar } from '@/utils/lunarCalendar'
+
+const noopSubscribe = () => () => {}
 
 interface EventsListProps {
   persons: {
@@ -82,12 +91,21 @@ export default function EventsList({
     setIsModalOpen(true)
   }
 
+  const savedRemind = useSyncExternalStore(
+    noopSubscribe,
+    readIcsRemind,
+    () => ICS_REMIND_DEFAULT
+  )
+  const [remindChoice, setRemindChoice] = useState<number | null>(null)
+  const remindDays = remindChoice ?? savedRemind
+
   const handleDownloadIcs = () => {
     const ics = buildIcs({
       persons,
       customEvents,
       t,
-      siteUrl: window.location.origin
+      siteUrl: window.location.origin,
+      remindDaysBefore: remindDays
     })
     const url = URL.createObjectURL(
       new Blob([ics], { type: 'text/calendar;charset=utf-8' })
@@ -235,6 +253,25 @@ export default function EventsList({
             <CalendarPlus className='size-5' />
             <span>{t('addToCalendar')}</span>
           </button>
+          <label className='flex items-center justify-center gap-2 text-xs text-stone-600'>
+            <span>{t('icsRemindLabel')}</span>
+            <select
+              value={remindDays}
+              onChange={(e) => {
+                const days = Number(e.target.value)
+                setRemindChoice(days)
+                writeIcsRemind(days)
+              }}
+              className='rounded-lg border border-stone-200/80 bg-white/90 px-2 py-1 text-xs text-stone-700 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 focus:outline-none'>
+              {ICS_REMIND_CHOICES.map((days) => (
+                <option key={days} value={days}>
+                  {days === 0
+                    ? t('icsRemindNone')
+                    : t('icsRemindDays', { days })}
+                </option>
+              ))}
+            </select>
+          </label>
           <p className='text-center text-xs text-stone-500'>
             {t('addToCalendarUntil', { year: icsLastYear() })}
           </p>

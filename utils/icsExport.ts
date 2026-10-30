@@ -19,6 +19,21 @@ export interface IcsOptions {
   today?: Date
   /** Moment written to DTSTAMP (default: now). */
   now?: Date
+  /** Remind this many days before each event, at 08:00 (0 = no reminder). */
+  remindDaysBefore?: number
+}
+
+/** Choices offered for the reminder; the first non-zero one is the default. */
+export const ICS_REMIND_CHOICES = [0, 1, 3, 7] as const
+export const ICS_REMIND_DEFAULT = 1
+
+/**
+ * TRIGGER duration for an all-day event: 08:00 local time `days` days before
+ * its start (00:00), i.e. 24*days - 8 hours earlier.
+ */
+export function icsReminderTrigger(days: number): string {
+  const d = days - 1
+  return `-P${d > 0 ? `${d}D` : ''}T16H`
 }
 
 const CRLF = '\r\n'
@@ -102,7 +117,11 @@ interface VEvent {
   lastDayOfFebruary?: boolean
 }
 
-function renderEvent(e: VEvent, stamp: string): string[] {
+function renderEvent(
+  e: VEvent,
+  stamp: string,
+  remindDaysBefore: number
+): string[] {
   const lines = [
     'BEGIN:VEVENT',
     `UID:${e.uid}`,
@@ -120,7 +139,17 @@ function renderEvent(e: VEvent, stamp: string): string[] {
     lines.push(`DESCRIPTION:${escapeIcsText(e.description.join('\n'))}`)
   }
   if (e.location) lines.push(`LOCATION:${escapeIcsText(e.location)}`)
-  lines.push('TRANSP:TRANSPARENT', 'END:VEVENT')
+  lines.push('TRANSP:TRANSPARENT')
+  if (remindDaysBefore > 0) {
+    lines.push(
+      'BEGIN:VALARM',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:${escapeIcsText(e.summary)}`,
+      `TRIGGER:${icsReminderTrigger(remindDaysBefore)}`,
+      'END:VALARM'
+    )
+  }
+  lines.push('END:VEVENT')
   return lines
 }
 
@@ -134,6 +163,8 @@ function renderEvent(e: VEvent, stamp: string): string[] {
  *   ones, like death anniversaries, one event per occurrence in the same years.
  * Lunar one-off events say in their description until when they remind.
  * Dates are the same ones the Events page shows (computeEvents).
+ * With remindDaysBefore > 0 every event gets one VALARM at 08:00 that many
+ * days before.
  */
 export function buildIcs({
   persons,
@@ -141,8 +172,10 @@ export function buildIcs({
   t,
   siteUrl,
   today = vnToday(),
-  now = new Date()
+  now = new Date(),
+  remindDaysBefore = 0
 }: IcsOptions): string {
+  const remind = Math.max(0, Math.floor(remindDaysBefore))
   const year = today.getFullYear()
   const domain = uidDomain(siteUrl)
   const stamp = icsTimestamp(now)
@@ -253,8 +286,36 @@ export function buildIcs({
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${escapeIcsText(t('icsCalendarName'))}`,
-    ...events.flatMap((e) => renderEvent(e, stamp)),
+    ...events.flatMap((e) => renderEvent(e, stamp, remind)),
     'END:VCALENDAR'
   ]
   return lines.map(foldIcsLine).join(CRLF) + CRLF
+}
+
+/** localStorage key that remembers the reminder choice of the .ics export. */
+export const ICS_REMIND_KEY = 'giapha-ics-remind-days'
+
+/** Stored value → one of ICS_REMIND_CHOICES; anything else is the default. */
+export function parseIcsRemind(raw: string | null): number {
+  const n = Number(raw)
+  return raw !== null && (ICS_REMIND_CHOICES as readonly number[]).includes(n)
+    ? n
+    : ICS_REMIND_DEFAULT
+}
+
+/** Saved reminder choice (the default when storage is blocked). */
+export function readIcsRemind(): number {
+  try {
+    return parseIcsRemind(localStorage.getItem(ICS_REMIND_KEY))
+  } catch {
+    return ICS_REMIND_DEFAULT
+  }
+}
+
+export function writeIcsRemind(days: number) {
+  try {
+    localStorage.setItem(ICS_REMIND_KEY, String(days))
+  } catch (e) {
+    console.warn('Failed to write to localStorage:', e)
+  }
 }
