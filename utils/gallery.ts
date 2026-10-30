@@ -7,6 +7,33 @@ import { GalleryItemNotUpdatedError } from '@/utils/writeErrors'
 
 export const GALLERY_PAGE_SIZE = 24
 export const SIGNED_URL_TTL_SECONDS = 60 * 60
+// Re-sign a little before the URLs expire, so open tabs never show broken images.
+export const GALLERY_RESIGN_AFTER_MS = 55 * 60 * 1000
+// An image that fails sooner than this after signing is broken, not expired:
+// re-signing would not help and would refresh the page in a loop.
+export const GALLERY_FRESH_URL_MS = 60 * 1000
+
+/**
+ * Whether the page should ask the server for fresh signed URLs: once per
+ * signing, when the URLs are about to expire or an image failed to load after
+ * its URL had time to expire (a fresh URL that fails is broken; no loop).
+ */
+export function shouldResignGallery({
+  signedAt,
+  now,
+  alreadyResigned,
+  imageFailed = false
+}: {
+  signedAt: number
+  now: number
+  alreadyResigned: boolean
+  imageFailed?: boolean
+}) {
+  if (alreadyResigned) return false
+  const age = now - signedAt
+  if (imageFailed) return age >= GALLERY_FRESH_URL_MS
+  return age >= GALLERY_RESIGN_AFTER_MS
+}
 
 export const GALLERY_BUCKET = 'gallery'
 

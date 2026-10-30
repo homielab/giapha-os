@@ -356,7 +356,7 @@ Hệ thống có 3 cấp độ phân quyền để dễ dàng quản lý ai đư
 
 1. **Admin (Quản trị viên):** Có toàn quyền đối với hệ thống.
 2. **Editor (Biên soạn):** Cho phép thêm, sửa, xóa thông tin hồ sơ và các mối quan hệ.
-3. **Member (Thành viên):** Chỉ có thể xem sơ đồ gia phả và các thống kê trực quan.
+3. **Member (Thành viên):** Xem sơ đồ gia phả và các thống kê trực quan; có thể thêm, sửa, xóa các sự kiện riêng do chính mình tạo.
 
 ## Đóng góp (Contributing)
 

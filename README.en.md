@@ -346,7 +346,7 @@ The system has three roles for controlling who can update the family tree:
 
 1. **Admin**: Full access to the system.
 2. **Editor**: Can add, edit, and delete member profiles and relationships.
-3. **Member**: Can view the family tree and visual statistics.
+3. **Member**: Can view the family tree and visual statistics, and add, edit or delete the custom events they created themselves.
 
 ## Contributing
 

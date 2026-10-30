@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Docker: `robots.txt`, `sitemap.xml` and the web manifest now use `SITE_NAME` / `APP_URL` set when the container starts, instead of `localhost` and the default name baked in at build time.
+- Gallery images no longer break in a tab left open over an hour: the page fetches fresh image links before they expire or when an image fails to load.
+- README: the Member role can also add, edit and delete the custom events they created.
+
 ### Added
 
 - Calendar export (.ics) adds a reminder at 8 AM 1, 3 or 7 days before each event (default 1 day, "No reminder" to turn off); the choice is remembered in the browser.

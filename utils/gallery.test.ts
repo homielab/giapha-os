@@ -16,7 +16,8 @@ import {
   getGalleryPageCount,
   loadGalleryPage,
   parseGalleryPage,
-  saveGalleryItem
+  saveGalleryItem,
+  shouldResignGallery
 } from './gallery'
 
 function makeItems(count: number): GalleryItem[] {
@@ -402,5 +403,60 @@ describe('loadGalleryPage signing errors', () => {
     const promise = loadGalleryPage(client, 1)
     await expect(promise).rejects.toBeInstanceOf(GallerySigningError)
     await expect(promise).rejects.toThrow('"gallery"')
+  })
+})
+
+describe('shouldResignGallery', () => {
+  const signedAt = 1_000_000
+  const minutes = (n: number) => signedAt + n * 60 * 1000
+
+  test('re-signs once the URLs are 55 minutes old', () => {
+    expect(
+      shouldResignGallery({
+        signedAt,
+        now: minutes(54),
+        alreadyResigned: false
+      })
+    ).toBe(false)
+    expect(
+      shouldResignGallery({
+        signedAt,
+        now: minutes(55),
+        alreadyResigned: false
+      })
+    ).toBe(true)
+  })
+
+  test('re-signs when an image fails after its URL could have expired', () => {
+    expect(
+      shouldResignGallery({
+        signedAt,
+        now: minutes(2),
+        alreadyResigned: false,
+        imageFailed: true
+      })
+    ).toBe(true)
+  })
+
+  test('ignores a fresh URL that fails, so a broken image does not loop', () => {
+    expect(
+      shouldResignGallery({
+        signedAt,
+        now: signedAt + 5000,
+        alreadyResigned: false,
+        imageFailed: true
+      })
+    ).toBe(false)
+  })
+
+  test('never re-signs twice for the same signing', () => {
+    expect(
+      shouldResignGallery({
+        signedAt,
+        now: minutes(90),
+        alreadyResigned: true,
+        imageFailed: true
+      })
+    ).toBe(false)
   })
 })
