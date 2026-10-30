@@ -25,7 +25,12 @@ function person(id: string, extra: Partial<Person> = {}): Person {
 const people = [
   person('a', { generation: 1, birth_order: 1 }),
   person('b', { gender: 'female', generation: 2, is_deceased: true }),
-  person('c', { gender: 'female', is_in_law: true, generation: 2 }),
+  person('c', {
+    gender: 'female',
+    is_in_law: true,
+    generation: 2,
+    birth_order: 1
+  }),
   person('d', { is_in_law: true, generation: 3, birth_year: null }),
   person('e', { gender: 'other', generation: null, birth_order: 1 }),
   person('f', {

@@ -43,7 +43,7 @@ export function matchesPersonFilter(person: Person, option: string): boolean {
     case 'deceased':
       return !!person.is_deceased
     case 'first_child':
-      return person.birth_order === 1
+      return person.birth_order === 1 && !person.is_in_law
     case 'alive':
       return !person.is_deceased
     case 'missingBirthYear':

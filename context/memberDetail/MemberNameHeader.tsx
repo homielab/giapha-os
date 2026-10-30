@@ -46,7 +46,7 @@ export default function MemberNameHeader({
                   : t('inLawOther')}
             </span>
           )}
-          {person.birth_order != null && (
+          {person.birth_order != null && !person.is_in_law && (
             <span className='rounded-md border border-amber-200/60 bg-amber-50/60 px-2 py-0.5 font-sans text-sm font-medium whitespace-nowrap text-amber-700 sm:text-sm'>
               {person.birth_order === 1
                 ? t('firstChild')

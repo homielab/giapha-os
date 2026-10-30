@@ -55,7 +55,7 @@ function PersonAvatar({ person }: { person: Person }) {
   )
 }
 
-function PersonBadges({
+export function PersonBadges({
   person,
   isDeceased
 }: {
@@ -67,7 +67,7 @@ function PersonBadges({
   if (!(
     isDeceased ||
     person.is_in_law ||
-    person.birth_order != null ||
+    (person.birth_order != null && !person.is_in_law) ||
     person.generation != null
   )) {
     return null
@@ -91,7 +91,7 @@ function PersonBadges({
               : t('inLawOther')}
         </span>
       )}
-      {person.birth_order != null && (
+      {person.birth_order != null && !person.is_in_law && (
         <span className='inline-flex items-center rounded-md border border-amber-200/60 bg-amber-50 px-2 py-0.5 text-sm font-medium text-amber-700 sm:text-sm'>
           {person.birth_order === 1
             ? t('firstChild')

@@ -91,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The member list's "Eldest child" filter no longer lists daughters- or sons-in-law, and member cards and the member detail header no longer show a birth order badge next to "In-law".
 - The kinship finder calls the wife or husband of a great-grandchild and later generations "Chắt dâu" / "Chắt rể", "Chít dâu"… and of a cousin's child "Cháu dâu (họ)" / "Cháu rể (họ)", instead of "Vợ của Chắt".
 
 - Editing a gallery photo opens with its title, description, date and current image filled in, so saving no longer wipes them; opening and closing it without changes no longer asks to discard.
