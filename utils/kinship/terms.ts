@@ -65,17 +65,6 @@ export function getDirectDescendantTerm(depth: number): string {
 // A relative's term (from a blood relation) maps to the term of the in-law
 // relation by lookup tables instead of testing the text of the term.
 
-const OLDER_GENERATION_WORDS = new Set(['Ông', 'Bà', 'Cụ'])
-
-/** Bố, Mẹ, Ông…, Bà…, Cụ…: the generation above, kept as is when "vợ"/"chồng" is added. */
-function isOlderGenerationTerm(term: string): boolean {
-  return (
-    term === 'Bố' ||
-    term === 'Mẹ' ||
-    OLDER_GENERATION_WORDS.has(term.split(' ')[0])
-  )
-}
-
 /** "Anh", "Chị" or "Em" + the spouse suffix, for the siblings and cousins. */
 const SIBLING_STEMS = new Map<string, string>([
   ['Anh trai', 'Anh'],
@@ -92,46 +81,19 @@ const COUSIN_STEMS = new Map<string, string>([
   ['Anh/Em họ', 'Anh/Em'],
   ['Chị/Em họ', 'Chị/Em']
 ])
-/** Aunts and uncles: kept, and the "họ" ones lose it when A calls B. */
-const UNCLE_AUNT_TERMS = new Set([
-  'Bác',
-  'Chú',
-  'Cô',
-  'Cậu',
-  'Dì',
-  'Bác/Chú',
-  'Bác/Cô'
-])
-const UNCLE_AUNT_COUSIN_TERMS = new Set([
-  'Bác họ',
-  'Chú họ',
-  'Cô họ',
-  'Cậu họ',
-  'Dì họ',
-  'Cháu họ',
-  'Bác/Chú họ',
-  'Bác/Cô họ'
-])
 
 /**
- * How someone calls the blood relative `term` of their spouse: "Anh trai" of
- * the wife becomes "Anh vợ"; `suffix` is " vợ" or " chồng". `dropHo` strips
- * the "họ" of "Bác họ" (the form a person uses for their own spouse's side).
+ * How someone calls the blood relative `term` of their spouse; `suffix` is
+ * " vợ" or " chồng". Parents, siblings and cousins take the suffix ("Bố vợ",
+ * "Anh vợ", "Chị chồng (họ)"); everyone else is called as the spouse calls
+ * them ("Cô", "Ông nội", "Bác họ"), because "Cô vợ" means the wife herself.
  */
-export function callSpouseRelative(
-  term: string,
-  suffix: string,
-  dropHo: boolean
-): string {
-  if (isOlderGenerationTerm(term)) return term + suffix
+export function callSpouseRelative(term: string, suffix: string): string {
+  if (term === 'Bố' || term === 'Mẹ') return term + suffix
   const sibling = SIBLING_STEMS.get(term)
   if (sibling) return sibling + suffix
   const cousin = COUSIN_STEMS.get(term)
   if (cousin) return `${cousin}${suffix} (họ)`
-  if (UNCLE_AUNT_TERMS.has(term)) return term + suffix
-  if (UNCLE_AUNT_COUSIN_TERMS.has(term)) {
-    return (dropHo ? term.replace(' họ', '') : term) + suffix
-  }
   return term
 }
 

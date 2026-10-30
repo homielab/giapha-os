@@ -15,6 +15,10 @@ export type KinshipDescription = (
   | { kind: 'relativesGeneric' }
   | { kind: 'marriage' }
   | { kind: 'viaSpouse'; name: string }
+  /** B married A's parent `name`, who is not B's parent: Bố dượng, Mẹ kế. */
+  | { kind: 'stepParent'; name: string }
+  /** B is the child of A's spouse `name`, not A's own: Con riêng. */
+  | { kind: 'stepChild'; name: string }
   | { kind: 'viaBothSpouses'; nameA: string; nameB: string }
   | { kind: 'none' }
 ) & {

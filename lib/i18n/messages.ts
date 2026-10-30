@@ -248,6 +248,8 @@ export const messages = {
     kinshipDescRelativesGeneric: 'Quan hệ họ hàng',
     kinshipDescMarriage: 'Quan hệ Hôn nhân',
     kinshipDescViaSpouse: 'Thông qua hôn nhân của {name}',
+    kinshipDescStepParent: 'Bố dượng, mẹ kế (thông qua hôn nhân của {name})',
+    kinshipDescStepChild: 'Con riêng (thông qua hôn nhân của {name})',
     kinshipDescViaBothSpouses: 'Thông qua hôn nhân của cả {nameA} và {nameB}',
     kinshipDescNone: 'Không tìm thấy quan hệ trong phạm vi dữ liệu',
     kinshipCommonAncestor: '(Tổ tiên chung: {name})',
@@ -1545,6 +1547,8 @@ export const messages = {
     kinshipDescRelativesGeneric: 'Extended family',
     kinshipDescMarriage: 'Marriage',
     kinshipDescViaSpouse: 'Through the marriage of {name}',
+    kinshipDescStepParent: 'Step-parent (through the marriage of {name})',
+    kinshipDescStepChild: 'Stepchild (through the marriage of {name})',
     kinshipDescViaBothSpouses:
       'Through the marriages of both {nameA} and {nameB}',
     kinshipDescNone: 'No relationship found within the data',

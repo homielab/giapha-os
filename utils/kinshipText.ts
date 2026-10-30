@@ -47,6 +47,12 @@ export function describeKinship(
     case 'viaSpouse':
       text = t('kinshipDescViaSpouse', { name: description.name })
       break
+    case 'stepParent':
+      text = t('kinshipDescStepParent', { name: description.name })
+      break
+    case 'stepChild':
+      text = t('kinshipDescStepChild', { name: description.name })
+      break
     case 'viaBothSpouses':
       text = t('kinshipDescViaBothSpouses', {
         nameA: description.nameA,

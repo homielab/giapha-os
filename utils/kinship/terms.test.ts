@@ -28,34 +28,48 @@ describe('direct line terms', () => {
 describe('calling the blood relative of a spouse', () => {
   test.each([
     ['Bố', 'Bố vợ'],
-    ['Ông nội', 'Ông nội vợ'],
-    ['Cụ bà (bà cố) nội', 'Cụ bà (bà cố) nội vợ'],
+    ['Mẹ', 'Mẹ vợ'],
     ['Anh trai', 'Anh vợ'],
     ['Chị gái', 'Chị vợ'],
     ['Em trai', 'Em vợ'],
     ['Em họ', 'Em vợ (họ)'],
     ['Chị họ', 'Chị vợ (họ)'],
     ['Anh họ', 'Anh vợ (họ)'],
-    ['Bác', 'Bác vợ'],
-    ['Cậu họ', 'Cậu vợ'],
-    ['Cháu họ', 'Cháu vợ'],
-    ['Con', 'Con'],
-    ['Chắt', 'Chắt'],
     ['Anh/Em trai', 'Anh/Em vợ'],
     ['Chị/Em gái', 'Chị/Em vợ'],
     ['Anh/Em họ', 'Anh/Em vợ (họ)'],
-    ['Chị/Em họ', 'Chị/Em vợ (họ)'],
-    ['Bác/Chú', 'Bác/Chú vợ'],
-    ['Bác/Cô', 'Bác/Cô vợ'],
-    ['Bác/Chú họ', 'Bác/Chú vợ'],
-    ['Bác/Cô họ', 'Bác/Cô vợ']
-  ])('%s', (term, expected) => {
-    expect(callSpouseRelative(term, ' vợ', true)).toBe(expected)
+    ['Chị/Em họ', 'Chị/Em vợ (họ)']
+  ])('%s takes the suffix: %s', (term, expected) => {
+    expect(callSpouseRelative(term, ' vợ')).toBe(expected)
   })
 
-  test('the "họ" is kept when the spouse side is B', () => {
-    expect(callSpouseRelative('Bác họ', ' chồng', false)).toBe('Bác họ chồng')
-    expect(callSpouseRelative('Bác họ', ' chồng', true)).toBe('Bác chồng')
+  test('parents and siblings of the husband take chồng', () => {
+    expect(callSpouseRelative('Mẹ', ' chồng')).toBe('Mẹ chồng')
+    expect(callSpouseRelative('Chị gái', ' chồng')).toBe('Chị chồng')
+  })
+
+  // "Cô vợ" would mean the wife herself: the other relatives are called
+  // as the spouse calls them.
+  test.each([
+    'Cô',
+    'Dì',
+    'Bác',
+    'Chú',
+    'Cậu',
+    'Bác họ',
+    'Cậu họ',
+    'Ông nội',
+    'Bà ngoại',
+    'Cụ bà (bà cố) nội',
+    'Bà Cô',
+    'Bác/Chú',
+    'Bác/Cô họ',
+    'Con',
+    'Cháu họ',
+    'Chắt'
+  ])('%s keeps the spouse’s term', (term) => {
+    expect(callSpouseRelative(term, ' vợ')).toBe(term)
+    expect(callSpouseRelative(term, ' chồng')).toBe(term)
   })
 })
 

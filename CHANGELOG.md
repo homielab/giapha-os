@@ -91,6 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Kinship finder: the new wife of your father is now "Mẹ kế" and the new husband of your mother "Bố dượng", and they call you "Con riêng của chồng" / "Con riêng của vợ" (was "Vợ của Bố" / "Chồng của Mẹ" and "Con").
+- Kinship finder: your spouse's aunts, uncles and grandparents are called as your spouse calls them ("Cô", "Ông nội") instead of "Cô vợ" or "Ông nội vợ" ("Cô vợ" means the wife herself); only parents, siblings and cousins keep vợ/chồng ("Bố vợ", "Anh chồng").
 - GEDCOM import from Gramps, MyHeritage and similar programs keeps a family's marriage date and place and its divorce as "Kết hôn: …" / "Ly hôn" lines in the marriage note instead of dropping them.
 - The kinship finder names relatives by marriage on both sides with the usual terms, such as "Mợ", "Thím", "Cháu dâu" or "Em rể", instead of "Vợ của Cậu" or "Chồng của Em gái".
 - The member list's "Eldest child" filter no longer lists daughters- or sons-in-law, and member cards and the member detail header no longer show a birth order badge next to "In-law".

@@ -166,9 +166,9 @@ describe('great-uncles and great-aunts', () => {
       child('G', 'B'),
       marriage('A', 'W')
     ]
-    // W's "Bà Cô" is "Bà Cô vợ" for A; the husband of her "Chắt" is "Chắt rể".
+    // W's "Bà Cô" is "Bà Cô" for A too; the husband of her "Chắt" is "Chắt rể".
     const [aCallsB, bCallsA] = terms('A', 'B', persons, rels)
-    expect(aCallsB).toBe('Bà Cô vợ')
+    expect(aCallsB).toBe('Bà Cô')
     expect(bCallsA).toBe('Chắt rể')
   })
 })
@@ -341,6 +341,128 @@ describe('relations through marriage', () => {
   })
 })
 
+describe('step-parents and stepchildren', () => {
+  function kinship(a: string, b: string, p: PersonNode[], e: RelEdge[]) {
+    const find = (id: string) => p.find((x) => x.id === id)!
+    return computeKinship(find(a), find(b), p, e)!
+  }
+
+  test('the father’s second wife is Mẹ kế; she calls him Con riêng của chồng', () => {
+    const p = [
+      person('bo', 'male'),
+      person('me', 'female'),
+      person('toi', 'male'),
+      person('ke', 'female')
+    ]
+    const e = [
+      child('bo', 'toi'),
+      child('me', 'toi'),
+      marriage('bo', 'me'),
+      marriage('bo', 'ke')
+    ]
+    const r = kinship('toi', 'ke', p, e)
+    expect([r.aCallsB, r.bCallsA]).toEqual(['Mẹ kế', 'Con riêng của chồng'])
+    expect(r.description).toEqual({ kind: 'stepParent', name: 'bo' })
+    const back = kinship('ke', 'toi', p, e)
+    expect([back.aCallsB, back.bCallsA]).toEqual([
+      'Con riêng của chồng',
+      'Mẹ kế'
+    ])
+    expect(back.description).toEqual({ kind: 'stepChild', name: 'bo' })
+    // The mother is still Mẹ.
+    expect(terms('toi', 'me', p, e)).toEqual(['Mẹ', 'Con'])
+  })
+
+  test('the mother’s new husband is Bố dượng; he calls her child Con riêng của vợ', () => {
+    const p = [
+      person('chongCu', 'male'),
+      person('me', 'female'),
+      person('kid', 'female'),
+      person('husb', 'male')
+    ]
+    const e = [
+      child('chongCu', 'kid'),
+      child('me', 'kid'),
+      marriage('me', 'husb')
+    ]
+    const r = kinship('husb', 'kid', p, e)
+    expect([r.aCallsB, r.bCallsA]).toEqual(['Con riêng của vợ', 'Bố dượng'])
+    expect(r.description).toEqual({ kind: 'stepChild', name: 'me' })
+    const back = kinship('kid', 'husb', p, e)
+    expect([back.aCallsB, back.bCallsA]).toEqual([
+      'Bố dượng',
+      'Con riêng của vợ'
+    ])
+    expect(back.description).toEqual({ kind: 'stepParent', name: 'me' })
+  })
+
+  test('a child of both spouses stays Con / Bố', () => {
+    const p = [
+      person('bo', 'male'),
+      person('me', 'female'),
+      person('con', 'male')
+    ]
+    const e = [child('bo', 'con'), child('me', 'con'), marriage('bo', 'me')]
+    expect(terms('bo', 'con', p, e)).toEqual(['Con', 'Bố'])
+  })
+
+  test('parents-in-law are unchanged', () => {
+    const p = [
+      person('boVo', 'male'),
+      person('meChong', 'female'),
+      person('vo', 'female'),
+      person('chong', 'male'),
+      person('anhVo', 'male', { birth_order: 1 })
+    ]
+    const e = [
+      child('boVo', 'vo'),
+      child('boVo', 'anhVo'),
+      child('meChong', 'chong'),
+      marriage('chong', 'vo')
+    ]
+    p[2].birth_order = 2
+    const r = kinship('chong', 'boVo', p, e)
+    expect([r.aCallsB, r.bCallsA]).toEqual(['Bố vợ', 'Con rể'])
+    expect(r.description.kind).toBe('viaSpouse')
+    expect(terms('boVo', 'chong', p, e)).toEqual(['Con rể', 'Bố vợ'])
+    expect(terms('vo', 'meChong', p, e)).toEqual(['Mẹ chồng', 'Con dâu'])
+    expect(terms('meChong', 'vo', p, e)).toEqual(['Con dâu', 'Mẹ chồng'])
+    expect(terms('chong', 'anhVo', p, e)).toEqual(['Anh vợ', 'Em rể'])
+  })
+})
+
+describe('the spouse’s aunts and grandparents are called as the spouse calls them', () => {
+  const persons = [
+    person('ongNoi', 'male'),
+    person('bo', 'male', { birth_order: 1 }),
+    person('co', 'female', { birth_order: 2 }),
+    person('ongNgoai', 'male'),
+    person('me', 'female', { birth_order: 1 }),
+    person('di', 'female', { birth_order: 2 }),
+    person('vo', 'female'),
+    person('chong', 'male')
+  ]
+  const rels = [
+    child('ongNoi', 'bo'),
+    child('ongNoi', 'co'),
+    child('ongNgoai', 'me'),
+    child('ongNgoai', 'di'),
+    child('bo', 'vo'),
+    child('me', 'vo'),
+    marriage('chong', 'vo')
+  ]
+
+  test.each([
+    ['co', 'Cô', 'Cháu rể'],
+    ['di', 'Dì', 'Cháu rể'],
+    ['ongNoi', 'Ông nội', 'Cháu rể'],
+    ['ongNgoai', 'Ông ngoại', 'Cháu rể']
+  ])('%s', (b, aCallsB, bCallsA) => {
+    expect(terms('chong', b, persons, rels)).toEqual([aCallsB, bCallsA])
+    expect(terms(b, 'chong', persons, rels)).toEqual([bCallsA, aCallsB])
+  })
+})
+
 describe('relations through marriage when the relative age is unknown', () => {
   const persons = [
     person('cha', 'male'),
@@ -360,7 +482,7 @@ describe('relations through marriage when the relative age is unknown', () => {
     expect(ba?.description.uncertain).toBe(true)
   })
 
-  test("the wife's uncle keeps vợ", () => {
+  test("the wife's uncle is Bác/Chú, without vợ", () => {
     const p = [
       person('ong', 'male'),
       person('chu', 'male'),
@@ -374,7 +496,7 @@ describe('relations through marriage when the relative age is unknown', () => {
       child('bo', 'lan'),
       marriage('a', 'lan')
     ]
-    expect(terms('a', 'chu', p, e)).toEqual(['Bác/Chú vợ', 'Cháu rể'])
+    expect(terms('a', 'chu', p, e)).toEqual(['Bác/Chú', 'Cháu rể'])
   })
 })
 

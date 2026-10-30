@@ -16,6 +16,8 @@ describe('kinship text', () => {
       describeKinship({ kind: 'siblings', commonAncestor: null }, en),
       describeKinship({ kind: 'cousins', side: 'maternal' }, en),
       describeKinship({ kind: 'viaSpouse', name: 'Ann' }, en),
+      describeKinship({ kind: 'stepParent', name: 'Ann' }, en),
+      describeKinship({ kind: 'stepChild', name: 'Ann' }, en),
       describeKinship({ kind: 'marriage' }, en),
       describeKinship({ kind: 'none' }, en),
       describePathStep(

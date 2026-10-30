@@ -30,6 +30,26 @@ function spouseStep(person: PersonNode, spouse: PersonNode): KinshipPathStep {
   }
 }
 
+function isParentOf(
+  parent: PersonNode,
+  child: PersonNode,
+  graph: KinshipGraph
+): boolean {
+  return (graph.parentMap.get(child.id) ?? []).includes(parent.id)
+}
+
+/**
+ * A step-parent and the child of their spouse (not their own child): "Bố
+ * dượng" / "Mẹ kế" and "Con riêng của vợ" / "Con riêng của chồng".
+ */
+function stepTerms(stepParent: PersonNode, parent: PersonNode) {
+  return {
+    stepParent: stepParent.gender === 'female' ? 'Mẹ kế' : 'Bố dượng',
+    stepChild:
+      parent.gender === 'male' ? 'Con riêng của chồng' : 'Con riêng của vợ'
+  }
+}
+
 /** A is married to someone related by blood to B. */
 function viaSpouseOfA(
   personA: PersonNode,
@@ -42,19 +62,32 @@ function viaSpouseOfA(
     if (!spouseA) continue
     const res = findBloodKinship(spouseA, personB, graph)
     if (!res) continue
+    const pathLabels = [spouseStep(personA, spouseA), ...res.pathLabels]
+
+    // B is the child of A's spouse but not A's own child.
+    if (isParentOf(spouseA, personB, graph)) {
+      const step = stepTerms(personA, spouseA)
+      return {
+        ...res,
+        aCallsB: step.stepChild,
+        bCallsA: step.stepParent,
+        description: { kind: 'stepChild', name: spouseA.full_name },
+        pathLabels
+      }
+    }
 
     // A gọi người trong họ của vợ/chồng mình; họ gọi A là dâu/rể.
     const suffix = personA.gender === 'male' ? ' vợ' : ' chồng'
     return {
       ...res,
-      aCallsB: callSpouseRelative(res.aCallsB, suffix, true),
+      aCallsB: callSpouseRelative(res.aCallsB, suffix),
       bCallsA: termRelativeCallsInLaw(res.bCallsA, personA.gender),
       description: {
         kind: 'viaSpouse',
         name: spouseA.full_name,
         ...carryUncertain(res.description)
       },
-      pathLabels: [spouseStep(personA, spouseA), ...res.pathLabels]
+      pathLabels
     }
   }
   return null
@@ -71,18 +104,31 @@ function viaSpouseOfB(
     if (!spouseB) continue
     const res = findBloodKinship(personA, spouseB, graph)
     if (!res) continue
+    const pathLabels = [...res.pathLabels, spouseStep(personB, spouseB)]
+
+    // A is the child of B's spouse but not B's own child.
+    if (isParentOf(spouseB, personA, graph)) {
+      const step = stepTerms(personB, spouseB)
+      return {
+        ...res,
+        aCallsB: step.stepParent,
+        bCallsA: step.stepChild,
+        description: { kind: 'stepParent', name: spouseB.full_name },
+        pathLabels
+      }
+    }
 
     const suffix = personB.gender === 'male' ? ' vợ' : ' chồng'
     return {
       ...res,
       aCallsB: termForSpouseOfRelative(res.aCallsB, personB.gender),
-      bCallsA: callSpouseRelative(res.bCallsA, suffix, false),
+      bCallsA: callSpouseRelative(res.bCallsA, suffix),
       description: {
         kind: 'viaSpouse',
         name: spouseB.full_name,
         ...carryUncertain(res.description)
       },
-      pathLabels: [...res.pathLabels, spouseStep(personB, spouseB)]
+      pathLabels
     }
   }
   return null
