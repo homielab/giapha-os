@@ -639,7 +639,7 @@ describe('runDataChecks: birth order', () => {
     extra: Partial<DataCheckPerson> = {}
   ) => person(id, { full_name: id, birth_order, birth_year, ...extra })
 
-  test('reports children of one parent sharing a birth order, once for full siblings', () => {
+  test('reports children of the same parents sharing a birth order, once', () => {
     const persons = [
       person('f', { full_name: 'F', gender: 'male' }),
       person('m', { full_name: 'M', gender: 'female' }),
@@ -658,27 +658,87 @@ describe('runDataChecks: birth order', () => {
           { id: 'A', name: 'A' },
           { id: 'B', name: 'B' }
         ],
-        params: { type: 'same', names: 'A, B', parent: 'F', order: 2 }
+        params: { type: 'same', names: 'A, B', parent: 'F & M', order: 2 }
       }
     ])
   })
 
-  test('groups by father or by mother: half siblings count too', () => {
+  test('half siblings numbered per mother are not compared', () => {
+    // a1, a2 by the first wife (1950, 1953); b1, b2 by the second (1965, 1968)
+    const persons = [
+      person('f', { gender: 'male' }),
+      person('m1', { gender: 'female' }),
+      person('m2', { gender: 'female' }),
+      kid('a1', 1, 1950),
+      kid('a2', 2, 1953),
+      kid('b1', 1, 1965),
+      kid('b2', 2, 1968)
+    ]
+    const relationships = [
+      ...['a1', 'a2'].flatMap((id) => [child('f', id), child('m1', id)]),
+      ...['b1', 'b2'].flatMap((id) => [child('f', id), child('m2', id)])
+    ]
+    expect(conflicts(persons, relationships)).toEqual([])
+  })
+
+  test('numbered across both wives is fine too', () => {
     const persons = [
       person('f'),
       person('m1'),
       person('m2'),
+      kid('a1', 1, 1950),
+      kid('a2', 2, 1953),
+      kid('b1', 3, 1965)
+    ]
+    expect(
+      conflicts(persons, [
+        child('f', 'a1'),
+        child('m1', 'a1'),
+        child('f', 'a2'),
+        child('m1', 'a2'),
+        child('f', 'b1'),
+        child('m2', 'b1')
+      ])
+    ).toEqual([])
+  })
+
+  test('still reports two children of the same pair sharing an order', () => {
+    const persons = [
+      person('f', { full_name: 'F', gender: 'male' }),
+      person('m1', { full_name: 'M1', gender: 'female' }),
+      person('m2', { full_name: 'M2', gender: 'female' }),
+      kid('a1', 1, 1950),
+      kid('a2', 1, 1953),
+      kid('b1', 1, 1965)
+    ]
+    const found = conflicts(persons, [
+      child('m1', 'a1'),
+      child('f', 'a1'),
+      child('f', 'a2'),
+      child('m1', 'a2'),
+      child('f', 'b1'),
+      child('m2', 'b1')
+    ])
+    expect(found).toHaveLength(1)
+    expect(found[0].people.map((p) => p.id)).toEqual(['a1', 'a2'])
+    expect(found[0].params.parent).toBe('F & M1')
+  })
+
+  test('a child with one known parent goes with that parent alone', () => {
+    const persons = [
+      person('f'),
+      person('m'),
       kid('A', 1),
-      kid('B', 1)
+      kid('B', 1),
+      kid('C', 1)
     ]
     const found = conflicts(persons, [
       child('f', 'A'),
-      child('m1', 'A'),
+      child('m', 'A'),
       child('f', 'B'),
-      child('m2', 'B')
+      child('f', 'C')
     ])
-    expect(found).toHaveLength(1)
-    expect(found[0].people.map((p) => p.id)).toEqual(['A', 'B'])
+    expect(found.map((f) => f.people.map((p) => p.id))).toEqual([['B', 'C']])
   })
 
   test('reports a birth order that runs against the birth years', () => {

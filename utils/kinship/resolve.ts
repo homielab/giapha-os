@@ -276,7 +276,8 @@ function viaChildInLaw(
 
 /** Anh kế / Chị kế / Em kế: what A calls B, by who is older. */
 function stepSiblingTerm(personA: PersonNode, personB: PersonNode): string {
-  const seniority = compareSeniority(personB, personA)
+  // Step siblings share no parent: the birth date counts before birth order.
+  const seniority = compareSeniority(personB, personA, false)
   if (seniority === 'junior') return 'Em kế'
   const older = byGenderOf(personB.gender, 'Anh', 'Chị', 'Anh/Chị')
   return seniority === 'senior' ? `${older} kế` : `${older}/Em kế`

@@ -17,26 +17,21 @@ import {
   type PersonNode
 } from './types'
 
+type Seniority = 'senior' | 'junior' | 'equal' | 'unknown'
+
+/** By birth order, when both have one and they differ. */
+function byBirthOrder(a: PersonNode, b: PersonNode): Seniority {
+  if (a.birth_order == null || b.birth_order == null) return 'unknown'
+  if (a.birth_order < b.birth_order) return 'senior'
+  if (a.birth_order > b.birth_order) return 'junior'
+  return 'unknown'
+}
+
 /**
- * So sánh thứ bậc giữa hai người (cùng bố mẹ hoặc cùng thế hệ)
- * Ưu tiên: Thứ tự sinh (birth_order) -> năm -> tháng -> ngày sinh.
- * Birth order counts when both have it; the date goes year → month → day and
- * stops at the first part one of them lacks. When nothing tells them apart
- * (missing data, or the same date such as twins) the result is 'unknown'.
+ * By birth date from the year down: a month only when both years are known
+ * and equal, a day only when both months are too.
  */
-export function compareSeniority(
-  a: PersonNode,
-  b: PersonNode
-): 'senior' | 'junior' | 'equal' | 'unknown' {
-  if (a.id === b.id) return 'equal'
-
-  if (a.birth_order != null && b.birth_order != null) {
-    if (a.birth_order < b.birth_order) return 'senior'
-    if (a.birth_order > b.birth_order) return 'junior'
-  }
-
-  // The date counts from the year down: a month only when both years are
-  // known and equal, a day only when both months are too.
+function byBirthDate(a: PersonNode, b: PersonNode): Seniority {
   const dateKeys: [number | null | undefined, number | null | undefined][] = [
     [a.birth_year, b.birth_year],
     [a.birth_month, b.birth_month],
@@ -48,6 +43,44 @@ export function compareSeniority(
     if (x > y) return 'junior'
   }
   return 'unknown'
+}
+
+/**
+ * So sánh thứ bậc giữa hai người (cùng bố mẹ hoặc cùng thế hệ).
+ * Full siblings (`sameParents`): birth order first, then the birth date.
+ * Otherwise (half siblings, step siblings, the heads of two branches) the
+ * birth date comes first, because each mother's children are often numbered
+ * on their own; birth order only when the dates do not tell them apart.
+ * The date goes year → month → day and stops at the first part one of them
+ * lacks. When nothing tells them apart (missing data, or the same date such
+ * as twins) the result is 'unknown'.
+ */
+export function compareSeniority(
+  a: PersonNode,
+  b: PersonNode,
+  sameParents = true
+): Seniority {
+  if (a.id === b.id) return 'equal'
+  const [first, second] = sameParents
+    ? [byBirthOrder, byBirthDate]
+    : [byBirthDate, byBirthOrder]
+  const result = first(a, b)
+  return result === 'unknown' ? second(a, b) : result
+}
+
+/** Both have the same recorded parents (birth or adoptive), at least one. */
+export function shareAllParents(
+  a: PersonNode,
+  b: PersonNode,
+  parentMap: Map<string, string[]>
+): boolean {
+  const parentsA = new Set(parentMap.get(a.id) ?? [])
+  const parentsB = new Set(parentMap.get(b.id) ?? [])
+  return (
+    parentsA.size > 0 &&
+    parentsA.size === parentsB.size &&
+    [...parentsA].every((id) => parentsB.has(id))
+  )
 }
 
 /** Marks the result as a guess about who is older, naming the two people to fill in. */
@@ -99,7 +132,7 @@ function siblingTerm(gender: Gender, rank: 'older' | 'younger' | 'unknown') {
  */
 function uncleAuntTerm(
   side: KinshipSide,
-  seniority: ReturnType<typeof compareSeniority>,
+  seniority: Seniority,
   gender: Gender
 ): string {
   const paternal =
@@ -125,7 +158,9 @@ export function resolveBloodTerms(
   personA: PersonNode,
   personB: PersonNode,
   pathA: PersonNode[], // Từ A lên tới LCA (không bao gồm LCA)
-  pathB: PersonNode[] // Từ B lên tới LCA (không bao gồm LCA)
+  pathB: PersonNode[], // Từ B lên tới LCA (không bao gồm LCA)
+  // Whether two children of the common ancestor have the same parents
+  sameParents: (x: PersonNode, y: PersonNode) => boolean = () => true
 ): [string, string, KinshipDescription] {
   const genderA = personA.gender
   const genderB = personB.gender
@@ -163,7 +198,11 @@ export function resolveBloodTerms(
   if (!branchA || !branchB)
     return ['Họ hàng', 'Họ hàng', { kind: 'relativesGeneric' }]
 
-  const seniority = compareSeniority(branchA, branchB)
+  const seniority = compareSeniority(
+    branchA,
+    branchB,
+    sameParents(branchA, branchB)
+  )
   const withSeniority = (description: KinshipDescription, isGuess: boolean) =>
     isGuess ? uncertain(description, branchA, branchB) : description
 
@@ -172,15 +211,14 @@ export function resolveBloodTerms(
 
   // Anh chị em ruột (Cùng bố mẹ)
   if (depthA === 1 && depthB === 1) {
-    const aSenior = compareSeniority(personA, personB)
-    if (aSenior === 'unknown') {
+    if (seniority === 'unknown') {
       return [
         siblingTerm(genderB, 'unknown'),
         siblingTerm(genderA, 'unknown'),
         uncertain({ kind: 'siblings' }, personA, personB)
       ]
     }
-    if (aSenior === 'senior') {
+    if (seniority === 'senior') {
       return [
         siblingTerm(genderB, 'younger'),
         siblingTerm(genderA, 'older'),
@@ -230,7 +268,8 @@ export function resolveBloodTerms(
       personB,
       personA,
       pathB,
-      pathA
+      pathA,
+      sameParents
     )
     return [aCallsB, bCallsA, desc]
   }
@@ -282,7 +321,8 @@ export function resolveBloodTerms(
           personB,
           personA,
           pathB,
-          pathA
+          pathA,
+          sameParents
         )
         return [aCallsB, bCallsA, desc]
       }
@@ -313,7 +353,8 @@ export function findBloodKinship(
     personA,
     personB,
     dataA.path,
-    dataB.path
+    dataB.path,
+    (x, y) => shareAllParents(x, y, parentMap)
   )
 
   const lcaName = personsMap.get(lcaId)?.full_name ?? null

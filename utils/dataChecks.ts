@@ -456,35 +456,55 @@ function checkGenerations(
 }
 
 /**
- * Children of one father or one mother sharing a birth order, or whose order
- * runs against known birth dates (only years that are recorded, down to the
- * month and day when both have them). Full siblings, seen from both parents,
- * are reported once.
+ * Children of the same parents sharing a birth order, or whose order runs
+ * against known birth dates (only years that are recorded, down to the month
+ * and day when both have them). Orders are compared only between children of
+ * the same pair of parents (a child with one known parent goes with the other
+ * children of that parent alone): half siblings are often numbered per mother,
+ * and a tree numbered across both wives is right too.
  */
 function checkBirthOrders(
   links: DataCheckRelationship[],
   byId: Map<string, DataCheckPerson>
 ): DataCheckFinding[] {
-  const childrenOf = new Map<string, DataCheckPerson[]>()
+  const parentsOf = new Map<string, DataCheckPerson[]>()
   for (const [parent, kid] of biologicalLinks(links, byId)) {
     if (kid.birth_order == null || kid.is_in_law) continue
-    const list = childrenOf.get(parent.id)
-    if (list) list.push(kid)
-    else childrenOf.set(parent.id, [kid])
+    parentsOf.set(kid.id, [...(parentsOf.get(kid.id) ?? []), parent])
+  }
+
+  const byName = (x: DataCheckPerson, y: DataCheckPerson) =>
+    x.full_name.localeCompare(y.full_name, 'vi') || x.id.localeCompare(y.id)
+  // Father first, then by name: 'F & M'
+  const fatherFirst = (x: DataCheckPerson, y: DataCheckPerson) =>
+    Number(y.gender === 'male') - Number(x.gender === 'male') || byName(x, y)
+  const families = new Map<
+    string,
+    { parents: DataCheckPerson[]; kids: DataCheckPerson[] }
+  >()
+  for (const [kidId, parents] of parentsOf) {
+    const key = parents
+      .map((p) => p.id)
+      .sort()
+      .join('|')
+    const family = families.get(key)
+    if (family) family.kids.push(byId.get(kidId)!)
+    else
+      families.set(key, {
+        parents: [...parents].sort(fatherFirst),
+        kids: [byId.get(kidId)!]
+      })
   }
 
   const findings: DataCheckFinding[] = []
-  const reported = new Set<string>()
-  const byName = (x: DataCheckPerson, y: DataCheckPerson) =>
-    x.full_name.localeCompare(y.full_name, 'vi') || x.id.localeCompare(y.id)
   const birthDate = (p: DataCheckPerson) => ({
     year: p.birth_year ?? ('' as const),
     month: p.birth_month ?? ('' as const),
     day: p.birth_day ?? ('' as const)
   })
 
-  for (const [parentId, kids] of childrenOf) {
-    const parent = byId.get(parentId)!
+  for (const { parents, kids } of families.values()) {
+    const parent = parents.map((p) => p.full_name).join(' & ')
 
     const sameOrder = new Map<number, DataCheckPerson[]>()
     for (const kid of kids) {
@@ -494,16 +514,13 @@ function checkBirthOrders(
     for (const [order, group] of sameOrder) {
       if (group.length < 2) continue
       group.sort(byName)
-      const key = `same|${group.map((p) => p.id).join('|')}`
-      if (reported.has(key)) continue
-      reported.add(key)
       findings.push({
         kind: 'birthOrderConflict',
         people: group.map(ref),
         params: {
           type: 'same',
           names: group.map((p) => p.full_name).join(', '),
-          parent: parent.full_name,
+          parent,
           order
         }
       })
@@ -522,9 +539,6 @@ function checkBirthOrders(
       if (earlier.birth_order === later.birth_order) continue
       const born = comparePartialDates(birthDate(earlier), birthDate(later))
       if (born == null || born <= 0) continue
-      const key = `reversed|${earlier.id}|${later.id}`
-      if (reported.has(key)) continue
-      reported.add(key)
       findings.push({
         kind: 'birthOrderConflict',
         people: [ref(earlier), ref(later)],
@@ -532,7 +546,7 @@ function checkBirthOrders(
           type: 'reversed',
           a: earlier.full_name,
           b: later.full_name,
-          parent: parent.full_name,
+          parent,
           orderA: earlier.birth_order as number,
           orderB: later.birth_order as number,
           birthA: birthOf(earlier),

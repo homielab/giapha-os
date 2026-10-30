@@ -186,3 +186,68 @@ describe('uncles and cousins when who is older is unknown', () => {
     expect(r.description.uncertain).toBeUndefined()
   })
 })
+
+describe('half siblings numbered per mother', () => {
+  // a1, a2 by the first wife (1950, 1953); b1, b2 by the second (1965, 1968)
+  const persons = [
+    person('f', 'male'),
+    person('m1', 'female'),
+    person('m2', 'female'),
+    person('a1', 'male', { birth_order: 1, birth_year: 1950 }),
+    person('a2', 'male', { birth_order: 2, birth_year: 1953 }),
+    person('b1', 'male', { birth_order: 1, birth_year: 1965 }),
+    person('b2', 'male', { birth_order: 2, birth_year: 1968 })
+  ]
+  const rels = [
+    ...['a1', 'a2'].flatMap((id) => [child('f', id), child('m1', id)]),
+    ...['b1', 'b2'].flatMap((id) => [child('f', id), child('m2', id)])
+  ]
+  const kinship = (a: string, b: string, list = persons, links = rels) =>
+    computeKinship(
+      list.find((p) => p.id === a)!,
+      list.find((p) => p.id === b)!,
+      list,
+      links
+    )!
+
+  test('the birth year counts before the birth order', () => {
+    const r = kinship('a2', 'b1')
+    expect(r.aCallsB).toBe('Em trai')
+    expect(r.bCallsA).toBe('Anh trai')
+    expect(r.description.uncertain).toBeUndefined()
+  })
+
+  test('full siblings still go by birth order first', () => {
+    const list = persons.map((p) =>
+      p.id === 'a2' ? { ...p, birth_year: 1949 } : p
+    )
+    expect(kinship('a1', 'a2', list).aCallsB).toBe('Em trai')
+  })
+
+  test('without both years the birth order decides', () => {
+    const list = persons.map((p) =>
+      p.id === 'b1' ? { ...p, birth_year: null } : p
+    )
+    expect(kinship('a2', 'b1', list).aCallsB).toBe('Anh trai')
+  })
+
+  test('without years or orders: uncertain', () => {
+    const list = persons.map((p) =>
+      p.id === 'a2' || p.id === 'b1'
+        ? { ...p, birth_year: null, birth_order: null }
+        : p
+    )
+    const r = kinship('a2', 'b1', list)
+    expect(r.aCallsB).toBe('Anh/Em trai')
+    expect(r.description.uncertain).toBe(true)
+  })
+
+  test('their children: uncle and cousins follow the birth year', () => {
+    const list = [...persons, person('ka2', 'male'), person('kb1', 'male')]
+    const links = [...rels, child('a2', 'ka2'), child('b1', 'kb1')]
+    // b1 is younger than a2: Chú, not Bác
+    expect(kinship('ka2', 'b1', list, links).aCallsB).toBe('Chú')
+    expect(kinship('kb1', 'a2', list, links).aCallsB).toBe('Bác')
+    expect(kinship('kb1', 'ka2', list, links).aCallsB).toBe('Anh họ')
+  })
+})
