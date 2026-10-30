@@ -77,6 +77,20 @@ describe('computeFamilyStats', () => {
     expect(stats.firstBorn).toBe(2)
   })
 
+  test('in-laws with birth order 1 are not counted as first-born', () => {
+    const withInLaws = computeFamilyStats(
+      [
+        ...persons,
+        person('wife1', 'female', { is_in_law: true, birth_order: 1 }),
+        person('wife2', 'female', { is_in_law: true, birth_order: 1 })
+      ],
+      relationships
+    )
+    expect(withInLaws.firstBorn).toBe(2)
+    expect(withInLaws.daughtersInLaw).toBe(3)
+    expect(withInLaws.total).toBe(8)
+  })
+
   test('married counts both spouses; parent-child links are ignored', () => {
     expect(stats.married).toBe(4)
     expect(stats.unmarried).toBe(2)

@@ -161,8 +161,10 @@ export function computeFamilyStats(
   // Deceased
   const deceased = persons.filter((p) => p.is_deceased).length
 
-  // First-born (con trưởng)
-  const firstBorn = persons.filter((p) => p.birth_order === 1).length
+  // First-born (con trưởng); an in-law's birth order is in their own family
+  const firstBorn = persons.filter(
+    (p) => p.birth_order === 1 && !p.is_in_law
+  ).length
 
   // Married / unmarried (based on marriage relationships)
   const marriedIds = new Set<string>()

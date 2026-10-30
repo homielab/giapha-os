@@ -91,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The statistics page no longer counts daughters- or sons-in-law with birth order 1 as eldest children.
 - Pressing Esc, clicking outside or Close in the Add/Edit event and gallery upload dialogs now asks "Discard changes?" when something was typed or a photo chosen, instead of losing it.
 - A custom event entered as a lunar date can no longer be saved with a day missing from that lunar month (e.g. the 30th of a 29-day month) or with an empty day, month or year; it used to be saved on today's date and, when yearly, repeat on that wrong date. A "Leap month" box now appears when the lunar year has that leap month (e.g. month 6 of 2025).
 - The gallery no longer shows the timeline for a moment after a reload when Grid is the chosen view.
