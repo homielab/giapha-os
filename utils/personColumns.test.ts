@@ -8,12 +8,13 @@ import { PERSON_LIST_COLUMNS, RELATIONSHIP_COLUMNS } from './personColumns'
 const columns = (list: string) => list.split(',').map((c) => c.trim())
 
 describe('column lists', () => {
-  test('relationship columns keep the link and drop note and timestamps', () => {
+  test('relationship columns keep the link and created_at (spouse order), drop note', () => {
     expect(columns(RELATIONSHIP_COLUMNS)).toEqual([
       'id',
       'type',
       'person_a',
-      'person_b'
+      'person_b',
+      'created_at'
     ])
   })
   test('person list columns drop note and created_at', () => {

@@ -92,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Members with several spouses: the tree, mind map and family book list the spouses by the spouse's birth year, then by when the marriage was added, so the order no longer looks random. A restore keeps when each relationship was added, so the order survives a backup and restore (migration `20261030120000_restore_relationship_created_at.sql`; older backups restore with the restore time).
 - Kinship finder: the new wife of your father is now "Mẹ kế" and the new husband of your mother "Bố dượng", and they call you "Con riêng của chồng" / "Con riêng của vợ" (was "Vợ của Bố" / "Chồng của Mẹ" and "Con").
 - Kinship finder: your spouse's aunts, uncles and grandparents are called as your spouse calls them ("Cô", "Ông nội") instead of "Cô vợ" or "Ông nội vợ" ("Cô vợ" means the wife herself); only parents, siblings and cousins keep vợ/chồng ("Bố vợ", "Anh chồng").
 - GEDCOM import from Gramps, MyHeritage and similar programs keeps a family's marriage date and place and its divorce as "Kết hôn: …" / "Ly hôn" lines in the marriage note instead of dropping them.

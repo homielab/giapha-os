@@ -98,6 +98,42 @@ describe('buildAdjacencyLists', () => {
     ])
   })
 
+  test('orders spouses by birth year, then marriage created_at, not by id', () => {
+    const ps = [
+      person('h', 'male'),
+      person('w1', 'female', { birth_year: 1950 }),
+      person('w2', 'female', { birth_year: 1960 }),
+      person('w3', 'female'),
+      person('w4', 'female')
+    ]
+    const m = (id: string, b: string, created_at: string): Relationship => ({
+      ...rel('marriage', 'h', b),
+      id,
+      created_at
+    })
+    const a = buildAdjacencyLists(
+      [
+        m('a', 'w4', '2024-03-01'),
+        m('b', 'w3', '2024-01-01'),
+        m('c', 'w2', '2020-01-01'),
+        m('d', 'w1', '2025-01-01')
+      ],
+      new Map(ps.map((x) => [x.id, x]))
+    )
+    const order = ['w1', 'w2', 'w3', 'w4']
+    expect(a.spousesByPersonId.get('h')!.map((s) => s.person.id)).toEqual(order)
+    const b = buildAdjacencyLists(
+      [
+        m('z', 'w1', '2025-01-01'),
+        m('y', 'w3', '2024-01-01'),
+        m('x', 'w4', '2024-03-01'),
+        m('w', 'w2', '2020-01-01')
+      ],
+      new Map(ps.map((x) => [x.id, x]))
+    )
+    expect(b.spousesByPersonId.get('h')!.map((s) => s.person.id)).toEqual(order)
+  })
+
   test('counts adopted children and skips unknown people', () => {
     const ids = adj.childrenByPersonId.get('dad')!.map((c) => c.id)
     expect(ids).toContain('adopted')

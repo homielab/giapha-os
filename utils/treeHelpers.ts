@@ -7,6 +7,30 @@ export interface SpouseData {
   note?: string | null
 }
 
+export interface SpouseOrderKey {
+  person: { birth_year?: number | null }
+  createdAt: string
+  relId: string
+}
+
+interface SpouseEntry extends SpouseData, SpouseOrderKey {
+  person: Person
+}
+
+/**
+ * Spouses in a stable order that does not depend on random ids: spouse's
+ * birth year (unknown last), then when the marriage was added, then its id.
+ */
+export function compareSpouses(a: SpouseOrderKey, b: SpouseOrderKey): number {
+  const ya = a.person.birth_year ?? Infinity
+  const yb = b.person.birth_year ?? Infinity
+  if (ya !== yb) return ya < yb ? -1 : 1
+  const ca = a.createdAt || '\uffff'
+  const cb = b.createdAt || '\uffff'
+  if (ca !== cb) return ca < cb ? -1 : 1
+  return a.relId < b.relId ? -1 : a.relId > b.relId ? 1 : 0
+}
+
 export interface AdjacencyLists {
   spousesByPersonId: Map<string, SpouseData[]>
   childrenByPersonId: Map<string, Person[]>
@@ -29,7 +53,7 @@ export function buildAdjacencyLists(
   relationships: Relationship[],
   personsMap: Map<string, Person>
 ): AdjacencyLists {
-  const spouses = new Map<string, SpouseData[]>()
+  const spouses = new Map<string, SpouseEntry[]>()
   const children = new Map<string, Person[]>()
 
   relationships.forEach((r) => {
@@ -37,11 +61,12 @@ export function buildAdjacencyLists(
       if (!spouses.has(r.person_a)) spouses.set(r.person_a, [])
       if (!spouses.has(r.person_b)) spouses.set(r.person_b, [])
 
+      const meta = { note: r.note, createdAt: r.created_at ?? '', relId: r.id }
       const pB = personsMap.get(r.person_b)
-      if (pB) spouses.get(r.person_a)?.push({ person: pB, note: r.note })
+      if (pB) spouses.get(r.person_a)?.push({ person: pB, ...meta })
 
       const pA = personsMap.get(r.person_a)
-      if (pA) spouses.get(r.person_b)?.push({ person: pA, note: r.note })
+      if (pA) spouses.get(r.person_b)?.push({ person: pA, ...meta })
     } else if (r.type === 'biological_child' || r.type === 'adopted_child') {
       if (!children.has(r.person_a)) children.set(r.person_a, [])
       const child = personsMap.get(r.person_b)
@@ -54,7 +79,16 @@ export function buildAdjacencyLists(
     childArray.sort(compareBirth)
   })
 
-  return { spousesByPersonId: spouses, childrenByPersonId: children }
+  const spousesByPersonId = new Map<string, SpouseData[]>()
+  spouses.forEach((list, id) => {
+    list.sort(compareSpouses)
+    spousesByPersonId.set(
+      id,
+      list.map(({ person, note }) => ({ person, note }))
+    )
+  })
+
+  return { spousesByPersonId, childrenByPersonId: children }
 }
 
 /**

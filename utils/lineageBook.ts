@@ -2,6 +2,7 @@ import { Gender } from '@/types'
 
 import { compareBirth } from './compareBirth'
 import { solarToLunar } from './lunarCalendar'
+import { compareSpouses } from './treeHelpers'
 
 /**
  * "Phả ký": the whole tree as a printable book, grouped by generation
@@ -39,6 +40,7 @@ export interface BookRelationshipRow {
   type: string
   person_a: string
   person_b: string
+  created_at?: string | null
 }
 
 export type ParentLabel = 'father' | 'mother' | 'parent'
@@ -164,7 +166,10 @@ export function buildLineageBook(
   const byId = new Map(persons.map((p) => [p.id, p]))
   const parentRows = new Map<string, Array<{ id: string; adopted: boolean }>>()
   const childRows = new Map<string, Array<{ id: string; adopted: boolean }>>()
-  const spouseIds = new Map<string, string[]>()
+  const spouseRows = new Map<
+    string,
+    Array<{ id: string; createdAt: string; relId: string }>
+  >()
   for (const r of relationships) {
     if (r.type === 'biological_child' || r.type === 'adopted_child') {
       const adopted = r.type === 'adopted_child'
@@ -179,9 +184,10 @@ export function buildLineageBook(
         [r.person_a, r.person_b],
         [r.person_b, r.person_a]
       ]) {
-        const list = spouseIds.get(a) ?? []
-        if (!list.includes(b)) list.push(b)
-        spouseIds.set(a, list)
+        const list = spouseRows.get(a) ?? []
+        if (!list.some((row) => row.id === b))
+          list.push({ id: b, createdAt: r.created_at ?? '', relId: r.id })
+        spouseRows.set(a, list)
       }
     }
   }
@@ -199,10 +205,13 @@ export function buildLineageBook(
           a.id.localeCompare(b.id)
       )
       .map((p) => ({ person: p, label: parentLabel(p.gender) })),
-    spouses: (spouseIds.get(person.id) ?? [])
-      .map((id) => byId.get(id))
-      .filter((p): p is LineageBookPerson => Boolean(p))
-      .map((p) => ({
+    spouses: (spouseRows.get(person.id) ?? [])
+      .map((row) => ({ ...row, person: byId.get(row.id) }))
+      .filter((x): x is typeof x & { person: LineageBookPerson } =>
+        Boolean(x.person)
+      )
+      .sort(compareSpouses)
+      .map(({ person: p }) => ({
         person: p,
         label: spouseLabel(p.gender),
         inLaw: p.is_in_law

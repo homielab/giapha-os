@@ -57,6 +57,7 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
       supabase
         .from('relationships')
         .select(RELATIONSHIP_COLUMNS)
+        .order('created_at')
         .order('id')
         .range(from, to)
     )
@@ -64,7 +65,7 @@ export default async function FamilyTreePage({ searchParams }: PageProps) {
 
   // PERSON_LIST_COLUMNS leaves out note/created_at; no view reads them.
   const persons = (personsRes.data || []) as Person[]
-  // RELATIONSHIP_COLUMNS leaves out note/created_at/updated_at; no view reads them.
+  // RELATIONSHIP_COLUMNS leaves out note/updated_at; no view reads them.
   const relationships = (relsRes.data || []) as Relationship[]
 
   // One storage request signs every avatar of the tree/list/mindmap instead

@@ -54,6 +54,7 @@ export default async function LineageBookPage() {
       supabase
         .from('relationships')
         .select(RELATIONSHIP_COLUMNS)
+        .order('created_at')
         .order('id')
         .range(from, to)
     )
@@ -61,7 +62,7 @@ export default async function LineageBookPage() {
 
   // BOOK_PERSON_COLUMNS ('*') covers everything the book renders.
   const persons = (personsData || []) as unknown as LineageBookPerson[]
-  // RELATIONSHIP_COLUMNS leaves out note/created_at/updated_at; no view reads them.
+  // RELATIONSHIP_COLUMNS leaves out note/updated_at; no view reads them.
   const relationships = (relsData || []) as unknown as Relationship[]
 
   const book = buildLineageBook(persons, relationships)

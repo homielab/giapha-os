@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
+import { Person } from '@/types'
+
 import {
   buildLineageBook,
   burialPlaceOf,
@@ -9,6 +11,7 @@ import {
   type LineageBookPerson
 } from './lineageBook'
 import { solarToLunar } from './lunarCalendar'
+import { buildAdjacencyLists } from './treeHelpers'
 
 const person = (over: Partial<LineageBookPerson>): LineageBookPerson => ({
   id: 'p',
@@ -370,5 +373,40 @@ describe('burialPlaceOf', () => {
       []
     )
     expect(book.generations[0].entries[0].burialPlace).toBe('Nghĩa trang X')
+  })
+})
+
+describe('spouse order', () => {
+  test('same order as the tree: birth year, then created_at, not id', () => {
+    const ps = [
+      person({ id: 'h', generation: 1 }),
+      person({ id: 'w1', gender: 'female', birth_year: 1950, is_in_law: true }),
+      person({ id: 'w2', gender: 'female', is_in_law: true }),
+      person({ id: 'w3', gender: 'female', is_in_law: true })
+    ]
+    const rels: BookRelationshipRow[] = [
+      { ...rel('marriage', 'h', 'w3'), id: 'a', created_at: '2024-05-01' },
+      { ...rel('marriage', 'h', 'w2'), id: 'b', created_at: '2020-01-01' },
+      { ...rel('marriage', 'w1', 'h'), id: 'c', created_at: '2025-01-01' }
+    ]
+    const book = buildLineageBook(ps, rels)
+    const entry = book.generations
+      .flatMap((g) => g.entries)
+      .find((e) => e.person.id === 'h')!
+    const bookOrder = entry.spouses.map((s) => s.person.id)
+    expect(bookOrder).toEqual(['w1', 'w2', 'w3'])
+    const adj = buildAdjacencyLists(
+      rels.map((r) => ({
+        ...r,
+        type: 'marriage',
+        note: null,
+        created_at: r.created_at ?? '',
+        updated_at: ''
+      })),
+      new Map(ps.map((p) => [p.id, p as unknown as Person]))
+    )
+    expect(adj.spousesByPersonId.get('h')!.map((s) => s.person.id)).toEqual(
+      bookOrder
+    )
   })
 })

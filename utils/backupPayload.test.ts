@@ -287,9 +287,30 @@ describe('buildRestorePayload', () => {
       type: 'marriage',
       person_a: A,
       person_b: B,
-      note: null
+      note: null,
+      created_at: '2024-01-02T03:04:05.000Z'
     })
     expect(payload.custom_events[0]).not.toHaveProperty('created_by')
+  })
+
+  test('keeps a valid relationship created_at (spouse order), drops a bad one', () => {
+    const base = validPayload()
+    const rel0 = base.relationships[0]
+    const payload = buildRestorePayload({
+      ...base,
+      relationships: [
+        { ...rel0, id: 'x', created_at: '2020-01-02T03:04:05+00:00' },
+        { ...rel0, created_at: 'not a date' }
+      ]
+    })
+    expect(payload.relationships[0]).toEqual({
+      type: 'marriage',
+      person_a: A,
+      person_b: B,
+      note: null,
+      created_at: '2020-01-02T03:04:05+00:00'
+    })
+    expect(payload.relationships[1]).not.toHaveProperty('created_at')
   })
 
   test('fills missing optional fields with null and defaults', () => {

@@ -16,4 +16,4 @@ export const PERSON_PICKER_COLUMNS =
  * `note`, `created_at` and `updated_at` are left out (the detail modal, the
  * member page and the edit form still load the whole row).
  */
-export const RELATIONSHIP_COLUMNS = 'id, type, person_a, person_b'
+export const RELATIONSHIP_COLUMNS = 'id, type, person_a, person_b, created_at'

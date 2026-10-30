@@ -93,7 +93,7 @@ export type SanitizedPerson = Omit<
 > & { burial_place: string | null }
 export type SanitizedRelationship = Omit<
   RelationshipExport,
-  'id' | 'created_at' | 'updated_at'
+  'id' | 'updated_at'
 >
 export type SanitizedCustomEvent = Omit<
   CustomEventExport,
@@ -452,7 +452,12 @@ export function sanitizeRelationship(
     type: r.type,
     person_a: r.person_a,
     person_b: r.person_b,
-    note: r.note ?? null
+    note: r.note ?? null,
+    // Kept so a restore keeps the spouse order; a missing or invalid value
+    // is left out and the database uses the restore time.
+    ...(typeof r.created_at === 'string' && !isNaN(Date.parse(r.created_at))
+      ? { created_at: r.created_at }
+      : {})
   }
 }
 
