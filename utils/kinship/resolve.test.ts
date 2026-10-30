@@ -132,7 +132,7 @@ describe('great-uncles and great-aunts', () => {
     'paternal, B %s, B order %d, X order %d: %s',
     (g, ob, ox, term) => {
       const r = greatUncle(g, ox, ob)
-      expect([r.aCallsB, r.bCallsA]).toEqual([term, 'Chắt'])
+      expect([r.aCallsB, r.bCallsA]).toEqual([term, 'Cháu'])
       expect(r.description).toMatchObject({
         kind: 'upperBranch',
         side: 'paternal'
@@ -142,7 +142,7 @@ describe('great-uncles and great-aunts', () => {
 
   test('grandmother’s brother is Ông Cậu, on the father’s (paternal) side', () => {
     const r = greatUncle('male', 1, 2, 'female')
-    expect([r.aCallsB, r.bCallsA]).toEqual(['Ông Cậu', 'Chắt'])
+    expect([r.aCallsB, r.bCallsA]).toEqual(['Ông Cậu', 'Cháu'])
     expect(r.description).toMatchObject({
       kind: 'upperBranch',
       side: 'paternal'
@@ -166,10 +166,56 @@ describe('great-uncles and great-aunts', () => {
       child('G', 'B'),
       marriage('A', 'W')
     ]
-    // W's "Bà Cô" is "Bà Cô" for A too; the husband of her "Chắt" is "Chắt rể".
+    // W's "Bà Cô" is "Bà Cô" for A too; the husband of her "Cháu" is "Cháu rể".
     const [aCallsB, bCallsA] = terms('A', 'B', persons, rels)
     expect(aCallsB).toBe('Bà Cô')
-    expect(bCallsA).toBe('Chắt rể')
+    expect(bCallsA).toBe('Cháu rể')
+  })
+
+  test('the wife of Ông Cậu is Bà Mợ, the husband of Bà Dì is Ông Dượng', () => {
+    // A's mother M is the child of GM; GM's siblings are K (male) and D (female).
+    const persons = [
+      person('G', 'male'),
+      person('GM', 'female'),
+      person('K', 'male'),
+      person('D', 'female'),
+      person('M', 'female'),
+      person('A', 'male'),
+      person('KW', 'female'),
+      person('DH', 'male')
+    ]
+    const rels = [
+      child('G', 'GM'),
+      child('G', 'K'),
+      child('G', 'D'),
+      child('GM', 'M'),
+      child('M', 'A'),
+      marriage('K', 'KW'),
+      marriage('DH', 'D')
+    ]
+    expect(terms('A', 'KW', persons, rels)).toEqual(['Bà Mợ', 'Cháu'])
+    expect(terms('KW', 'A', persons, rels)).toEqual(['Cháu', 'Bà Mợ'])
+    expect(terms('A', 'DH', persons, rels)).toEqual(['Ông Dượng', 'Cháu'])
+    expect(terms('DH', 'A', persons, rels)).toEqual(['Cháu', 'Ông Dượng'])
+  })
+
+  test('great-grandchildren of a great-uncle are Cháu, not Chít', () => {
+    const persons = [
+      person('G', 'male'),
+      person('X', 'male', { birth_order: 1 }),
+      person('P', 'male'),
+      person('Q', 'male'),
+      person('A', 'male'),
+      person('B', 'male', { birth_order: 2 })
+    ]
+    const rels = [
+      child('G', 'X'),
+      child('X', 'P'),
+      child('P', 'Q'),
+      child('Q', 'A'),
+      child('G', 'B')
+    ]
+    expect(terms('A', 'B', persons, rels)).toEqual(['Cụ ông Chú', 'Cháu'])
   })
 })
 

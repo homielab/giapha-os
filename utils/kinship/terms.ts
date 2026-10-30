@@ -125,6 +125,12 @@ const IN_LAW_COMMON = new Map<string, GenderTerms>([
   ['Bà Cô', KEEP('Ông Dượng')],
   ['Ông Chú', KEEP('Bà Thím')],
   ['Ông Bác', KEEP('Bà Bác')],
+  ['Bà Bác', KEEP('Ông Bác')],
+  ['Ông Cậu', KEEP('Bà Mợ')],
+  ['Bà Dì', KEEP('Ông Dượng')],
+  ['Cậu họ', KEEP('Mợ họ')],
+  ['Dì họ', KEEP('Dượng họ')],
+  ['Cô họ', KEEP('Dượng họ')],
   // Relative age unknown (no birth data): both terms, joined by '/'.
   ['Anh/Em họ', KEEP('Chị/Em dâu (họ)')],
   ['Chị/Em họ', KEEP('Anh/Em rể (họ)')],
@@ -153,6 +159,7 @@ const IN_LAW_CALLED_BY_RELATIVE = new Map<string, GenderTerms>([
  */
 const SPOUSE_OF_RELATIVE = new Map<string, GenderTerms>([
   ...IN_LAW_COMMON,
+  ['Bác họ', byGender('Bác trai họ', 'Bác gái họ')],
   ['Anh trai', byGender('Anh rể', 'Chị dâu', 'Anh rể')],
   ['Chị gái', byGender('Anh rể', 'Chị dâu', 'Chị dâu')],
   ['Anh/Em trai', byGender('Anh/Em rể', 'Chị/Em dâu', 'Anh/Em rể')],

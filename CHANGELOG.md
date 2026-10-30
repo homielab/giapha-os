@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Kinship finder: spouses of grandparents' siblings and of parents' cousins get their own terms ("Bà Mợ", "Ông Dượng", "Ông Bác" / "Bà Bác", "Mợ họ", "Dượng họ", "Bác gái họ") instead of "Wife of Ông Cậu"; grandchildren and great-grandchildren of a grandparent's sibling are "Cháu", no longer "Chắt" / "Chít".
 - Kinship finder: children of two remarried parents (no parent in common) are now "Anh kế" / "Chị kế" / "Em kế" by birth year, and two wives of one husband (or two husbands of one wife) get a description naming that spouse, instead of "Unknown".
 - The calendar file (.ics) now holds death anniversaries and lunar events for this year and the next four instead of two; the file name, each event's description and a caption under the export button say until which year it reminds.
 - Kinship finder: the parents of a married couple are now "Ông thông gia" / "Bà thông gia" (sui gia) to each other, with the path through their children, instead of "Unknown".

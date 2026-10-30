@@ -91,6 +91,24 @@ describe('in-law terms when the relative age is unknown', () => {
 })
 
 describe('calling the person who married in', () => {
+  test.each([
+    ['Ông Cậu', 'female', 'Bà Mợ'],
+    ['Bà Dì', 'male', 'Ông Dượng'],
+    ['Bà Bác', 'male', 'Ông Bác'],
+    ['Ông Bác', 'female', 'Bà Bác'],
+    ['Cậu họ', 'female', 'Mợ họ'],
+    ['Dì họ', 'male', 'Dượng họ'],
+    ['Cô họ', 'male', 'Dượng họ']
+  ] as const)('spouse of %s (%s) is %s', (term, gender, spouse) => {
+    expect(termForSpouseOfRelative(term, gender)).toBe(spouse)
+    expect(termRelativeCallsInLaw(term, gender)).toBe(spouse)
+  })
+
+  test('the spouse of Bác họ is Bác gái họ / Bác trai họ', () => {
+    expect(termForSpouseOfRelative('Bác họ', 'female')).toBe('Bác gái họ')
+    expect(termForSpouseOfRelative('Bác họ', 'male')).toBe('Bác trai họ')
+  })
+
   test('Con and Cháu depend on the gender', () => {
     expect(termRelativeCallsInLaw('Con', 'male')).toBe('Con rể')
     expect(termRelativeCallsInLaw('Con', 'female')).toBe('Con dâu')
@@ -114,7 +132,7 @@ describe('calling the person who married in', () => {
     expect(termRelativeCallsInLaw('Cậu', 'female')).toBe('Mợ')
     expect(termForSpouseOfRelative('Bà Cô', 'male')).toBe('Ông Dượng')
     expect(termRelativeCallsInLaw('Bác họ', 'female')).toBe('Bác họ')
-    expect(termForSpouseOfRelative('Bác họ', 'female')).toBe('Vợ của Bác họ')
+    expect(termForSpouseOfRelative('Bác họ', 'female')).toBe('Bác gái họ')
   })
 
   test('descendants and cousins keep the dâu/rể form', () => {

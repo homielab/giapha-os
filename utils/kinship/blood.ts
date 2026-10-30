@@ -1,6 +1,7 @@
 import { findLca, getAncestryData, type KinshipGraph } from './graph'
 import {
   ancestorTitle,
+  DESCENDANTS,
   getDirectAncestorTerm,
   getDirectDescendantTerm
 } from './terms'
@@ -185,7 +186,9 @@ export function resolveBloodTerms(
 
     return [
       (prefix + termForB).trim(),
-      getDirectDescendantTerm(depthA),
+      // Collateral grandchildren are 'Cháu' (Chắt/Chít only for direct
+      // descendants); past the term table keep 'Cháu đời N'.
+      depthA >= DESCENDANTS.length ? getDirectDescendantTerm(depthA) : 'Cháu',
       withSeniority(
         { kind: 'upperBranch', side: isPaternalA ? 'paternal' : 'maternal' },
         isPaternalSide && seniority === 'unknown'
