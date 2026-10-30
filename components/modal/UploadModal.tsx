@@ -12,7 +12,7 @@ import { useFilePreview } from '@/hooks/useFilePreview'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 import type { GalleryItem } from '@/types'
-import { isUploadFormDirty } from '@/utils/formDirty'
+import { isUploadFormDirty, uploadFormValuesFrom } from '@/utils/formDirty'
 import { saveGalleryItem } from '@/utils/gallery'
 import { resizeGalleryImage } from '@/utils/image'
 import { validateImageFile } from '@/utils/imageUpload'
@@ -36,9 +36,15 @@ export default function UploadModal({
 }: UploadModalProps) {
   const { t } = useI18n()
   const { file, previewUrl: preview, setFile } = useFilePreview()
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [eventDate, setEventDate] = useState('')
+  // Editing starts from the photo's saved values; the dialog is keyed by item
+  // id, so these are read once per item.
+  const initial = uploadFormValuesFrom(initialData)
+  const [title, setTitle] = useState(initial.title)
+  const [description, setDescription] = useState(initial.description)
+  const [eventDate, setEventDate] = useState(initial.eventDate)
+  // The current photo shows until a new one is chosen or it is cleared;
+  // clearing it without choosing another keeps the saved photo.
+  const [showCurrent, setShowCurrent] = useState(Boolean(initialData))
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [askDiscard, setAskDiscard] = useState(false)
@@ -150,9 +156,10 @@ export default function UploadModal({
 
   const resetForm = () => {
     setFile(null)
-    setTitle('')
-    setDescription('')
-    setEventDate('')
+    setTitle(initial.title)
+    setDescription(initial.description)
+    setEventDate(initial.eventDate)
+    setShowCurrent(Boolean(initialData))
     setError(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -170,12 +177,15 @@ export default function UploadModal({
   const requestClose = () => {
     if (isUploading) return
     if (
-      isUploadFormDirty({
-        hasFile: Boolean(file),
-        title,
-        description,
-        eventDate
-      })
+      isUploadFormDirty(
+        {
+          hasFile: Boolean(file),
+          title,
+          description,
+          eventDate
+        },
+        initial
+      )
     )
       setAskDiscard(true)
     else handleClose()
@@ -237,9 +247,17 @@ export default function UploadModal({
                 onSubmit={handleSubmit}
                 className='space-y-6'>
                 <UploadDropzone
-                  preview={preview}
+                  preview={
+                    preview ??
+                    (showCurrent && initialData?.image_url
+                      ? initialData.image_url
+                      : null)
+                  }
                   fileInputRef={fileInputRef}
-                  onRemovePreview={() => setFile(null)}
+                  onRemovePreview={() => {
+                    setFile(null)
+                    setShowCurrent(false)
+                  }}
                   onFileChange={handleFileChange}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}

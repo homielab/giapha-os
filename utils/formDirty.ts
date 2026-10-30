@@ -58,12 +58,43 @@ export interface UploadFormValues {
   eventDate: string
 }
 
-/** True when a photo was chosen or any field was typed in the upload form. */
-export function isUploadFormDirty(values: UploadFormValues): boolean {
+type UploadFormFields = Omit<UploadFormValues, 'hasFile'>
+
+const BLANK_UPLOAD_FORM: UploadFormFields = {
+  title: '',
+  description: '',
+  eventDate: ''
+}
+
+/** The upload form's starting values: blank, or the saved photo's fields. */
+export function uploadFormValuesFrom(
+  item?: {
+    title: string
+    description: string | null
+    event_date: string | null
+  } | null
+): UploadFormFields {
+  if (!item) return BLANK_UPLOAD_FORM
+  return {
+    title: item.title ?? '',
+    description: item.description ?? '',
+    // <input type="date"> takes YYYY-MM-DD only.
+    eventDate: item.event_date ? item.event_date.slice(0, 10) : ''
+  }
+}
+
+/**
+ * True when a photo was chosen or a field differs from where the form started
+ * (blank when adding, the saved values when editing).
+ */
+export function isUploadFormDirty(
+  values: UploadFormValues,
+  base: UploadFormFields = BLANK_UPLOAD_FORM
+): boolean {
   return (
     values.hasFile ||
-    values.title !== '' ||
-    values.description !== '' ||
-    values.eventDate !== ''
+    values.title !== base.title ||
+    values.description !== base.description ||
+    values.eventDate !== base.eventDate
   )
 }
