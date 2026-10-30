@@ -33,7 +33,15 @@ describe('kinship text', () => {
         { kind: 'spouseOf', name: 'Bo', spouse: 'Cy', spouseRole: 'wife' },
         en
       ),
-      describePathStep({ kind: 'childOf', name: 'Bo', parent: 'Cy' }, en)
+      describePathStep({ kind: 'childOf', name: 'Bo', parent: 'Cy' }, en),
+      describePathStep(
+        { kind: 'spouseOf', name: 'Bo', spouse: 'Cy', spouseRole: 'spouse' },
+        en
+      ),
+      describeKinship({ kind: 'upperBranch', side: 'unknown' }, en),
+      describeKinship({ kind: 'cousins', side: 'unknown' }, en),
+      describeKinship({ kind: 'relatives', side: 'unknown' }, en),
+      describeKinship({ kind: 'coSpouses', name: 'Bo', role: 'spouses' }, en)
     ]
     for (const text of texts) expect(text).not.toMatch(VIETNAMESE)
   })

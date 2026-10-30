@@ -1,4 +1,4 @@
-import type { Gender } from './types'
+import { byGenderOf, type Gender, type KinshipSide } from './types'
 
 // ── Direct line (trực hệ) ───────────────────────────────────────────────────
 
@@ -33,24 +33,43 @@ export function ancestorTitle(depth: number): string {
   return ANCESTORS[depth] || `Tổ đời ${depth}`
 }
 
+const SIDE_SUFFIX: Record<KinshipSide, string> = {
+  paternal: 'nội',
+  maternal: 'ngoại',
+  unknown: 'nội/ngoại'
+}
+
 /**
  * Lấy danh xưng trực hệ vế trên
  */
 export function getDirectAncestorTerm(
   depth: number,
   gender: Gender,
-  isPaternal: boolean
+  side: KinshipSide
 ): string {
-  if (depth === 1) return gender === 'female' ? 'Mẹ' : 'Bố'
+  if (depth === 1) return byGenderOf(gender, 'Bố', 'Mẹ', 'Bố/Mẹ')
   if (depth === 2) {
-    const base = gender === 'female' ? 'Bà' : 'Ông'
-    return `${base} ${isPaternal ? 'nội' : 'ngoại'}`
+    const base = byGenderOf(gender, 'Ông', 'Bà', 'Ông/Bà')
+    return `${base} ${SIDE_SUFFIX[side]}`
   }
   if (depth === 3) {
-    const base = gender === 'female' ? 'Cụ bà (bà cố)' : 'Cụ ông (ông cố)'
-    return `${base} ${isPaternal ? 'nội' : 'ngoại'}`
+    const base = byGenderOf(
+      gender,
+      'Cụ ông (ông cố)',
+      'Cụ bà (bà cố)',
+      'Cụ ông/bà (ông/bà cố)'
+    )
+    return `${base} ${SIDE_SUFFIX[side]}`
   }
   return ancestorTitle(depth)
+}
+
+/**
+ * Both alternatives of two terms, without repeats: "Bác/Chú" and "Cậu" give
+ * "Bác/Chú/Cậu" (used when Nội or Ngoại is not known).
+ */
+export function joinAlternatives(...terms: string[]): string {
+  return [...new Set(terms.flatMap((term) => term.split('/')))].join('/')
 }
 
 /**
@@ -72,14 +91,20 @@ const SIBLING_STEMS = new Map<string, string>([
   ['Em gái', 'Em'],
   ['Em trai', 'Em'],
   ['Anh/Em trai', 'Anh/Em'],
-  ['Chị/Em gái', 'Chị/Em']
+  ['Chị/Em gái', 'Chị/Em'],
+  // Gender 'other'
+  ['Anh/Chị', 'Anh/Chị'],
+  ['Em', 'Em'],
+  ['Anh/Chị/Em', 'Anh/Chị/Em']
 ])
 const COUSIN_STEMS = new Map<string, string>([
   ['Anh họ', 'Anh'],
   ['Chị họ', 'Chị'],
   ['Em họ', 'Em'],
   ['Anh/Em họ', 'Anh/Em'],
-  ['Chị/Em họ', 'Chị/Em']
+  ['Chị/Em họ', 'Chị/Em'],
+  ['Anh/Chị họ', 'Anh/Chị'],
+  ['Anh/Chị/Em họ', 'Anh/Chị/Em']
 ])
 
 /**
@@ -89,7 +114,7 @@ const COUSIN_STEMS = new Map<string, string>([
  * them ("Cô", "Ông nội", "Bác họ"), because "Cô vợ" means the wife herself.
  */
 export function callSpouseRelative(term: string, suffix: string): string {
-  if (term === 'Bố' || term === 'Mẹ') return term + suffix
+  if (term === 'Bố' || term === 'Mẹ' || term === 'Bố/Mẹ') return term + suffix
   const sibling = SIBLING_STEMS.get(term)
   if (sibling) return sibling + suffix
   const cousin = COUSIN_STEMS.get(term)
@@ -97,23 +122,27 @@ export function callSpouseRelative(term: string, suffix: string): string {
   return term
 }
 
-/** One in-law term per gender of the person who married in (other follows female unless given). */
-function byGender(male: string, female: string, other = female) {
+/**
+ * One in-law term per gender of the person who married in; gender 'other'
+ * lists both ("Con dâu/Con rể") unless given.
+ */
+function byGender(male: string, female: string, other = `${female}/${male}`) {
   return { male, female, other }
 }
 type GenderTerms = ReturnType<typeof byGender>
 
-const KEEP = (term: string) => byGender(term, term)
+/** The term follows the relative's gender, not the in-law's ("Chú" → "Thím"). */
+const KEEP = (term: string) => byGender(term, term, term)
 
 const IN_LAW_COMMON = new Map<string, GenderTerms>([
   // Descendants: "Con dâu", "Cháu rể", "Chắt dâu", … "Chẹt rể".
   ...DESCENDANTS.filter(Boolean).map(
     (term) => [term, byGender(`${term} rể`, `${term} dâu`)] as const
   ),
-  ['Cháu họ', byGender('Cháu rể (họ)', 'Cháu dâu (họ)')],
+  ['Cháu họ', byGender('Cháu rể (họ)', 'Cháu dâu (họ)', 'Cháu dâu/rể (họ)')],
   ['Em gái', byGender('Em rể', 'Em dâu')],
   ['Em trai', byGender('Em rể', 'Em dâu')],
-  ['Em họ', byGender('Em rể (họ)', 'Em dâu (họ)')],
+  ['Em họ', byGender('Em rể (họ)', 'Em dâu (họ)', 'Em dâu/rể (họ)')],
   ['Chị họ', KEEP('Anh rể (họ)')],
   ['Anh họ', KEEP('Chị dâu (họ)')],
   ['Bác', byGender('Bác', 'Bác gái')],
@@ -134,10 +163,37 @@ const IN_LAW_COMMON = new Map<string, GenderTerms>([
   // Relative age unknown (no birth data): both terms, joined by '/'.
   ['Anh/Em họ', KEEP('Chị/Em dâu (họ)')],
   ['Chị/Em họ', KEEP('Anh/Em rể (họ)')],
-  ['Bác/Chú', byGender('Bác/Dượng', 'Bác gái/Thím')],
-  ['Bác/Cô', byGender('Bác/Dượng', 'Bác gái/Thím')],
-  ['Bác/Chú họ', byGender('Bác/Dượng họ', 'Bác gái/Thím họ')],
-  ['Bác/Cô họ', byGender('Bác/Dượng họ', 'Bác gái/Thím họ')]
+  ['Bác/Chú', byGender('Bác/Dượng', 'Bác gái/Thím', 'Bác/Thím/Dượng')],
+  ['Bác/Cô', byGender('Bác/Dượng', 'Bác gái/Thím', 'Bác/Thím/Dượng')],
+  [
+    'Bác/Chú họ',
+    byGender('Bác/Dượng họ', 'Bác gái/Thím họ', 'Bác/Thím/Dượng họ')
+  ],
+  [
+    'Bác/Cô họ',
+    byGender('Bác/Dượng họ', 'Bác gái/Thím họ', 'Bác/Thím/Dượng họ')
+  ],
+  // The relative has gender 'other': the in-law's own gender decides.
+  ['Em', byGender('Em rể', 'Em dâu')],
+  ['Anh/Chị', byGender('Anh rể', 'Chị dâu')],
+  ['Anh/Chị/Em', byGender('Anh/Em rể', 'Chị/Em dâu', 'Dâu/Rể')],
+  [
+    'Anh/Chị họ',
+    byGender('Anh rể (họ)', 'Chị dâu (họ)', 'Chị dâu/Anh rể (họ)')
+  ],
+  [
+    'Anh/Chị/Em họ',
+    byGender('Anh/Em rể (họ)', 'Chị/Em dâu (họ)', 'Dâu/Rể (họ)')
+  ],
+  ['Chú/Cô', byGender('Dượng', 'Thím')],
+  ['Bác/Chú/Cô', byGender('Bác/Dượng', 'Bác gái/Thím', 'Bác/Thím/Dượng')],
+  ['Cậu/Dì', byGender('Dượng', 'Mợ')],
+  ['Chú/Cô họ', byGender('Dượng họ', 'Thím họ', 'Thím/Dượng họ')],
+  [
+    'Bác/Chú/Cô họ',
+    byGender('Bác/Dượng họ', 'Bác gái/Thím họ', 'Bác/Thím/Dượng họ')
+  ],
+  ['Cậu/Dì họ', byGender('Dượng họ', 'Mợ họ', 'Mợ/Dượng họ')]
 ])
 
 /**
@@ -149,8 +205,8 @@ const IN_LAW_CALLED_BY_RELATIVE = new Map<string, GenderTerms>([
   ['Anh trai', byGender('Anh rể', 'Chị dâu')],
   ['Chị gái', byGender('Anh rể', 'Chị dâu')],
   ['Bác họ', KEEP('Bác họ')],
-  ['Anh/Em trai', byGender('Anh/Em rể', 'Chị/Em dâu')],
-  ['Chị/Em gái', byGender('Anh/Em rể', 'Chị/Em dâu')]
+  ['Anh/Em trai', byGender('Anh/Em rể', 'Chị/Em dâu', 'Dâu/Rể')],
+  ['Chị/Em gái', byGender('Anh/Em rể', 'Chị/Em dâu', 'Dâu/Rể')]
 ])
 
 /**
@@ -159,11 +215,11 @@ const IN_LAW_CALLED_BY_RELATIVE = new Map<string, GenderTerms>([
  */
 const SPOUSE_OF_RELATIVE = new Map<string, GenderTerms>([
   ...IN_LAW_COMMON,
-  ['Bác họ', byGender('Bác trai họ', 'Bác gái họ')],
-  ['Anh trai', byGender('Anh rể', 'Chị dâu', 'Anh rể')],
-  ['Chị gái', byGender('Anh rể', 'Chị dâu', 'Chị dâu')],
-  ['Anh/Em trai', byGender('Anh/Em rể', 'Chị/Em dâu', 'Anh/Em rể')],
-  ['Chị/Em gái', byGender('Anh/Em rể', 'Chị/Em dâu', 'Chị/Em dâu')]
+  ['Bác họ', byGender('Bác trai họ', 'Bác gái họ', 'Bác gái/trai họ')],
+  ['Anh trai', byGender('Anh rể', 'Chị dâu')],
+  ['Chị gái', byGender('Anh rể', 'Chị dâu')],
+  ['Anh/Em trai', byGender('Anh/Em rể', 'Chị/Em dâu', 'Dâu/Rể')],
+  ['Chị/Em gái', byGender('Anh/Em rể', 'Chị/Em dâu', 'Dâu/Rể')]
 ])
 
 function lookupInLaw(
@@ -173,7 +229,7 @@ function lookupInLaw(
 ): string {
   const entry = table.get(relativeTerm)
   if (entry) return entry[gender]
-  return `${gender === 'male' ? 'Chồng' : 'Vợ'} của ${relativeTerm}`
+  return `${byGenderOf(gender, 'Chồng', 'Vợ', 'Vợ/Chồng')} của ${relativeTerm}`
 }
 
 /** A's relative calls A, the person married to their kin: "Con" → "Con dâu". */

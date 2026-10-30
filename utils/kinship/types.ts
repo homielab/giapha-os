@@ -1,9 +1,31 @@
 /** Placeholder term when no relation is found; the UI shows its own text. */
 export const UNKNOWN_TERM = ''
 
-export type KinshipSide = 'paternal' | 'maternal'
+/** 'unknown': the parent on the way up has gender 'other', so Nội or Ngoại is not known. */
+export type KinshipSide = 'paternal' | 'maternal' | 'unknown'
 
 export type Gender = 'male' | 'female' | 'other'
+
+/** 'neutral' for 'other' (or anything not recorded as male or female). */
+export function genderBranch(gender: Gender): 'male' | 'female' | 'neutral' {
+  if (gender === 'male') return 'male'
+  if (gender === 'female') return 'female'
+  return 'neutral'
+}
+
+/**
+ * The term for the person's gender; `neutral` for gender 'other' lists both
+ * forms ("Bố/Mẹ"), so isAmbiguousTerm flags it.
+ */
+export function byGenderOf<T extends string>(
+  gender: Gender,
+  male: T,
+  female: T,
+  neutral: T
+): T {
+  const branch = genderBranch(gender)
+  return branch === 'male' ? male : branch === 'female' ? female : neutral
+}
 
 /** What kind of relation was found; the UI turns it into a sentence. */
 export type KinshipDescription = (
@@ -24,8 +46,12 @@ export type KinshipDescription = (
   | { kind: 'coParentsInLaw'; childA: string; childB: string }
   /** A's parent `parent` married B's parent `stepParent`; no shared parent. */
   | { kind: 'stepSiblings'; parent: string; stepParent: string }
-  /** A and B are both married to `name` (two wives or two husbands). */
-  | { kind: 'coSpouses'; name: string; role: 'wives' | 'husbands' }
+  /** A and B are both married to `name` (wives, husbands, or spouses when `name` has gender 'other'). */
+  | {
+      kind: 'coSpouses'
+      name: string
+      role: 'wives' | 'husbands' | 'spouses'
+    }
   | { kind: 'none' }
 ) & {
   commonAncestor?: string | null
@@ -54,7 +80,7 @@ export type KinshipPathStep =
       kind: 'spouseOf'
       name: string
       spouse: string
-      spouseRole: 'husband' | 'wife'
+      spouseRole: 'husband' | 'wife' | 'spouse'
     }
 
 export interface KinshipTerms {
@@ -73,6 +99,8 @@ export interface KinshipTerms {
 export interface KinshipResult extends KinshipTerms {
   /** Cách gọi chung chung ("Họ hàng") hoặc nhiều cách ("Bố/Mẹ"): cần lưu ý */
   hasAmbiguousTerm: boolean
+  /** A or B has gender 'other', so a term lists the male and female forms. */
+  hasNeutralGender: boolean
 }
 
 /** True for a term that offers several alternatives or is only "Họ hàng". */

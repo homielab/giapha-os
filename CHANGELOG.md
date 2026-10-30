@@ -96,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Kinship finder: a person whose gender is "Other" is no longer called as a man ("Chồng", "Bố", "Anh trai"): terms list both forms ("Vợ/Chồng", "Bố/Mẹ", "Ông/Bà nội", "Anh/Chị", "Chú/Cô", "Con dâu/Con rể"), with a note that the gender is Other; a parent of gender Other leaves Nội or Ngoại open ("Ông nội/ngoại").
 - GEDCOM import: estimated dates (`ABT`, `BEF`, `AFT`, `EST`, `CAL`) are no longer taken as exact; the original text goes into the note (`BIRT: ABT 1950`). Foster, step and sealing children (`PEDI FOSTER`/`STEP`/`SEALING`) become adopted children with a note line, instead of biological children.
 - GEDCOM import: a person without a name is saved as "Chưa rõ tên" ("Unknown" in English) in the interface language instead of always "Unknown", and the import confirmation says how many such people the file has.
 - Merge preview rejects profile IDs that are not UUIDs before querying.

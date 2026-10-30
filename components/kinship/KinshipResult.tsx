@@ -21,6 +21,7 @@ interface KinshipResultProps {
     bCallsA: string
     pathLabels: KinshipPathStep[]
     hasAmbiguousTerm: boolean
+    hasNeutralGender?: boolean
   } | null
 }
 
@@ -142,6 +143,13 @@ export default function KinshipResult({
                 .
               </p>
             )}
+
+          {/* Gender 'other': why the term lists both forms */}
+          {result.hasNeutralGender && (
+            <p className='px-1 text-sm text-stone-600'>
+              {t('kinshipNeutralGenderHint')}
+            </p>
+          )}
 
           {/* Disclaimer for ambiguous terms */}
           {result.hasAmbiguousTerm && (

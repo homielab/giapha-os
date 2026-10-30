@@ -1,8 +1,37 @@
+import type { TranslationKey } from '@/lib/i18n/messages'
 import type { Translate } from '@/utils/dateHelpers'
 import type {
   KinshipDescription,
-  KinshipPathStep
+  KinshipPathStep,
+  KinshipSide
 } from '@/utils/kinshipHelpers'
+
+/** Message keys per side; 'unknown' says a parent's gender is 'other'. */
+const UPPER_KEYS: Record<KinshipSide, TranslationKey> = {
+  paternal: 'kinshipDescUpperPaternal',
+  maternal: 'kinshipDescUpperMaternal',
+  unknown: 'kinshipDescUpperUnknownSide'
+}
+const COUSIN_KEYS: Record<KinshipSide, TranslationKey> = {
+  paternal: 'kinshipDescCousinsPaternal',
+  maternal: 'kinshipDescCousinsMaternal',
+  unknown: 'kinshipDescCousinsUnknownSide'
+}
+const RELATIVE_KEYS: Record<KinshipSide, TranslationKey> = {
+  paternal: 'kinshipDescRelativesPaternal',
+  maternal: 'kinshipDescRelativesMaternal',
+  unknown: 'kinshipDescRelativesUnknownSide'
+}
+const CO_SPOUSE_KEYS = {
+  wives: 'kinshipDescCoWives',
+  husbands: 'kinshipDescCoHusbands',
+  spouses: 'kinshipDescCoSpouses'
+} as const
+const SPOUSE_OF_KEYS = {
+  husband: 'kinshipPathHusbandOf',
+  wife: 'kinshipPathWifeOf',
+  spouse: 'kinshipPathSpouseOf'
+} as const
 
 /** The sentence for the relation kind, in the user's language. */
 export function describeKinship(
@@ -18,25 +47,13 @@ export function describeKinship(
       text = t('kinshipDescSiblings')
       break
     case 'upperBranch':
-      text = t(
-        description.side === 'paternal'
-          ? 'kinshipDescUpperPaternal'
-          : 'kinshipDescUpperMaternal'
-      )
+      text = t(UPPER_KEYS[description.side])
       break
     case 'cousins':
-      text = t(
-        description.side === 'paternal'
-          ? 'kinshipDescCousinsPaternal'
-          : 'kinshipDescCousinsMaternal'
-      )
+      text = t(COUSIN_KEYS[description.side])
       break
     case 'relatives':
-      text = t(
-        description.side === 'paternal'
-          ? 'kinshipDescRelativesPaternal'
-          : 'kinshipDescRelativesMaternal'
-      )
+      text = t(RELATIVE_KEYS[description.side])
       break
     case 'relativesGeneric':
       text = t('kinshipDescRelativesGeneric')
@@ -72,12 +89,7 @@ export function describeKinship(
       })
       break
     case 'coSpouses':
-      text = t(
-        description.role === 'wives'
-          ? 'kinshipDescCoWives'
-          : 'kinshipDescCoHusbands',
-        { name: description.name }
-      )
+      text = t(CO_SPOUSE_KEYS[description.role], { name: description.name })
       break
     case 'none':
       text = t('kinshipDescNone')
@@ -105,11 +117,9 @@ export function describePathStep(step: KinshipPathStep, t: Translate): string {
     case 'childOf':
       return t('kinshipPathChildOf', { name: step.name, parent: step.parent })
     case 'spouseOf':
-      return t(
-        step.spouseRole === 'husband'
-          ? 'kinshipPathHusbandOf'
-          : 'kinshipPathWifeOf',
-        { name: step.name, spouse: step.spouse }
-      )
+      return t(SPOUSE_OF_KEYS[step.spouseRole], {
+        name: step.name,
+        spouse: step.spouse
+      })
   }
 }

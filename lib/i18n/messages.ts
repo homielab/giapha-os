@@ -237,14 +237,22 @@ export const messages = {
     kinshipUncertainHint:
       'Chưa rõ ai lớn hơn nên hiện cả hai cách gọi. Thêm năm sinh hoặc thứ tự sinh cho',
     kinshipUncertainOr: 'hoặc',
+    kinshipNeutralGenderHint:
+      'Có người ghi giới tính Khác nên cách gọi ghi cả dạng nam và nữ.',
     kinshipDescDirect: 'Quan hệ Trực hệ',
     kinshipDescSiblings: 'Anh chị em ruột',
     kinshipDescUpperPaternal: 'Bên Nội (Vế trên)',
     kinshipDescUpperMaternal: 'Bên Ngoại (Vế trên)',
+    kinshipDescUpperUnknownSide:
+      'Vế trên, chưa rõ bên Nội hay Ngoại (cha/mẹ ghi giới tính Khác)',
     kinshipDescCousinsPaternal: 'Anh em họ Nội',
     kinshipDescCousinsMaternal: 'Anh em họ Ngoại',
+    kinshipDescCousinsUnknownSide:
+      'Anh em họ, chưa rõ bên Nội hay Ngoại (cha/mẹ ghi giới tính Khác)',
     kinshipDescRelativesPaternal: 'Họ hàng Nội',
     kinshipDescRelativesMaternal: 'Họ hàng Ngoại',
+    kinshipDescRelativesUnknownSide:
+      'Họ hàng, chưa rõ bên Nội hay Ngoại (cha/mẹ ghi giới tính Khác)',
     kinshipDescRelativesGeneric: 'Quan hệ họ hàng',
     kinshipDescMarriage: 'Quan hệ Hôn nhân',
     kinshipDescViaSpouse: 'Thông qua hôn nhân của {name}',
@@ -257,6 +265,7 @@ export const messages = {
       'Anh chị em kế: con riêng của {stepParent} và con riêng của {parent}, hai người là vợ chồng',
     kinshipDescCoWives: 'Cùng chồng: hai người vợ của {name}',
     kinshipDescCoHusbands: 'Cùng vợ: hai người chồng của {name}',
+    kinshipDescCoSpouses: 'Cùng vợ/chồng: hai người cùng kết hôn với {name}',
     kinshipNoTerm: 'Không có cách gọi riêng',
     kinshipDescNone: 'Không tìm thấy quan hệ trong phạm vi dữ liệu',
     kinshipCommonAncestor: '(Tổ tiên chung: {name})',
@@ -265,6 +274,7 @@ export const messages = {
     kinshipPathSpouses: '{nameA} và {nameB} là vợ chồng.',
     kinshipPathHusbandOf: '{name} là Chồng của {spouse}',
     kinshipPathWifeOf: '{name} là Vợ của {spouse}',
+    kinshipPathSpouseOf: '{name} là Vợ/Chồng của {spouse}',
     kinshipPathChildOf: '{name} là con của {parent}.',
     kinshipUnknownTerm: 'Chưa xác định',
     personNotUpdatedShort:
@@ -1551,14 +1561,22 @@ export const messages = {
     kinshipUncertainHint:
       'It is not known who is older, so both terms are shown. Add a birth year or birth order for',
     kinshipUncertainOr: 'or',
+    kinshipNeutralGenderHint:
+      'Someone’s gender is Other, so the term lists both the male and female forms.',
     kinshipDescDirect: 'Direct line',
     kinshipDescSiblings: 'Siblings',
     kinshipDescUpperPaternal: 'Father’s side (older generation)',
     kinshipDescUpperMaternal: 'Mother’s side (older generation)',
+    kinshipDescUpperUnknownSide:
+      'Older generation, father’s or mother’s side not known (a parent’s gender is Other)',
     kinshipDescCousinsPaternal: 'Cousins on the father’s side',
     kinshipDescCousinsMaternal: 'Cousins on the mother’s side',
+    kinshipDescCousinsUnknownSide:
+      'Cousins, father’s or mother’s side not known (a parent’s gender is Other)',
     kinshipDescRelativesPaternal: 'Relatives on the father’s side',
     kinshipDescRelativesMaternal: 'Relatives on the mother’s side',
+    kinshipDescRelativesUnknownSide:
+      'Relatives, father’s or mother’s side not known (a parent’s gender is Other)',
     kinshipDescRelativesGeneric: 'Extended family',
     kinshipDescMarriage: 'Marriage',
     kinshipDescViaSpouse: 'Through the marriage of {name}',
@@ -1572,6 +1590,7 @@ export const messages = {
       'Step-siblings: children of {stepParent} and of {parent}, who are married',
     kinshipDescCoWives: 'Both are wives of {name}',
     kinshipDescCoHusbands: 'Both are husbands of {name}',
+    kinshipDescCoSpouses: 'Both are married to {name}',
     kinshipNoTerm: 'No specific term',
     kinshipDescNone: 'No relationship found within the data',
     kinshipCommonAncestor: '(Common ancestor: {name})',
@@ -1580,6 +1599,7 @@ export const messages = {
     kinshipPathSpouses: '{nameA} and {nameB} are married.',
     kinshipPathHusbandOf: '{name} is the husband of {spouse}',
     kinshipPathWifeOf: '{name} is the wife of {spouse}',
+    kinshipPathSpouseOf: '{name} is the spouse of {spouse}',
     kinshipPathChildOf: '{name} is the child of {parent}.',
     kinshipUnknownTerm: 'Undetermined',
     personNotUpdatedShort:

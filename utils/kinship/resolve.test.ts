@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import { computeKinship } from './resolve'
-import type { PersonNode, RelEdge } from './types'
+import { isAmbiguousTerm, type PersonNode, type RelEdge } from './types'
 
 function person(
   id: string,
@@ -844,5 +844,165 @@ describe('step-siblings and co-spouses', () => {
       name: 'W',
       role: 'husbands'
     })
+  })
+})
+
+describe("gender 'other' gives the neutral terms", () => {
+  const persons = [
+    person('ong', 'male'),
+    person('ba', 'female'),
+    person('bo', 'male', { birth_year: 1960 }),
+    person('khac', 'other', { birth_year: 1965 }),
+    person('me', 'female'),
+    person('con', 'male', { birth_year: 1990 }),
+    person('vo', 'female'),
+    person('chau', 'other', { birth_year: 1988 }),
+    person('dau', 'other'),
+    person('anhRe', 'male'),
+    person('kid', 'female')
+  ]
+  const rels = [
+    child('ong', 'bo'),
+    child('ba', 'bo'),
+    child('ong', 'khac'),
+    child('ba', 'khac'),
+    marriage('bo', 'me'),
+    child('bo', 'con'),
+    child('me', 'con'),
+    child('bo', 'chau'),
+    child('me', 'chau'),
+    marriage('khac', 'vo'),
+    marriage('con', 'dau'),
+    marriage('chau', 'anhRe'),
+    child('khac', 'kid'),
+    child('vo', 'kid')
+  ]
+  const kin = (a: string, b: string) => {
+    const find = (id: string) => persons.find((p) => p.id === id)!
+    return computeKinship(find(a), find(b), persons, rels)!
+  }
+  const expectNeutral = (
+    a: string,
+    b: string,
+    aCallsB: string,
+    bCallsA: string
+  ) => {
+    const r = kin(a, b)
+    expect([r.aCallsB, r.bCallsA]).toEqual([aCallsB, bCallsA])
+    expect(isAmbiguousTerm(r.aCallsB) || isAmbiguousTerm(r.bCallsA)).toBe(true)
+    expect(r.hasNeutralGender).toBe(true)
+    return r
+  }
+
+  test('husband or wife: Vợ/Chồng', () => {
+    const r = expectNeutral('vo', 'khac', 'Vợ/Chồng', 'Vợ')
+    expect(r.pathLabels).toEqual([
+      { kind: 'spouses', nameA: 'vo', nameB: 'khac' }
+    ])
+    expect(kin('vo', 'khac').hasAmbiguousTerm).toBe(true)
+  })
+
+  test('father or mother: Bố/Mẹ', () => {
+    expectNeutral('kid', 'khac', 'Bố/Mẹ', 'Con')
+    expect(kin('kid', 'vo').aCallsB).toBe('Mẹ')
+  })
+
+  test('brother or sister: Anh/Chị; a younger one is Em', () => {
+    expectNeutral('con', 'chau', 'Anh/Chị', 'Em trai')
+    // "Em" is already the same for both genders.
+    expect([kin('bo', 'khac').aCallsB, kin('bo', 'khac').bCallsA]).toEqual([
+      'Em',
+      'Anh trai'
+    ])
+    const twins = [
+      person('t1', 'other'),
+      person('t2', 'male'),
+      person('pa', 'male')
+    ]
+    const e = [child('pa', 't1'), child('pa', 't2')]
+    const r = computeKinship(twins[1], twins[0], twins, e)!
+    expect(r.aCallsB).toBe('Anh/Chị/Em')
+    expect(r.hasAmbiguousTerm).toBe(true)
+  })
+
+  test('the spouse of a relative of gender other and the in-law of gender other: dâu/rể', () => {
+    expectNeutral('bo', 'dau', 'Con dâu/Con rể', 'Bố chồng')
+    // The relative of gender other: the spouse's own gender decides.
+    expect([kin('con', 'anhRe').aCallsB, kin('con', 'anhRe').bCallsA]).toEqual([
+      'Anh rể',
+      'Em vợ'
+    ])
+    expectNeutral('chau', 'dau', 'Em dâu/Em rể', 'Anh/Chị chồng')
+    expect(kin('dau', 'bo').pathLabels[0]).toEqual({
+      kind: 'spouseOf',
+      name: 'dau',
+      spouse: 'con',
+      spouseRole: 'spouse'
+    })
+  })
+
+  test('grandparents: Ông/Bà, and the uncle or aunt Chú/Cô', () => {
+    expectNeutral('con', 'khac', 'Chú/Cô', 'Cháu')
+    expect(kin('con', 'vo').aCallsB).toBe('Thím')
+    const p = [person('g', 'other'), person('f', 'male'), person('k', 'male')]
+    const e = [child('g', 'f'), child('f', 'k')]
+    const r = computeKinship(p[2], p[0], p, e)!
+    expect([r.aCallsB, r.bCallsA]).toEqual(['Ông/Bà nội', 'Cháu'])
+    expect(r.hasAmbiguousTerm && r.hasNeutralGender).toBe(true)
+  })
+
+  test('a parent of gender other: Nội or Ngoại is not known', () => {
+    const p = [
+      person('g', 'male'),
+      person('gm', 'female'),
+      person('p', 'other', { birth_year: 1960 }),
+      person('u', 'male', { birth_year: 1955 }),
+      person('k', 'female')
+    ]
+    const e = [
+      child('g', 'p'),
+      child('gm', 'p'),
+      child('g', 'u'),
+      child('gm', 'u'),
+      child('p', 'k')
+    ]
+    const find = (id: string) => p.find((x) => x.id === id)!
+    const grand = computeKinship(find('k'), find('g'), p, e)!
+    expect(grand.aCallsB).toBe('Ông nội/ngoại')
+    expect(computeKinship(find('k'), find('p'), p, e)!.aCallsB).toBe('Bố/Mẹ')
+    const uncle = computeKinship(find('k'), find('u'), p, e)!
+    expect(uncle.aCallsB).toBe('Bác/Cậu')
+    expect(uncle.description).toMatchObject({
+      kind: 'upperBranch',
+      side: 'unknown'
+    })
+  })
+
+  test('the path and co-spouses name a spouse of gender other', () => {
+    const p = [
+      person('x', 'other'),
+      person('w1', 'female'),
+      person('w2', 'female')
+    ]
+    const e = [marriage('x', 'w1'), marriage('x', 'w2')]
+    const find = (id: string) => p.find((y) => y.id === id)!
+    const r = computeKinship(find('w1'), find('w2'), p, e)!
+    expect(r.description).toEqual({
+      kind: 'coSpouses',
+      name: 'x',
+      role: 'spouses'
+    })
+    expect(r.pathLabels[0]).toMatchObject({ spouseRole: 'wife' })
+    expect(computeKinship(find('w1'), find('x'), p, e)!.pathLabels).toEqual([
+      { kind: 'spouses', nameA: 'w1', nameB: 'x' }
+    ])
+  })
+
+  test('male and female terms do not change', () => {
+    expect([kin('con', 'bo').aCallsB, kin('con', 'me').aCallsB]).toEqual([
+      'Bố',
+      'Mẹ'
+    ])
+    expect(kin('con', 'bo').hasNeutralGender).toBe(false)
   })
 })

@@ -10,12 +10,14 @@ import {
 
 describe('direct line terms', () => {
   test('ancestors by depth, gender and side', () => {
-    expect(getDirectAncestorTerm(1, 'male', true)).toBe('Bố')
-    expect(getDirectAncestorTerm(1, 'female', true)).toBe('Mẹ')
-    expect(getDirectAncestorTerm(2, 'female', false)).toBe('Bà ngoại')
-    expect(getDirectAncestorTerm(3, 'male', true)).toBe('Cụ ông (ông cố) nội')
-    expect(getDirectAncestorTerm(9, 'male', true)).toBe('Diễn')
-    expect(getDirectAncestorTerm(10, 'male', true)).toBe('Tổ đời 10')
+    expect(getDirectAncestorTerm(1, 'male', 'paternal')).toBe('Bố')
+    expect(getDirectAncestorTerm(1, 'female', 'paternal')).toBe('Mẹ')
+    expect(getDirectAncestorTerm(2, 'female', 'maternal')).toBe('Bà ngoại')
+    expect(getDirectAncestorTerm(3, 'male', 'paternal')).toBe(
+      'Cụ ông (ông cố) nội'
+    )
+    expect(getDirectAncestorTerm(9, 'male', 'paternal')).toBe('Diễn')
+    expect(getDirectAncestorTerm(10, 'male', 'paternal')).toBe('Tổ đời 10')
   })
 
   test('descendants by depth', () => {
@@ -116,8 +118,8 @@ describe('calling the person who married in', () => {
   })
 
   test('older and younger siblings differ between the two directions', () => {
-    expect(termRelativeCallsInLaw('Anh trai', 'other')).toBe('Chị dâu')
-    expect(termForSpouseOfRelative('Anh trai', 'other')).toBe('Anh rể')
+    expect(termRelativeCallsInLaw('Anh trai', 'female')).toBe('Chị dâu')
+    expect(termForSpouseOfRelative('Anh trai', 'male')).toBe('Anh rể')
     expect(termForSpouseOfRelative('Chị gái', 'male')).toBe('Anh rể')
   })
 
@@ -152,5 +154,38 @@ describe('calling the person who married in', () => {
     expect(termRelativeCallsInLaw('constructor', 'female')).toBe(
       'Vợ của constructor'
     )
+  })
+})
+
+describe("gender 'other' lists both forms", () => {
+  test('ancestors name both genders, and both sides when the side is unknown', () => {
+    expect(getDirectAncestorTerm(1, 'other', 'paternal')).toBe('Bố/Mẹ')
+    expect(getDirectAncestorTerm(2, 'other', 'maternal')).toBe('Ông/Bà ngoại')
+    expect(getDirectAncestorTerm(2, 'male', 'unknown')).toBe('Ông nội/ngoại')
+  })
+
+  test('the in-law of gender other is dâu/rể', () => {
+    expect(termRelativeCallsInLaw('Con', 'other')).toBe('Con dâu/Con rể')
+    expect(termRelativeCallsInLaw('Anh trai', 'other')).toBe('Chị dâu/Anh rể')
+    expect(termForSpouseOfRelative('Chị gái', 'other')).toBe('Chị dâu/Anh rể')
+    expect(termForSpouseOfRelative('Bác', 'other')).toBe('Bác gái/Bác')
+    expect(termForSpouseOfRelative('Ông nội', 'other')).toBe(
+      'Vợ/Chồng của Ông nội'
+    )
+  })
+
+  test('the spouse of a relative of gender other follows the spouse’s gender', () => {
+    expect(termForSpouseOfRelative('Anh/Chị', 'female')).toBe('Chị dâu')
+    expect(termForSpouseOfRelative('Chú/Cô', 'female')).toBe('Thím')
+    expect(termForSpouseOfRelative('Cậu/Dì', 'male')).toBe('Dượng')
+    expect(callSpouseRelative('Bố/Mẹ', ' vợ')).toBe('Bố/Mẹ vợ')
+    expect(callSpouseRelative('Anh/Chị họ', ' chồng')).toBe(
+      'Anh/Chị chồng (họ)'
+    )
+  })
+
+  test('only a relation that depends on gender keeps the term of the relative', () => {
+    // "Chú" is the man of the family, so his spouse stays Thím.
+    expect(termForSpouseOfRelative('Chú', 'other')).toBe('Thím')
   })
 })

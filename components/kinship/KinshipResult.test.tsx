@@ -89,4 +89,29 @@ describe('KinshipResult', () => {
     expect(html).toContain(dict.kinshipNoTerm)
     expect(html).not.toContain(dict.kinshipUnknownTerm)
   })
+
+  test('a spouse of gender Khác is Vợ/Chồng, with the reason', () => {
+    const persons = [person('Lan', 'female'), person('Kha', 'other')]
+    const rels = [{ type: 'marriage', person_a: 'Lan', person_b: 'Kha' }]
+    const result = computeKinship(persons[0], persons[1], persons, rels)
+    const dict = messages.vi
+    const html = renderToStaticMarkup(
+      <I18nContext.Provider
+        value={{
+          locale: 'vi',
+          messages: dict,
+          setLocale: noop,
+          t: (key, values) => interpolate(dict[key], values)
+        }}>
+        <KinshipResult
+          personA={persons[0]}
+          personB={persons[1]}
+          result={result}
+        />
+      </I18nContext.Provider>
+    )
+    expect(html).toContain('Vợ/Chồng')
+    expect(html).toContain(dict.kinshipNeutralGenderHint)
+    expect(html).not.toContain('>Chồng<')
+  })
 })

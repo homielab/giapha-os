@@ -6,8 +6,11 @@ import {
   termRelativeCallsInLaw
 } from './terms'
 import {
+  byGenderOf,
+  genderBranch,
   isAmbiguousTerm,
   UNKNOWN_TERM,
+  type Gender,
   type KinshipDescription,
   type KinshipPathStep,
   type KinshipResult,
@@ -26,8 +29,19 @@ function spouseStep(person: PersonNode, spouse: PersonNode): KinshipPathStep {
     kind: 'spouseOf',
     name: person.full_name,
     spouse: spouse.full_name,
-    spouseRole: person.gender === 'male' ? 'husband' : 'wife'
+    spouseRole: byGenderOf(person.gender, 'husband', 'wife', 'spouse')
   }
+}
+
+/**
+ * " vợ" or " chồng" for how `person` calls their spouse's relatives ("Bố
+ * vợ"); for gender 'other' it follows the spouse's gender, else both.
+ */
+function spouseSuffix(person: PersonNode, spouse: PersonNode): string {
+  const own = genderBranch(person.gender)
+  if (own === 'male') return ' vợ'
+  if (own === 'female') return ' chồng'
+  return byGenderOf(spouse.gender, ' chồng', ' vợ', ' vợ/chồng')
 }
 
 function isParentOf(
@@ -44,9 +58,18 @@ function isParentOf(
  */
 function stepTerms(stepParent: PersonNode, parent: PersonNode) {
   return {
-    stepParent: stepParent.gender === 'female' ? 'Mẹ kế' : 'Bố dượng',
-    stepChild:
-      parent.gender === 'male' ? 'Con riêng của chồng' : 'Con riêng của vợ'
+    stepParent: byGenderOf(
+      stepParent.gender,
+      'Bố dượng',
+      'Mẹ kế',
+      'Bố dượng/Mẹ kế'
+    ),
+    stepChild: byGenderOf(
+      parent.gender,
+      'Con riêng của chồng',
+      'Con riêng của vợ',
+      'Con riêng của vợ/chồng'
+    )
   }
 }
 
@@ -77,7 +100,7 @@ function viaSpouseOfA(
     }
 
     // A gọi người trong họ của vợ/chồng mình; họ gọi A là dâu/rể.
-    const suffix = personA.gender === 'male' ? ' vợ' : ' chồng'
+    const suffix = spouseSuffix(personA, spouseA)
     return {
       ...res,
       aCallsB: callSpouseRelative(res.aCallsB, suffix),
@@ -118,7 +141,7 @@ function viaSpouseOfB(
       }
     }
 
-    const suffix = personB.gender === 'male' ? ' vợ' : ' chồng'
+    const suffix = spouseSuffix(personB, spouseB)
     return {
       ...res,
       aCallsB: termForSpouseOfRelative(res.aCallsB, personB.gender),
@@ -202,9 +225,12 @@ function viaBothSpouses(
 
 /** Ông thông gia / Bà thông gia (miền Nam: ông sui / bà sui) by gender. */
 function coParentInLawTerm(person: PersonNode): string {
-  if (person.gender === 'male') return 'Ông thông gia'
-  if (person.gender === 'female') return 'Bà thông gia'
-  return 'Ông/Bà thông gia'
+  return byGenderOf(
+    person.gender,
+    'Ông thông gia',
+    'Bà thông gia',
+    'Ông/Bà thông gia'
+  )
 }
 
 /** A child of A is married to a child of B: the two are thông gia. */
@@ -252,12 +278,7 @@ function viaChildInLaw(
 function stepSiblingTerm(personA: PersonNode, personB: PersonNode): string {
   const seniority = compareSeniority(personB, personA)
   if (seniority === 'junior') return 'Em kế'
-  const older =
-    personB.gender === 'male'
-      ? 'Anh'
-      : personB.gender === 'female'
-        ? 'Chị'
-        : 'Anh/Chị'
+  const older = byGenderOf(personB.gender, 'Anh', 'Chị', 'Anh/Chị')
   return seniority === 'senior' ? `${older} kế` : `${older}/Em kế`
 }
 
@@ -326,7 +347,7 @@ function viaSharedSpouse(
       description: {
         kind: 'coSpouses',
         name: spouse.full_name,
-        role: spouse.gender === 'female' ? 'husbands' : 'wives'
+        role: byGenderOf(spouse.gender, 'wives', 'husbands', 'spouses')
       },
       distance: 2,
       pathLabels: [spouseStep(personA, spouse), spouseStep(personB, spouse)]
@@ -348,8 +369,8 @@ function resolveKinship(
   // 0. Kiểm tra quan hệ hôn nhân trực tiếp
   if ((graph.spouseMap.get(personA.id) ?? []).includes(personB.id)) {
     return {
-      aCallsB: personB.gender === 'female' ? 'Vợ' : 'Chồng',
-      bCallsA: personA.gender === 'female' ? 'Vợ' : 'Chồng',
+      aCallsB: byGenderOf(personB.gender, 'Chồng', 'Vợ', 'Vợ/Chồng'),
+      bCallsA: byGenderOf(personA.gender, 'Chồng', 'Vợ', 'Vợ/Chồng'),
       description: { kind: 'marriage' },
       distance: 0,
       pathLabels: [
@@ -390,8 +411,12 @@ export function computeKinship(
 ): KinshipResult | null {
   const terms = resolveKinship(personA, personB, persons, relationships)
   if (!terms) return null
+  const neutral = (gender: Gender) => genderBranch(gender) === 'neutral'
   return {
     ...terms,
-    hasAmbiguousTerm: isAmbiguousTerm(terms.aCallsB)
+    hasAmbiguousTerm: isAmbiguousTerm(terms.aCallsB),
+    hasNeutralGender:
+      (neutral(personA.gender) || neutral(personB.gender)) &&
+      (isAmbiguousTerm(terms.aCallsB) || isAmbiguousTerm(terms.bCallsA))
   }
 }
