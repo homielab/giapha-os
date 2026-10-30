@@ -101,6 +101,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Sign-in and sign-up errors (wrong password, unconfirmed email, email already registered, weak password, too many attempts) are shown in Vietnamese or English instead of Supabase's raw English text; unknown errors show a generic message.
+- Quick search (Ctrl/⌘K) and the person pickers (tree root, kinship, add relationship, export): pressing Enter to finish a word typed with Telex or VNI no longer opens or picks the first result. The member form asks for the month when a day is entered, and older dates with a day but no month show only the year instead of reading like a month.
+- Opening a link with `?rootId=` no longer replaces the tree root you chose; the root is remembered only when you pick it in the root selector.
 - Signing in with Google or Facebook from a shared member link now opens that page, as password sign-in already did, instead of the dashboard home. Self-hosted apps on a domain other than the Supabase Site URL need `https://<domain>/**` in Redirect URLs (see README).
 - A first visit without a saved language now opens in English when the browser prefers English (Vietnamese otherwise); a language picked in the app still wins.
 - `.env.example` no longer quotes values, so `docker run --env-file` no longer keeps the quotes in the site name, sender email or app URL (which broke approval emails and the sitemap).

@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   filterPickerPersons,
   filterRootPersons,
+  isImeComposing,
   pickerKeyNavigation
 } from './pickerNavigation'
 
@@ -75,6 +76,23 @@ describe('pickerKeyNavigation', () => {
 
   test('other keys are not handled', () => {
     expect(pickerKeyNavigation('a', 0, 3).handled).toBe(false)
+  })
+})
+
+describe('isImeComposing', () => {
+  test('is true while an input method composes a word', () => {
+    expect(isImeComposing({ nativeEvent: { isComposing: true } })).toBe(true)
+    // Safari sends the composition-ending Enter as keyCode 229.
+    expect(
+      isImeComposing({ nativeEvent: { isComposing: false }, keyCode: 229 })
+    ).toBe(true)
+  })
+
+  test('is false for a plain key', () => {
+    expect(
+      isImeComposing({ nativeEvent: { isComposing: false }, keyCode: 13 })
+    ).toBe(false)
+    expect(isImeComposing({})).toBe(false)
   })
 })
 

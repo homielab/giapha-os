@@ -13,6 +13,7 @@ import {
   type SearchableMember
 } from '@/utils/memberSearch'
 import { memberSearchCache } from '@/utils/memberSearchCache'
+import { isImeComposing } from '@/utils/pickerNavigation'
 import { createClient } from '@/utils/supabase/client'
 import { fetchAllRows } from '@/utils/supabase/fetchAll'
 
@@ -90,6 +91,7 @@ export default function GlobalMemberSearch() {
   }
 
   const onInputKeyDown = (e: React.KeyboardEvent) => {
+    if (isImeComposing(e)) return
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       setActive((i) => Math.min(i + 1, results.length - 1))

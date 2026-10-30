@@ -9,6 +9,7 @@ import PersonAvatar from '@/components/kinship/PersonAvatar'
 import { useI18n } from '@/lib/i18n/useI18n'
 import {
   filterPickerPersons,
+  isImeComposing,
   pickerKeyNavigation
 } from '@/utils/pickerNavigation'
 import { getAvatarBg } from '@/utils/styleHelpers'
@@ -61,6 +62,7 @@ export default function KinshipPersonSelector({
   }
 
   const onInputKeyDown = (e: React.KeyboardEvent) => {
+    if (isImeComposing(e)) return
     const result = pickerKeyNavigation(e.key, active, filtered.length)
     if (!result.handled) return
     e.preventDefault()

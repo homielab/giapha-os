@@ -21,6 +21,18 @@ export function filterPickerPersons<
   return searchPersons(available, query, limit)
 }
 
+/**
+ * True while an input method (Telex, VNI, Chinese, Japanese…) is composing a
+ * word: its Enter, arrows and Escape finish or cancel the word and must not
+ * also select, move or close. Safari reports such keys as keyCode 229.
+ */
+export function isImeComposing(e: {
+  nativeEvent?: { isComposing?: boolean }
+  keyCode?: number
+}): boolean {
+  return e.nativeEvent?.isComposing === true || e.keyCode === 229
+}
+
 export interface PickerKeyResult {
   /** The highlighted option after the key (-1 when the list is empty). */
   active: number

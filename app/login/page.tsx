@@ -21,6 +21,7 @@ import SsoButtons from '@/components/auth/SsoButtons'
 import Footer from '@/components/Footer'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useI18n } from '@/lib/i18n/useI18n'
+import { authErrorKey } from '@/utils/authErrors'
 import { oauthRedirectTo, safeNextPath } from '@/utils/safeNextPath'
 import { createClient } from '@/utils/supabase/client'
 
@@ -110,7 +111,7 @@ export default function LoginPage() {
         })
 
         if (error) {
-          setError(error.message)
+          setError(t(authErrorKey(error)))
         } else {
           await notifyIfPending()
           router.push(nextPath())
@@ -142,7 +143,7 @@ export default function LoginPage() {
             return
           }
 
-          setError(error.message)
+          setError(t(authErrorKey(error)))
         } else {
           if (data.session) {
             await notifyIfPending()

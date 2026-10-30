@@ -9,7 +9,11 @@ import RootSelector from '@/components/RootSelector'
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
-import { pickDefaultRootId, resolveRootId } from '@/utils/treeRoot'
+import {
+  pickDefaultRootId,
+  resolveRootId,
+  ROOT_STORAGE_KEY
+} from '@/utils/treeRoot'
 
 const FamilyTree = dynamic(() => import('@/components/FamilyTree'))
 const MindmapTree = dynamic(() => import('@/components/MindmapTree'))
@@ -81,12 +85,12 @@ export default function MembersViews({
 
     if (!urlRootId) {
       try {
-        const savedRootId = localStorage.getItem('members_rootId')
+        const savedRootId = localStorage.getItem(ROOT_STORAGE_KEY)
 
         if (savedRootId && personsMap.has(savedRootId)) {
           if (savedRootId !== rootId) setRootId(savedRootId)
         } else if (savedRootId) {
-          localStorage.removeItem('members_rootId')
+          localStorage.removeItem(ROOT_STORAGE_KEY)
         }
       } catch (e) {
         console.warn('Failed to read from localStorage:', e)
@@ -95,21 +99,6 @@ export default function MembersViews({
 
     hasRestored.current = true
   }, [rootId, personsMap, searchParams, setRootId])
-
-  // Lưu lựa chọn vào localStorage
-  useEffect(() => {
-    if (!hasRestored.current) return
-
-    const timeout = setTimeout(() => {
-      try {
-        if (activeRootId) localStorage.setItem('members_rootId', activeRootId)
-      } catch (e) {
-        console.warn('Failed to write to localStorage:', e)
-      }
-    }, 100)
-
-    return () => clearTimeout(timeout)
-  }, [currentView, activeRootId])
 
   return (
     <>

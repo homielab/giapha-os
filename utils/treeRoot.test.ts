@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'bun:test'
 
-import { pickDefaultRootId, resolveRootId } from '@/utils/treeRoot'
+import {
+  pickDefaultRootId,
+  resolveRootId,
+  ROOT_STORAGE_KEY,
+  saveChosenRoot
+} from '@/utils/treeRoot'
 
 const person = (
   id: string,
@@ -111,5 +116,33 @@ describe('resolveRootId', () => {
 
   it('returns null for an empty map', () => {
     expect(resolveRootId('a', new Map(), 'a')).toBeNull()
+  })
+})
+
+describe('saveChosenRoot', () => {
+  it('stores the picked root', () => {
+    const saved = new Map<string, string>()
+    saveChosenRoot({ setItem: (k, v) => void saved.set(k, v) }, 'p1')
+    expect(saved.get(ROOT_STORAGE_KEY)).toBe('p1')
+  })
+
+  it('ignores a storage that throws or is missing', () => {
+    const warn = console.warn
+    console.warn = () => {}
+    try {
+      expect(() =>
+        saveChosenRoot(
+          {
+            setItem: () => {
+              throw new Error('quota')
+            }
+          },
+          'p1'
+        )
+      ).not.toThrow()
+      expect(() => saveChosenRoot(undefined, 'p1')).not.toThrow()
+    } finally {
+      console.warn = warn
+    }
   })
 })

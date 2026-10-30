@@ -3,6 +3,7 @@
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
+import { saveChosenRoot } from '@/utils/treeRoot'
 
 import PersonSelector from './PersonSelector'
 
@@ -21,7 +22,9 @@ export default function RootSelector({
       persons={persons}
       selectedId={currentRootId}
       onSelect={(id) => {
-        if (id) setRootId(id)
+        if (!id) return
+        setRootId(id)
+        saveChosenRoot(window.localStorage, id)
       }}
       placeholder={t('choosePerson')}
       label={t('displayRoot')}

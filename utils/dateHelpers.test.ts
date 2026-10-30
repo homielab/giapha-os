@@ -32,6 +32,11 @@ describe('formatDisplayDate', () => {
     expect(formatDisplayDate(null, 7, 9, en)).toBe('09/07')
   })
 
+  test('drops a day that has no month', () => {
+    expect(formatDisplayDate(1990, null, 5, en)).toBe('1990')
+    expect(formatDisplayDate(null, null, 5, vi)).toBe('Chưa rõ')
+  })
+
   test('translates the unknown label', () => {
     expect(formatDisplayDate(null, null, null, vi)).toBe('Chưa rõ')
     expect(formatDisplayDate(null, null, null, en)).toBe('Unknown')

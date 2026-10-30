@@ -65,6 +65,7 @@ export function comparePartialDates(
 
 export type MemberValidationError =
   | 'fullNameRequired'
+  | 'dayNeedsMonth'
   | 'invalidBirthDate'
   | 'invalidLunarDate'
   | 'invalidDeathDate'
@@ -112,6 +113,14 @@ export function validateMemberForm(
   for (const v of [counts.birthOrder, counts.generation]) {
     if (v !== '' && !Number.isInteger(v)) return 'invalidWholeNumber'
   }
+
+  if (
+    (birthDay !== '' && birthMonth === '') ||
+    (isDeceased &&
+      ((deathValues.day !== '' && deathValues.month === '') ||
+        (deathValues.lunarDay !== '' && deathValues.lunarMonth === '')))
+  )
+    return 'dayNeedsMonth'
 
   if (!isValidDate(birthDay, birthMonth, birthYear)) return 'invalidBirthDate'
 

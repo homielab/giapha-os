@@ -5,6 +5,7 @@ import { ArrowUpDown, Filter, Plus, Search, X } from 'lucide-react'
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { generationFilterOption } from '@/utils/memberFilters'
+import { isImeComposing } from '@/utils/pickerNavigation'
 
 interface MemberListToolbarProps {
   searchTerm: string
@@ -44,7 +45,8 @@ export default function MemberListToolbar({
               value={searchTerm}
               onChange={(e) => onSearchTermChange(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Escape') onSearchTermChange('')
+                if (e.key === 'Escape' && !isImeComposing(e))
+                  onSearchTermChange('')
               }}
             />
             {searchTerm && (

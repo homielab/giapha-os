@@ -10,7 +10,7 @@ import { FemaleIcon, MaleIcon } from '@/components/GenderIcons'
 import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
-import { pickerKeyNavigation } from '@/utils/pickerNavigation'
+import { isImeComposing, pickerKeyNavigation } from '@/utils/pickerNavigation'
 import { getAvatarBg } from '@/utils/styleHelpers'
 
 const getGenderStyle = (gender: string) => {
@@ -236,6 +236,7 @@ export function SelectorDropdown({
   }, [])
 
   const onInputKeyDown = (e: React.KeyboardEvent) => {
+    if (isImeComposing(e)) return
     const result = pickerKeyNavigation(e.key, active, optionIds.length)
     if (!result.handled) return
     e.preventDefault()

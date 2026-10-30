@@ -50,6 +50,24 @@ describe('isValidDate', () => {
 })
 
 describe('validateMemberForm', () => {
+  test('needs a month when a day is entered', () => {
+    expect(validateMemberForm(5, '', 1990, false, emptyDeath)).toBe(
+      'dayNeedsMonth'
+    )
+    expect(validateMemberForm('', '', 1990, true, death(5, '', 2000))).toBe(
+      'dayNeedsMonth'
+    )
+    expect(
+      validateMemberForm('', '', 1990, true, {
+        ...death('', '', 2000),
+        lunarDay: 5,
+        lunarYear: 2000
+      })
+    ).toBe('dayNeedsMonth')
+    // A death day is ignored for a living person.
+    expect(validateMemberForm('', '', 1990, false, death(5, '', ''))).toBeNull()
+  })
+
   test('rejects a death earlier in the same year as the birth', () => {
     expect(validateMemberForm(20, 5, 1990, true, death(10, 5, 1990))).toBe(
       'deathBeforeBirth'

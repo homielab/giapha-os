@@ -53,3 +53,20 @@ export function resolveRootId(
   if (defaultRootId && personsMap.has(defaultRootId)) return defaultRootId
   return null
 }
+
+export const ROOT_STORAGE_KEY = 'members_rootId'
+
+/**
+ * Remembers the root the user picked in the root selector. Only a deliberate
+ * pick is saved: a root from a shared `?rootId=` link must not replace it.
+ */
+export function saveChosenRoot(
+  storage: Pick<Storage, 'setItem'> | undefined,
+  id: string
+) {
+  try {
+    storage?.setItem(ROOT_STORAGE_KEY, id)
+  } catch (e) {
+    console.warn('Failed to write to localStorage:', e)
+  }
+}

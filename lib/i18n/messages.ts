@@ -518,6 +518,14 @@ export const messages = {
     signupSuccess:
       'Đăng ký thành công! Vui lòng chờ admin kích hoạt tài khoản để xem nội dung.',
     passwordMismatch: 'Mật khẩu xác nhận không khớp.',
+    authInvalidCredentials: 'Email hoặc mật khẩu không đúng.',
+    authEmailNotConfirmed:
+      'Email chưa được xác nhận. Vui lòng mở thư xác nhận trong hộp thư của bạn.',
+    authUserExists: 'Email này đã được đăng ký. Vui lòng đăng nhập.',
+    authWeakPassword:
+      'Mật khẩu quá yếu. Vui lòng chọn mật khẩu dài và khó đoán hơn.',
+    authRateLimited: 'Bạn thử quá nhiều lần. Vui lòng đợi một lát rồi thử lại.',
+    authEmailInvalid: 'Địa chỉ email không hợp lệ.',
     unexpectedError: 'Đã xảy ra lỗi không mong muốn',
     oauthNotConfigured:
       'Đăng nhập với {provider} chưa được cấu hình trên hệ thống.',
@@ -595,6 +603,7 @@ export const messages = {
     membersShownOfTotal: 'Đang hiện {shown}/{total} thành viên',
     noMembers: 'Chưa có thành viên nào. Hãy thêm thành viên đầu tiên.',
     invalidBirthDate: 'Ngày sinh không hợp lệ. Vui lòng kiểm tra lại.',
+    dayNeedsMonth: 'Cần có tháng khi nhập ngày.',
     invalidLunarDate: 'Ngày âm lịch không hợp lệ. Vui lòng kiểm tra lại.',
     invalidDeathDate: 'Ngày mất không hợp lệ. Vui lòng kiểm tra lại.',
     deathBeforeBirth: 'Ngày mất không được trước ngày sinh.',
@@ -1880,6 +1889,14 @@ export const messages = {
     signupSuccess:
       'Registration successful! Please wait for an administrator to activate your account.',
     passwordMismatch: 'The confirmation password does not match.',
+    authInvalidCredentials: 'The email or password is incorrect.',
+    authEmailNotConfirmed:
+      'Your email is not confirmed yet. Please open the confirmation email in your inbox.',
+    authUserExists: 'This email is already registered. Please sign in.',
+    authWeakPassword:
+      'The password is too weak. Please choose a longer, harder to guess one.',
+    authRateLimited: 'Too many attempts. Please wait a moment and try again.',
+    authEmailInvalid: 'The email address is invalid.',
     unexpectedError: 'An unexpected error occurred',
     oauthNotConfigured: '{provider} sign-in is not configured on this system.',
     aboutTitle: 'About the project',
@@ -1956,6 +1973,7 @@ export const messages = {
     membersShownOfTotal: 'Showing {shown} of {total} members',
     noMembers: 'No members yet. Add the first member.',
     invalidBirthDate: 'The birth date is invalid. Please check it again.',
+    dayNeedsMonth: 'Enter the month when you enter a day.',
     invalidLunarDate: 'The lunar date is invalid. Please check it again.',
     invalidDeathDate: 'The death date is invalid. Please check it again.',
     deathBeforeBirth: 'The death date cannot be before the birth date.',

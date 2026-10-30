@@ -16,6 +16,8 @@ export function formatDisplayDate(
   day: number | null,
   t: Translate
 ): string {
+  // A day without its month (older data) would read as a month: drop it.
+  if (day && !month) day = null
   if (!year && !month && !day) return t('unknownDate')
 
   const parts = []

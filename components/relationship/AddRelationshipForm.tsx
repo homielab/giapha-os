@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, RelationshipType } from '@/types'
 import { formatDisplayDate } from '@/utils/dateHelpers'
 import { MAX_NOTE } from '@/utils/limits'
-import { pickerKeyNavigation } from '@/utils/pickerNavigation'
+import { isImeComposing, pickerKeyNavigation } from '@/utils/pickerNavigation'
 
 interface AddRelationshipFormProps {
   newRelNote: string
@@ -76,7 +76,7 @@ export default function AddRelationshipForm({
   }
 
   const onSearchKeyDown = (e: React.KeyboardEvent) => {
-    if (!listOpen) return
+    if (!listOpen || isImeComposing(e)) return
     const result = pickerKeyNavigation(e.key, active, options.length)
     if (!result.handled) return
     e.preventDefault()
