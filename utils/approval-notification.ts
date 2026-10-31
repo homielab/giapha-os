@@ -75,7 +75,8 @@ async function getAdminEmails(supabase: ReturnType<typeof getAdminSupabase>) {
 }
 
 // Mails the administrators when a signed-in user still waits for approval:
-// a member whose account is not active yet. Called after every way an account
+// a member whose account is not active yet and not locked by an administrator
+// (notifyAdminOfPendingUser checks profiles.locked_at). Called after every way an account
 // can sign in (email confirmation or SSO callback, password sign-in, sign-up
 // without email confirmation); notifyAdminOfPendingUser keeps it to one email
 // per open approval request.
@@ -113,6 +114,24 @@ export async function notifyAdminOfPendingUser({
   } catch (error) {
     console.error('Cannot create the Supabase admin client:', error)
     return { sent: false, configured: false, reason: 'missing_service_key' }
+  }
+
+  // A locked account is not waiting for approval: signing in again must not
+  // open a new request or mail the administrators.
+  const { data: lockState, error: lockError } = await supabase
+    .from('profiles')
+    .select('locked_at')
+    .eq('id', id)
+    .maybeSingle()
+
+  // 42703: the database has no locked_at column yet (migration
+  // 20261031180000 not run), so it cannot tell a locked account apart.
+  if (lockError && lockError.code !== '42703') {
+    console.error('Cannot read the account lock state:', lockError)
+    return { sent: false, configured: true, reason: 'database_lookup_failed' }
+  }
+  if (!lockError && lockState?.locked_at) {
+    return { sent: false, configured: true, reason: 'locked' }
   }
 
   const adminEmails = await getAdminEmails(supabase)

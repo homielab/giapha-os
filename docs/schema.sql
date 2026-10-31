@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   role public.user_role_enum DEFAULT 'member' NOT NULL,
   is_active BOOLEAN NOT NULL DEFAULT false,
+  locked_at TIMESTAMPTZ, -- Set while an admin has locked the account (not just waiting for approval)
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

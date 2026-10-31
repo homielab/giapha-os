@@ -32,6 +32,7 @@ DROP FUNCTION IF EXISTS public.is_admin() CASCADE;
 DROP FUNCTION IF EXISTS public.is_active_user() CASCADE;
 DROP FUNCTION IF EXISTS public.is_editor() CASCADE;
 DROP FUNCTION IF EXISTS public.handle_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS public.approve_user_request(text) CASCADE;
 DROP FUNCTION IF EXISTS private.set_user_active_status(uuid, boolean) CASCADE;
 DROP FUNCTION IF EXISTS private.admin_create_user(text, text, text, boolean) CASCADE;
 DROP FUNCTION IF EXISTS private.delete_user(uuid) CASCADE;

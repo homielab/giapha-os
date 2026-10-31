@@ -178,6 +178,9 @@ export const messages = {
     approvalFailureTitle: 'Duyệt thất bại',
     approvalFailureText:
       'Đã xảy ra lỗi khi cập nhật trạng thái. Vui lòng thử lại hoặc duyệt trong ứng dụng.',
+    approvalUpgradeTitle: 'Cần nâng cấp database',
+    approvalUpgradeText:
+      'Database chưa có hàm duyệt mới nên liên kết này chưa duyệt được tài khoản. Hãy chạy migration ở trang Nâng cấp hệ thống (/dashboard/upgrade) rồi bấm lại liên kết, hoặc đăng nhập ứng dụng và duyệt ở Quản lý người dùng.',
     kinshipDescription: 'Hệ thống gọi tên họ hàng chuẩn xác',
     kinshipPageTitle: 'Tra cứu danh xưng',
     kinshipPageDescription:
@@ -1563,6 +1566,9 @@ export const messages = {
     approvalFailureTitle: 'Approval failed',
     approvalFailureText:
       'An error occurred while updating the status. Please try again or approve it in the app.',
+    approvalUpgradeTitle: 'Database upgrade needed',
+    approvalUpgradeText:
+      'The database does not have the new approval function yet, so this link cannot approve the account. Run the migrations on the System upgrade page (/dashboard/upgrade) and open the link again, or sign in and approve the account in Manage users.',
     kinshipDescription: 'Accurate family relationship terminology',
     kinshipPageTitle: 'Kinship finder',
     kinshipPageDescription:

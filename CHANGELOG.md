@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A locked account that signs in again no longer sends administrators a new approval email, and locking an account while its approval page is open (even as "Confirm approval" is pressed) keeps it locked; approval now runs in one database transaction. Needs the migration `20261031180000_lock_blocks_approval.sql`.
 - Running the `/setup` SQL bundle again on a database that already has the security hardening migration (20260901) no longer fails with "function already exists in schema private"; the README's re-run guidance is now accurate.
 - Quick search (⌘K) finds a spouse or children right after they are added, and logging out clears it, so the next account on the same browser no longer sees the previous tree's names.
 - Large trees: the in-law list of a member with hundreds of children and the parent/child loop check no longer miss rows past 1000; a self-hosted server with `max_rows` below 1000 no longer cuts lists at the first page.

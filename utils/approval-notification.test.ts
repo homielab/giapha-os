@@ -133,20 +133,20 @@ describe('notifyAdminOfPendingUser configuration', () => {
 })
 
 describe('notifyAdminOfPendingUser recipients', () => {
-  test('ADMIN_NOTIFICATION_EMAIL wins and skips the profile lookup', async () => {
+  test('ADMIN_NOTIFICATION_EMAIL wins and skips the admin lookup', async () => {
     process.env.ADMIN_NOTIFICATION_EMAIL =
       ' boss@example.com, ,cto@example.com '
     const result = await notifyAdminOfPendingUser(user)
     expect(result).toEqual({ sent: true, configured: true })
     expect(sent[0].body.to).toEqual(['boss@example.com', 'cto@example.com'])
-    expect(calls.some((c) => c.table === 'profiles')).toBe(false)
+    expect(calls.some((c) => c.table === 'profiles' && !c.single)).toBe(false)
   })
 
   test('otherwise mails the active admins that have an email', async () => {
     adminEmailsById = { a1: 'one@example.com', a2: null }
     await notifyAdminOfPendingUser(user)
     expect(sent[0].body.to).toEqual(['one@example.com'])
-    const profiles = calls.find((c) => c.table === 'profiles')
+    const profiles = calls.find((c) => c.table === 'profiles' && !c.single)
     expect(profiles?.filters).toEqual([
       ['eq', 'role', 'admin'],
       ['eq', 'is_active', true]
@@ -161,10 +161,92 @@ describe('notifyAdminOfPendingUser recipients', () => {
       reason: 'missing_admin_email'
     })
     respond = (call) =>
-      call.table === 'profiles' ? { error: { message: 'rls' } } : {}
+      call.table === 'profiles' && !call.single
+        ? { error: { message: 'rls' } }
+        : {}
     expect((await notifyAdminOfPendingUser(user)).reason).toBe(
       'missing_admin_email'
     )
+    expect(sent).toHaveLength(0)
+  })
+})
+
+describe('notifyAdminOfPendingUser locked accounts', () => {
+  // The lock-state read is the single-row profiles query; the admin list is
+  // the other one.
+  function withLockState(result: FakeResult) {
+    const base = respond
+    respond = (call) =>
+      call.table === 'profiles' && call.single ? result : base(call)
+  }
+
+  test('a locked account signing in again opens no request and sends no email', async () => {
+    withLockState({ data: { locked_at: '2026-10-31T00:00:00Z' } })
+
+    expect(await notifyAdminOfPendingUser(user)).toEqual({
+      sent: false,
+      configured: true,
+      reason: 'locked'
+    })
+    expect(
+      await notifyAdminIfPending(user, { role: 'member', is_active: false })
+    ).toEqual({ sent: false, configured: true, reason: 'locked' })
+
+    const lockRead = calls.find((c) => c.table === 'profiles' && c.single)
+    expect(lockRead?.filters).toEqual([['eq', 'id', 'u1']])
+    expect(calls.some((c) => c.table === 'user_approval_requests')).toBe(false)
+    expect(sent).toHaveLength(0)
+  })
+
+  test('the revoked request of a locked account is not replaced by a new one', async () => {
+    // Locking marked the open request as used; before, a used request meant
+    // "mail again".
+    withLockState({ data: { locked_at: '2026-10-31T00:00:00Z' } })
+    const base = respond
+    respond = (call) =>
+      call.table === 'user_approval_requests' && call.op === 'select'
+        ? {
+            data: {
+              id: 'req1',
+              used_at: '2026-10-31T00:00:00Z',
+              expires_at: new Date(Date.now() + 86_400_000).toISOString()
+            }
+          }
+        : base(call)
+
+    expect((await notifyAdminOfPendingUser(user)).reason).toBe('locked')
+    expect(calls.some((c) => c.op === 'upsert')).toBe(false)
+    expect(sent).toHaveLength(0)
+  })
+
+  test('an unlocked account waiting for approval is mailed', async () => {
+    withLockState({ data: { locked_at: null } })
+
+    expect(await notifyAdminOfPendingUser(user)).toEqual({
+      sent: true,
+      configured: true
+    })
+  })
+
+  test('a database without the locked_at column mails as before', async () => {
+    withLockState({
+      error: {
+        message: 'column profiles.locked_at does not exist',
+        code: '42703'
+      }
+    })
+
+    expect((await notifyAdminOfPendingUser(user)).sent).toBe(true)
+  })
+
+  test('a failed lock-state read sends nothing', async () => {
+    withLockState({ error: { message: 'network down' } })
+
+    expect(await notifyAdminOfPendingUser(user)).toEqual({
+      sent: false,
+      configured: true,
+      reason: 'database_lookup_failed'
+    })
     expect(sent).toHaveLength(0)
   })
 })
