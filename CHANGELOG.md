@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Docker image is now based on `oven/bun:1-alpine` (smaller image).
+
 ### Fixed
 
 - A locked account that signs in again no longer sends administrators a new approval email, and locking an account while its approval page is open (even as "Confirm approval" is pressed) keeps it locked; approval now runs in one database transaction. Needs the migration `20261031180000_lock_blocks_approval.sql`.
