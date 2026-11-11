@@ -59,8 +59,12 @@ mock.module('@/lib/i18n/server', () => ({
 mock.module('next/cache', () => ({ revalidatePath }))
 mock.module('next/navigation', () => ({ redirect }))
 
+// The query string loads the real module even when another test file
+// (utils/memberFormSubmit.test.ts) has mocked '@/app/actions/member': bun
+// keeps module mocks for the whole run.
+const realActions = '../app/actions/member.ts?real'
 const { deleteMemberProfile, updateDescendantGenerationsAction } =
-  await import('@/app/actions/member')
+  (await import(realActions)) as typeof import('@/app/actions/member')
 
 beforeEach(() => {
   user = { id: 'u1' }
