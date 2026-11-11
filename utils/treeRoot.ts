@@ -70,3 +70,20 @@ export function saveChosenRoot(
     console.warn('Failed to write to localStorage:', e)
   }
 }
+
+/**
+ * What to do with the root saved by `saveChosenRoot` when the members page
+ * shows the tree: restore it only when neither the URL nor the current state
+ * names a root, so a shared `?rootId=` link still wins. Runs on every client
+ * navigation, not only on the first render. A saved root that is no longer in
+ * the family is forgotten.
+ */
+export function savedRootAction(
+  urlRootId: string | null,
+  currentRootId: string | null,
+  savedRootId: string | null,
+  exists: (id: string) => boolean
+): { restore: string } | { forget: true } | null {
+  if (urlRootId || currentRootId || !savedRootId) return null
+  return exists(savedRootId) ? { restore: savedRootId } : { forget: true }
+}

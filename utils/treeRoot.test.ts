@@ -4,7 +4,8 @@ import {
   pickDefaultRootId,
   resolveRootId,
   ROOT_STORAGE_KEY,
-  saveChosenRoot
+  saveChosenRoot,
+  savedRootAction
 } from '@/utils/treeRoot'
 
 const person = (
@@ -144,5 +145,32 @@ describe('saveChosenRoot', () => {
     } finally {
       console.warn = warn
     }
+  })
+})
+
+describe('savedRootAction', () => {
+  const exists = (id: string) => id === 'p1'
+
+  it('restores the saved root when neither the URL nor the state names one', () => {
+    expect(savedRootAction(null, null, 'p1', exists)).toEqual({ restore: 'p1' })
+  })
+
+  it('keeps the root of a shared link or the one already shown', () => {
+    expect(savedRootAction('p2', null, 'p1', exists)).toBeNull()
+    expect(savedRootAction(null, 'p2', 'p1', exists)).toBeNull()
+  })
+
+  it('restores again after a client navigation drops ?rootId=', () => {
+    // First visit from a link: the link wins.
+    expect(savedRootAction('p2', 'p2', 'p1', exists)).toBeNull()
+    // Same mounted page, now at /members without rootId: state was reset to null.
+    expect(savedRootAction(null, null, 'p1', exists)).toEqual({ restore: 'p1' })
+  })
+
+  it('forgets a saved root that left the family and does nothing without one', () => {
+    expect(savedRootAction(null, null, 'gone', exists)).toEqual({
+      forget: true
+    })
+    expect(savedRootAction(null, null, null, exists)).toBeNull()
   })
 })

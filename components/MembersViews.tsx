@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import MemberList from '@/components/MemberList'
 import RootSelector from '@/components/RootSelector'
@@ -12,7 +12,8 @@ import { Person, Relationship } from '@/types'
 import {
   pickDefaultRootId,
   resolveRootId,
-  ROOT_STORAGE_KEY
+  ROOT_STORAGE_KEY,
+  savedRootAction
 } from '@/utils/treeRoot'
 
 const FamilyTree = dynamic(() => import('@/components/FamilyTree'))
@@ -49,7 +50,6 @@ export default function MembersViews({
 }: MembersViewsProps) {
   const { view: currentView, rootId, setRootId } = useMemberListView()
   const searchParams = useSearchParams()
-  const hasRestored = useRef(false)
 
   // Prepare map and roots for tree views
   const { personsMap, roots, defaultRootId } = useMemo(() => {
@@ -77,27 +77,21 @@ export default function MembersViews({
 
   const activeRootId = resolveRootId(rootId, personsMap, defaultRootId)
 
-  // Khôi phục lựa chọn từ localStorage
+  // Restore the root picked earlier whenever the URL names none: on the first
+  // render and after a client navigation from a `?rootId=` link.
   useEffect(() => {
-    if (hasRestored.current) return
-
-    const urlRootId = searchParams.get('rootId')
-
-    if (!urlRootId) {
-      try {
-        const savedRootId = localStorage.getItem(ROOT_STORAGE_KEY)
-
-        if (savedRootId && personsMap.has(savedRootId)) {
-          if (savedRootId !== rootId) setRootId(savedRootId)
-        } else if (savedRootId) {
-          localStorage.removeItem(ROOT_STORAGE_KEY)
-        }
-      } catch (e) {
-        console.warn('Failed to read from localStorage:', e)
-      }
+    try {
+      const action = savedRootAction(
+        searchParams.get('rootId'),
+        rootId,
+        localStorage.getItem(ROOT_STORAGE_KEY),
+        (id) => personsMap.has(id)
+      )
+      if (action && 'restore' in action) setRootId(action.restore)
+      else if (action) localStorage.removeItem(ROOT_STORAGE_KEY)
+    } catch (e) {
+      console.warn('Failed to read from localStorage:', e)
     }
-
-    hasRestored.current = true
   }, [rootId, personsMap, searchParams, setRootId])
 
   return (
