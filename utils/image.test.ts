@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 
+import { jpegWithOrientation } from './exifOrientation.fixture'
 import { resizeAvatar, resizeGalleryImage, resizeImage } from './image'
 
 type Globals = {
@@ -12,6 +13,7 @@ interface FakeCanvas {
   width: number
   height: number
   drawn: { width: number; height: number } | null
+  transform: number[] | null
 }
 
 let canvases: FakeCanvas[] = []
@@ -47,9 +49,13 @@ beforeEach(() => {
         width: 0,
         height: 0,
         drawn: null,
+        transform: null,
         getContext: () =>
           hasContext
             ? {
+                setTransform: (...m: number[]) => {
+                  canvas.transform = m
+                },
                 drawImage: (
                   _b: unknown,
                   _x: number,
@@ -235,5 +241,35 @@ describe('resizeImage', () => {
       await resizeImage(file, { maxDimension: 800, minBytes: 10 })
     ).not.toBe(file)
     expect(canvases[0].width).toBe(800)
+  })
+})
+
+describe('photo orientation', () => {
+  function jpeg(orientation: number) {
+    const head = jpegWithOrientation(orientation)
+    const bytes = new Uint8Array(500_000)
+    bytes.set(head)
+    return new File([bytes], 'iphone.jpg', { type: 'image/jpeg' })
+  }
+
+  test('lets the browser rotate when it reads imageOrientation', async () => {
+    g.createImageBitmap = async (
+      _f: Blob,
+      options?: { imageOrientation?: string }
+    ) => {
+      expect(options?.imageOrientation).toBe('from-image')
+      return { width: 2000, height: 1000, close: () => (closed += 1) }
+    }
+    await resizeAvatar(jpeg(6), 100)
+    expect(canvases[0].width).toBe(100)
+    expect(canvases[0].transform).toBeNull()
+  })
+
+  test('rotates an EXIF orientation 6 JPEG itself on older Safari', async () => {
+    await resizeAvatar(jpeg(6), 100)
+    expect(canvases[0].width).toBe(50)
+    expect(canvases[0].height).toBe(100)
+    expect(canvases[0].drawn).toEqual({ width: 100, height: 50 })
+    expect(canvases[0].transform).toEqual([0, 1, -1, 0, 50, 0])
   })
 })

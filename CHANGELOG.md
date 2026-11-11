@@ -7,12 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The bubble map can be saved as an image or PDF (editors), with the whole map in the file, not only the visible part.
+
 ### Changed
 
 - The Docker image is now based on `oven/bun:1-alpine` (smaller image).
 
 ### Fixed
 
+- The saved tree root comes back after moving to another page and back, not only on a full page load; a saved root whose member was deleted is forgotten.
+- Photos from an iPhone are no longer saved sideways on Safari older than 17: avatars and gallery photos keep the EXIF orientation when resized.
 - A locked account that signs in again no longer sends administrators a new approval email, and locking an account while its approval page is open (even as "Confirm approval" is pressed) keeps it locked; approval now runs in one database transaction. Needs the migration `20261031180000_lock_blocks_approval.sql`.
 - Running the `/setup` SQL bundle again on a database that already has the security hardening migration (20260901) no longer fails with "function already exists in schema private"; the README's re-run guidance is now accurate.
 - Quick search (⌘K) finds a spouse or children right after they are added, and logging out clears it, so the next account on the same browser no longer sees the previous tree's names.

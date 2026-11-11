@@ -1,3 +1,9 @@
+import {
+  orientationTransform,
+  readJpegOrientation,
+  swapsSides
+} from './exifOrientation'
+
 const AVATAR_MAX_DIMENSION = 512
 const GALLERY_MAX_DIMENSION = 2048
 const QUALITY = 0.85
@@ -29,6 +35,27 @@ async function isAnimatedWebp(file: Blob): Promise<boolean> {
 }
 
 /**
+ * Decodes the image upright. Browsers that know `imageOrientation` apply the
+ * EXIF rotation themselves; older ones (Safari < 17) never read the option,
+ * so for a JPEG the orientation is read here and applied when drawing.
+ */
+async function decodeUpright(
+  file: File
+): Promise<{ bitmap: ImageBitmap; orientation: number }> {
+  let honoured = false
+  const options = {
+    get imageOrientation(): ImageOrientation {
+      honoured = true
+      return 'from-image'
+    }
+  }
+  const bitmap = await createImageBitmap(file, options)
+  if (honoured || file.type !== 'image/jpeg') return { bitmap, orientation: 1 }
+  const head = new Uint8Array(await file.slice(0, 128 * 1024).arrayBuffer())
+  return { bitmap, orientation: readJpegOrientation(head) }
+}
+
+/**
  * Downscales and re-encodes an image in the browser before upload. Returns the
  * original file when it is a GIF that must keep its animation, an animated
  * WebP, already small, not made smaller by re-encoding, or cannot be decoded.
@@ -51,26 +78,30 @@ export async function resizeImage(
   try {
     if (file.type === 'image/webp' && (await isAnimatedWebp(file))) return file
 
-    const bitmap = await createImageBitmap(file)
+    const { bitmap, orientation } = await decodeUpright(file)
     const ratio = Math.min(
       1,
       maxDimension / Math.max(bitmap.width, bitmap.height)
     )
 
-    if (ratio === 1 && file.size <= minBytes) {
+    if (ratio === 1 && orientation === 1 && file.size <= minBytes) {
       bitmap.close()
       return file
     }
 
     const width = Math.round(bitmap.width * ratio)
     const height = Math.round(bitmap.height * ratio)
+    const swap = swapsSides(orientation)
     const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
+    canvas.width = swap ? height : width
+    canvas.height = swap ? width : height
     const ctx = canvas.getContext('2d')
     if (!ctx) {
       bitmap.close()
       return file
+    }
+    if (orientation !== 1) {
+      ctx.setTransform(...orientationTransform(orientation, width, height))
     }
     ctx.drawImage(bitmap, 0, 0, width, height)
     bitmap.close()
