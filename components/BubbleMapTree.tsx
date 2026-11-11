@@ -6,11 +6,13 @@ import { select } from 'd3-selection'
 import { zoomIdentity, type ZoomBehavior } from 'd3-zoom'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import ExportButton from '@/components/ExportButton'
 import BubbleTreeToolbar from '@/components/tree/BubbleTreeToolbar'
 import { useAvatarUrl } from '@/context/AvatarUrlContext'
 import { useBubbleTreeRender } from '@/hooks/useBubbleTreeRender'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
+import { prepareBubbleExport } from '@/utils/bubbleExport'
 import { buildBubbleGraph, GraphLink, GraphNode } from '@/utils/bubbleGraph'
 import { bubbleNodeLabel } from '@/utils/bubbleLayout'
 
@@ -24,7 +26,8 @@ export interface BubbleMapTreeProps {
 export default function BubbleMapTree({
   personsMap,
   relationships,
-  roots
+  roots,
+  canEdit = false
 }: BubbleMapTreeProps) {
   const { t } = useI18n()
   const avatarUrl = useAvatarUrl()
@@ -261,9 +264,14 @@ export default function BubbleMapTree({
           ? 'rounded-none border-0'
           : 'rounded-2xl border border-stone-200/60'
       }`}>
-      <div
-        id='tree-toolbar-portal'
-        className='absolute top-4 left-4 z-50'></div>
+      <div id='tree-toolbar-portal' className='absolute top-4 left-4 z-50'>
+        {canEdit && (
+          <ExportButton
+            targetId='bubble-export-container'
+            prepare={prepareBubbleExport}
+          />
+        )}
+      </div>
 
       <BubbleTreeToolbar
         containerRef={containerRef}
@@ -275,7 +283,10 @@ export default function BubbleMapTree({
         onToggleFullscreen={toggleFullscreen}
       />
 
-      <div ref={containerRef} className='h-full w-full'>
+      <div
+        ref={containerRef}
+        id='bubble-export-container'
+        className='h-full w-full'>
         <svg ref={svgRef} className='block h-full w-full' />
       </div>
     </div>

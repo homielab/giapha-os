@@ -45,7 +45,20 @@ function readSavedPdfFormat(): PdfPageFormat {
   return 'single'
 }
 
-export default function ExportButton() {
+interface ExportButtonProps {
+  /** Element to capture; the tree and mind map use `export-container`. */
+  targetId?: string
+  /**
+   * Lays the target out for the capture (e.g. the whole bubble map instead of
+   * the zoomed viewport) and returns the function that undoes it.
+   */
+  prepare?: (element: HTMLElement) => (() => void) | null
+}
+
+export default function ExportButton({
+  targetId = 'export-container',
+  prepare
+}: ExportButtonProps = {}) {
   const [isExporting, setIsExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pdfFormat, setPdfFormat] = useState<PdfPageFormat>(readSavedPdfFormat)
@@ -268,13 +281,18 @@ export default function ExportButton() {
       // Add a small delay to allow UI to update (close menu) before capturing
       await new Promise((resolve) => setTimeout(resolve, 100))
 
-      const element = document.getElementById('export-container')
+      const element = document.getElementById(targetId)
       if (!element) throw new Error(t('exportError'))
 
-      if (format === 'png') {
-        await handleExportPng(element)
-      } else {
-        await handleExportPdf(element, format)
+      const restore = prepare?.(element) ?? null
+      try {
+        if (format === 'png') {
+          await handleExportPng(element)
+        } else {
+          await handleExportPdf(element, format)
+        }
+      } finally {
+        restore?.()
       }
     } catch (err) {
       console.error('Export error:', err)
