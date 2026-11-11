@@ -3,7 +3,13 @@ name: Test
 on:
   push:
     branches: [main]
+    paths-ignore: &docs-only
+      - '**/*.md'
+      - LICENSE
+      - .github/ISSUE_TEMPLATE/**
+      - .github/FUNDING.yml
   pull_request:
+    paths-ignore: *docs-only
 
 permissions:
   contents: read
@@ -15,13 +21,19 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.4
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -38,26 +50,8 @@ jobs:
       - name: Unit tests
         run: bun run test
 
-  build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      # Placeholders: the build only needs the variables to exist.
-      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY: placeholder-publishable-key
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.4
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build
-        run: bun run build
-
+  # Builds the app the way production does (`bun run build` inside the
+  # Dockerfile), so no separate `next build` job is needed.
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 15

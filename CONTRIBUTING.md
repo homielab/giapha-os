@@ -22,7 +22,7 @@ bun run dev
 
 ## Checks
 
-CI (`.github/workflows/test.yml`) runs these on every push to `main` and every pull request. Run them before you open one:
+CI (`.github/workflows/test.yml`) runs these on every push to `main` and every pull request (changes to Markdown files only are skipped). Run them before you open one:
 
 ```bash
 bun run lint          # eslint, no warnings allowed
@@ -31,7 +31,7 @@ bun run typecheck     # tsc --noEmit
 bun run test          # bun test
 ```
 
-- CI also runs `bun run build` (with placeholder Supabase values) and a Docker image build without pushing; run `bun run build` yourself if you touch `next.config.ts` or the `Dockerfile`.
+- CI also builds the Docker image without pushing it, which runs `bun run build` with placeholder Supabase values; run `bun run build` yourself if you touch `next.config.ts` or the `Dockerfile`.
 - Put a test next to the file it covers (`utils/csv.ts` → `utils/csv.test.ts`).
 - Database changes: add a new file `docs/migrations/<timestamp>_<name>.sql`; the setup and upgrade pages pick it up.
 - UI changes follow [DESIGN.md](DESIGN.md): use its tokens, don't invent new ones.
