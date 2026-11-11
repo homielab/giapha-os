@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Members and tree: help texts, empty-relationship notes, search and form placeholders, tree menu headings, the inactive view tab and the back and clear buttons are darker so they are easier to read (contrast 4.5:1 or more).
 - The saved tree root comes back after moving to another page and back, not only on a full page load; a saved root whose member was deleted is forgotten.
 - Photos from an iPhone are no longer saved sideways on Safari older than 17: avatars and gallery photos keep the EXIF orientation when resized.
 - A locked account that signs in again no longer sends administrators a new approval email, and locking an account while its approval page is open (even as "Confirm approval" is pressed) keeps it locked; approval now runs in one database transaction. Needs the migration `20261031180000_lock_blocks_approval.sql`.

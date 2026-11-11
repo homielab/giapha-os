@@ -96,7 +96,7 @@ export default function BulkAddChildrenForm({
                 </span>
                 <button
                   onClick={() => removeRow(index)}
-                  className='rounded-lg p-1.5 text-sm text-stone-400 transition-colors hover:bg-red-50 hover:text-red-500'
+                  className='rounded-lg p-1.5 text-sm text-stone-500 transition-colors hover:bg-red-50 hover:text-red-500'
                   title={t('remove')}>
                   ✕
                 </button>
@@ -114,7 +114,7 @@ export default function BulkAddChildrenForm({
                   onChange={(e) =>
                     updateRow(index, { birthOrder: e.target.value })
                   }
-                  className='w-14 shrink-0 rounded-lg border border-stone-300 bg-stone-50 px-1 py-2 text-center text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-sky-500 focus:ring-sky-500'
+                  className='w-14 shrink-0 rounded-lg border border-stone-300 bg-stone-50 px-1 py-2 text-center text-sm text-stone-900 placeholder-stone-500 transition-colors focus:border-sky-500 focus:ring-sky-500'
                 />
                 <input
                   id={`child-name-${child.id}`}
@@ -125,7 +125,7 @@ export default function BulkAddChildrenForm({
                   maxLength={MAX_NAME}
                   value={child.name}
                   onChange={(e) => updateRow(index, { name: e.target.value })}
-                  className='w-[calc(100%-4rem)] min-w-0 rounded-lg border border-stone-300 bg-stone-50 px-3 py-2 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-sky-500 focus:ring-sky-500 sm:w-auto sm:flex-1'
+                  className='w-[calc(100%-4rem)] min-w-0 rounded-lg border border-stone-300 bg-stone-50 px-3 py-2 text-sm text-stone-900 placeholder-stone-500 transition-colors focus:border-sky-500 focus:ring-sky-500 sm:w-auto sm:flex-1'
                 />
                 <select
                   id={`child-gender-${child.id}`}
@@ -152,7 +152,7 @@ export default function BulkAddChildrenForm({
                   onChange={(e) =>
                     updateRow(index, { birthYear: e.target.value })
                   }
-                  className='w-[calc(50%-0.25rem)] shrink-0 rounded-lg border border-stone-300 bg-stone-50 px-2 py-2 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-sky-500 focus:ring-sky-500 sm:w-24'
+                  className='w-[calc(50%-0.25rem)] shrink-0 rounded-lg border border-stone-300 bg-stone-50 px-2 py-2 text-sm text-stone-900 placeholder-stone-500 transition-colors focus:border-sky-500 focus:ring-sky-500 sm:w-24'
                 />
               </div>
             </div>

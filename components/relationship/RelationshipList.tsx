@@ -92,7 +92,7 @@ export default function RelationshipList({
                           </span>
                         )}
                         {rel.type === 'adopted_child' && (
-                          <span className='mt-0.5 text-sm text-stone-400 italic'>
+                          <span className='mt-0.5 text-sm text-stone-500 italic'>
                             ({t('adoptedChild')})
                           </span>
                         )}
@@ -126,7 +126,7 @@ export default function RelationshipList({
                 ))}
               </ul>
             ) : (
-              <p className='text-sm text-stone-400 italic'>
+              <p className='text-sm text-stone-500 italic'>
                 {t('noFamilyInfo')}
               </p>
             )}

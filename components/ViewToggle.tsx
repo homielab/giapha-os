@@ -59,7 +59,7 @@ export default function ViewToggle() {
             )}
             <span
               aria-hidden='true'
-              className={`transition-colors duration-300 ${isActive ? 'text-amber-700' : 'text-stone-400'}`}>
+              className={`transition-colors duration-300 ${isActive ? 'text-amber-700' : 'text-stone-600'}`}>
               {tab.icon}
             </span>
             <span className='hidden sm:block'>{tab.label}</span>

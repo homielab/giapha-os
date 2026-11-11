@@ -106,7 +106,7 @@ export default function AddRelationshipForm({
             maxLength={MAX_NOTE}
             value={newRelNote}
             onChange={(e) => onNoteChange(e.target.value)}
-            className='mb-3 block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-amber-500 focus:ring-amber-500 sm:p-2.5'
+            className='mb-3 block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-500 transition-colors focus:border-amber-500 focus:ring-amber-500 sm:p-2.5'
           />
         </div>
 
@@ -174,7 +174,7 @@ export default function AddRelationshipForm({
               setActive(0)
               setDismissed(false)
             }}
-            className='block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-amber-500 focus:ring-amber-500 sm:p-2.5'
+            className='block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-500 transition-colors focus:border-amber-500 focus:ring-amber-500 sm:p-2.5'
           />
           {/* Search Results Dropdown */}
           {listOpen && (
@@ -221,7 +221,7 @@ export default function AddRelationshipForm({
                         {p.full_name}
                       </span>
                     </div>
-                    <span className='text-sm text-stone-400'>
+                    <span className='text-sm text-stone-500'>
                       {formatDisplayDate(
                         p.birth_year,
                         p.birth_month,

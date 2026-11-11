@@ -117,7 +117,7 @@ export default function BaseToolbar({
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
               className='absolute top-full right-0 z-50 mt-2 flex w-48 flex-col gap-3 rounded-3xl border border-border bg-surface/95 p-4 backdrop-blur-xl'>
-              <div className='mb-1 text-sm font-medium text-stone-400'>
+              <div className='mb-1 text-sm font-medium text-stone-500'>
                 {t('display')}
               </div>
               <label className='flex cursor-pointer items-center gap-2 text-sm text-stone-600 transition-colors select-none hover:text-stone-900'>
@@ -158,7 +158,7 @@ export default function BaseToolbar({
               )}
 
               <div className='my-1 flex h-px w-full items-center gap-2 bg-stone-100 font-medium text-stone-400'></div>
-              <div className='mb-1 text-sm font-medium text-stone-400'>
+              <div className='mb-1 text-sm font-medium text-stone-500'>
                 {t('filters')}
               </div>
               <label className='flex cursor-pointer items-center gap-2 text-sm text-stone-600 transition-colors select-none hover:text-stone-900'>

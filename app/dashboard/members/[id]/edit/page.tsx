@@ -75,7 +75,7 @@ export default async function EditMemberPage({ params }: PageProps) {
         <div className='flex items-center gap-3'>
           <Link
             href={`/dashboard/members/${id}`}
-            className='-ml-2 rounded-full p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600'
+            className='-ml-2 rounded-full p-2 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-600'
             title={t('backToMembers')}>
             <ArrowLeft className='size-5' />
           </Link>

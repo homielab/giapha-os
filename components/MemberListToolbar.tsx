@@ -41,7 +41,7 @@ export default function MemberListToolbar({
               type='search'
               placeholder={t('searchMembers')}
               aria-label={t('searchMembers')}
-              className='w-full rounded-xl border border-stone-200/80 bg-white/90 py-2.5 pr-10 pl-10 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 focus:outline-none [&::-webkit-search-cancel-button]:appearance-none'
+              className='w-full rounded-xl border border-stone-200/80 bg-white/90 py-2.5 pr-10 pl-10 text-sm text-stone-900 placeholder-stone-500 transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 focus:outline-none [&::-webkit-search-cancel-button]:appearance-none'
               value={searchTerm}
               onChange={(e) => onSearchTermChange(e.target.value)}
               onKeyDown={(e) => {
@@ -53,7 +53,7 @@ export default function MemberListToolbar({
               <button
                 type='button'
                 onClick={() => onSearchTermChange('')}
-                className='absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700'
+                className='absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700'
                 aria-label={t('clearSearch')}
                 title={t('clearSearch')}>
                 <X className='size-4' />
