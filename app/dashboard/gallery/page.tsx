@@ -1,10 +1,18 @@
 import GalleryClient from '@/components/GalleryClient'
 import { getServerTranslations } from '@/lib/i18n/server'
+import type { Person } from '@/types'
 import {
   GallerySigningError,
   loadGalleryPage,
   parseGalleryPage
 } from '@/utils/gallery'
+import {
+  attachGalleryTags,
+  parseGalleryMember,
+  parseGalleryPhoto
+} from '@/utils/galleryTags'
+import { PERSON_PICKER_COLUMNS } from '@/utils/personColumns'
+import { fetchAllRowsOrThrow } from '@/utils/supabase/fetchAll'
 import { getIsAdmin, getSupabase } from '@/utils/supabase/queries'
 
 export async function generateMetadata() {
@@ -18,7 +26,11 @@ export async function generateMetadata() {
 export default async function GalleryPage({
   searchParams
 }: {
-  searchParams: Promise<{ page?: string | string[] }>
+  searchParams: Promise<{
+    page?: string | string[]
+    member?: string | string[]
+    photo?: string | string[]
+  }>
 }) {
   const [supabase, isAdmin, params] = await Promise.all([
     getSupabase(),
@@ -26,9 +38,16 @@ export default async function GalleryPage({
     searchParams
   ])
 
+  const memberId = parseGalleryMember(params.member)
+  const photoId = parseGalleryPhoto(params.photo)
+
   let gallery
   try {
-    gallery = await loadGalleryPage(supabase, parseGalleryPage(params.page))
+    gallery = await loadGalleryPage(
+      supabase,
+      parseGalleryPage(params.page),
+      memberId
+    )
   } catch (error) {
     if (!(error instanceof GallerySigningError)) throw error
     const { t } = await getServerTranslations()
@@ -45,7 +64,23 @@ export default async function GalleryPage({
       </main>
     )
   }
-  const { items, page, pageCount, total } = gallery
+  const { page, pageCount, total } = gallery
+  const [items, { data: persons }] = await Promise.all([
+    attachGalleryTags(supabase, gallery.items),
+    // Names for the member filter, the tags and the tag picker.
+    fetchAllRowsOrThrow<Person>(
+      (from, to) =>
+        supabase
+          .from('persons')
+          .select(PERSON_PICKER_COLUMNS)
+          .order('full_name')
+          .order('id')
+          .range(from, to) as unknown as PromiseLike<{
+          data: Person[] | null
+          error: { message: string } | null
+        }>
+    )
+  ])
 
   return (
     <main className='mx-auto flex w-full max-w-7xl flex-1 flex-col p-4 sm:p-8'>
@@ -55,6 +90,9 @@ export default async function GalleryPage({
         pageCount={pageCount}
         total={total}
         isAdmin={isAdmin}
+        persons={persons}
+        memberId={memberId}
+        photoId={photoId}
       />
     </main>
   )

@@ -16,6 +16,7 @@ import {
   validateImportPayload,
   type BackupPayload,
   type CustomEventExport,
+  type GalleryTagExport,
   type ImportPayload,
   type PersonDetailsPrivateExport,
   type PersonExport,
@@ -97,6 +98,20 @@ export async function exportData(
     return { error: t('loadDataError', { error: message }) }
   }
 
+  // Photo tags: a database that has not been upgraded yet has no tag table,
+  // which is the same as no tags, not a failed export.
+  let allGalleryTags: GalleryTagExport[] = []
+  try {
+    allGalleryTags = await fetchAll<GalleryTagExport>(
+      'gallery_item_persons',
+      'gallery_item_id, person_id',
+      'gallery_item_id',
+      'person_id'
+    )
+  } catch (error: unknown) {
+    console.error('Gallery tags not exported:', error)
+  }
+
   // A selected root limits the export to its branch (custom events have no
   // person link, so they are always exported in full).
   const {
@@ -112,6 +127,10 @@ export async function exportData(
     exportRootId
   )
   const exportCustomEvents = allCustomEvents
+  const exportedIds = new Set(exportPersons.map((p) => p.id))
+  const exportGalleryTags = allGalleryTags.filter((tag) =>
+    exportedIds.has(tag.person_id)
+  )
 
   return {
     version: BACKUP_VERSION,
@@ -119,7 +138,8 @@ export async function exportData(
     persons: exportPersons,
     relationships: exportRels,
     person_details_private: exportPrivateDetails,
-    custom_events: exportCustomEvents
+    custom_events: exportCustomEvents,
+    gallery_item_persons: exportGalleryTags
   }
 }
 

@@ -698,3 +698,59 @@ describe('text limits', () => {
     expect(validateImportPayload(payload, t)).toContain('fieldTooLong')
   })
 })
+
+describe('gallery tags in backups', () => {
+  const ITEM = '44444444-4444-4444-8444-444444444444'
+  const withTags = (tags: unknown) =>
+    ({ ...validPayload(), gallery_item_persons: tags }) as ImportPayload
+
+  test('the backup version counts photo tags', () => {
+    expect(BACKUP_VERSION).toBe(6)
+  })
+
+  test('accepts files with and without tags', () => {
+    expect(validateImportPayload(validPayload(), t)).toBeNull()
+    expect(validateImportPayload(withTags([]), t)).toBeNull()
+    expect(
+      validateImportPayload(
+        withTags([{ gallery_item_id: ITEM, person_id: A }]),
+        t
+      )
+    ).toBeNull()
+  })
+
+  test('a tag of a member that is not in the file is not an error', () => {
+    const stray = '55555555-5555-4555-8555-555555555555'
+    expect(
+      validateImportPayload(
+        withTags([{ gallery_item_id: ITEM, person_id: stray }]),
+        t
+      )
+    ).toBeNull()
+  })
+
+  test('refuses malformed tags', () => {
+    for (const tags of [
+      'x',
+      [null],
+      [{ gallery_item_id: ITEM }],
+      [{ gallery_item_id: 'nope', person_id: A }]
+    ]) {
+      expect(validateImportPayload(withTags(tags), t)).not.toBeNull()
+    }
+  })
+
+  test('the restore payload has the tags only when the file has them', () => {
+    const tags = [{ gallery_item_id: ITEM, person_id: A }]
+    expect(buildRestorePayload(withTags(tags)).gallery_item_persons).toEqual(
+      tags
+    )
+    expect(buildRestorePayload(validPayload())).not.toHaveProperty(
+      'gallery_item_persons'
+    )
+    // Tags are not part of the counts the database checks.
+    expect(buildRestorePayload(withTags(tags)).counts).not.toHaveProperty(
+      'gallery_item_persons'
+    )
+  })
+})

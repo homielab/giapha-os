@@ -11,7 +11,7 @@ import {
 import GalleryImage from '@/components/GalleryImage'
 import GalleryLightbox from '@/components/GalleryLightbox'
 import { useI18n } from '@/lib/i18n/useI18n'
-import { GalleryItem } from '@/types'
+import { GalleryItem, Person } from '@/types'
 import { deleteGalleryItem, GalleryItemNotDeletedError } from '@/utils/gallery'
 import { idAfterDelete, stepIndex } from '@/utils/galleryNav'
 import { createClient } from '@/utils/supabase/client'
@@ -20,6 +20,10 @@ interface GalleryGridProps {
   items: GalleryItem[]
   isAdmin?: boolean
   viewMode?: 'grid' | 'timeline'
+  /** Members, to name the tags of the open photo. */
+  persons?: Pick<Person, 'id' | 'full_name'>[]
+  /** Photo to open in the lightbox at first (from the member page). */
+  initialPhotoId?: string | null
   onEdit?: (item: GalleryItem) => void
   onDeleteSuccess?: (id: string) => void
 }
@@ -28,11 +32,13 @@ export default function GalleryGrid({
   items,
   isAdmin,
   viewMode = 'timeline',
+  persons = [],
+  initialPhotoId = null,
   onEdit,
   onDeleteSuccess
 }: GalleryGridProps) {
   const { t } = useI18n()
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(initialPhotoId)
   const setSelectedItem = (item: GalleryItem | null) =>
     setSelectedId(item ? item.id : null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -100,6 +106,13 @@ export default function GalleryGrid({
   )
   const selectedIndex = orderedItems.findIndex((i) => i.id === selectedId)
   const selectedItem = selectedIndex >= 0 ? orderedItems[selectedIndex] : null
+  const selectedPeople = useMemo(() => {
+    const names = new Map(persons.map((p) => [p.id, p.full_name]))
+    return (selectedItem?.person_ids ?? []).flatMap((id) => {
+      const name = names.get(id)
+      return name ? [{ id, name }] : []
+    })
+  }, [persons, selectedItem])
   const step = (dir: -1 | 1) => {
     const next = stepIndex(selectedIndex, orderedItems.length, dir)
     if (next !== null) setSelectedId(orderedItems[next].id)
@@ -273,6 +286,7 @@ export default function GalleryGrid({
           item={selectedItem}
           isAdmin={isAdmin}
           isDeleting={isDeleting}
+          people={selectedPeople}
           onClose={() => setSelectedItem(null)}
           onEdit={onEdit}
           onDelete={handleDelete}

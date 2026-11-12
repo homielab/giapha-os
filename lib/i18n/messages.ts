@@ -120,6 +120,9 @@ export const messages = {
     duplicatePrivateDetail:
       'Thông tin riêng tư của thành viên {id} xuất hiện nhiều lần.',
     eventsLimit: 'Số lượng sự kiện vượt quá giới hạn cho phép.',
+    galleryTagsLimit:
+      'Số lượng thẻ thành viên trong ảnh vượt quá giới hạn cho phép ({count}).',
+    invalidGalleryTag: 'Thẻ thành viên trong ảnh không hợp lệ.',
     invalidEvent: 'Sự kiện không hợp lệ.',
     invalidEventId: 'ID sự kiện không hợp lệ.',
     duplicateEventId: 'File chứa ID sự kiện bị trùng: {id}.',
@@ -1045,6 +1048,18 @@ export const messages = {
       'Không lưu được: bạn không còn quyền sửa ảnh này. Hãy tải lại trang.',
     deleteImageNotAllowed:
       'Bạn không có quyền xoá ảnh này nên ảnh vẫn còn nguyên.',
+    galleryTagMembers: 'Thành viên trong ảnh',
+    galleryTagAdd: 'Thêm thành viên',
+    galleryTagRemove: 'Bỏ {name} khỏi ảnh',
+    galleryTagsNotSaved:
+      'Ảnh đã được lưu nhưng chưa gắn được thành viên. Hãy mở ảnh, bấm Sửa và gắn lại.',
+    galleryFilterMember: 'Lọc theo thành viên',
+    galleryAllMembers: 'Tất cả ảnh',
+    galleryFilterEmpty: 'Chưa có ảnh nào gắn {name}.',
+    galleryInPhoto: 'Trong ảnh',
+    memberPhotos: 'Ảnh',
+    memberPhotosSeeAll: 'Xem tất cả ({total})',
+    memberPhotoOpen: 'Mở ảnh {title}',
     close: 'Đóng',
     filterLabel: 'Lọc',
     sortLabel: 'Sắp xếp',
@@ -1504,6 +1519,9 @@ export const messages = {
     duplicatePrivateDetail:
       'The private details of member {id} appear more than once.',
     eventsLimit: 'The number of events exceeds the allowed limit.',
+    galleryTagsLimit:
+      'The number of member tags in photos exceeds the allowed limit ({count}).',
+    invalidGalleryTag: 'Invalid member tag in a photo.',
     invalidEvent: 'Invalid event.',
     invalidEventId: 'Invalid event ID.',
     duplicateEventId: 'Duplicate event ID in the file: {id}.',
@@ -2438,6 +2456,18 @@ export const messages = {
       'Not saved: you can no longer edit this photo. Reload the page.',
     deleteImageNotAllowed:
       'You are not allowed to delete this image, so it was kept.',
+    galleryTagMembers: 'Members in this photo',
+    galleryTagAdd: 'Add a member',
+    galleryTagRemove: 'Remove {name} from this photo',
+    galleryTagsNotSaved:
+      'The photo was saved but its members were not. Open the photo, choose Edit and tag them again.',
+    galleryFilterMember: 'Filter by member',
+    galleryAllMembers: 'All photos',
+    galleryFilterEmpty: 'No photos are tagged with {name} yet.',
+    galleryInPhoto: 'In this photo',
+    memberPhotos: 'Photos',
+    memberPhotosSeeAll: 'See all ({total})',
+    memberPhotoOpen: 'Open photo {title}',
     close: 'Close',
     filterLabel: 'Filter',
     sortLabel: 'Sort',

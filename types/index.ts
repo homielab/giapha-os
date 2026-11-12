@@ -82,4 +82,6 @@ export interface GalleryItem {
   storage_path?: string
   // True when no signed URL could be made for the image (it is not shown).
   image_error?: boolean
+  // Ids of the members tagged in the photo (filled by attachGalleryTags).
+  person_ids?: string[]
 }

@@ -110,16 +110,33 @@ describe('editing a gallery photo', () => {
     expect(base).toEqual({
       title: 'Giỗ tổ',
       description: 'Cả họ',
-      eventDate: '2024-03-15'
+      eventDate: '2024-03-15',
+      personIds: []
     })
     expect(
       uploadFormValuesFrom({ title: 'A', description: null, event_date: null })
-    ).toEqual({ title: 'A', description: '', eventDate: '' })
+    ).toEqual({ title: 'A', description: '', eventDate: '', personIds: [] })
     expect(uploadFormValuesFrom(null)).toEqual({
       title: '',
       description: '',
-      eventDate: ''
+      eventDate: '',
+      personIds: []
     })
+    expect(
+      uploadFormValuesFrom({ ...item, person_ids: ['p1', 'p2'] }).personIds
+    ).toEqual(['p1', 'p2'])
+  })
+
+  it('is dirty when the tagged members change, whatever their order', () => {
+    const tagged = uploadFormValuesFrom({ ...item, person_ids: ['p1', 'p2'] })
+    const values = { hasFile: false, ...tagged }
+    expect(isUploadFormDirty(values, tagged)).toBe(false)
+    expect(
+      isUploadFormDirty({ ...values, personIds: ['p2', 'p1'] }, tagged)
+    ).toBe(false)
+    expect(isUploadFormDirty({ ...values, personIds: ['p1'] }, tagged)).toBe(
+      true
+    )
   })
 
   it('is clean when opened and closed without changes', () => {

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Tag family members in gallery photos, filter the gallery by member and see a member's photos on their page.
 - The bubble map can be saved as an image or PDF (editors), with the whole map in the file, not only the visible part.
 
 ### Changed

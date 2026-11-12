@@ -7,27 +7,37 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useGalleryView } from '@/hooks/useGalleryView'
 import { useI18n } from '@/lib/i18n/useI18n'
-import { GalleryItem } from '@/types'
+import { GalleryItem, Person } from '@/types'
 import { GALLERY_RESIGN_AFTER_MS, shouldResignGallery } from '@/utils/gallery'
+import { galleryHref } from '@/utils/galleryTags'
 import { writeGalleryView } from '@/utils/galleryView'
 
 import GalleryGrid from './GalleryGrid'
 import { GalleryImageErrorContext } from './GalleryImage'
 import GalleryViewSwitcher from './GalleryViewSwitcher'
 import UploadModal from './modal/UploadModal'
+import PersonSelector from './PersonSelector'
 
 export default function GalleryClient({
   items: pageItems,
   page,
   pageCount,
   total,
-  isAdmin
+  isAdmin,
+  persons,
+  memberId,
+  photoId
 }: {
   items: GalleryItem[]
   page: number
   pageCount: number
   total: number
   isAdmin: boolean
+  persons: Person[]
+  /** Member the gallery is filtered by (`?member=`), if any. */
+  memberId: string | null
+  /** Photo to open at first (`?photo=`), if any. */
+  photoId: string | null
 }) {
   // Hide deleted items right away; router.refresh() then brings the new page.
   const [deletedIds, setDeletedIds] = useState<Set<string>>(() => new Set())
@@ -37,6 +47,7 @@ export default function GalleryClient({
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null)
   const router = useRouter()
   const { t } = useI18n()
+  const member = memberId ? persons.find((p) => p.id === memberId) : undefined
 
   // Signed image URLs last 1 h. A new `pageItems` means the server just signed
   // them; refresh once before they expire or when an image fails to load.
@@ -104,7 +115,18 @@ export default function GalleryClient({
             </div>
           </div>
 
-          <div className='flex items-center gap-3'>
+          <div className='flex flex-wrap items-center gap-3'>
+            {persons.length > 0 && (
+              <PersonSelector
+                persons={persons}
+                selectedId={memberId}
+                showAllOption
+                label={t('galleryFilterMember')}
+                allOptionLabel={t('galleryAllMembers')}
+                onSelect={(id) => router.push(galleryHref({ member: id }))}
+                className='w-full sm:w-64'
+              />
+            )}
             {/* View switcher */}
             <GalleryViewSwitcher value={viewMode} onChange={writeGalleryView} />
 
@@ -119,11 +141,19 @@ export default function GalleryClient({
           </div>
         </div>
 
-        {viewMode ? (
+        {viewMode && memberId && items.length === 0 ? (
+          <p
+            role='status'
+            className='rounded-3xl border border-stone-100 bg-white px-4 py-16 text-center text-stone-500'>
+            {t('galleryFilterEmpty', { name: member?.full_name ?? '' })}
+          </p>
+        ) : viewMode ? (
           <GalleryGrid
             items={items}
             isAdmin={isAdmin}
             viewMode={viewMode}
+            persons={persons}
+            initialPhotoId={photoId}
             onEdit={handleEdit}
             onDeleteSuccess={handleDeleteSuccess}
           />
@@ -138,7 +168,7 @@ export default function GalleryClient({
             className='mt-10 flex items-center justify-center gap-3'>
             {page > 1 ? (
               <Link
-                href={`?page=${page - 1}`}
+                href={galleryHref({ page: page - 1, member: memberId })}
                 className='btn-outline px-3 py-2.5'
                 aria-label={t('previousPage')}>
                 <ChevronLeft className='size-4' />
@@ -155,7 +185,7 @@ export default function GalleryClient({
             </span>
             {page < pageCount ? (
               <Link
-                href={`?page=${page + 1}`}
+                href={galleryHref({ page: page + 1, member: memberId })}
                 className='btn-outline px-3 py-2.5'
                 aria-label={t('nextPage')}>
                 <ChevronRight className='size-4' />
@@ -176,6 +206,7 @@ export default function GalleryClient({
           onClose={handleCloseModal}
           onSuccess={handleUploadSuccess}
           initialData={editingItem}
+          persons={persons}
         />
       </>
     </GalleryImageErrorContext.Provider>

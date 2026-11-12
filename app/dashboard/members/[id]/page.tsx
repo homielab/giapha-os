@@ -4,10 +4,12 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import DeleteMemberButton from '@/components/DeleteMemberButton'
+import MemberPhotoStrip from '@/components/MemberPhotoStrip'
 import PrintButton from '@/components/PrintButton'
 import ViewOnTreeLink from '@/components/ViewOnTreeLink'
 import MemberDetailContent from '@/context/MemberDetailContent'
 import { getServerTranslations } from '@/lib/i18n/server'
+import { loadMemberPhotos } from '@/utils/gallery'
 import { memberPrintTitle } from '@/utils/memberPrint'
 import { fetchPrivateDetails } from '@/utils/privateDetails'
 import {
@@ -58,10 +60,10 @@ export default async function MemberDetailPage({ params }: PageProps) {
   if (!person) notFound()
 
   // Fetch Private Data if Admin
-  let privateData = null
-  if (isAdmin) {
-    privateData = await fetchPrivateDetails(supabase, id)
-  }
+  const [privateData, photos] = await Promise.all([
+    isAdmin ? fetchPrivateDetails(supabase, id) : null,
+    loadMemberPhotos(supabase, id)
+  ])
 
   return (
     <div className='relative flex w-full flex-1 flex-col pb-8'>
@@ -110,6 +112,11 @@ export default async function MemberDetailPage({ params }: PageProps) {
             canEdit={canEdit}
           />
         </div>
+        <MemberPhotoStrip
+          personId={id}
+          items={photos.items}
+          total={photos.total}
+        />
       </main>
     </div>
   )

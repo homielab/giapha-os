@@ -237,7 +237,8 @@ export default function DataImportExport({
         persons: payload.persons,
         relationships: payload.relationships,
         person_details_private: payload.person_details_private,
-        custom_events: payload.custom_events
+        custom_events: payload.custom_events,
+        gallery_item_persons: payload.gallery_item_persons
       })
 
       if ('error' in result) {

@@ -69,6 +69,12 @@ export interface CustomEventExport {
   recurrence?: CustomEventRecurrence | null
 }
 
+/** A member tagged in a gallery photo. The photos themselves are not in the backup. */
+export interface GalleryTagExport {
+  gallery_item_id: string
+  person_id: string
+}
+
 export interface BackupPayload {
   version: number
   timestamp: string
@@ -76,6 +82,8 @@ export interface BackupPayload {
   relationships: RelationshipExport[]
   person_details_private?: PersonDetailsPrivateExport[]
   custom_events?: CustomEventExport[]
+  /** Missing in backups made before photo tags (= none in the file). */
+  gallery_item_persons?: GalleryTagExport[]
 }
 
 export interface ImportPayload {
@@ -85,6 +93,7 @@ export interface ImportPayload {
   relationships: RelationshipExport[]
   person_details_private?: PersonDetailsPrivateExport[]
   custom_events?: CustomEventExport[]
+  gallery_item_persons?: GalleryTagExport[]
 }
 
 export type SanitizedPerson = Omit<
@@ -119,6 +128,12 @@ export interface RestorePayload {
   relationships: SanitizedRelationship[]
   person_details_private: PersonDetailsPrivateExport[]
   custom_events: SanitizedCustomEvent[]
+  /**
+   * Only present when the backup has photo tags. Not part of `counts`: a tag
+   * whose photo or member is missing is skipped. Without the key the
+   * database keeps the tags it has for the members that are restored.
+   */
+  gallery_item_persons?: GalleryTagExport[]
 }
 
 export const RESTORE_PAYLOAD_VERSION = 1
@@ -126,16 +141,18 @@ export const RESTORE_PAYLOAD_VERSION = 1
 /**
  * Version written into JSON backups. v2 added birth order and generation, v3
  * lunar death dates, private details, relationship notes and custom events, v4
- * the recurrence of custom events, v5 the burial place. Raise it when the backup format changes;
+ * the recurrence of custom events, v5 the burial place, v6 the members tagged
+ * in gallery photos. Raise it when the backup format changes;
  * files with a higher version are refused.
  */
-export const BACKUP_VERSION = 5
+export const BACKUP_VERSION = 6
 
 // Keep in sync with private.restore_backup in docs/migrations.
 export const MAX_PERSONS = 10000
 export const MAX_RELATIONSHIPS = 30000
 export const MAX_PRIVATE_DETAILS = 10000
 export const MAX_CUSTOM_EVENTS = 10000
+export const MAX_GALLERY_TAGS = 100000
 /** Relationship problems listed when a backup is refused. */
 export const MAX_REPORTED_ISSUES = 10
 
@@ -355,6 +372,24 @@ export function validateImportPayload(
     }
   }
 
+  // Tags are only shape-checked: one that points to a photo or member that
+  // does not exist is skipped by the restore, not a reason to refuse the file.
+  const galleryTags = payload.gallery_item_persons
+  if (galleryTags !== undefined) {
+    if (!Array.isArray(galleryTags) || galleryTags.length > MAX_GALLERY_TAGS)
+      return t('galleryTagsLimit', { count: MAX_GALLERY_TAGS })
+    for (const tag of galleryTags) {
+      const row = (tag ?? {}) as Record<string, unknown>
+      if (
+        typeof row.gallery_item_id !== 'string' ||
+        !isUuid(row.gallery_item_id) ||
+        typeof row.person_id !== 'string' ||
+        !isUuid(row.person_id)
+      )
+        return t('invalidGalleryTag')
+    }
+  }
+
   return checkRelationshipIssues(
     persons as PersonExport[],
     relationships as RelationshipLink[],
@@ -514,6 +549,10 @@ export function legacyCustomEventRows(
   })
 }
 
+export function sanitizeGalleryTag(tag: GalleryTagExport): GalleryTagExport {
+  return { gallery_item_id: tag.gallery_item_id, person_id: tag.person_id }
+}
+
 /** Builds the `restore_backup` payload from an already validated import. */
 export function buildRestorePayload(input: ImportPayload): RestorePayload {
   const persons = input.persons.map(sanitizePerson)
@@ -522,6 +561,7 @@ export function buildRestorePayload(input: ImportPayload): RestorePayload {
     sanitizePrivateDetails
   )
   const customEvents = (input.custom_events ?? []).map(sanitizeCustomEvent)
+  const galleryTags = input.gallery_item_persons?.map(sanitizeGalleryTag)
 
   return {
     version: RESTORE_PAYLOAD_VERSION,
@@ -534,7 +574,8 @@ export function buildRestorePayload(input: ImportPayload): RestorePayload {
     persons,
     relationships,
     person_details_private: privateDetails,
-    custom_events: customEvents
+    custom_events: customEvents,
+    ...(galleryTags ? { gallery_item_persons: galleryTags } : {})
   }
 }
 

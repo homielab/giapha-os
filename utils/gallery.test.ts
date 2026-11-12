@@ -309,7 +309,16 @@ describe('saveGalleryItem', () => {
         call.op === 'remove' ? { error: { message: 'boom' } } : ok(call),
       { initialData, fields, imagePath: 'new.jpg', uploadedPath: 'new.jpg' }
     )
-    await expect(done).resolves.toBeUndefined()
+    await expect(done).resolves.toBe('g1')
+  })
+
+  test('an insert returns the id of the new row', async () => {
+    const { done, calls } = run(
+      (call) => (call.op === 'insert' ? { data: [{ id: 'new-1' }] } : {}),
+      { fields, imagePath: 'new.jpg', uploadedPath: 'new.jpg', createdBy: 'u1' }
+    )
+    await expect(done).resolves.toBe('new-1')
+    expect(calls.find((c) => c.op === 'insert')?.columns).toBe('id')
   })
 
   test('removes the new file when the update fails', async () => {

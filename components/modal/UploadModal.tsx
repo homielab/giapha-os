@@ -8,12 +8,18 @@ import DiscardChangesDialog from '@/components/member/DiscardChangesDialog'
 import UploadDropzone from '@/components/modal/UploadDropzone'
 import UploadFormFields from '@/components/modal/UploadFormFields'
 import UploadModalActions from '@/components/modal/UploadModalActions'
+import UploadTagField from '@/components/modal/UploadTagField'
 import { useFilePreview } from '@/hooks/useFilePreview'
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
-import type { GalleryItem } from '@/types'
+import type { GalleryItem, Person } from '@/types'
 import { isUploadFormDirty, uploadFormValuesFrom } from '@/utils/formDirty'
 import { saveGalleryItem } from '@/utils/gallery'
+import {
+  GalleryTagsNotSavedError,
+  sameIds,
+  saveGalleryTags
+} from '@/utils/galleryTags'
 import { resizeGalleryImage } from '@/utils/image'
 import { validateGallerySource } from '@/utils/imageUpload'
 import { createClient } from '@/utils/supabase/client'
@@ -26,13 +32,16 @@ interface UploadModalProps {
   onClose: () => void
   onSuccess: () => void
   initialData?: GalleryItem | null
+  /** Members that can be tagged in the photo. */
+  persons?: Person[]
 }
 
 export default function UploadModal({
   isOpen,
   onClose,
   onSuccess,
-  initialData
+  initialData,
+  persons = []
 }: UploadModalProps) {
   const { t } = useI18n()
   const { file, previewUrl: preview, setFile } = useFilePreview()
@@ -42,6 +51,7 @@ export default function UploadModal({
   const [title, setTitle] = useState(initial.title)
   const [description, setDescription] = useState(initial.description)
   const [eventDate, setEventDate] = useState(initial.eventDate)
+  const [personIds, setPersonIds] = useState<string[]>(initial.personIds ?? [])
   // The current photo shows until a new one is chosen or it is cleared;
   // clearing it without choosing another keeps the saved photo.
   const [showCurrent, setShowCurrent] = useState(Boolean(initialData))
@@ -127,7 +137,7 @@ export default function UploadModal({
       const supabase = createClient()
       const { data: userData } = await supabase.auth.getUser()
 
-      await saveGalleryItem(supabase, {
+      const savedId = await saveGalleryItem(supabase, {
         initialData,
         fields: {
           title,
@@ -138,6 +148,19 @@ export default function UploadModal({
         uploadedPath: file ? finalPath : null,
         createdBy: userData?.user?.id
       })
+
+      // 3. Tags: only when they changed, so a photo without tags never
+      // touches the tag table. The photo is saved by now: a failure here
+      // is reported, but the form closes (saving again would add a copy).
+      if (!sameIds(personIds, initial.personIds ?? [])) {
+        try {
+          if (!savedId) throw new GalleryTagsNotSavedError('no photo id')
+          await saveGalleryTags(supabase, savedId, personIds)
+        } catch (tagError) {
+          console.error('Gallery tags not saved', tagError)
+          alert(t('galleryTagsNotSaved'))
+        }
+      }
 
       // Success
       resetForm()
@@ -160,6 +183,7 @@ export default function UploadModal({
     setTitle(initial.title)
     setDescription(initial.description)
     setEventDate(initial.eventDate)
+    setPersonIds(initial.personIds ?? [])
     setShowCurrent(Boolean(initialData))
     setError(null)
     if (fileInputRef.current) {
@@ -183,7 +207,8 @@ export default function UploadModal({
           hasFile: Boolean(file),
           title,
           description,
-          eventDate
+          eventDate,
+          personIds
         },
         initial
       )
@@ -279,6 +304,12 @@ export default function UploadModal({
                   onTitleChange={setTitle}
                   onEventDateChange={setEventDate}
                   onDescriptionChange={setDescription}
+                />
+
+                <UploadTagField
+                  persons={persons}
+                  selectedIds={personIds}
+                  onChange={setPersonIds}
                 />
 
                 <UploadModalActions

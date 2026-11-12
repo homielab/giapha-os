@@ -2,6 +2,7 @@
 
 import dayjs from 'dayjs'
 import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import Link from 'next/link'
 import { useId } from 'react'
 
 import GalleryImage from '@/components/GalleryImage'
@@ -13,6 +14,8 @@ interface GalleryLightboxProps {
   item: GalleryItem
   isAdmin?: boolean
   isDeleting: boolean
+  /** Members tagged in the photo, shown as links to their pages. */
+  people?: { id: string; name: string }[]
   onClose: () => void
   onEdit?: (item: GalleryItem) => void
   onDelete: (item: GalleryItem) => void
@@ -27,6 +30,7 @@ export default function GalleryLightbox({
   item,
   isAdmin,
   isDeleting,
+  people = [],
   onClose,
   onEdit,
   onDelete,
@@ -116,6 +120,25 @@ export default function GalleryLightbox({
               <div className='mb-6 flex items-center gap-2 border-b border-stone-100 pb-6 font-medium text-stone-500'>
                 <CalendarDays className='size-4' />
                 <span>{dayjs(item.event_date).format('DD/MM/YYYY')}</span>
+              </div>
+            )}
+
+            {people.length > 0 && (
+              <div className='mb-6'>
+                <h3 className='mb-2 text-sm font-medium text-stone-500'>
+                  {t('galleryInPhoto')}
+                </h3>
+                <ul className='flex flex-wrap gap-2'>
+                  {people.map((person) => (
+                    <li key={person.id}>
+                      <Link
+                        href={`/dashboard/members/${person.id}`}
+                        className='inline-block rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100'>
+                        {person.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 

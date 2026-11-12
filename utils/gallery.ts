@@ -71,11 +71,24 @@ function pageRange(page: number): [number, number] {
   return [from, from + GALLERY_PAGE_SIZE - 1]
 }
 
-function fetchPage(supabase: SupabaseClient, page: number) {
+// With a member, only the photos that member is tagged in: an inner join on
+// the tag table, so the filter and the paging stay in one request.
+const MEMBER_FILTER_ALIAS = 'member_filter'
+
+function fetchPage(supabase: SupabaseClient, page: number, personId?: string) {
   const [from, to] = pageRange(page)
-  return supabase
-    .from('gallery_items')
-    .select('*', { count: 'exact' })
+  const query = personId
+    ? supabase
+        .from('gallery_items')
+        .select(
+          `*, ${MEMBER_FILTER_ALIAS}:gallery_item_persons!inner(person_id)`,
+          {
+            count: 'exact'
+          }
+        )
+        .eq(`${MEMBER_FILTER_ALIAS}.person_id`, personId)
+    : supabase.from('gallery_items').select('*', { count: 'exact' })
+  return query
     .order('event_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
     .order('id', { ascending: true })
@@ -86,23 +99,39 @@ function fetchPage(supabase: SupabaseClient, page: number) {
 // storage request. A page past the end falls back to the last page.
 export async function loadGalleryPage(
   supabase: SupabaseClient,
-  requestedPage: number
+  requestedPage: number,
+  personId?: string | null
 ): Promise<GalleryPage> {
   let page = Math.max(1, Math.floor(requestedPage) || 1)
-  let { data, count, error } = await fetchPage(supabase, page)
+  let { data, count, error } = await fetchPage(
+    supabase,
+    page,
+    personId || undefined
+  )
 
   // PostgREST answers 416 (PGRST103) when the offset is past the last row.
   if (error?.code === 'PGRST103' && page > 1) {
-    const { count: total } = await supabase
-      .from('gallery_items')
-      .select('id', { count: 'exact', head: true })
-    page = getGalleryPageCount(total ?? 0)
-    ;({ data, count, error } = await fetchPage(supabase, page))
+    page = getGalleryPageCount(
+      await countGalleryItems(supabase, personId || undefined)
+    )
+    ;({ data, count, error } = await fetchPage(
+      supabase,
+      page,
+      personId || undefined
+    ))
   }
 
   if (error) throw error
 
-  const rows = (data ?? []) as GalleryItem[]
+  const rows = (
+    (data ?? []) as (GalleryItem & {
+      [MEMBER_FILTER_ALIAS]?: unknown
+    })[]
+  ).map((row) => {
+    const item = { ...row }
+    delete item[MEMBER_FILTER_ALIAS]
+    return item as GalleryItem
+  })
   const total = count ?? rows.length
   const paths = rows.map((item) => getGalleryStoragePath(item.image_url))
   const signedUrls = new Map<string, string>()
@@ -139,6 +168,25 @@ export async function loadGalleryPage(
     pageCount: getGalleryPageCount(total),
     total
   }
+}
+
+async function countGalleryItems(supabase: SupabaseClient, personId?: string) {
+  const query = personId
+    ? supabase
+        .from('gallery_items')
+        .select(
+          `id, ${MEMBER_FILTER_ALIAS}:gallery_item_persons!inner(person_id)`,
+          {
+            count: 'exact',
+            head: true
+          }
+        )
+        .eq(`${MEMBER_FILTER_ALIAS}.person_id`, personId)
+    : supabase
+        .from('gallery_items')
+        .select('id', { count: 'exact', head: true })
+  const { count } = await query
+  return count ?? 0
 }
 
 /** Thrown when the database accepted the delete but removed no row (RLS). */
@@ -243,6 +291,8 @@ export interface GalleryItemFields {
  * - An update succeeds and replaced the image: the old file is removed, unless
  *   another row still points at it. A failed removal is only logged.
  *
+ * Returns the id of the saved row (null if the database did not return it).
+ *
  * Upload names are unique, so two rows normally never share a file; the lookup
  * guards rows that were created or imported by other means.
  */
@@ -255,9 +305,10 @@ export async function saveGalleryItem(
     uploadedPath?: string | null
     createdBy?: string | null
   }
-): Promise<void> {
+): Promise<string | null> {
   const { initialData, fields, imagePath, uploadedPath, createdBy } = options
   const itemData = { ...fields, image_url: imagePath }
+  let savedId: string | null = initialData?.id ?? null
 
   try {
     if (initialData) {
@@ -271,24 +322,53 @@ export async function saveGalleryItem(
         throw new GalleryItemNotUpdatedError()
       }
     } else {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('gallery_items')
         .insert([{ ...itemData, created_by: createdBy || null }])
+        .select('id')
       if (error) throw error
+      savedId = data?.[0]?.id ?? null
     }
   } catch (err) {
     if (uploadedPath) await removeGalleryFile(supabase, uploadedPath)
     throw err
   }
 
-  if (!initialData) return
+  if (!initialData) return savedId
   const oldPath =
     initialData.storage_path || getGalleryStoragePath(initialData.image_url)
-  if (!oldPath || oldPath === imagePath) return
+  if (!oldPath || oldPath === imagePath) return savedId
 
   await removeUnusedGalleryFile(
     supabase,
     oldPath,
     'Old gallery file was not removed'
   )
+  return savedId
+}
+
+/** Photos shown in the strip on a member's page. */
+export const MEMBER_PHOTOS_SHOWN = 12
+
+/**
+ * The newest photos a member is tagged in, signed, plus how many there are.
+ * Never throws: the strip is an extra on the member page, so any failure (no
+ * tag table yet, signing) is logged and the strip is simply not shown.
+ */
+export async function loadMemberPhotos(
+  supabase: SupabaseClient,
+  personId: string
+): Promise<{ items: GalleryItem[]; total: number }> {
+  try {
+    const { items, total } = await loadGalleryPage(supabase, 1, personId)
+    return {
+      items: items
+        .filter((item) => item.image_url)
+        .slice(0, MEMBER_PHOTOS_SHOWN),
+      total
+    }
+  } catch (err) {
+    console.error('Cannot load member photos:', err)
+    return { items: [], total: 0 }
+  }
 }

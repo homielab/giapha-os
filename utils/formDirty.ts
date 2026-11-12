@@ -4,6 +4,7 @@ import {
   defaultEventDate,
   toRecurrence
 } from '@/utils/eventHelpers'
+import { sameIds } from '@/utils/galleryTags'
 
 export interface CustomEventFormValues {
   name: string
@@ -56,6 +57,8 @@ export interface UploadFormValues {
   title: string
   description: string
   eventDate: string
+  /** Members tagged in the photo. */
+  personIds?: string[]
 }
 
 type UploadFormFields = Omit<UploadFormValues, 'hasFile'>
@@ -63,7 +66,8 @@ type UploadFormFields = Omit<UploadFormValues, 'hasFile'>
 const BLANK_UPLOAD_FORM: UploadFormFields = {
   title: '',
   description: '',
-  eventDate: ''
+  eventDate: '',
+  personIds: []
 }
 
 /** The upload form's starting values: blank, or the saved photo's fields. */
@@ -72,6 +76,7 @@ export function uploadFormValuesFrom(
     title: string
     description: string | null
     event_date: string | null
+    person_ids?: string[]
   } | null
 ): UploadFormFields {
   if (!item) return BLANK_UPLOAD_FORM
@@ -79,7 +84,8 @@ export function uploadFormValuesFrom(
     title: item.title ?? '',
     description: item.description ?? '',
     // <input type="date"> takes YYYY-MM-DD only.
-    eventDate: item.event_date ? item.event_date.slice(0, 10) : ''
+    eventDate: item.event_date ? item.event_date.slice(0, 10) : '',
+    personIds: item.person_ids ?? []
   }
 }
 
@@ -95,6 +101,7 @@ export function isUploadFormDirty(
     values.hasFile ||
     values.title !== base.title ||
     values.description !== base.description ||
-    values.eventDate !== base.eventDate
+    values.eventDate !== base.eventDate ||
+    !sameIds(values.personIds ?? [], base.personIds ?? [])
   )
 }

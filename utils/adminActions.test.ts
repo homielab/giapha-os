@@ -356,6 +356,82 @@ describe('appendImportData', () => {
   })
 })
 
+describe('gallery tags in backups', () => {
+  const ITEM = '44444444-4444-4444-8444-444444444444'
+  const person = (id: string) => ({
+    id,
+    full_name: 'Nguyễn Văn An',
+    gender: 'male',
+    is_deceased: false,
+    is_in_law: false,
+    created_at: '2024-01-01T00:00:00Z'
+  })
+  const tags = [
+    { gallery_item_id: ITEM, person_id: A },
+    { gallery_item_id: ITEM, person_id: B }
+  ]
+
+  beforeEach(() => {
+    isAdmin = true
+  })
+
+  test('a new backup carries the tags and restores them', async () => {
+    respond = (call) => {
+      if (call.table === 'persons') return { data: [person(A)] }
+      if (call.table === 'gallery_item_persons') return { data: tags }
+      return { data: [] }
+    }
+    const exported = await exportData()
+    if ('error' in exported) throw new Error(exported.error)
+    expect(exported.version).toBe(6)
+    // B is not in the file: its tag is not exported.
+    expect(exported.gallery_item_persons).toEqual([tags[0]])
+
+    // Through a file and back into the restore.
+    const file = JSON.parse(JSON.stringify(exported))
+    respond = () => ({
+      data: {
+        persons: 1,
+        relationships: 0,
+        person_details_private: 0,
+        custom_events: 0
+      }
+    })
+    const result = await importData(file)
+    expect(result).toMatchObject({ success: true })
+    const { payload } = calls[0].payload as {
+      payload: { gallery_item_persons?: unknown }
+    }
+    expect(payload.gallery_item_persons).toEqual([tags[0]])
+  })
+
+  test('an old backup restores without a tag section', async () => {
+    respond = () => ({
+      data: {
+        persons: 1,
+        relationships: 0,
+        person_details_private: 0,
+        custom_events: 0
+      }
+    })
+    const result = await importData(backup())
+    expect(result).toMatchObject({ success: true })
+    const { payload } = calls[0].payload as { payload: object }
+    expect(payload).not.toHaveProperty('gallery_item_persons')
+  })
+
+  test('the export still works before the database has the tag table', async () => {
+    respond = (call) => {
+      if (call.table === 'persons') return { data: [person(A)] }
+      if (call.table === 'gallery_item_persons')
+        return { error: { message: 'no table', code: 'PGRST205' } }
+      return { data: [] }
+    }
+    const exported = await exportData()
+    expect(exported).toMatchObject({ version: 6, gallery_item_persons: [] })
+  })
+})
+
 describe('read-only admin scans', () => {
   beforeEach(() => {
     isAdmin = true
