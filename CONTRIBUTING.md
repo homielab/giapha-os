@@ -12,7 +12,7 @@ For a security problem, do **not** open a public issue: see [SECURITY.md](SECURI
 
 ## Set up
 
-You need [Bun](https://bun.sh/) and a Supabase project (see the README, "Run locally").
+You need [Bun](https://bun.sh/) and a Supabase project (see [docs/en/install.md](docs/en/install.md), "Run locally").
 
 ```bash
 bun install
@@ -33,6 +33,8 @@ bun run test          # bun test
 
 - CI also builds the Docker image without pushing it, which runs `bun run build` with placeholder Supabase values; run `bun run build` yourself if you touch `next.config.ts` or the `Dockerfile`.
 - Put a test next to the file it covers (`utils/csv.ts` → `utils/csv.test.ts`).
+- Code that calls Supabase is tested with the fake client `utils/testing/fakeSupabase.ts` (it returns `{ data, error }` per call). Server actions (`app/actions/`) are tested by mocking `@/utils/supabase/queries`, `@/lib/i18n/server` and `next/cache` with `mock.module` (see `utils/adminActions.test.ts`, `utils/memberActions.test.ts`). `mock.module` applies across test files, so a mock of `queries` must provide every export.
+- Pages that only show numbers (such as `/dashboard/stats`) compute them on the server and `select` only the columns they need (see `STATS_PERSON_COLUMNS` in `utils/familyStats.ts`), never the whole `persons` table.
 - Database changes: add a new file `docs/migrations/<timestamp>_<name>.sql`; the setup and upgrade pages pick it up.
 - UI changes follow [DESIGN.md](DESIGN.md): use its tokens, don't invent new ones.
 

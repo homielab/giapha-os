@@ -12,8 +12,8 @@ import { compareVersions, parseVersion } from '@/utils/version'
 
 const SOURCE_REPOSITORY = 'homielab/giapha-os'
 const SOURCE_BRANCH = 'main'
-const SOURCE_README_URL = `https://github.com/${SOURCE_REPOSITORY}/blob/${SOURCE_BRANCH}/README.md#hướng-dẫn-cập-nhật-source-code`
-const SOURCE_README_EN_URL = `https://github.com/${SOURCE_REPOSITORY}/blob/${SOURCE_BRANCH}/README.en.md#source-code-updates`
+const SOURCE_README_URL = `https://github.com/${SOURCE_REPOSITORY}/blob/${SOURCE_BRANCH}/docs/vi/nang-cap.md#hướng-dẫn-cập-nhật-source-code`
+const SOURCE_README_EN_URL = `https://github.com/${SOURCE_REPOSITORY}/blob/${SOURCE_BRANCH}/docs/en/upgrade.md#source-code-updates`
 const SOURCE_PACKAGE_URL = `https://raw.githubusercontent.com/${SOURCE_REPOSITORY}/${SOURCE_BRANCH}/package.json`
 
 interface MigrationDefinition {

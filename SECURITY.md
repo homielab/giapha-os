@@ -22,4 +22,4 @@ Không bao giờ gửi `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL` hay `.env.
 
 ## Supported versions
 
-Only the latest version on `main` receives fixes. Update through Dashboard → Upgrade or see the README ("Hướng dẫn cập nhật source code" / "Updating").
+Only the latest version on `main` receives fixes. Update through Dashboard → Upgrade or see [docs/en/upgrade.md](docs/en/upgrade.md) ([Tiếng Việt](docs/vi/nang-cap.md)).
