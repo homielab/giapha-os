@@ -140,13 +140,10 @@ export default function MergePersonsModal({
 
   return (
     <AnimatePresence>
-      <div
+      <dialog
         ref={dialogRef}
-        role='dialog'
-        aria-modal='true'
         aria-labelledby={titleId}
-        tabIndex={-1}
-        className='fixed inset-0 z-50 flex items-center justify-center p-4 outline-none'>
+        className='items-center justify-center p-4 outline-none open:flex'>
         <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -369,7 +366,11 @@ export default function MergePersonsModal({
               )}
 
               <div className='mt-5 flex justify-end gap-2'>
-                <button onClick={onCancel} disabled={isMerging} className='btn'>
+                <button
+                  onClick={onCancel}
+                  disabled={isMerging}
+                  className='btn'
+                  data-autofocus>
                   {t('cancel')}
                 </button>
                 <button
@@ -382,7 +383,7 @@ export default function MergePersonsModal({
             </>
           )}
         </m.div>
-      </div>
+      </dialog>
     </AnimatePresence>
   )
 }

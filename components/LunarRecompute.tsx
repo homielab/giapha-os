@@ -30,7 +30,7 @@ export default function LunarRecompute() {
   // Esc closes the confirmation unless the changes are being written.
   const dialogRef = useModalA11y(() => {
     if (!isApplying) setShowConfirm(false)
-  }, showConfirm)
+  })
 
   const loadPreview = async (): Promise<boolean> => {
     const result = await previewLunarRecompute()
@@ -158,7 +158,10 @@ export default function LunarRecompute() {
 
       <AnimatePresence>
         {showConfirm && (
-          <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+          <dialog
+            ref={dialogRef}
+            aria-labelledby='lunar-recompute-confirm-title'
+            className='items-center justify-center p-4 outline-none open:flex'>
             <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -170,11 +173,6 @@ export default function LunarRecompute() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              ref={dialogRef}
-              role='dialog'
-              tabIndex={-1}
-              aria-modal='true'
-              aria-labelledby='lunar-recompute-confirm-title'
               className='relative z-10 w-full max-w-md rounded-2xl border border-stone-200/60 bg-white p-6'>
               <div className='mb-5 flex items-start gap-4'>
                 <div className='mt-1 shrink-0 rounded-full bg-amber-100/50 p-3 text-amber-600'>
@@ -198,6 +196,7 @@ export default function LunarRecompute() {
                 <button
                   onClick={() => setShowConfirm(false)}
                   disabled={isApplying}
+                  data-autofocus
                   className='rounded-xl bg-stone-100 px-4 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-200 hover:text-stone-900'>
                   {t('cancel')}
                 </button>
@@ -211,7 +210,7 @@ export default function LunarRecompute() {
                 </button>
               </div>
             </m.div>
-          </div>
+          </dialog>
         )}
       </AnimatePresence>
     </DataCard>

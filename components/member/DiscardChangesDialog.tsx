@@ -20,14 +20,12 @@ export default function DiscardChangesDialog({
   const bodyId = useId()
   const dialogRef = useModalA11y(onKeepEditing)
   return (
-    <div
+    <dialog
       ref={dialogRef}
       role='alertdialog'
-      aria-modal='true'
       aria-labelledby={titleId}
       aria-describedby={bodyId}
-      tabIndex={-1}
-      className='fixed inset-0 z-[60] flex items-center justify-center p-4 outline-none'>
+      className='items-center justify-center p-4 outline-none open:flex'>
       <div
         className='absolute inset-0 cursor-pointer bg-stone-900/40 backdrop-blur-sm'
         onClick={onKeepEditing}
@@ -50,11 +48,15 @@ export default function DiscardChangesDialog({
           <button type='button' onClick={onDiscard} className='btn'>
             {t('discardChanges')}
           </button>
-          <button type='button' onClick={onKeepEditing} className='btn-primary'>
+          <button
+            type='button'
+            onClick={onKeepEditing}
+            className='btn-primary'
+            data-autofocus>
             {t('keepEditing')}
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }

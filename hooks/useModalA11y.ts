@@ -1,86 +1,53 @@
-import { useEffect, useEffectEvent, useRef } from 'react'
-
-import { FOCUSABLE_SELECTOR, focusTrapTarget } from '@/utils/focusTrap'
-
-// Open modals, topmost last: only the topmost one reacts to Escape.
-const openModals: symbol[] = []
-let previousBodyOverflow = ''
-
-function lockScroll() {
-  if (openModals.length === 1) {
-    previousBodyOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-  }
-}
-
-function unlockScroll() {
-  if (openModals.length === 0) {
-    document.body.style.overflow = previousBodyOverflow
-  }
-}
+import { useCallback, useLayoutEffect, useRef } from 'react'
 
 /**
- * Keyboard and focus behaviour shared by modal dialogs: Escape closes the
- * topmost modal, focus moves into the dialog when it opens and returns to the
- * element that had it when it closes, Tab and Shift+Tab cycle inside the
- * dialog, and the page behind does not scroll.
+ * Opens a `<dialog>` as a modal for as long as it is mounted. The browser
+ * makes the page behind inert, keeps it in the top layer, moves focus in and
+ * returns it to the opener on close.
  *
- * Attach the returned ref to the element carrying `role="dialog"` (give it
- * `tabIndex={-1}`). Pass `isOpen` when the component stays mounted while closed.
+ * Mark the control that should get focus first with `data-autofocus`.
+ *
+ * Esc and the back gesture call `onClose` instead of closing the dialog, so
+ * the caller decides (a form with unsaved changes can ask first). Unmount the
+ * dialog to close it. Attach the returned ref to the `<dialog>`.
  */
-export function useModalA11y<T extends HTMLElement = HTMLDivElement>(
-  onClose: () => void,
-  isOpen = true
-) {
-  const ref = useRef<T>(null)
-  const handleClose = useEffectEvent(onClose)
+export function useModalA11y(onClose: () => void) {
+  const onCloseRef = useRef(onClose)
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose
+  })
 
-  useEffect(() => {
-    if (!isOpen) return
-    const id = Symbol('modal')
-    openModals.push(id)
-    lockScroll()
-    const opener =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null
-    ref.current?.focus({ preventScroll: true })
+  return useCallback((dialog: HTMLDialogElement | null) => {
+    if (!dialog) return
+    let unmounting = false
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.defaultPrevented) return
-      if (openModals[openModals.length - 1] !== id) return
-      if (e.key === 'Tab') {
-        const dialog = ref.current
-        if (!dialog) return
-        const focusables = Array.from(
-          dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-        ).filter((el) => el.getClientRects().length > 0)
-        const active = document.activeElement as HTMLElement | null
-        const target = focusTrapTarget(
-          focusables.length > 0 ? focusables : [dialog],
-          active,
-          e.shiftKey
-        )
-        if (target) {
-          e.preventDefault()
-          target.focus()
-        }
-        return
-      }
-      if (e.key !== 'Escape') return
-      e.preventDefault()
-      handleClose()
+    const onCancel = (event: Event) => {
+      event.preventDefault()
+      onCloseRef.current()
     }
-    document.addEventListener('keydown', onKeyDown)
+    // Browsers ignore preventDefault() on repeated Esc presses without user
+    // activation and close the dialog anyway: reopen it and let the caller
+    // decide, as for any other close request.
+    const onNativeClose = () => {
+      if (unmounting || !dialog.isConnected) return
+      dialog.showModal()
+      onCloseRef.current()
+    }
+
+    dialog.addEventListener('cancel', onCancel)
+    dialog.addEventListener('close', onNativeClose)
+    if (!dialog.open) {
+      dialog.showModal()
+      // React's autoFocus focuses before the dialog opens and renders no
+      // attribute for showModal() to find, so the caller marks the control.
+      dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus()
+    }
 
     return () => {
-      document.removeEventListener('keydown', onKeyDown)
-      const index = openModals.indexOf(id)
-      if (index !== -1) openModals.splice(index, 1)
-      unlockScroll()
-      if (opener?.isConnected) opener.focus({ preventScroll: true })
+      unmounting = true
+      dialog.removeEventListener('cancel', onCancel)
+      dialog.removeEventListener('close', onNativeClose)
+      if (dialog.open) dialog.close()
     }
-  }, [isOpen])
-
-  return ref
+  }, [])
 }

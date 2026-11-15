@@ -218,22 +218,19 @@ export default function UploadModal({
   }
 
   const titleId = useId()
-  const dialogRef = useModalA11y(requestClose, isOpen)
+  const dialogRef = useModalA11y(requestClose)
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <m.div
+        <m.dialog
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           ref={dialogRef}
-          role='dialog'
-          aria-modal='true'
           aria-labelledby={titleId}
-          tabIndex={-1}
-          className='fixed inset-0 z-100 flex items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm outline-none sm:p-6'>
+          className='items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm outline-none open:flex sm:p-6'>
           {/* Click-away backdrop */}
           <button
             type='button'
@@ -329,7 +326,7 @@ export default function UploadModal({
               onDiscard={handleClose}
             />
           )}
-        </m.div>
+        </m.dialog>
       )}
     </AnimatePresence>
   )

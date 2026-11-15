@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Dialogs are native browser modal dialogs: the page behind cannot be clicked or tabbed to, Esc and the phone's back gesture close them (a form with unsaved changes still asks first), and focus goes back to the button that opened them.
+
+### Fixed
+
+- Closing the member details dialog no longer lets the page scroll under another dialog that is still open.
+- Gallery photos open from a real button, so screen readers announce them as buttons and the photo title stays a heading.
+
 ## [2.5.0] - 2026-11-15
 
 ### Added

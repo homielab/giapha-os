@@ -164,16 +164,7 @@ export default function GalleryGrid({
           {items.map((item) => (
             <div
               key={item.id}
-              className='group relative cursor-pointer break-inside-avoid overflow-hidden rounded-2xl bg-stone-100 shadow-sm transition duration-500 hover:shadow-xl'
-              role='button'
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  setSelectedItem(item)
-                }
-              }}
-              onClick={() => setSelectedItem(item)}>
+              className='group relative cursor-pointer break-inside-avoid overflow-hidden rounded-2xl bg-stone-100 shadow-sm transition duration-500 hover:shadow-xl'>
               {/* Image */}
               <GalleryImage
                 item={item}
@@ -207,6 +198,13 @@ export default function GalleryGrid({
                   <Maximize2 className='size-4' />
                 </div>
               </div>
+
+              <button
+                type='button'
+                aria-label={item.title}
+                onClick={() => setSelectedItem(item)}
+                className='absolute inset-0 z-10 cursor-pointer rounded-2xl ring-amber-500 focus-visible:ring-2'
+              />
             </div>
           ))}
         </div>
@@ -230,16 +228,7 @@ export default function GalleryGrid({
                 {group.items.map((item) => (
                   <div
                     key={item.id}
-                    onClick={() => setSelectedItem(item)}
-                    role='button'
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        setSelectedItem(item)
-                      }
-                    }}
-                    className='group flex cursor-pointer flex-col justify-between rounded-2xl border border-stone-200/80 bg-white/80 p-4 backdrop-blur-xl transition-colors duration-300 hover:-translate-y-1'>
+                    className='group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-stone-200/80 bg-white/80 p-4 backdrop-blur-xl transition-colors duration-300 hover:-translate-y-1'>
                     <div>
                       <div className='relative mb-4 aspect-16/10 overflow-hidden rounded-xl bg-stone-100'>
                         <GalleryImage
@@ -272,6 +261,12 @@ export default function GalleryGrid({
                         </p>
                       )}
                     </div>
+                    <button
+                      type='button'
+                      aria-label={item.title}
+                      onClick={() => setSelectedItem(item)}
+                      className='absolute inset-0 cursor-pointer rounded-2xl ring-amber-500 focus-visible:ring-2'
+                    />
                   </div>
                 ))}
               </div>

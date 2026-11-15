@@ -47,12 +47,9 @@ export default function GalleryLightbox({
   const navButton =
     'absolute top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/40 p-3 text-white/80 transition-colors hover:bg-black/60 hover:text-white disabled:cursor-not-allowed disabled:opacity-30'
   return (
-    <div
+    <dialog
       ref={dialogRef}
-      role='dialog'
-      aria-modal='true'
       aria-labelledby={titleId}
-      tabIndex={-1}
       onKeyDown={(e) => {
         if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
         if (e.key === 'ArrowLeft' && hasPrev) {
@@ -63,7 +60,7 @@ export default function GalleryLightbox({
           onNext?.()
         }
       }}
-      className='animate-in fade-in fixed inset-0 z-60 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm duration-200 outline-none'>
+      className='animate-in fade-in items-center justify-center bg-black/90 p-4 backdrop-blur-sm duration-200 outline-none open:flex'>
       <button
         onClick={onClose}
         aria-label={t('close')}
@@ -179,6 +176,6 @@ export default function GalleryLightbox({
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }

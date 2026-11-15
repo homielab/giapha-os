@@ -59,7 +59,8 @@ describe('GalleryGrid grid view', () => {
   test('the caption overlay reveals on focus and without hover', () => {
     expect(html).toContain(revealOnInteract)
     expect(html).toContain(slideInOnInteract)
-    expect(html).toContain('tabindex="0"')
+    // The card opens from a native button, so it is keyboard focusable
+    expect(html).toContain('<button type="button" aria-label="Giỗ tổ 2024"')
   })
 
   test('the title and date stay in the DOM', () => {

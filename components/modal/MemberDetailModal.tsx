@@ -199,11 +199,11 @@ export default function MemberDetailModal() {
   }, [setMemberModalId, setShowCreateMember])
 
   // Escape closes the detail view, not a form being edited (see the helper)
-  const dialogRef = useModalA11y<HTMLDivElement>(() => {
+  const dialogRef = useModalA11y(() => {
     if (shouldCloseMemberModalOnEscape({ isEditing, showCreateMember })) {
       closeModal()
     }
-  }, isOpen)
+  })
   let dialogLabel = t('memberDetails')
   if (showCreateMember) dialogLabel = t('addMember')
   else if (isEditing) dialogLabel = t('editMember')
@@ -285,18 +285,6 @@ export default function MemberDetailModal() {
     return syncModalState(memberId)
   }, [memberId, showCreateMember])
 
-  // Prevent background scrolling when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
-
   // Called by MemberForm after a successful save
   const handleEditSuccess = (savedPersonId: string) => {
     // Clear stale data first so the loading state is shown while refetching
@@ -328,17 +316,14 @@ export default function MemberDetailModal() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <m.div
+        <m.dialog
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           ref={dialogRef}
-          role='dialog'
-          aria-modal='true'
           aria-label={dialogLabel}
-          tabIndex={-1}
-          className='fixed inset-0 z-100 flex items-center justify-center bg-stone-900/40 backdrop-blur-sm sm:p-6'>
+          className='items-center justify-center bg-stone-900/40 backdrop-blur-sm outline-none open:flex sm:p-6'>
           {/* Click-away backdrop (disabled while editing/creating to avoid accidental close) */}
           {!isEditing && !showCreateMember && (
             <button
@@ -384,7 +369,7 @@ export default function MemberDetailModal() {
               onEditCancel={() => setIsEditing(false)}
             />
           </m.div>
-        </m.div>
+        </m.dialog>
       )}
     </AnimatePresence>
   )

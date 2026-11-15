@@ -50,8 +50,9 @@ export function usePopupMenu<
     containerRef,
     buttonRef,
     menuId,
+    // A disclosure, not role="menu": the panel is a list users Tab through,
+    // with no arrow-key navigation, so aria-haspopup="menu" would mislead.
     buttonProps: {
-      'aria-haspopup': 'menu' as const,
       'aria-expanded': isOpen,
       'aria-controls': isOpen ? menuId : undefined
     }

@@ -23,13 +23,10 @@ export default function AdminCreateUserModal({
   const titleId = useId()
   const dialogRef = useModalA11y(onClose)
   return (
-    <div
+    <dialog
       ref={dialogRef}
-      role='dialog'
-      aria-modal='true'
       aria-labelledby={titleId}
-      tabIndex={-1}
-      className='fixed inset-0 z-60 flex items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm transition-opacity duration-300 outline-none'>
+      className='items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm transition-opacity duration-300 outline-none open:flex'>
       <div className='w-full max-w-md transform overflow-hidden rounded-2xl border border-stone-200/60 bg-white/95 backdrop-blur-xl transition-colors'>
         <div className='flex items-center justify-between border-b border-stone-100/80 bg-stone-50/50 px-6 py-5'>
           <h3
@@ -66,6 +63,7 @@ export default function AdminCreateUserModal({
               </label>
               <input
                 id='admin-create-email'
+                data-autofocus
                 type='email'
                 name='email'
                 required
@@ -135,6 +133,6 @@ export default function AdminCreateUserModal({
           </div>
         </form>
       </div>
-    </div>
+    </dialog>
   )
 }

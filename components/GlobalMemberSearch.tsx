@@ -2,7 +2,7 @@
 
 import { Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 
 import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
@@ -34,8 +34,7 @@ export default function GlobalMemberSearch() {
     setQuery('')
     setActive(0)
   }
-  const dialogRef = useModalA11y<HTMLDivElement>(close, open)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const dialogRef = useModalA11y(close)
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -50,7 +49,6 @@ export default function GlobalMemberSearch() {
 
   useEffect(() => {
     if (!open) return
-    inputRef.current?.focus()
     // Stale-while-revalidate: the list already on screen stays while it is
     // reloaded in the background when older than the TTL (or cleared by an edit).
     const cached = memberSearchCache.get()
@@ -125,20 +123,16 @@ export default function GlobalMemberSearch() {
         <Search className='size-4' aria-hidden='true' />
       </button>
       {open && (
-        <div
-          className='fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[15vh]'
+        <dialog
+          ref={dialogRef}
+          aria-label={t('globalSearchTitle')}
+          className='items-start justify-center bg-black/40 p-4 pt-[15vh] outline-none open:flex'
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) close()
           }}>
-          <div
-            ref={dialogRef}
-            role='dialog'
-            aria-modal='true'
-            aria-label={t('globalSearchTitle')}
-            tabIndex={-1}
-            className='w-full max-w-lg rounded-2xl border border-border bg-surface p-3 shadow-xl outline-none'>
+          <div className='w-full max-w-lg rounded-2xl border border-border bg-surface p-3 shadow-xl'>
             <input
-              ref={inputRef}
+              data-autofocus
               type='text'
               role='combobox'
               aria-expanded={results.length > 0}
@@ -205,7 +199,7 @@ export default function GlobalMemberSearch() {
               )}
             </div>
           </div>
-        </div>
+        </dialog>
       )}
     </>
   )
