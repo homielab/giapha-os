@@ -7,40 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-11-15
+
 ### Added
 
 - Tag family members in gallery photos, filter the gallery by member and see a member's photos on their page.
 - The bubble map can be saved as an image or PDF (editors), with the whole map in the file, not only the visible part.
-
-### Changed
-
-- The Docker image is now based on `oven/bun:1-alpine` (smaller image).
-
-### Fixed
-
-- Members and tree: help texts, empty-relationship notes, search and form placeholders, tree menu headings, the inactive view tab and the back and clear buttons are darker so they are easier to read (contrast 4.5:1 or more).
-- The saved tree root comes back after moving to another page and back, not only on a full page load; a saved root whose member was deleted is forgotten.
-- Photos from an iPhone are no longer saved sideways on Safari older than 17: avatars and gallery photos keep the EXIF orientation when resized.
-- A locked account that signs in again no longer sends administrators a new approval email, and locking an account while its approval page is open (even as "Confirm approval" is pressed) keeps it locked; approval now runs in one database transaction. Needs the migration `20261031180000_lock_blocks_approval.sql`.
-- Running the `/setup` SQL bundle again on a database that already has the security hardening migration (20260901) no longer fails with "function already exists in schema private"; the README's re-run guidance is now accurate.
-- Quick search (⌘K) finds a spouse or children right after they are added, and logging out clears it, so the next account on the same browser no longer sees the previous tree's names.
-- Large trees: the in-law list of a member with hundreds of children and the parent/child loop check no longer miss rows past 1000; a self-hosted server with `max_rows` below 1000 no longer cuts lists at the first page.
-- Restoring a backup larger than 4.5 MB on Vercel now explains the host limit instead of failing with a bare 413.
-- Member form: a lunar death date with day 31, month 13, or day 30 of a 29-day month is now refused ("invalid death date") instead of being saved with no death anniversary ever shown.
-- Names are saved in one Unicode form (NFC) with single spaces, and a note of only spaces or blank lines is no longer saved.
-- Statistics: the gender bar and legend now include Other, so the parts add up to the total; ages use today's date in Vietnam time.
-- Locking a user in Manage users now revokes their emailed approval link: the old link (valid 7 days) shows "Request revoked" (HTTP 410) instead of turning the account back on. Needs the migration `20261031120000_revoke_approval_link_on_lock.sql`.
-- Kinship finder: the wife of a grandfather (or of an older ancestor) who is not recorded as the mother of his child on the line, when that child has only one parent recorded, is now "Bà nội" / "Cụ bà" with a note that she may be a later wife and a link to the child's profile to add the parent, instead of "Wife of Ông nội".
-- Docker: `robots.txt`, `sitemap.xml` and the web manifest now use `SITE_NAME` / `APP_URL` set when the container starts, instead of `localhost` and the default name baked in at build time.
-- Gallery images no longer break in a tab left open over an hour: the page fetches fresh image links before they expire or when an image fails to load.
-- README: the Member role can also add, edit and delete the custom events they created.
-
-### Added
-
 - Data check lists children with only one parent recorded whose parent has a spouse, naming the spouses as the possible missing parent (a hint only; nothing is linked).
 - Calendar export (.ics) adds a reminder at 8 AM 1, 3 or 7 days before each event (default 1 day, "No reminder" to turn off); the choice is remembered in the browser.
 - Import can add a file to the current tree instead of replacing it: choose "Add to the current tree" after picking a JSON backup, GEDCOM or CSV ZIP (e.g. a relative's branch). Members and events get new ids and are inserted in one transaction without touching existing data; photos are not imported. A "Scan for duplicates now" button then helps merge people who are in both. Needs the migration `20261030180000_add_append_import.sql`.
-
 - Data check and the add-relationship form now flag a marriage between a parent and child, between siblings (sharing a biological parent), or with someone who died before the other was born; the form asks before saving it.
 - Kinship finder: spouses of grandparents' siblings and of parents' cousins get their own terms ("Bà Mợ", "Ông Dượng", "Ông Bác" / "Bà Bác", "Mợ họ", "Dượng họ", "Bác gái họ") instead of "Wife of Ông Cậu"; grandchildren and great-grandchildren of a grandparent's sibling are "Cháu", no longer "Chắt" / "Chít".
 - Kinship finder: children of two remarried parents (no parent in common) are now "Anh kế" / "Chị kế" / "Em kế" by birth year, and two wives of one husband (or two husbands of one wife) get a description naming that spouse, instead of "Unknown".
@@ -58,7 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Data check now lists parent–child loops (someone who ends up as their own ancestor, common after a GEDCOM/CSV import), naming each person on the loop with a link to their profile, and people with a marriage or parent–child link to themselves.
 - GEDCOM import keeps the place of birth (`BIRT`/`PLAC`), the place of death (`DEAT`/`PLAC`) and occupations (`OCCU`) from Gramps, MyHeritage and other programs as "Nơi sinh: …", "Nơi mất: …" and "Nghề nghiệp: …" lines at the end of the person's note, instead of dropping them. Exporting and importing again does not repeat the lines.
 - GEDCOM import keeps cited sources: a `SOUR @S1@` citation of a person or a family becomes a "Nguồn: <title>" line in the person's or marriage's note. The restore confirmation now warns how many source/repository records the file has and how many note pointers lead to notes missing from the file, instead of dropping them silently.
-
 - The burial place can be entered for a deceased member (under the dates of death in the member form) and shows on the member page, the printed profile and the family book ("An táng tại …"). GEDCOM export writes it as `BURI`/`PLAC` and import reads it back.
 - Members can store a burial place ("Nơi an táng"), public like the dates of death, so the family knows where to go for tomb sweeping. JSON (now format v5) and CSV backups carry it, older backups restore it empty, and merging duplicates fills an empty burial place from the merged-away profile. Existing installs need the new `add_burial_place` migration (Dashboard → Upgrade).
 - Custom events can repeat every year: a "Repeats" choice in the event dialog offers once, every year on the solar date, or every year on the lunar date (like a death anniversary, leap month kept), so clan meetings or tomb sweeping no longer need to be entered again each year. Backups (JSON/CSV) and the .ics export carry the choice; existing installs need the new `custom_events_recurrence` migration (Dashboard → Upgrade), existing events stay one-off.
@@ -95,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The Docker image is now based on `oven/bun:1-alpine` (smaller image).
 - Profile photos on the members (tree, list, mind map, bubbles), kinship and member pages keep the same link between page loads for 12 hours (signed links now last 24 hours instead of 1), so the browser shows them from its cache instead of downloading hundreds of photos again on every visit. A changed photo gets a new link right away.
 - Member list: "Given name (A-Z)" sorts by the given name (last word) first, then the whole name, so a one-surname family no longer sorts by middle name; search results with equal rank follow the same order.
 - The gallery remembers the Timeline/Grid choice across pages and visits.
@@ -130,6 +105,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Members and tree: help texts, empty-relationship notes, search and form placeholders, tree menu headings, the inactive view tab and the back and clear buttons are darker so they are easier to read (contrast 4.5:1 or more).
+- The saved tree root comes back after moving to another page and back, not only on a full page load; a saved root whose member was deleted is forgotten.
+- Photos from an iPhone are no longer saved sideways on Safari older than 17: avatars and gallery photos keep the EXIF orientation when resized.
+- A locked account that signs in again no longer sends administrators a new approval email, and locking an account while its approval page is open (even as "Confirm approval" is pressed) keeps it locked; approval now runs in one database transaction. Needs the migration `20261031180000_lock_blocks_approval.sql`.
+- Running the `/setup` SQL bundle again on a database that already has the security hardening migration (20260901) no longer fails with "function already exists in schema private"; the README's re-run guidance is now accurate.
+- Quick search (⌘K) finds a spouse or children right after they are added, and logging out clears it, so the next account on the same browser no longer sees the previous tree's names.
+- Large trees: the in-law list of a member with hundreds of children and the parent/child loop check no longer miss rows past 1000; a self-hosted server with `max_rows` below 1000 no longer cuts lists at the first page.
+- Restoring a backup larger than 4.5 MB on Vercel now explains the host limit instead of failing with a bare 413.
+- Member form: a lunar death date with day 31, month 13, or day 30 of a 29-day month is now refused ("invalid death date") instead of being saved with no death anniversary ever shown.
+- Names are saved in one Unicode form (NFC) with single spaces, and a note of only spaces or blank lines is no longer saved.
+- Statistics: the gender bar and legend now include Other, so the parts add up to the total; ages use today's date in Vietnam time.
+- Locking a user in Manage users now revokes their emailed approval link: the old link (valid 7 days) shows "Request revoked" (HTTP 410) instead of turning the account back on. Needs the migration `20261031120000_revoke_approval_link_on_lock.sql`.
+- Kinship finder: the wife of a grandfather (or of an older ancestor) who is not recorded as the mother of his child on the line, when that child has only one parent recorded, is now "Bà nội" / "Cụ bà" with a note that she may be a later wife and a link to the child's profile to add the parent, instead of "Wife of Ông nội".
+- Docker: `robots.txt`, `sitemap.xml` and the web manifest now use `SITE_NAME` / `APP_URL` set when the container starts, instead of `localhost` and the default name baked in at build time.
+- Gallery images no longer break in a tab left open over an hour: the page fetches fresh image links before they expire or when an image fails to load.
+- README: the Member role can also add, edit and delete the custom events they created.
 - Sign-in and sign-up errors (wrong password, unconfirmed email, email already registered, weak password, too many attempts) are shown in Vietnamese or English instead of Supabase's raw English text; unknown errors show a generic message.
 - Quick search (Ctrl/⌘K) and the person pickers (tree root, kinship, add relationship, export): pressing Enter to finish a word typed with Telex or VNI no longer opens or picks the first result. The member form asks for the month when a day is entered, and older dates with a day but no month show only the year instead of reading like a month.
 - Opening a link with `?rootId=` no longer replaces the tree root you chose; the root is remembered only when you pick it in the root selector.
@@ -159,7 +150,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The kinship finder names relatives by marriage on both sides with the usual terms, such as "Mợ", "Thím", "Cháu dâu" or "Em rể", instead of "Vợ của Cậu" or "Chồng của Em gái".
 - The member list's "Eldest child" filter no longer lists daughters- or sons-in-law, and member cards and the member detail header no longer show a birth order badge next to "In-law".
 - The kinship finder calls the wife or husband of a great-grandchild and later generations "Chắt dâu" / "Chắt rể", "Chít dâu"… and of a cousin's child "Cháu dâu (họ)" / "Cháu rể (họ)", instead of "Vợ của Chắt".
-
 - Editing a gallery photo opens with its title, description, date and current image filled in, so saving no longer wipes them; opening and closing it without changes no longer asks to discard.
 - The statistics page no longer counts daughters- or sons-in-law with birth order 1 as eldest children.
 - Pressing Esc, clicking outside or Close in the Add/Edit event and gallery upload dialogs now asks "Discard changes?" when something was typed or a photo chosen, instead of losing it.
@@ -198,15 +188,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Screen readers now name the icon-only buttons of the tree (zoom in/out, centre), the mind map (expand/collapse all, also on small screens where the text is hidden), the kinship swap button and the admin delete-user button instead of reading an empty "button". These buttons and the admin status toggle no longer submit a surrounding form on Enter.
 - Quick-adding a spouse no longer leaves a stray profile when the marriage cannot be saved: the new person is removed again, and if that is refused too, a message names the profile left without the marriage so it is not added twice.
 - A failed merge of duplicate profiles (e.g. lost connection) now shows a full message instead of one ending in an empty space.
-
 - Mind map: "Expand all" no longer freezes the tab when the data has a parent-child loop (for example A recorded as a child of B and B as a child of A). A person already above a branch is not drawn again under it, like the tree view.
 - Quick add spouse refuses a birth year that is not a whole number from 1 to the current year (such as 2099, -5 or 1.5) with a message, like adding children, instead of saving it into the tree and backups.
 - Members list (by generation): siblings, cousins' families and a member's spouses born in the same year now follow the month and day of birth, like the family tree and the family book, instead of the order they were entered. A set birth order still comes first; members without a known date come last.
 - Changing a member's generation no longer shifts that member a second time when old imported data has a parent-child loop back to them; only their descendants move.
 - Keyboard and screen reader: the cards on the Events page that open a profile or an event can be reached with Tab and opened with Enter or Space; cards that open nothing stay out of the Tab order. The day/month/year boxes of the birth date, the solar and lunar death dates and the lunar event date are now grouped under their label, so a screen reader says which date they belong to, and the birth order and birth year boxes of "add several children" have a name.
-
 - An `APP_URL` without `https://` (e.g. `giapha.example.com`) or with a path no longer breaks every page with "Invalid URL": the app adds `https://` and keeps only the origin for share links, `sitemap.xml`, `robots.txt`, JSON-LD and approval emails. A value that is not an http(s) address falls back to the Vercel domain.
-
 - The quick "add spouse" form, "add several children" and the custom event dialog now stop names over 200 characters and notes, places and event details over 2,000 characters, like the member form. Before, such text saved but a backup holding it was refused on restore.
 - The account menu and the export menu now close with Esc and put focus back on their button; screen readers hear that the button opens a menu and whether it is open, and export errors are read out.
 - GEDCOM import: notes and sources of a family with only a husband or only a wife are no longer dropped silently; the restore confirmation now counts them in its warning (they are still not imported, since there is no marriage to hold them).
