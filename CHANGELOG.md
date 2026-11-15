@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Expanding or collapsing a branch on the family tree is faster on large trees: only that branch re-renders, the +/- button stays under the pointer instead of jumping, and the opened branch fades in.
 - Dialogs are native browser modal dialogs: the page behind cannot be clicked or tabbed to, Esc and the phone's back gesture close them (a form with unsaved changes still asks first), and focus goes back to the button that opened them.
 
 ### Fixed

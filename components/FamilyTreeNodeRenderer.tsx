@@ -1,11 +1,12 @@
 'use client'
 
 import { Minus, Plus } from 'lucide-react'
-import React from 'react'
+import { memo, useMemo, useSyncExternalStore } from 'react'
 
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
 import { EXPORT_IGNORE_PROPS } from '@/utils/exportFilter'
+import type { CollapseStore } from '@/utils/treeCollapseStore'
 
 import FamilyNodeCard from './FamilyNodeCard'
 
@@ -15,13 +16,15 @@ interface TreeData {
   children: { id: string }[]
 }
 
-interface FamilyTreeNodeRendererProps {
-  roots: Person[]
+/** Everything nodes share; a new object re-renders the whole tree. */
+export interface TreeRenderContext {
   getTreeData: (personId: string) => TreeData
-  collapsedNodes: Set<string>
+  collapseStore: CollapseStore
+  autoCollapsed: ReadonlySet<string>
   showAvatar: boolean
   hideExpandButtons: boolean
-  toggleCollapse: (personId: string) => void
+  /** The button is passed so the tree can keep it under the pointer. */
+  toggleCollapse: (personId: string, button: HTMLElement) => void
 }
 
 /**
@@ -35,7 +38,7 @@ export function TreeExpandToggle({
 }: {
   name: string
   isCollapsed: boolean
-  onToggle: () => void
+  onToggle: (button: HTMLElement) => void
 }) {
   const { t } = useI18n()
   return (
@@ -45,7 +48,7 @@ export function TreeExpandToggle({
       onClick={(e) => {
         e.stopPropagation()
         e.preventDefault()
-        onToggle()
+        onToggle(e.currentTarget)
       }}
       className='absolute -bottom-3 left-1/2 z-100 flex size-6 -translate-x-1/2 items-center justify-center rounded-full border border-stone-200/80 bg-white text-stone-500 transition-colors hover:border-amber-300 hover:text-amber-600'
       title={isCollapsed ? t('expand') : t('collapse')}
@@ -60,79 +63,108 @@ export function TreeExpandToggle({
   )
 }
 
-/** Recursively renders the CSS-tree node list. */
+/**
+ * One person row and, unless collapsed, its children. Memoized and subscribed
+ * to its own branch state, so a toggle re-renders the toggled node only.
+ */
+const TreeNode = memo(function TreeNode({
+  personId,
+  level,
+  ancestors,
+  ctx
+}: {
+  personId: string
+  level: number
+  /** Ids on the path from the root, to stop at circular relationships. */
+  ancestors: ReadonlySet<string>
+  ctx: TreeRenderContext
+}) {
+  const { collapseStore, autoCollapsed } = ctx
+  const branch = useSyncExternalStore(
+    collapseStore.subscribe,
+    () => collapseStore.branchState(personId, autoCollapsed),
+    () => collapseStore.branchState(personId, autoCollapsed)
+  )
+  // Stable while this node re-renders, so its children stay memoized
+  const path = useMemo(
+    () => new Set(ancestors).add(personId),
+    [ancestors, personId]
+  )
+
+  if (ancestors.has(personId)) return null // cycle guard
+  const data = ctx.getTreeData(personId)
+  if (!data.person) return null
+
+  const hasChildren = data.children.length > 0
+  const isCollapsed = branch === 'collapsed'
+
+  return (
+    <li>
+      <div
+        className='node-container inline-flex flex-col items-center'
+        data-level={level}>
+        {/* Main Person & Spouses Row */}
+        <div
+          className={`relative z-10 flex h-full items-stretch ${ctx.showAvatar ? 'rounded-2xl border border-stone-200/80 bg-white' : ''}`}>
+          <FamilyNodeCard person={data.person} level={level} />
+
+          {data.spouses.map((spouseData, idx) => (
+            <div key={spouseData.person.id} className='relative flex'>
+              <FamilyNodeCard
+                isRingVisible={idx === 0}
+                isPlusVisible={idx > 0}
+                person={spouseData.person}
+                level={level}
+              />
+            </div>
+          ))}
+
+          {/* Expand/Collapse Toggle – centered on the row */}
+          {!ctx.hideExpandButtons && hasChildren && (
+            <TreeExpandToggle
+              name={data.person.full_name}
+              isCollapsed={isCollapsed}
+              onToggle={(button) => ctx.toggleCollapse(personId, button)}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Children; a branch the user just opened animates in */}
+      {hasChildren && !isCollapsed && (
+        <ul className={branch === 'opened' ? 'tree-branch-enter' : undefined}>
+          {data.children.map((child) => (
+            <TreeNode
+              key={child.id}
+              personId={child.id}
+              level={level + 1}
+              ancestors={path}
+              ctx={ctx}
+            />
+          ))}
+        </ul>
+      )}
+    </li>
+  )
+})
+
+const NO_ANCESTORS: ReadonlySet<string> = new Set()
+
+/** Renders the CSS-tree node list. */
 export default function FamilyTreeNodeRenderer({
   roots,
-  getTreeData,
-  collapsedNodes,
-  showAvatar,
-  hideExpandButtons,
-  toggleCollapse
-}: FamilyTreeNodeRendererProps) {
-  // Tracks visited IDs to prevent infinite loops from circular relationships
-  const renderTreeNode = (
-    personId: string,
-    visited: Set<string>,
-    level: number
-  ): React.ReactNode => {
-    if (visited.has(personId)) return null // cycle guard
-    visited.add(personId)
-
-    const data = getTreeData(personId)
-    if (!data.person) return null
-
-    const hasChildren = data.children.length > 0
-    const isCollapsed = collapsedNodes.has(personId)
-
-    return (
-      <li>
-        <div
-          className='node-container inline-flex flex-col items-center'
-          data-level={level}>
-          {/* Main Person & Spouses Row */}
-          <div
-            className={`relative z-10 flex h-full items-stretch ${showAvatar ? 'rounded-2xl border border-stone-200/80 bg-white' : ''}`}>
-            <FamilyNodeCard person={data.person} level={level} />
-
-            {data.spouses.map((spouseData, idx) => (
-              <div key={spouseData.person.id} className='relative flex'>
-                <FamilyNodeCard
-                  isRingVisible={idx === 0}
-                  isPlusVisible={idx > 0}
-                  person={spouseData.person}
-                  level={level}
-                />
-              </div>
-            ))}
-
-            {/* Expand/Collapse Toggle – centered on the row */}
-            {!hideExpandButtons && hasChildren && (
-              <TreeExpandToggle
-                name={data.person.full_name}
-                isCollapsed={isCollapsed}
-                onToggle={() => toggleCollapse(personId)}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Render Children (if any and not collapsed) */}
-        {hasChildren && !isCollapsed && (
-          <ul>
-            {data.children.map((child) => (
-              <React.Fragment key={child.id}>
-                {renderTreeNode(child.id, new Set(visited), level + 1)}
-              </React.Fragment>
-            ))}
-          </ul>
-        )}
-      </li>
-    )
-  }
-
+  ctx
+}: {
+  roots: Person[]
+  ctx: TreeRenderContext
+}) {
   return roots.map((root) => (
-    <React.Fragment key={root.id}>
-      {renderTreeNode(root.id, new Set(), 0)}
-    </React.Fragment>
+    <TreeNode
+      key={root.id}
+      personId={root.id}
+      level={0}
+      ancestors={NO_ANCESTORS}
+      ctx={ctx}
+    />
   ))
 }

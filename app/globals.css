@@ -127,6 +127,30 @@ select {
   }
 }
 
+/* Family tree: a branch the user just expanded fades and slides in.
+   Opacity and translate only, so nothing around it re-lays out. */
+.tree-branch-enter {
+  transition:
+    opacity 200ms ease-out,
+    translate 200ms ease-out;
+}
+@starting-style {
+  .tree-branch-enter {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tree-branch-enter {
+    translate: none;
+  }
+  @starting-style {
+    .tree-branch-enter {
+      translate: none;
+    }
+  }
+}
+
 /* Design system buttons */
 .btn-primary {
   @apply inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-4 text-sm font-medium text-surface transition duration-300 hover:-translate-y-1 hover:bg-[#292524] hover:shadow-soft-hover;

@@ -1,20 +1,25 @@
 'use client'
 
-import React, {
+import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
-  useState
+  useState,
+  useSyncExternalStore
 } from 'react'
 
-import FamilyTreeNodeRenderer from '@/components/FamilyTreeNodeRenderer'
+import FamilyTreeNodeRenderer, {
+  TreeRenderContext
+} from '@/components/FamilyTreeNodeRenderer'
 import TreeLinesStyle from '@/components/TreeLinesStyle'
 import { useMemberListView } from '@/context/useMemberListView'
 import { usePanZoom } from '@/hooks/usePanZoom'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person, Relationship } from '@/types'
+import { createCollapseStore } from '@/utils/treeCollapseStore'
 import {
   buildAdjacencyLists,
   buildNodeChildrenMap,
@@ -134,28 +139,27 @@ export default function FamilyTree({
     [roots, adj, autoCollapseLevel]
   )
 
-  // Manual expand/collapse toggles, reset whenever the automatic baseline changes
-  const [collapseState, setCollapseState] = useState({
-    base: autoCollapsed,
-    nodes: autoCollapsed
-  })
-  const collapsedNodes =
-    collapseState.base === autoCollapsed ? collapseState.nodes : autoCollapsed
+  // Manual expand/collapse toggles, reset whenever the automatic baseline
+  // changes. Each node subscribes to its own branch (see treeCollapseStore).
+  const [collapseStore] = useState(createCollapseStore)
+  const getCollapsed = () => collapseStore.collapsed(autoCollapsed)
+  const collapsedNodes = useSyncExternalStore(
+    collapseStore.subscribe,
+    getCollapsed,
+    getCollapsed
+  )
+
+  // The toggle button just pressed and where it was on screen: after the
+  // tree re-lays out, the canvas scrolls so it stays under the pointer.
+  const toggleAnchor = useRef<{ el: HTMLElement; x: number; y: number }>(null)
 
   const toggleCollapse = useCallback(
-    (personId: string) => {
-      setCollapseState((prev) => {
-        const current = prev.base === autoCollapsed ? prev.nodes : autoCollapsed
-        const next = new Set(current)
-        if (next.has(personId)) {
-          next.delete(personId)
-        } else {
-          next.add(personId)
-        }
-        return { base: autoCollapsed, nodes: next }
-      })
+    (personId: string, button: HTMLElement) => {
+      const { left, top } = button.getBoundingClientRect()
+      toggleAnchor.current = { el: button, x: left, y: top }
+      collapseStore.toggle(personId, autoCollapsed)
     },
-    [autoCollapsed]
+    [collapseStore, autoCollapsed]
   )
 
   // Center once the new layout has been committed
@@ -164,24 +168,20 @@ export default function FamilyTree({
     return () => cancelAnimationFrame(raf)
   }, [autoCollapsed, centerTree])
 
-  useEffect(() => {
-    const equalizeHeights = () => {
-      if (containerRef.current) equalizeNodeHeights(containerRef.current)
-    }
-
-    let frame = 0
-    const scheduleEqualize = () => {
-      cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(equalizeHeights)
-    }
-
-    scheduleEqualize()
-    window.addEventListener('resize', scheduleEqualize)
-
-    return () => {
-      cancelAnimationFrame(frame)
-      window.removeEventListener('resize', scheduleEqualize)
-    }
+  // Before paint, so new rows never show at their own height first and the
+  // scaled box already has the new size when the toggle anchor is applied.
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    const tree = treeRef.current
+    if (!container || !tree) return
+    equalizeNodeHeights(container)
+    const width = tree.offsetWidth
+    const height = tree.offsetHeight
+    setNaturalSize((prev) =>
+      prev && prev.width === width && prev.height === height
+        ? prev
+        : { width, height }
+    )
     // `scale` is intentionally not a dependency: CSS transforms don't change
     // layout heights, so zooming never needs a re-measure.
   }, [
@@ -197,6 +197,44 @@ export default function FamilyTree({
     hideFemales,
     collapsedNodes
   ])
+
+  // Keep the pressed toggle where it was. Waits for the commit in which the
+  // scaled box has the tree's new size, still before anything is painted.
+  useLayoutEffect(() => {
+    const anchor = toggleAnchor.current
+    const container = containerRef.current
+    const tree = treeRef.current
+    if (!anchor || !container || !tree || !naturalSize) return
+    if (
+      naturalSize.width !== tree.offsetWidth ||
+      naturalSize.height !== tree.offsetHeight
+    )
+      return
+    toggleAnchor.current = null
+    if (!anchor.el.isConnected) return
+    const { left, top } = anchor.el.getBoundingClientRect()
+    container.scrollLeft += left - anchor.x
+    container.scrollTop += top - anchor.y
+  })
+
+  useEffect(() => {
+    const equalizeHeights = () => {
+      if (containerRef.current) equalizeNodeHeights(containerRef.current)
+    }
+
+    let frame = 0
+    const scheduleEqualize = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(equalizeHeights)
+    }
+
+    window.addEventListener('resize', scheduleEqualize)
+
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('resize', scheduleEqualize)
+    }
+  }, [])
 
   const handleCenter = centerTree
 
@@ -302,7 +340,8 @@ export default function FamilyTree({
               <MemoizedNodeTree
                 roots={roots}
                 getTreeData={getTreeData}
-                collapsedNodes={collapsedNodes}
+                collapseStore={collapseStore}
+                autoCollapsed={autoCollapsed}
                 showAvatar={showAvatar}
                 hideExpandButtons={hideExpandButtons}
                 toggleCollapse={toggleCollapse}
@@ -316,43 +355,36 @@ export default function FamilyTree({
 }
 
 // The node tree is memoized so zooming and panning (which only change
-// `scale` / drag state) never re-render thousands of nodes. It lives in its
-// own component so the memo is not re-evaluated on renders that early-return
-// to the empty state.
+// `scale` / drag state) and expand/collapse toggles (each node subscribes to
+// its own branch) never re-render thousands of nodes. It lives in its own
+// component so the memo is not re-evaluated on renders that early-return to
+// the empty state.
 function MemoizedNodeTree({
   roots,
   getTreeData,
-  collapsedNodes,
+  collapseStore,
+  autoCollapsed,
   showAvatar,
   hideExpandButtons,
   toggleCollapse
-}: {
-  roots: Person[]
-  getTreeData: (personId: string) => ReturnType<typeof getFilteredTreeData>
-  collapsedNodes: Set<string>
-  showAvatar: boolean
-  hideExpandButtons: boolean
-  toggleCollapse: (personId: string) => void
-}) {
-  const treeContent = useMemo(
-    () => (
-      <FamilyTreeNodeRenderer
-        roots={roots}
-        getTreeData={getTreeData}
-        collapsedNodes={collapsedNodes}
-        showAvatar={showAvatar}
-        hideExpandButtons={hideExpandButtons}
-        toggleCollapse={toggleCollapse}
-      />
-    ),
-    [
-      roots,
+}: { roots: Person[] } & TreeRenderContext) {
+  const ctx = useMemo(
+    () => ({
       getTreeData,
-      collapsedNodes,
+      collapseStore,
+      autoCollapsed,
+      showAvatar,
+      hideExpandButtons,
+      toggleCollapse
+    }),
+    [
+      getTreeData,
+      collapseStore,
+      autoCollapsed,
       showAvatar,
       hideExpandButtons,
       toggleCollapse
     ]
   )
-  return treeContent
+  return <FamilyTreeNodeRenderer roots={roots} ctx={ctx} />
 }
