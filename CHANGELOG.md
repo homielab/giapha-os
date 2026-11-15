@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-11-15
+
 ### Changed
 
 - The README is short; installation, accounts, upgrade, feature and GEDCOM guides moved to `docs/vi/` and `docs/en/`. Links in the app point to the new guides.
