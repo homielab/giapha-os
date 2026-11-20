@@ -1,15 +1,10 @@
 name: Test
 
+# Release tags only (Boss 2026-11-21: no CI on push to main).
 on:
   push:
-    branches: [main]
-    paths-ignore: &docs-only
-      - '**/*.md'
-      - LICENSE
-      - .github/ISSUE_TEMPLATE/**
-      - .github/FUNDING.yml
-  pull_request:
-    paths-ignore: *docs-only
+    tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: read
