@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-11-22
+
+### Added
+
+- One-click install on Vercel: the Deploy button creates a free Supabase database and fills in every setting; only the family tree's name is asked. The app also reads the Supabase settings under the names the Vercel integration uses.
+- The `/setup` page installs the database with one button when a database connection is configured; copying the SQL into the Supabase editor remains as a fallback. It only ever runs into a database that has no tables yet.
+
+### Changed
+
+- Hints, counts, labels and placeholders that used a very light grey are darker, and every remaining 12px text is 14px, so they are easier to read.
+
+### Fixed
+
+- Signing in with a password no longer shows "An unexpected response was received from the server", and the email asking an administrator to approve a new account is sent again after a password sign-in or sign-up.
+- The header search button (and Ctrl/⌘ + K) opens the search box again instead of closing it at once; other dialogs had the same fault in development.
+- Members whose id is not a standard versioned UUID, such as those of the demo data, open from search and links instead of showing "Page not found".
+
 ## [2.5.1] - 2026-11-15
 
 ### Changed
