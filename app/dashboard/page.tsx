@@ -9,9 +9,11 @@ import {
   GitMerge,
   Image as ImageIcon,
   Info,
+  ListOrdered,
   Network,
   Star,
-  Users
+  Users,
+  type LucideIcon
 } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -88,90 +90,63 @@ export default async function DashboardLaunchpad() {
   const lunar = getTodayLunar(t)
 
   /* ── Feature lists ────────────────────────────────────────────── */
-  const publicFeatures = [
+  const publicFeatures: Feature[] = [
     {
       title: t('familyTree'),
       description: t('familyTreeDescription'),
-      icon: <Network className='size-8 text-amber-600' />,
-      href: '/dashboard/members',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-200/60',
-      hoverColor: 'hover:border-amber-400 '
+      icon: Network,
+      href: '/dashboard/members'
     },
     {
       title: t('kinship'),
       description: t('kinshipDescription'),
-      icon: <GitMerge className='size-8 text-blue-600' />,
-      href: '/dashboard/kinship',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200/60',
-      hoverColor: 'hover:border-blue-400 '
+      icon: GitMerge,
+      href: '/dashboard/kinship'
     },
     {
       title: t('statsPageTitle'),
       description: t('statisticsDescription'),
-      icon: <BarChart2 className='size-8 text-purple-600' />,
-      href: '/dashboard/stats',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200/60',
-      hoverColor: 'hover:border-purple-400 '
+      icon: BarChart2,
+      href: '/dashboard/stats'
     },
     {
       title: t('galleryTitle'),
       description: t('galleryDescriptionShort'),
-      icon: <ImageIcon className='size-8 text-pink-600' />,
-      href: '/dashboard/gallery',
-      bgColor: 'bg-pink-50',
-      borderColor: 'border-pink-200/60',
-      hoverColor: 'hover:border-pink-400 '
+      icon: ImageIcon,
+      href: '/dashboard/gallery'
     },
     {
       title: t('about'),
       description: t('aboutDescriptionShort'),
-      icon: <Info className='size-8 text-stone-600' />,
-      href: '/about',
-      bgColor: 'bg-stone-50',
-      borderColor: 'border-stone-200/60',
-      hoverColor: 'hover:border-stone-400 '
+      icon: Info,
+      href: '/about'
     }
   ]
 
-  const adminFeatures = [
+  const adminFeatures: Feature[] = [
     {
       title: t('manageUsers'),
       description: t('manageUsersDescription'),
-      icon: <Users className='size-8 text-rose-600' />,
-      href: '/dashboard/users',
-      bgColor: 'bg-rose-50',
-      borderColor: 'border-rose-200/60',
-      hoverColor: 'hover:border-rose-400 '
+      icon: Users,
+      href: '/dashboard/users'
     },
     {
       title: t('lineageOrder'),
       description: t('lineageDescription'),
-      icon: <Network className='size-8 text-indigo-600' />,
-      href: '/dashboard/lineage',
-      bgColor: 'bg-indigo-50',
-      borderColor: 'border-indigo-200/60',
-      hoverColor: 'hover:border-indigo-400 '
+      icon: ListOrdered,
+      href: '/dashboard/lineage'
     },
     {
       title: t('backupRestore'),
       description: t('backupDescriptionShort'),
-      icon: <Database className='size-8 text-teal-600' />,
-      href: '/dashboard/data',
-      bgColor: 'bg-teal-50',
-      borderColor: 'border-teal-200/60',
-      hoverColor: 'hover:border-teal-400 '
+      icon: Database,
+      href: '/dashboard/data'
     },
     {
       title: t('upgrade'),
       description: t('upgradeDescriptionShort'),
-      icon: <ArrowUpCircle className='size-8 text-amber-600' />,
-      href: '/dashboard/upgrade',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-200/60',
-      hoverColor: 'hover:border-amber-400 '
+      icon: ArrowUpCircle,
+      href: '/dashboard/upgrade'
     }
   ]
 
@@ -286,57 +261,60 @@ export default async function DashboardLaunchpad() {
       </section>
 
       {/* ── Feature Grid ──────────────────────────────────── */}
-      <div className='space-y-12'>
+      <div className='space-y-10'>
         <section>
-          <div className='grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3'>
+          <div className={FEATURE_GRID}>
             {publicFeatures.map((feat) => (
-              <Link
-                key={feat.href}
-                href={feat.href}
-                className={`group flex flex-col rounded-2xl border bg-white p-6 ${feat.borderColor} ${feat.hoverColor} transition duration-300 hover:-translate-y-1`}>
-                <div
-                  className={`mb-5 flex size-14 items-center justify-center rounded-xl ${feat.bgColor} border border-transparent transition-colors duration-300 group-hover:bg-white group-hover:${feat.borderColor}`}>
-                  {feat.icon}
-                </div>
-                <h4 className='mb-2 text-lg font-semibold text-stone-800 transition-colors group-hover:text-amber-700'>
-                  {feat.title}
-                </h4>
-                <p className='line-clamp-2 text-sm text-stone-500'>
-                  {feat.description}
-                </p>
-              </Link>
+              <FeatureCard key={feat.href} feature={feat} />
             ))}
           </div>
         </section>
 
         {isAdmin && (
           <section>
-            <h3 className='mb-6 flex items-center gap-2 font-serif text-xl font-semibold text-rose-800'>
-              <span className='h-px w-8 rounded-full bg-rose-200'></span>
+            <h3 className='mb-4 font-serif text-xl font-semibold text-stone-800'>
               {t('adminSection')}
             </h3>
-            <div className='grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3'>
+            <div className={FEATURE_GRID}>
               {adminFeatures.map((feat) => (
-                <Link
-                  key={feat.href}
-                  href={feat.href}
-                  className={`group flex flex-col rounded-2xl border bg-white p-6 ${feat.borderColor} ${feat.hoverColor} transition duration-300 hover:-translate-y-1`}>
-                  <div
-                    className={`mb-5 flex size-14 items-center justify-center rounded-xl ${feat.bgColor} border border-transparent transition-colors duration-300 group-hover:bg-white group-hover:${feat.borderColor}`}>
-                    {feat.icon}
-                  </div>
-                  <h4 className='mb-2 text-lg font-semibold text-stone-800 transition-colors group-hover:text-rose-700'>
-                    {feat.title}
-                  </h4>
-                  <p className='line-clamp-2 text-sm text-stone-500'>
-                    {feat.description}
-                  </p>
-                </Link>
+                <FeatureCard key={feat.href} feature={feat} />
               ))}
             </div>
           </section>
         )}
       </div>
     </main>
+  )
+}
+
+interface Feature {
+  title: string
+  description: string
+  icon: LucideIcon
+  href: string
+}
+
+const FEATURE_GRID = 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'
+
+// One accent (amber) for every feature: the title and the icon tell them
+// apart, not a colour each.
+function FeatureCard({ feature }: { feature: Feature }) {
+  const Icon = feature.icon
+  return (
+    <Link
+      href={feature.href}
+      className='group flex items-center gap-4 rounded-2xl border border-border bg-white p-4 transition-colors duration-200 hover:border-amber-300'>
+      <span className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700'>
+        <Icon className='size-5' aria-hidden='true' />
+      </span>
+      <span className='min-w-0'>
+        <span className='block font-semibold text-stone-800 transition-colors group-hover:text-amber-700'>
+          {feature.title}
+        </span>
+        <span className='mt-0.5 line-clamp-2 block text-sm text-stone-500'>
+          {feature.description}
+        </span>
+      </span>
+    </Link>
   )
 }
