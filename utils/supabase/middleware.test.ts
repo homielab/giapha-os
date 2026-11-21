@@ -174,6 +174,17 @@ describe('updateSession', () => {
     expectSessionCookies(response)
   })
 
+  test('lets a server action posted from /login through after sign-in', async () => {
+    user = { id: 'user-1' }
+    const response = await updateSession(
+      new NextRequest(new URL('/login', 'http://localhost:3000'), {
+        method: 'POST',
+        headers: { 'next-action': 'abc123' }
+      })
+    )
+    expect(response.headers.get('location')).toBeNull()
+  })
+
   test('keeps refreshed cookies when no redirect is needed', async () => {
     user = { id: 'user-1' }
     refreshedCookies = SESSION_COOKIES

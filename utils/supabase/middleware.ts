@@ -111,8 +111,11 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Redirect users who are already logged in away from the login page, to
-  // the page in ?next= when it is a safe dashboard page
-  if (isLoginPage && user) {
+  // the page in ?next= when it is a safe dashboard page. A server action
+  // posted from /login right after sign-in (notifyAdminIfAccountPending) is
+  // not a page visit: a redirect would hand it HTML and the action fails.
+  const isServerAction = request.headers.has('next-action')
+  if (isLoginPage && user && !isServerAction) {
     const url = new URL(
       safeNextPath(request.nextUrl.searchParams.get('next')),
       request.nextUrl.origin
