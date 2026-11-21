@@ -28,9 +28,23 @@ export function supabaseSecretKey(): string | undefined {
 
 /** Server only: the connection that runs setup and migrations (session mode). */
 export function databaseUrl(): string | undefined {
-  return (
-    process.env.SUPABASE_DB_URL?.trim() ||
-    process.env.POSTGRES_URL_NON_POOLING?.trim() ||
-    undefined
-  )
+  const documented = process.env.SUPABASE_DB_URL?.trim()
+  if (documented) return documented
+  // POSTGRES_URL_NON_POOLING may come from another database integration on
+  // the same Vercel project (Neon, the old Vercel Postgres): use it only when
+  // it names this Supabase project (postgres.<ref>@… or db.<ref>.supabase.co).
+  const integration = process.env.POSTGRES_URL_NON_POOLING?.trim()
+  const ref = supabaseProjectRef()
+  return integration && ref && integration.includes(ref)
+    ? integration
+    : undefined
+}
+
+function supabaseProjectRef(): string | null {
+  try {
+    const host = new URL(supabaseUrl() ?? '').hostname
+    return host.endsWith('.supabase.co') ? host.split('.')[0] : null
+  } catch {
+    return null
+  }
 }

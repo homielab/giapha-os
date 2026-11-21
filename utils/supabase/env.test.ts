@@ -7,6 +7,7 @@ import {
 } from '@/utils/supabase/env'
 
 const NAMES = [
+  'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY',
   'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
@@ -47,10 +48,22 @@ describe('Supabase settings', () => {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'vercel'
     process.env.SUPABASE_SECRET_KEY = 'vercel'
     process.env.SUPABASE_DB_URL = ''
-    process.env.POSTGRES_URL_NON_POOLING = 'postgres://vercel'
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://abcref.supabase.co'
+    process.env.POSTGRES_URL_NON_POOLING =
+      'postgres://postgres.abcref:pw@aws-0-x.pooler.supabase.com:5432/postgres'
     expect(supabasePublishableKey()).toBe('vercel')
     expect(supabaseSecretKey()).toBe('vercel')
-    expect(databaseUrl()).toBe('postgres://vercel')
+    expect(databaseUrl()).toContain('postgres.abcref')
+  })
+
+  test('ignores a database URL of another project or provider', () => {
+    clear()
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://abcref.supabase.co'
+    process.env.POSTGRES_URL_NON_POOLING =
+      'postgres://user:pw@ep-x.neon.tech/db'
+    expect(databaseUrl()).toBeUndefined()
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://supabase.example.com'
+    expect(databaseUrl()).toBeUndefined()
   })
 
   test('accepts the legacy anon key name', () => {
