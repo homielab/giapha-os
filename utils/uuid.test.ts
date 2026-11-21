@@ -8,6 +8,10 @@ describe('isUuid', () => {
     expect(isUuid('3B241101-E2BB-4255-8CAF-4136C566A962')).toBe(true)
   })
 
+  test('accepts the seed ids, which carry no version', () => {
+    expect(isUuid('40000000-0000-0000-0000-000000000001')).toBe(true)
+  })
+
   test('rejects empty, short and padded values', () => {
     expect(isUuid('')).toBe(false)
     expect(isUuid('abc')).toBe(false)
