@@ -18,7 +18,7 @@ export function LoadingPanel() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.12, delay: 0.2 }}
-      className='flex min-h-125 flex-1 flex-col items-center justify-center gap-4'>
+      className='flex flex-1 flex-col items-center justify-center gap-4'>
       <div className='size-10 animate-spin rounded-full border-4 border-amber-600 border-t-transparent'></div>
       <p className='font-medium text-stone-500'>{t('loadingMember')}</p>
     </m.div>
@@ -39,7 +39,7 @@ export function ErrorPanel({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.12 }}
-      className='flex min-h-100 flex-1 flex-col items-center justify-center gap-4 p-8 text-center'>
+      className='flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center'>
       <div className='mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500 shadow-inner'>
         <AlertCircle className='size-8' />
       </div>

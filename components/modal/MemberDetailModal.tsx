@@ -338,13 +338,16 @@ export default function MemberDetailModal() {
           {/* Modal Content */}
           {/* One short open/close: opacity and a 2% scale, both on the
               compositor. No layout animation: the dialog grows when the
-              member loads and must not stretch while doing so. */}
+              member loads and must not stretch while doing so. The height is
+              fixed (90% of the screen) so the dialog does not grow as the
+              member, then the family and descendants, load: the content
+              scrolls inside instead. */}
           <m.div
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.98, opacity: 0 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className='relative flex h-full w-full max-w-4xl flex-col overflow-hidden bg-white sm:h-auto sm:max-h-[90vh] sm:rounded-3xl sm:border sm:border-stone-200'>
+            className='relative flex h-full w-full max-w-4xl flex-col overflow-hidden bg-white sm:h-[90dvh] sm:rounded-3xl sm:border sm:border-stone-200'>
             <ModalHeaderActions
               isEditing={isEditing}
               canEdit={canEdit}
