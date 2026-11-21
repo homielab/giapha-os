@@ -8,6 +8,7 @@ import {
   itemVariants,
   RelationshipStats
 } from '@/context/memberDetail/memberDetailShared'
+import { DescendantsSkeleton } from '@/context/memberDetail/MemberDetailSkeleton'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
 import {
@@ -225,6 +226,9 @@ export default function MemberInfoCards({
       <BirthCard person={person} />
       {isDeceased && <DeathCard person={person} />}
       <AgeCard person={person} isDeceased={isDeceased} />
+      {/* Placeholder while the family loads; it goes away for a member
+          without descendants. */}
+      {!relStats && <DescendantsSkeleton />}
       {relStats &&
         (relStats.biologicalChildren > 0 ||
           relStats.sonInLaw > 0 ||

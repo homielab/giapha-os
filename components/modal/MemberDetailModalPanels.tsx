@@ -4,25 +4,16 @@ import { m } from 'framer-motion'
 import { AlertCircle } from 'lucide-react'
 
 import MemberForm from '@/components/MemberForm'
+import { MemberDetailSkeleton } from '@/context/memberDetail/MemberDetailSkeleton'
 import MemberDetailContent from '@/context/MemberDetailContent'
 import { useI18n } from '@/lib/i18n/useI18n'
 import { Person } from '@/types'
 
 export function LoadingPanel() {
   const { t } = useI18n()
-  return (
-    <m.div
-      key='loading'
-      // Shown only when the load takes a while, so a fast load opens
-      // straight on the member instead of flashing a spinner.
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.12, delay: 0.2 }}
-      className='flex flex-1 flex-col items-center justify-center gap-4'>
-      <div className='size-10 animate-spin rounded-full border-4 border-amber-600 border-t-transparent'></div>
-      <p className='font-medium text-stone-500'>{t('loadingMember')}</p>
-    </m.div>
-  )
+  // Same layout as the member view, so the content does not jump when the
+  // member arrives.
+  return <MemberDetailSkeleton label={t('loadingMember')} />
 }
 
 export function ErrorPanel({

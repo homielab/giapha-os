@@ -7,6 +7,7 @@ import {
   AvatarUrlProvider,
   useInAvatarUrlProvider
 } from '@/context/AvatarUrlContext'
+import { FamilySkeleton } from '@/context/memberDetail/MemberDetailSkeleton'
 import { MemberListContext } from '@/context/memberListViewContext'
 import { useMemberListView } from '@/context/useMemberListView'
 import { useI18n } from '@/lib/i18n/useI18n'
@@ -152,7 +153,10 @@ export default function RelationshipManager({
 
   if (loading)
     return (
-      <div className='text-sm text-stone-500'>{t('loadingFamilyInfo')}</div>
+      <div role='status'>
+        <span className='sr-only'>{t('loadingFamilyInfo')}</span>
+        <FamilySkeleton />
+      </div>
     )
 
   if (loadError)
