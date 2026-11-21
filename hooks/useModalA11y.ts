@@ -28,8 +28,11 @@ export function useModalA11y(onClose: () => void) {
     // Browsers ignore preventDefault() on repeated Esc presses without user
     // activation and close the dialog anyway: reopen it and let the caller
     // decide, as for any other close request.
+    // A close event queued by an earlier close that was already undone (React
+    // re-attaching the ref, as Strict Mode does, closes and reopens the
+    // dialog) finds it open again: ignore it.
     const onNativeClose = () => {
-      if (unmounting || !dialog.isConnected) return
+      if (unmounting || !dialog.isConnected || dialog.open) return
       dialog.showModal()
       onCloseRef.current()
     }
