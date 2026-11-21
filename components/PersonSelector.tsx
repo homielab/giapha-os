@@ -1,6 +1,7 @@
 'use client'
 
 import { AnimatePresence } from 'framer-motion'
+import type { LucideIcon } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 
 import {
@@ -19,7 +20,8 @@ export default function PersonSelector({
   label,
   className = 'w-full sm:w-72',
   showAllOption = false,
-  allOptionLabel
+  allOptionLabel,
+  allOptionIcon
 }: {
   persons: Person[]
   selectedId?: string | null
@@ -29,6 +31,8 @@ export default function PersonSelector({
   className?: string
   showAllOption?: boolean
   allOptionLabel?: string
+  /** Icon of the "all" option (default: a database, for all data). */
+  allOptionIcon?: LucideIcon
 }) {
   const { t } = useI18n()
   const resolvedPlaceholder = placeholder ?? t('choosePerson')
@@ -73,6 +77,7 @@ export default function PersonSelector({
         showAllOption={showAllOption}
         resolvedLabel={resolvedLabel}
         resolvedAllOptionLabel={resolvedAllOptionLabel}
+        allOptionIcon={allOptionIcon}
         resolvedPlaceholder={resolvedPlaceholder}
         label={label}
         isOpen={isOpen}
@@ -88,6 +93,7 @@ export default function PersonSelector({
             searchTerm={searchTerm}
             onSearchTermChange={setSearchTerm}
             resolvedAllOptionLabel={resolvedAllOptionLabel}
+            allOptionIcon={allOptionIcon}
             selectedId={selectedId}
             onSelect={handleSelect}
             onClose={() => {

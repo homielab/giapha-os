@@ -1,7 +1,13 @@
 'use client'
 
 import { m } from 'framer-motion'
-import { Check, ChevronDown, Database, Search } from 'lucide-react'
+import {
+  Check,
+  ChevronDown,
+  Database,
+  Search,
+  type LucideIcon
+} from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useId, useRef, useState } from 'react'
 
@@ -124,6 +130,7 @@ export function SelectorTrigger({
   showAllOption,
   resolvedLabel,
   resolvedAllOptionLabel,
+  allOptionIcon: AllIcon = Database,
   resolvedPlaceholder,
   label,
   isOpen,
@@ -136,6 +143,7 @@ export function SelectorTrigger({
   showAllOption: boolean
   resolvedLabel: string
   resolvedAllOptionLabel: string
+  allOptionIcon?: LucideIcon
   resolvedPlaceholder: string
   label?: string
   isOpen: boolean
@@ -167,7 +175,7 @@ export function SelectorTrigger({
                 ? 'bg-stone-500 text-white'
                 : 'bg-stone-100 text-stone-600'
             }`}>
-            {isAllSelected ? <Database className='size-4' /> : '?'}
+            {isAllSelected ? <AllIcon className='size-4' /> : '?'}
           </div>
         </div>
       )}
@@ -203,6 +211,7 @@ export function SelectorDropdown({
   searchTerm,
   onSearchTermChange,
   resolvedAllOptionLabel,
+  allOptionIcon: AllIcon = Database,
   selectedId,
   onSelect,
   onClose,
@@ -213,6 +222,7 @@ export function SelectorDropdown({
   searchTerm: string
   onSearchTermChange: (value: string) => void
   resolvedAllOptionLabel: string
+  allOptionIcon?: LucideIcon
   selectedId?: string | null
   onSelect: (personId: string | null) => void
   onClose: () => void
@@ -299,7 +309,7 @@ export function SelectorDropdown({
             }`}>
             <div className='relative shrink-0'>
               <div className='flex size-8 items-center justify-center rounded-full bg-stone-500 text-white shadow-xs ring-1 ring-white'>
-                <Database className='size-4' />
+                <AllIcon className='size-4' />
               </div>
             </div>
             <div className='min-w-0 flex-1 text-left'>

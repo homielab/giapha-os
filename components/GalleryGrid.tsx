@@ -1,7 +1,7 @@
 'use client'
 
 import dayjs from 'dayjs'
-import { CalendarDays, Clock, Maximize2 } from 'lucide-react'
+import { CalendarDays, Maximize2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import {
@@ -170,7 +170,7 @@ export default function GalleryGrid({
                 item={item}
                 width={800}
                 height={600}
-                className='w-full object-cover transition-transform duration-700 group-hover:scale-105'
+                className='w-full object-cover'
                 loading='lazy'
               />
 
@@ -210,15 +210,18 @@ export default function GalleryGrid({
         </div>
       ) : (
         /* Timeline View */
-        <div className='relative space-y-12 pl-4 before:absolute before:top-3 before:bottom-3 before:left-3 before:w-0.5 before:bg-linear-to-b before:from-amber-500 before:via-stone-300 before:to-stone-200 sm:pl-8 sm:before:left-7'>
+        <div className='relative space-y-10 pl-8 before:absolute before:top-3 before:bottom-3 before:left-[11px] before:w-0.5 before:bg-stone-200 sm:pl-12 sm:before:left-[19px]'>
           {timelineGroups.map((group) => (
             <div key={group.year} className='relative'>
               {/* Timeline Header Badge */}
-              <div className='relative mb-6 flex items-center gap-3'>
-                <div className='absolute -left-7 z-10 flex size-6 items-center justify-center rounded-full border-4 border-stone-50 bg-amber-600 sm:-left-11 sm:size-7'>
-                  <Clock className='size-3 text-white' />
-                </div>
-                <h2 className='inline-block bg-stone-50/90 pr-4 font-serif text-2xl font-semibold text-stone-900 backdrop-blur-xs sm:text-3xl'>
+              <div className='relative mb-4 flex items-center'>
+                {/* Centred on the line: line centre 12px (sm 20px) from the
+                    list edge; the item starts at 32px (sm 48px). */}
+                <span
+                  aria-hidden='true'
+                  className='absolute -left-[25px] size-2.5 rounded-full bg-amber-600 ring-4 ring-stone-50 sm:-left-[33px]'
+                />
+                <h2 className='font-serif text-xl font-semibold text-stone-900'>
                   {group.year}
                 </h2>
               </div>
@@ -228,14 +231,14 @@ export default function GalleryGrid({
                 {group.items.map((item) => (
                   <div
                     key={item.id}
-                    className='group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-stone-200/80 bg-white/80 p-4 backdrop-blur-xl transition-colors duration-300 hover:-translate-y-1'>
+                    className='group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-stone-200/80 bg-white p-3 transition-colors duration-200 hover:border-amber-300'>
                     <div>
-                      <div className='relative mb-4 aspect-16/10 overflow-hidden rounded-xl bg-stone-100'>
+                      <div className='relative mb-3 aspect-16/10 overflow-hidden rounded-lg bg-stone-100'>
                         <GalleryImage
                           item={item}
                           width={600}
                           height={400}
-                          className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'
+                          className='h-full w-full object-cover'
                           loading='lazy'
                         />
                         <div
@@ -251,7 +254,7 @@ export default function GalleryGrid({
                         </span>
                       )}
 
-                      <h3 className='line-clamp-2 text-lg leading-snug font-semibold text-stone-900 transition-colors group-hover:text-amber-700'>
+                      <h3 className='line-clamp-2 text-base leading-snug font-semibold text-stone-900 transition-colors group-hover:text-amber-700'>
                         {item.title}
                       </h3>
 

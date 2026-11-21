@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -123,6 +123,7 @@ export default function GalleryClient({
                 showAllOption
                 label={t('galleryFilterMember')}
                 allOptionLabel={t('galleryAllMembers')}
+                allOptionIcon={Users}
                 onSelect={(id) => router.push(galleryHref({ member: id }))}
                 className='w-full sm:w-64'
               />
