@@ -7,6 +7,7 @@ import postgres from 'postgres'
 
 import { getServerTranslations } from '@/lib/i18n/server'
 import packageJson from '@/package.json'
+import { databaseUrl as readDatabaseUrl } from '@/utils/supabase/env'
 import { getIsAdmin } from '@/utils/supabase/queries'
 import { compareVersions, parseVersion } from '@/utils/version'
 
@@ -122,11 +123,13 @@ async function getMigrationDefinitions(): Promise<MigrationDefinition[]> {
 }
 
 function createDatabaseClient() {
-  const databaseUrl = process.env.SUPABASE_DB_URL?.trim()
+  const databaseUrl = readDatabaseUrl()
   if (!databaseUrl) return null
 
   if (!/^postgres(?:ql)?:\/\//i.test(databaseUrl)) {
-    throw new Error('SUPABASE_DB_URL must be a PostgreSQL connection string.')
+    throw new Error(
+      'SUPABASE_DB_URL (or POSTGRES_URL_NON_POOLING) must be a PostgreSQL connection string.'
+    )
   }
 
   return postgres(databaseUrl, {
@@ -155,6 +158,70 @@ async function ensureMigrationTable(sql: ReturnType<typeof postgres>) {
   `)
 }
 
+const ALREADY_INSTALLED = 'Database already installed'
+
+// Runs every migration not yet recorded in app_migrations, in one
+// transaction: a failure leaves the database as it was.
+function applyMigrations(
+  sql: ReturnType<typeof postgres>,
+  definitions: MigrationDefinition[],
+  onlyIntoEmptyDatabase = false
+): Promise<string[]> {
+  return sql.begin(async (transaction) => {
+    await transaction.unsafe(`
+      CREATE TABLE IF NOT EXISTS public.app_migrations (
+        migration_id TEXT PRIMARY KEY,
+        file_name TEXT NOT NULL,
+        applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      ALTER TABLE public.app_migrations ENABLE ROW LEVEL SECURITY;
+      REVOKE ALL ON public.app_migrations FROM PUBLIC, anon, authenticated;
+      DROP POLICY IF EXISTS "No client access to app migrations" ON public.app_migrations;
+      CREATE POLICY "No client access to app migrations"
+        ON public.app_migrations
+        FOR ALL TO anon, authenticated
+        USING (false)
+        WITH CHECK (false);
+      SELECT pg_advisory_xact_lock(hashtext('giapha_os_app_migrations'));
+    `)
+
+    if (onlyIntoEmptyDatabase) {
+      // Under the lock: a second click or visitor finds the tables created.
+      const [{ installed }] = await transaction.unsafe<
+        Array<{ installed: boolean }>
+      >(`SELECT to_regclass('public.profiles') IS NOT NULL AS installed`)
+      if (installed) throw new Error(ALREADY_INSTALLED)
+    }
+
+    const rows = await transaction.unsafe<
+      Array<{ migration_id: string; applied_at: string }>
+    >(`SELECT migration_id, applied_at FROM public.app_migrations`)
+    const applied = new Map(
+      rows.map((row) => [row.migration_id, row.applied_at])
+    )
+    const appliedNow: string[] = []
+
+    for (const migration of definitions) {
+      if (applied.has(migration.id)) continue
+
+      try {
+        await transaction.unsafe(migration.sql)
+        await transaction`
+          INSERT INTO public.app_migrations (migration_id, file_name)
+          VALUES (${migration.id}, ${migration.file})
+          ON CONFLICT (migration_id) DO NOTHING
+        `
+        appliedNow.push(migration.file)
+      } catch (error) {
+        console.error(`Migration failed: ${migration.file}`, error)
+        throw new Error(`Migration failed: ${migration.file}`)
+      }
+    }
+
+    return appliedNow
+  })
+}
+
 export async function getMigrationStatus(): Promise<MigrationStatus> {
   const { locale, t } = await getServerTranslations()
   const sourceReadmeUrl =
@@ -164,7 +231,7 @@ export async function getMigrationStatus(): Promise<MigrationStatus> {
 
   if (!isAdmin) {
     return {
-      configured: Boolean(process.env.SUPABASE_DB_URL),
+      configured: Boolean(readDatabaseUrl()),
       databaseReachable: false,
       error: t('migrationAccessDenied'),
       source: {
@@ -271,51 +338,7 @@ export async function runPendingMigrations() {
 
   try {
     const definitions = await getMigrationDefinitions()
-    const result = await sql.begin(async (transaction) => {
-      await transaction.unsafe(`
-        CREATE TABLE IF NOT EXISTS public.app_migrations (
-          migration_id TEXT PRIMARY KEY,
-          file_name TEXT NOT NULL,
-          applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        );
-        ALTER TABLE public.app_migrations ENABLE ROW LEVEL SECURITY;
-        REVOKE ALL ON public.app_migrations FROM PUBLIC, anon, authenticated;
-        DROP POLICY IF EXISTS "No client access to app migrations" ON public.app_migrations;
-        CREATE POLICY "No client access to app migrations"
-          ON public.app_migrations
-          FOR ALL TO anon, authenticated
-          USING (false)
-          WITH CHECK (false);
-        SELECT pg_advisory_xact_lock(hashtext('giapha_os_app_migrations'));
-      `)
-
-      const rows = await transaction.unsafe<
-        Array<{ migration_id: string; applied_at: string }>
-      >(`SELECT migration_id, applied_at FROM public.app_migrations`)
-      const applied = new Map(
-        rows.map((row) => [row.migration_id, row.applied_at])
-      )
-      const appliedNow: string[] = []
-
-      for (const migration of definitions) {
-        if (applied.has(migration.id)) continue
-
-        try {
-          await transaction.unsafe(migration.sql)
-          await transaction`
-            INSERT INTO public.app_migrations (migration_id, file_name)
-            VALUES (${migration.id}, ${migration.file})
-            ON CONFLICT (migration_id) DO NOTHING
-          `
-          appliedNow.push(migration.file)
-        } catch (error) {
-          console.error(`Migration failed: ${migration.file}`, error)
-          throw new Error(`Migration failed: ${migration.file}`)
-        }
-      }
-
-      return appliedNow
-    })
+    const result = await applyMigrations(sql, definitions)
 
     return {
       success: true,
@@ -334,6 +357,45 @@ export async function runPendingMigrations() {
               file: error.message.replace('Migration failed: ', '')
             })
           : t('migrationRunError')
+    }
+  } finally {
+    await sql.end({ timeout: 5 })
+  }
+}
+
+/**
+ * First install from /setup, before any account exists: creates the schema
+ * and records every migration, so /dashboard/upgrade starts current. Open to
+ * anyone, so it only ever runs into a database without the app's tables.
+ */
+export async function installDatabase(): Promise<
+  { success: true } | { success: false; error: string }
+> {
+  const { t } = await getServerTranslations()
+  let sql: ReturnType<typeof createDatabaseClient>
+  try {
+    sql = createDatabaseClient()
+  } catch {
+    return { success: false, error: t('setupInstallError') }
+  }
+  if (!sql) return { success: false, error: t('databaseConfigMissing') }
+
+  try {
+    await applyMigrations(sql, await getMigrationDefinitions(), true)
+    return { success: true }
+  } catch (error) {
+    if (error instanceof Error && error.message === ALREADY_INSTALLED) {
+      return { success: true }
+    }
+    console.error('Cannot install the database:', error)
+    return {
+      success: false,
+      error:
+        error instanceof Error && error.message.startsWith('Migration failed:')
+          ? t('migrationFailed', {
+              file: error.message.replace('Migration failed: ', '')
+            })
+          : t('setupInstallError')
     }
   } finally {
     await sql.end({ timeout: 5 })

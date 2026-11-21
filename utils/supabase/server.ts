@@ -2,8 +2,10 @@ import { createServerClient } from '@supabase/ssr'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+import { supabaseUrl as readSupabaseUrl, supabasePublishableKey } from './env'
+
+const supabaseUrl = readSupabaseUrl()
+const supabaseKey = supabasePublishableKey()
 
 export const createClient = (
   cookieStore: Awaited<ReturnType<typeof cookies>>

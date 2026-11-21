@@ -2,9 +2,36 @@
 
 [English](install.md) | [Tiếng Việt](../vi/cai-dat.md) · [← README](../../README.en.md)
 
-You can set up a family genealogy system in about 10–15 minutes.
+You can set up a family genealogy system in about 5 minutes.
 
-## 1. Create a database (free with Supabase)
+## Option 1: One-click install on Vercel (recommended)
+
+About 5 minutes. Vercel creates a free Supabase database and fills in every setting, so there are no keys to copy.
+
+1. Press [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhomielab%2Fgiapha-os&project-name=giapha-os&repository-name=giapha-os&env=SITE_NAME&envDescription=The+name+shown+on+your+family+tree+site%2C+for+example%3A+Nguyen+family+tree&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D)
+2. Sign in to Vercel (a GitHub account is recommended), choose where to store the source code and enter `SITE_NAME` = the name of your family tree.
+3. At the **Supabase** step, create a new database (Free plan) in the region closest to your family.
+4. Press **Deploy** and wait 2–3 minutes.
+5. Open the new site: the **Set up the database** page appears. Press **Install the database** and wait a few seconds.
+6. Register: the first account automatically becomes **admin** and can sign in at once, without email confirmation.
+
+### Let other people register
+
+Later accounts get a confirmation email. For its link to open your site: in Vercel → project → **Storage** → Supabase → **Open in Supabase**, then follow [Troubleshooting registration](#troubleshooting-registration) (set **Site URL** and **Redirect URLs** to your Vercel domain).
+
+If nobody needs to register on their own, skip this: the admin creates accounts for relatives under **Manage users**.
+
+### Optional settings
+
+Add them in Vercel → project → **Settings → Environment Variables**, then redeploy:
+
+- `SHORT_NAME`: the short name under the home-screen icon (default `Gia Phả`).
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `ADMIN_NOTIFICATION_EMAIL`: email the administrators when a new account waits for approval (see below).
+- `NEXT_PUBLIC_DISABLE_SSO=false`: show Google/Facebook sign-in once configured ([accounts.md](accounts.md#sign-in-with-google-and-facebook)).
+
+## Option 1b: Use an existing Supabase project
+
+### Step 1: Create a database (free with Supabase)
 
 1. Create a free account at https://github.com if you do not already have one.
 2. Create a free account at https://supabase.com if you do not already have one. Signing up with GitHub is recommended for a faster setup.
@@ -14,7 +41,7 @@ You can set up a family genealogy system in about 10–15 minutes.
    - `Publishable key` (starts with `sb_publishable_`; older projects may show an `anon` key)
    - `Secret key` for server-side email notifications and administration when needed (starts with `sb_secret_`; older projects may use the `service_role` key in the **Legacy API Keys** tab)
 
-## Option 1: Quick deploy to Vercel
+### Step 2: Deploy to Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhomielab%2Fgiapha-os&env=SITE_NAME,SHORT_NAME,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY,NEXT_PUBLIC_DISABLE_SSO,APP_URL,SUPABASE_SERVICE_ROLE_KEY,SUPABASE_DB_URL,RESEND_API_KEY,RESEND_FROM_EMAIL,ADMIN_NOTIFICATION_EMAIL)
 
@@ -28,7 +55,7 @@ You can set up a family genealogy system in about 10–15 minutes.
    - `NEXT_PUBLIC_DISABLE_SSO` = `false` to enable SSO; set it to `true` to hide SSO until it is configured
    - `APP_URL` = the public application URL, for example `https://your-domain.vercel.app` (used for account-approval emails, Open Graph share links, JSON-LD structured data on the home and about pages, `sitemap.xml` and `robots.txt`; only the origin is used: `https://` is added when missing and any path is dropped; when empty or not an http(s) address, Vercel's production domain is used). The social share image is `public/og-image.png` (1200×630); you can replace it with your own family's image.
    - `SUPABASE_SERVICE_ROLE_KEY` = the **Secret key** under **Project Settings → API Keys → Secret keys**. For older projects, copy the `service_role` key from **Legacy API Keys**. This key has high privileges: store it only in Vercel server environment variables, never use a publishable/anon key for this variable, and never use a `NEXT_PUBLIC_` prefix.
-   - `SUPABASE_DB_URL` = the PostgreSQL connection string under **Project Settings → Database → Connection Pooling** (Session mode). Store it only in the Vercel server environment. It allows administrators to check and run migrations from the Dashboard.
+   - `SUPABASE_DB_URL` = the PostgreSQL connection string under **Project Settings → Database → Connection Pooling** (Session mode). Store it only in the Vercel server environment. It lets the `/setup` page install the database and administrators run migrations from the Dashboard.
    - `RESEND_API_KEY` = an API key from [Resend](https://resend.com)
    - `RESEND_FROM_EMAIL` = a verified sender address on Resend, for example `Gia Pha OS <no-reply@your-domain.com>`
    - `ADMIN_NOTIFICATION_EMAIL` = optional address for notifications. If omitted, notifications are sent to active administrator accounts.

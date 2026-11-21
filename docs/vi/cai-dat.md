@@ -2,9 +2,34 @@
 
 [Tiếng Việt](cai-dat.md) | [English](../en/install.md) · [← README](../../README.md)
 
-Chỉ cần khoảng 10 -> 15 phút là bạn có thể tự dựng hệ thống gia phả cho gia đình mình.
+## Cách 1: Cài một chạm trên Vercel (khuyên dùng)
 
-## 1. Tạo Database (Miễn phí với Supabase)
+Khoảng 5 phút. Vercel tự tạo database Supabase miễn phí và tự điền mọi cấu hình, bạn không phải chép key nào.
+
+1. Bấm [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhomielab%2Fgiapha-os&project-name=giapha-os&repository-name=giapha-os&env=SITE_NAME&envDescription=T%C3%AAn+gia+ph%E1%BA%A3+hi%E1%BB%87n+tr%C3%AAn+trang+web%2C+v%C3%AD+d%E1%BB%A5%3A+Gia+ph%E1%BA%A3+h%E1%BB%8D+Nguy%E1%BB%85n&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D)
+2. Đăng nhập Vercel (nên dùng tài khoản GitHub), chọn nơi lưu source code và nhập `SITE_NAME` = tên gia phả.
+3. Ở bước **Supabase**, bấm tạo database mới (gói Free) và chọn vùng gần Việt Nam nhất, ví dụ Singapore.
+4. Bấm **Deploy** và chờ 2–3 phút.
+5. Mở trang web vừa tạo: trang **Khởi tạo cơ sở dữ liệu** hiện ra. Bấm **Cài database** và chờ vài giây.
+6. Đăng ký tài khoản: người đăng ký đầu tiên tự động là **admin** và đăng nhập được ngay, không cần xác nhận email.
+
+### Cho người khác đăng ký
+
+Người đăng ký sau nhận email xác nhận. Để liên kết trong email mở đúng trang của bạn: vào Vercel → project → **Storage** → Supabase → **Open in Supabase**, rồi làm theo [Xử lý lỗi khi đăng ký](#xử-lý-lỗi-khi-đăng-ký) (đặt **Site URL** và **Redirect URLs** là domain Vercel của bạn).
+
+Không cần ai tự đăng ký thì bỏ qua bước này: admin tạo tài khoản cho người nhà trong **Quản lý người dùng**.
+
+### Tuỳ chọn sau khi cài
+
+Thêm trong Vercel → project → **Settings → Environment Variables**, rồi deploy lại:
+
+- `SHORT_NAME`: tên ngắn dưới biểu tượng khi thêm vào màn hình chính (mặc định `Gia Phả`).
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `ADMIN_NOTIFICATION_EMAIL`: email báo admin khi có tài khoản mới chờ duyệt (xem bên dưới).
+- `NEXT_PUBLIC_DISABLE_SSO=false`: hiện nút đăng nhập Google/Facebook sau khi cấu hình ([tai-khoan.md](tai-khoan.md#đăng-nhập-bằng-google-và-facebook)).
+
+## Cách 1b: Dùng project Supabase có sẵn
+
+### Bước 1: Tạo Database (miễn phí với Supabase)
 
 1. Tạo tài khoản miễn phí tại https://github.com nếu chưa có.
 2. Tạo tài khoản miễn phí tại https://supabase.com nếu chưa có (khuyên dùng đăng ký bằng tài khoản GitHub cho nhanh).
@@ -14,7 +39,7 @@ Chỉ cần khoảng 10 -> 15 phút là bạn có thể tự dựng hệ thống
    - `Publishable key` (bắt đầu bằng `sb_publishable_`; project cũ có thể hiển thị key `anon`)
    - `Secret key` cho server (bắt đầu bằng `sb_secret_`) nếu cần gửi email thông báo và quản trị server. Project cũ có thể dùng key `service_role` trong tab **Legacy API Keys**.
 
-## Cách 1: Deploy nhanh lên Vercel
+### Bước 2: Deploy lên Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhomielab%2Fgiapha-os&env=SITE_NAME,SHORT_NAME,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY,NEXT_PUBLIC_DISABLE_SSO,APP_URL,SUPABASE_SERVICE_ROLE_KEY,SUPABASE_DB_URL,RESEND_API_KEY,RESEND_FROM_EMAIL,ADMIN_NOTIFICATION_EMAIL)
 
@@ -28,7 +53,7 @@ Chỉ cần khoảng 10 -> 15 phút là bạn có thể tự dựng hệ thống
    - `NEXT_PUBLIC_DISABLE_SSO` = `false` để bật SSO; đặt `true` để ẩn SSO khi chưa cấu hình
    - `APP_URL` = URL public của ứng dụng, ví dụ `https://your-domain.vercel.app` (dùng cho email duyệt tài khoản, link chia sẻ Open Graph, dữ liệu có cấu trúc JSON-LD ở trang chủ và giới thiệu, `sitemap.xml` và `robots.txt`; chỉ lấy phần gốc: thiếu `https://` sẽ tự thêm, đường dẫn phía sau bị bỏ; nếu bỏ trống hoặc không phải địa chỉ http(s), trên Vercel sẽ dùng domain production). Ảnh chia sẻ mạng xã hội là `public/og-image.png` (1200×630), có thể thay bằng ảnh của dòng họ bạn.
    - `SUPABASE_SERVICE_ROLE_KEY` = **Secret key** trong **Project Settings → API Keys → Secret keys**. Nếu project dùng giao diện cũ, vào tab **Legacy API Keys** và copy key `service_role`. Đây là key có quyền cao, chỉ lưu ở Vercel server environment; tuyệt đối không dùng publishable/anon key cho biến này và không đặt tên biến với tiền tố `NEXT_PUBLIC_`.
-   - `SUPABASE_DB_URL` = PostgreSQL connection string trong **Project Settings → Database → Connection Pooling** (Session mode, chỉ lưu ở Vercel server environment). Biến này cho phép admin kiểm tra/chạy migration ngay trong Dashboard.
+   - `SUPABASE_DB_URL` = PostgreSQL connection string trong **Project Settings → Database → Connection Pooling** (Session mode, chỉ lưu ở Vercel server environment). Biến này cho phép trang `/setup` tự cài database và admin chạy migration ngay trong Dashboard.
    - `RESEND_API_KEY` = API key của [Resend](https://resend.com)
    - `RESEND_FROM_EMAIL` = địa chỉ gửi đã xác minh domain trên Resend, ví dụ `Gia Phả OS <no-reply@your-domain.com>`
    - `ADMIN_NOTIFICATION_EMAIL` = tuỳ chọn; email nhận thông báo. Nếu bỏ trống, hệ thống tự gửi tới email của các admin đang hoạt động

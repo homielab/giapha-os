@@ -54,16 +54,14 @@ More screenshots: [docs/screenshots/](docs/screenshots/)
 
 ## Installation
 
-You can set up a family genealogy system in about 10–15 minutes:
+The easiest way takes about 5 minutes, with no keys to copy and no commands to run:
 
-1. Create a free project on [Supabase](https://supabase.com) and copy its `Project URL` and `Publishable key`.
-2. Choose how to run the app:
-   - **Vercel** (fastest): [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhomielab%2Fgiapha-os&env=SITE_NAME,SHORT_NAME,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY,NEXT_PUBLIC_DISABLE_SSO,APP_URL,SUPABASE_SERVICE_ROLE_KEY,SUPABASE_DB_URL,RESEND_API_KEY,RESEND_FROM_EMAIL,ADMIN_NOTIFICATION_EMAIL)
-   - **Locally**: install [Bun](https://bun.sh/), create `.env.local` from `.env.example`, then run `bun install` and `bun run dev`.
-   - **Docker**: `docker compose --env-file .env.local up -d --build`.
-3. Open the site and register: the first account automatically becomes **admin**.
+1. Press [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhomielab%2Fgiapha-os&project-name=giapha-os&repository-name=giapha-os&env=SITE_NAME&envDescription=The+name+shown+on+your+family+tree+site%2C+for+example%3A+Nguyen+family+tree&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D), sign in to Vercel (a GitHub account is recommended) and enter the name of your family tree.
+2. At the **Supabase** step, create a new database. Vercel creates a free database and fills in every setting.
+3. When the deploy finishes, open the site: the **Set up the database** page appears; press **Install the database**.
+4. Register: the first account automatically becomes **admin**.
 
-Step-by-step instructions, every environment variable, and the fix for `Failed to fetch` when registering: [docs/en/install.md](docs/en/install.md).
+To let other people register, also follow "Let other people register" in the guide. To use an existing Supabase project, run locally or use Docker: see [docs/en/install.md](docs/en/install.md).
 
 ### Sign in with Google and Facebook
 

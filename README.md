@@ -54,16 +54,14 @@ Xem thêm ảnh khác: [docs/screenshots/](docs/screenshots/)
 
 ## Cài đặt
 
-Chỉ cần khoảng 10 đến 15 phút để tự dựng hệ thống gia phả cho gia đình mình:
+Cách dễ nhất, khoảng 5 phút, không cần chép key hay chạy lệnh:
 
-1. Tạo project miễn phí trên [Supabase](https://supabase.com) và lấy `Project URL`, `Publishable key`.
-2. Chọn một cách chạy ứng dụng:
-   - **Vercel** (nhanh nhất): [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhomielab%2Fgiapha-os&env=SITE_NAME,SHORT_NAME,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY,NEXT_PUBLIC_DISABLE_SSO,APP_URL,SUPABASE_SERVICE_ROLE_KEY,SUPABASE_DB_URL,RESEND_API_KEY,RESEND_FROM_EMAIL,ADMIN_NOTIFICATION_EMAIL)
-   - **Máy cá nhân**: cần [Bun](https://bun.sh/); tạo `.env.local` từ `.env.example`, rồi chạy `bun install` và `bun run dev`.
-   - **Docker**: `docker compose --env-file .env.local up -d --build`.
-3. Mở trang web và đăng ký: người đăng ký đầu tiên tự động là **admin**.
+1. Bấm [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhomielab%2Fgiapha-os&project-name=giapha-os&repository-name=giapha-os&env=SITE_NAME&envDescription=T%C3%AAn+gia+ph%E1%BA%A3+hi%E1%BB%87n+tr%C3%AAn+trang+web%2C+v%C3%AD+d%E1%BB%A5%3A+Gia+ph%E1%BA%A3+h%E1%BB%8D+Nguy%E1%BB%85n&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%7D%5D), đăng nhập Vercel (nên dùng tài khoản GitHub) và nhập tên gia phả.
+2. Ở bước **Supabase**, bấm tạo database mới. Vercel tự tạo database miễn phí và tự điền mọi cấu hình.
+3. Chờ deploy xong, mở trang web: trang **Khởi tạo cơ sở dữ liệu** hiện ra, bấm **Cài database**.
+4. Đăng ký tài khoản: người đăng ký đầu tiên tự động là **admin**.
 
-Hướng dẫn từng bước, ý nghĩa các biến môi trường và cách sửa lỗi `Failed to fetch` khi đăng ký: [docs/vi/cai-dat.md](docs/vi/cai-dat.md).
+Muốn người khác tự đăng ký được, làm thêm bước "Cho người khác đăng ký" trong hướng dẫn. Dùng project Supabase có sẵn, chạy trên máy cá nhân hoặc Docker: xem [docs/vi/cai-dat.md](docs/vi/cai-dat.md).
 
 ### Đăng nhập bằng Google và Facebook
 

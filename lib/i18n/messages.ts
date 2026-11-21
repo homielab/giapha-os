@@ -708,6 +708,13 @@ export const messages = {
     returnAndReload: 'Quay lại đây và tải lại trang (hoặc bấm đăng nhập lại).',
     sqlBundle: 'SQL bundle (schema + migrations)',
     backToLogin: 'Quay lại đăng nhập',
+    setupInstallHint:
+      'Bấm nút bên dưới để tạo các bảng dữ liệu. Chỉ mất vài giây và chỉ cần làm một lần.',
+    setupInstallButton: 'Cài database',
+    setupInstalling: 'Đang cài database…',
+    setupInstallError:
+      'Không cài được database. Kiểm tra kết nối database (SUPABASE_DB_URL) và log server, hoặc cài bằng tay theo cách bên dưới.',
+    setupManualTitle: 'Hoặc cài bằng tay trong Supabase',
     copySuccess: 'Đã copy thành công!',
     copyError:
       'Không thể copy. Trình duyệt của bạn có thể không hỗ trợ tính năng này.',
@@ -2114,6 +2121,13 @@ export const messages = {
     returnAndReload: 'Return here and reload the page (or log in again).',
     sqlBundle: 'SQL bundle (schema + migrations)',
     backToLogin: 'Back to log in',
+    setupInstallHint:
+      'Press the button below to create the data tables. It takes a few seconds and is needed only once.',
+    setupInstallButton: 'Install the database',
+    setupInstalling: 'Installing the database…',
+    setupInstallError:
+      'Could not install the database. Check the database connection (SUPABASE_DB_URL) and the server log, or install it by hand as shown below.',
+    setupManualTitle: 'Or install it by hand in Supabase',
     copySuccess: 'Copied successfully!',
     copyError: 'Could not copy. Your browser may not support this feature.',
     eventsTitle: 'Family events',

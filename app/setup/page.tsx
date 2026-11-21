@@ -6,11 +6,16 @@ import Link from 'next/link'
 
 import Footer from '@/components/Footer'
 import { getServerTranslations } from '@/lib/i18n/server'
+import { databaseUrl } from '@/utils/supabase/env'
 
 import CopyButton from './CopyButton'
+import InstallButton from './InstallButton'
 
 export default async function SetupPage() {
   const { t } = await getServerTranslations()
+  // With a database connection (SUPABASE_DB_URL, or the one the Vercel
+  // integration sets) the page installs the schema itself.
+  const canInstall = Boolean(databaseUrl())
   let sqlBundle = ''
   try {
     const schemaPath = path.join(process.cwd(), 'docs', 'schema.sql')
@@ -66,6 +71,19 @@ export default async function SetupPage() {
               </p>
             </div>
           </div>
+
+          {canInstall && (
+            <div className='mb-8 rounded-2xl border border-stone-200 bg-stone-50 p-6'>
+              <p className='mb-4 text-stone-600'>{t('setupInstallHint')}</p>
+              <InstallButton />
+            </div>
+          )}
+
+          {canInstall && (
+            <h3 className='mb-4 font-semibold text-stone-900'>
+              {t('setupManualTitle')}
+            </h3>
+          )}
 
           <div className='grid grid-cols-1 gap-8 md:grid-cols-2'>
             <div className='space-y-6'>

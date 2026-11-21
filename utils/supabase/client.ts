@@ -1,8 +1,10 @@
 import { createBrowserClient } from '@supabase/ssr'
 import { SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+import { supabaseUrl as readSupabaseUrl, supabasePublishableKey } from './env'
+
+const supabaseUrl = readSupabaseUrl()
+const supabaseKey = supabasePublishableKey()
 
 export const createClient = () => {
   if (!supabaseUrl || !supabaseKey) {
