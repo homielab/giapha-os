@@ -73,7 +73,7 @@ export default function KinshipPersonSelector({
 
   return (
     <div className='relative w-full min-w-0 flex-1'>
-      <p className='mb-2 text-sm font-medium text-stone-400'>{label}</p>
+      <p className='mb-2 text-sm font-medium text-stone-500'>{label}</p>
       <button
         ref={buttonRef}
         type='button'
@@ -85,7 +85,7 @@ export default function KinshipPersonSelector({
         className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition ${
           selected
             ? 'border-amber-300 bg-amber-50 text-stone-800'
-            : 'border-stone-200 bg-white/80 text-stone-400 hover:border-amber-200'
+            : 'border-stone-200 bg-white/80 text-stone-500 hover:border-amber-200'
         }`}>
         <PersonAvatar
           person={selected}
@@ -93,7 +93,7 @@ export default function KinshipPersonSelector({
           bgClassName={
             selected
               ? getAvatarBg(selected.gender)
-              : 'bg-stone-100 text-stone-400'
+              : 'bg-stone-100 text-stone-600'
           }
         />
 
@@ -101,7 +101,7 @@ export default function KinshipPersonSelector({
           {selected ? selected.full_name : t('selectMember')}
         </span>
         {selected?.birth_year && (
-          <span className='shrink-0 text-sm text-stone-400'>
+          <span className='shrink-0 text-sm text-stone-500'>
             ({selected.birth_year})
           </span>
         )}
@@ -170,7 +170,7 @@ export default function KinshipPersonSelector({
                     {p.full_name}
                   </span>
                   {p.birth_year && (
-                    <span className='ml-auto shrink-0 text-sm text-stone-400'>
+                    <span className='ml-auto shrink-0 text-sm text-stone-500'>
                       {p.birth_year}
                     </span>
                   )}
@@ -187,7 +187,7 @@ export default function KinshipPersonSelector({
               aria-live='polite'
               className={
                 filtered.length === 0
-                  ? 'py-6 text-center text-sm text-stone-400'
+                  ? 'py-6 text-center text-sm text-stone-500'
                   : 'sr-only'
               }>
               {filtered.length === 0

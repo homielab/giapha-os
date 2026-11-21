@@ -65,7 +65,7 @@ export default function LineagePreviewTable({
                     {u.full_name}
                   </td>
                   <td className='px-4 py-3 text-center'>
-                    <span className='text-stone-400'>
+                    <span className='text-stone-500'>
                       {u.old_generation ?? '—'}
                     </span>
                     {u.old_generation !== u.new_generation && (
@@ -78,7 +78,7 @@ export default function LineagePreviewTable({
                     )}
                   </td>
                   <td className='px-4 py-3 text-center'>
-                    <span className='text-stone-400'>
+                    <span className='text-stone-500'>
                       {u.old_birth_order ?? '—'}
                     </span>
                     {u.old_birth_order !== u.new_birth_order && (
@@ -94,7 +94,7 @@ export default function LineagePreviewTable({
                     <span
                       className={
                         u.old_is_in_law !== u.new_is_in_law
-                          ? 'text-stone-400'
+                          ? 'text-stone-500'
                           : ''
                       }>
                       {u.old_is_in_law
@@ -122,7 +122,7 @@ export default function LineagePreviewTable({
                         {t('updated')}
                       </span>
                     ) : (
-                      <span className='inline-block rounded-full border border-stone-200/60 bg-stone-100 px-2 py-0.5 text-sm font-medium text-stone-400'>
+                      <span className='inline-block rounded-full border border-stone-200/60 bg-stone-100 px-2 py-0.5 text-sm font-medium text-stone-600'>
                         {t('unchanged')}
                       </span>
                     )}

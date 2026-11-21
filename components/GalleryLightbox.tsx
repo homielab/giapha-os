@@ -146,11 +146,11 @@ export default function GalleryLightbox({
                 </p>
               </div>
             ) : (
-              <p className='text-stone-400 italic'>{t('noDescription')}</p>
+              <p className='text-stone-500 italic'>{t('noDescription')}</p>
             )}
           </div>
 
-          <div className='flex items-center justify-between border-t border-stone-100 bg-stone-50 p-6 text-sm font-medium text-stone-400'>
+          <div className='flex items-center justify-between border-t border-stone-100 bg-stone-50 p-6 text-sm font-medium text-stone-500'>
             <span>
               {t('addedOn')} {dayjs(item.created_at).format('DD/MM/YYYY')}
             </span>

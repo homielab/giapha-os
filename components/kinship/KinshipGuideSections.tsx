@@ -174,7 +174,7 @@ export default function KinshipGuideSections() {
                       </span>
                       <div className='min-w-0'>
                         <p className='text-sm text-stone-600'>{t(row[1])}</p>
-                        <p className='mt-0.5 text-sm text-stone-400'>
+                        <p className='mt-0.5 text-sm text-stone-500'>
                           {t(row[2])}
                         </p>
                       </div>

@@ -52,7 +52,7 @@ export default function QuickAddSpouseForm({
             maxLength={MAX_NAME}
             value={newSpouseName}
             onChange={(e) => onNameChange(e.target.value)}
-            className='block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-rose-500 focus:ring-rose-500 sm:p-2.5'
+            className='block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-500 transition-colors focus:border-rose-500 focus:ring-rose-500 sm:p-2.5'
           />
         </div>
 
@@ -69,7 +69,7 @@ export default function QuickAddSpouseForm({
             placeholder={t('birthYearExample')}
             value={newSpouseBirthYear}
             onChange={(e) => onBirthYearChange(e.target.value)}
-            className='block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-rose-500 focus:ring-rose-500 sm:p-2.5'
+            className='block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-500 transition-colors focus:border-rose-500 focus:ring-rose-500 sm:p-2.5'
           />
         </div>
 
@@ -87,7 +87,7 @@ export default function QuickAddSpouseForm({
             maxLength={MAX_NOTE}
             value={newSpouseNote}
             onChange={(e) => onNoteChange(e.target.value)}
-            className='block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-rose-500 focus:ring-rose-500 sm:p-2.5'
+            className='block w-full rounded-lg border border-stone-300 bg-white p-2 text-sm text-stone-900 placeholder-stone-500 transition-colors focus:border-rose-500 focus:ring-rose-500 sm:p-2.5'
           />
         </div>
 

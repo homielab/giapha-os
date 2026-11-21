@@ -287,7 +287,7 @@ export default function DataImportExport({
           description={
             <>
               {t('backupDataDescription')}
-              <span className='mt-1 block text-xs text-stone-500'>
+              <span className='mt-1 block text-sm text-stone-500'>
                 {t('backupPhotosNote')}
               </span>
             </>

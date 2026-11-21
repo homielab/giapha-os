@@ -35,7 +35,7 @@ export default function KinshipResult({
   return (
     <AnimatePresence mode='wait'>
       {result === null ? (
-        <m.div key='same' className='py-8 text-center text-stone-400'>
+        <m.div key='same' className='py-8 text-center text-stone-500'>
           {t('chooseDifferentMembers')}
         </m.div>
       ) : (
@@ -61,7 +61,7 @@ export default function KinshipResult({
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
               className='rounded-2xl border border-stone-200/60 bg-white/90 p-5'>
-              <p className='mb-3 text-sm font-medium text-stone-400'>
+              <p className='mb-3 text-sm font-medium text-stone-500'>
                 {t('callsAs', {
                   name: personA.full_name,
                   other: personB.full_name
@@ -79,7 +79,7 @@ export default function KinshipResult({
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.15 }}
               className='rounded-2xl border border-stone-200/60 bg-white/90 p-5'>
-              <p className='mb-3 text-sm font-medium text-stone-400'>
+              <p className='mb-3 text-sm font-medium text-stone-500'>
                 {t('callsAs', {
                   name: personB.full_name,
                   other: personA.full_name
@@ -101,8 +101,8 @@ export default function KinshipResult({
               transition={{ delay: 0.25 }}
               className='rounded-2xl border border-stone-200/60 bg-stone-50 px-6 py-5'>
               <div className='mb-4 flex items-center gap-2'>
-                <GitMerge className='size-4 text-stone-400' />
-                <p className='text-sm font-medium text-stone-400'>
+                <GitMerge className='size-4 text-stone-500' />
+                <p className='text-sm font-medium text-stone-500'>
                   {t('relationPathAnalysis')}
                 </p>
               </div>
@@ -112,7 +112,7 @@ export default function KinshipResult({
                     key={describePathStep(step, t)}
                     className='flex items-start gap-4'>
                     <div className='mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-white'>
-                      <span className='text-sm font-medium text-stone-400'>
+                      <span className='text-sm font-medium text-stone-500'>
                         {i + 1}
                       </span>
                     </div>
@@ -166,7 +166,7 @@ export default function KinshipResult({
 
           {/* Disclaimer for ambiguous terms */}
           {result.hasAmbiguousTerm && (
-            <p className='px-1 text-sm text-stone-400 italic'>
+            <p className='px-1 text-sm text-stone-500 italic'>
               {t('kinshipDisclaimer')}
             </p>
           )}

@@ -58,7 +58,7 @@ export default function EventRecurrenceField({
       {recurrence === 'yearly_lunar' && (
         <p
           id='custom-event-recurrence-hint'
-          className='mt-1.5 text-xs text-stone-500'>
+          className='mt-1.5 text-sm text-stone-500'>
           {t('recurrenceLunarHint')}
         </p>
       )}

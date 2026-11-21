@@ -34,7 +34,7 @@ function StatCard({
 
       <div className='relative z-10 mb-3 flex items-start justify-between'>
         <div className={`rounded-xl p-2.5 ${color} bg-opacity-10`}>{icon}</div>
-        <span className='rounded-full bg-stone-100 px-2 py-1 text-sm font-medium text-stone-400'>
+        <span className='rounded-full bg-stone-100 px-2 py-1 text-sm font-medium text-stone-600'>
           {pct}%
         </span>
       </div>

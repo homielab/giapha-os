@@ -130,14 +130,14 @@ function LifespanCard({ lifespan }: Pick<FamilyStatsResult, 'lifespan'>) {
                 </div>
                 <span className='w-28 shrink-0 text-right text-sm text-stone-700'>
                   {t('lifespanAge', { age: average })}{' '}
-                  <span className='text-stone-400'>({count})</span>
+                  <span className='text-stone-500'>({count})</span>
                 </span>
               </div>
             ))}
           </div>
         </>
       )}
-      <p className='mt-4 text-sm text-stone-400 italic'>
+      <p className='mt-4 text-sm text-stone-500 italic'>
         {t('lifespanCountedHint', { count: lifespan.counted })}
       </p>
     </m.div>
@@ -174,7 +174,7 @@ export default function FamilyStats({ stats }: FamilyStatsProps) {
               />
             ))}
           </div>
-          <p className='mt-4 text-sm text-stone-400 italic'>
+          <p className='mt-4 text-sm text-stone-500 italic'>
             {t('generationAssignedHint')}
           </p>
         </m.div>
@@ -287,7 +287,7 @@ export default function FamilyStats({ stats }: FamilyStatsProps) {
                 )
               })}
             </div>
-            <p className='mt-4 text-sm text-stone-400 italic'>
+            <p className='mt-4 text-sm text-stone-500 italic'>
               {t('zodiacSolarHint')}
             </p>
           </m.div>
@@ -332,7 +332,7 @@ export default function FamilyStats({ stats }: FamilyStatsProps) {
                 )
               })}
             </div>
-            <p className='mt-4 text-sm text-stone-400 italic'>
+            <p className='mt-4 text-sm text-stone-500 italic'>
               {t('chineseZodiacLunarHint')}
             </p>
           </m.div>

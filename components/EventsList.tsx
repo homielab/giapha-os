@@ -253,7 +253,7 @@ export default function EventsList({
             <CalendarPlus className='size-5' />
             <span>{t('addToCalendar')}</span>
           </button>
-          <label className='flex items-center justify-center gap-2 text-xs text-stone-600'>
+          <label className='flex items-center justify-center gap-2 text-sm text-stone-600'>
             <span>{t('icsRemindLabel')}</span>
             <select
               value={remindDays}
@@ -262,7 +262,7 @@ export default function EventsList({
                 setRemindChoice(days)
                 writeIcsRemind(days)
               }}
-              className='rounded-lg border border-stone-200/80 bg-white/90 px-2 py-1 text-xs text-stone-700 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 focus:outline-none'>
+              className='rounded-lg border border-stone-200/80 bg-white/90 px-2 py-1 text-sm text-stone-700 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 focus:outline-none'>
               {ICS_REMIND_CHOICES.map((days) => (
                 <option key={days} value={days}>
                   {days === 0
@@ -272,7 +272,7 @@ export default function EventsList({
               ))}
             </select>
           </label>
-          <p className='text-center text-xs text-stone-500'>
+          <p className='text-center text-sm text-stone-500'>
             {t('addToCalendarUntil', { year: icsLastYear() })}
           </p>
         </div>
@@ -312,7 +312,7 @@ export default function EventsList({
           <span
             role='status'
             aria-live='polite'
-            className='ml-auto self-center text-sm text-stone-400'>
+            className='ml-auto self-center text-sm text-stone-500'>
             {t('eventCount', { count: filtered.length })}
             {filter === 'past' ? t('eventPastYear') : ''}
           </span>
@@ -336,7 +336,7 @@ export default function EventsList({
 
       {/* Event list */}
       {visible.length === 0 ? (
-        <div className='py-16 text-center text-stone-400'>
+        <div className='py-16 text-center text-stone-500'>
           <CalendarDays className='mx-auto mb-3 size-10 opacity-40' />
           <p className='font-medium'>{t('noEvents')}</p>
           <p className='mt-1 text-sm'>{t('noEventsHint')}</p>

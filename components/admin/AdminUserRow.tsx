@@ -110,7 +110,7 @@ function RowActions({
   const { t } = useI18n()
   if (isSelf) {
     return (
-      <span className='text-sm text-stone-400 italic'>{t('adminYou')}</span>
+      <span className='text-sm text-stone-500 italic'>{t('adminYou')}</span>
     )
   }
   return (
@@ -121,7 +121,7 @@ function RowActions({
         title={t('adminDeleteUser')}
         disabled={disabled}
         onClick={onDelete}
-        className='rounded-md p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50'>
+        className='rounded-md p-1.5 text-stone-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50'>
         <Trash className='size-4' aria-hidden='true' />
       </button>
     </div>

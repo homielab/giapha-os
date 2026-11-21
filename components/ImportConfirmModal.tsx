@@ -210,7 +210,7 @@ export default function ImportConfirmModal({
                 </fieldset>
               ) : null}
               {exportedDate && (
-                <p className='mt-1 text-xs text-stone-500'>
+                <p className='mt-1 text-sm text-stone-500'>
                   {t('restoreFileExportedAt', { date: exportedDate })}
                 </p>
               )}

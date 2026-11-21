@@ -258,7 +258,7 @@ export default async function DashboardLaunchpad() {
                   })}
                 </div>
                 {upcomingEvents.length > 4 && (
-                  <p className='mt-2 text-center text-sm font-medium text-stone-400 sm:text-left'>
+                  <p className='mt-2 text-center text-sm font-medium text-stone-500 sm:text-left'>
                     {t('moreEvents', {
                       count: upcomingEvents.length - 4
                     })}
@@ -275,7 +275,7 @@ export default async function DashboardLaunchpad() {
                   className='px-4 text-center font-medium text-stone-500 after:absolute after:inset-0 after:rounded-3xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-amber-500'>
                   {t('noUpcomingEvents')}
                 </Link>
-                <div className='mt-1 flex items-center gap-2 text-sm font-medium text-stone-400 transition-colors group-hover:text-stone-600'>
+                <div className='mt-1 flex items-center gap-2 text-sm font-medium text-stone-500 transition-colors group-hover:text-stone-600'>
                   <span>{t('viewYearEvents')}</span>
                   <ArrowRight className='size-4 transition-transform group-hover:translate-x-1' />
                 </div>

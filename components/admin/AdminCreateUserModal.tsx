@@ -6,7 +6,7 @@ import { useModalA11y } from '@/hooks/useModalA11y'
 import { useI18n } from '@/lib/i18n/useI18n'
 
 const fieldClasses =
-  'w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 placeholder-stone-400 transition-colors focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none sm:py-2.5'
+  'w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 placeholder-stone-500 transition-colors focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none sm:py-2.5'
 
 interface AdminCreateUserModalProps {
   isCreating: boolean
@@ -37,7 +37,7 @@ export default function AdminCreateUserModal({
           <button
             onClick={onClose}
             aria-label={t('close')}
-            className='flex size-8 items-center justify-center rounded-full text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600'>
+            className='flex size-8 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-600'>
             <svg
               className='size-5'
               fill='none'

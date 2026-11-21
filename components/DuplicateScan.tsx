@@ -129,7 +129,7 @@ export default function DuplicateScan() {
                     key={group.members.map((m) => m.id).join('-')}
                     className='overflow-hidden rounded-2xl border border-stone-200/80'>
                     <div className='flex items-center justify-between border-b border-stone-200/80 bg-stone-50 px-4 py-2'>
-                      <span className='text-xs font-medium text-stone-500'>
+                      <span className='text-sm font-medium text-stone-500'>
                         {t('duplicateScanGroup')}
                       </span>
                       <button

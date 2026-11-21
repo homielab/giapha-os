@@ -169,7 +169,7 @@ export default function MergePersonsModal({
           </div>
 
           <div className='mt-4 space-y-2'>
-            <p className='text-xs font-semibold text-stone-600'>
+            <p className='text-sm font-semibold text-stone-600'>
               {t('mergeKeepTag')} / {t('mergeDropTag')}
             </p>
             {members.map((member) => (
@@ -186,7 +186,7 @@ export default function MergePersonsModal({
                   <span className='block font-medium text-stone-900'>
                     {member.full_name}
                   </span>
-                  <span className='block text-xs text-stone-500'>
+                  <span className='block text-sm text-stone-500'>
                     {t('duplicateScanYears')}:{' '}
                     {years(member.birth_year, deathYearOf(member))}
                   </span>
@@ -212,7 +212,7 @@ export default function MergePersonsModal({
               </div>
             ))}
           </div>
-          <p className='mt-2 text-xs text-stone-500'>{t('mergeKeeperHint')}</p>
+          <p className='mt-2 text-sm text-stone-500'>{t('mergeKeeperHint')}</p>
 
           {keepId !== dropId && keepId !== '' && dropId !== '' && (
             <>
@@ -328,7 +328,7 @@ export default function MergePersonsModal({
                   {preview.moved.length === 0 &&
                     preview.droppedDuplicates.length === 0 &&
                     preview.personFills.length === 0 && (
-                      <p className='text-xs text-stone-500'>
+                      <p className='text-sm text-stone-500'>
                         {t('mergeNoRelationships')}
                       </p>
                     )}
@@ -345,7 +345,7 @@ export default function MergePersonsModal({
 
               <div className='mt-4 space-y-2'>
                 <label className='block space-y-1.5'>
-                  <span className='text-xs font-semibold text-stone-600'>
+                  <span className='text-sm font-semibold text-stone-600'>
                     {t('mergeConfirmLabel', { name: drop?.full_name ?? '' })}
                   </span>
                   <input

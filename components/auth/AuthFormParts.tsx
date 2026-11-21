@@ -7,7 +7,7 @@ import { ReactNode } from 'react'
 import { useI18n } from '@/lib/i18n/useI18n'
 
 const inputClasses =
-  'block w-full rounded-xl border border-stone-200/80 bg-white/50 py-3.5 pr-4 pl-11 text-stone-900 placeholder-stone-400 transition duration-200 outline-none focus:border-amber-400 focus:bg-white focus:ring-amber-400'
+  'block w-full rounded-xl border border-stone-200/80 bg-white/50 py-3.5 pr-4 pl-11 text-stone-900 placeholder-stone-500 transition duration-200 outline-none focus:border-amber-400 focus:bg-white focus:ring-amber-400'
 
 export function AuthField({
   id,

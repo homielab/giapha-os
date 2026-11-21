@@ -126,7 +126,7 @@ export default function HeaderMenu() {
             transition={{ duration: 0.15, ease: 'easeOut' }}
             className='absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-3xl border border-border bg-surface py-2'>
             <div className='border-b border-stone-100 bg-stone-50/50 px-4 py-3'>
-              <p className='mb-0.5 text-sm font-medium text-stone-400'>
+              <p className='mb-0.5 text-sm font-medium text-stone-500'>
                 {t('account')}
               </p>
               <p className='truncate text-sm font-medium text-stone-900'>

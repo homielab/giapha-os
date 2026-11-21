@@ -43,7 +43,7 @@ export default function LogoutButton() {
         {isLoggingOut ? t('processing') : t('logout')}
       </button>
       {error && (
-        <p role='alert' className='px-4 pb-2 text-xs text-rose-600'>
+        <p role='alert' className='px-4 pb-2 text-sm text-rose-600'>
           {error}
         </p>
       )}

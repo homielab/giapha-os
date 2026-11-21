@@ -173,7 +173,7 @@ export default function GlobalMemberSearch() {
                     {member.full_name}
                   </span>
                   {years && (
-                    <span className='shrink-0 text-xs text-stone-500'>
+                    <span className='shrink-0 text-sm text-stone-500'>
                       {years}
                     </span>
                   )}

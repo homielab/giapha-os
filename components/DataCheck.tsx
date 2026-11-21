@@ -185,7 +185,7 @@ export default function DataCheck() {
                         ))}
                       </ul>
                       {result.counts[kind] > items.length && (
-                        <p className='border-t border-stone-100 px-4 py-2 text-xs text-stone-500'>
+                        <p className='border-t border-stone-100 px-4 py-2 text-sm text-stone-500'>
                           {t('dataCheckLimited', { shown: items.length })}
                         </p>
                       )}

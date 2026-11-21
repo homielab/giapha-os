@@ -302,7 +302,7 @@ export default function MemberGeneralFields({
           placeholder={t('notePlaceholder')}
           className={`${inputClasses} resize-none`}
         />
-        <p className='mt-1 text-right text-xs text-stone-500' aria-live='off'>
+        <p className='mt-1 text-right text-sm text-stone-500' aria-live='off'>
           {note.length}/{MAX_NOTE}
         </p>
       </div>

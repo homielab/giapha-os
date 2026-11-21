@@ -12,9 +12,9 @@ export default function SsoButtons({
   const { t } = useI18n()
   return (
     <>
-      <div className='relative flex items-center py-2 opacity-60'>
+      <div className='relative flex items-center py-2'>
         <div className='grow border-t border-stone-200'></div>
-        <span className='mx-4 shrink-0 text-sm font-medium text-stone-400'>
+        <span className='mx-4 shrink-0 text-sm font-medium text-stone-500'>
           {t('or')}
         </span>
         <div className='grow border-t border-stone-200'></div>

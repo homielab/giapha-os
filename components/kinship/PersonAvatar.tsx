@@ -57,7 +57,7 @@ export default function PersonAvatar({
   return (
     <div className='relative shrink-0'>
       <div
-        className={`flex ${size.box} items-center justify-center overflow-hidden rounded-full text-sm font-medium text-white ${size.ring} ring-white ${person ? bgClassName : 'bg-stone-100 text-stone-400'}`}>
+        className={`flex ${size.box} items-center justify-center overflow-hidden rounded-full text-sm font-medium text-white ${size.ring} ring-white ${person ? bgClassName : 'bg-stone-100 text-stone-600'}`}>
         {url ? (
           <Image
             unoptimized

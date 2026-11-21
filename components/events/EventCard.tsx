@@ -173,7 +173,7 @@ export default function EventCard({
           <p className='flex items-center gap-1.5 text-sm leading-snug text-stone-500 sm:text-sm'>
             <CalendarDays className='size-3.5 shrink-0' />
             <span className='font-medium text-stone-600'>{dateLabel}</span>
-            {yearsInfo && <span className='text-stone-400'>· {yearsInfo}</span>}
+            {yearsInfo && <span className='text-stone-500'>· {yearsInfo}</span>}
           </p>
 
           {event.location && (
@@ -183,7 +183,7 @@ export default function EventCard({
             </p>
           )}
           {event.content && (
-            <p className='mt-0.5 flex items-start gap-1.5 text-sm leading-snug text-stone-400 sm:text-sm'>
+            <p className='mt-0.5 flex items-start gap-1.5 text-sm leading-snug text-stone-500 sm:text-sm'>
               <AlignLeft className='mt-0.5 size-3.5 shrink-0' />
               <span className='line-clamp-2'>{event.content}</span>
             </p>

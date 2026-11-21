@@ -144,7 +144,7 @@ export default function KinshipFinder({ persons, relationships }: Props) {
       {personA && personB ? (
         <KinshipResult personA={personA} personB={personB} result={result} />
       ) : (
-        <div className='py-16 text-center text-stone-400'>
+        <div className='py-16 text-center text-stone-500'>
           <Users className='mx-auto mb-3 size-12 opacity-30' />
           <p className='font-medium'>{t('chooseTwoMembers')}</p>
         </div>

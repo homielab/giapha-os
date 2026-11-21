@@ -80,7 +80,7 @@ export default function LunarRecomputeTable({
                 <td className='px-4 py-3 whitespace-nowrap text-stone-600'>
                   {formatDate(row.solar)}
                 </td>
-                <td className='px-4 py-3 whitespace-nowrap text-stone-400'>
+                <td className='px-4 py-3 whitespace-nowrap text-stone-500'>
                   {formatDate(row.stored)}
                 </td>
                 <td className='px-4 py-3 font-medium whitespace-nowrap text-amber-700'>
