@@ -153,14 +153,14 @@ export default async function DashboardLaunchpad() {
   return (
     <main className='mx-auto flex w-full max-w-7xl flex-1 flex-col p-4 sm:p-8'>
       {/* ── Today's Date & Upcoming Events ─────────────────── */}
-      <section className='group relative mb-10 block overflow-hidden rounded-3xl border border-stone-200/60 bg-white transition-colors duration-300 focus-within:border-stone-400 hover:-translate-y-1 hover:border-stone-400'>
+      <section className='group relative mb-10 block overflow-hidden rounded-3xl border border-stone-200/60 bg-white transition-colors duration-300 focus-within:border-stone-400 hover:border-stone-400'>
         {/* Subtle background flair */}
         <div className='pointer-events-none absolute top-0 right-0 h-64 w-64 translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-50/50 opacity-50 blur-3xl'></div>
 
         <div className='relative flex flex-col items-center gap-6 p-6 sm:gap-8 sm:p-8 md:flex-row'>
           {/* Date section */}
           <div className='flex w-full flex-col items-center gap-4 border-stone-100 text-center md:w-[35%] md:items-start md:border-r md:pr-8 md:text-left'>
-            <div className='flex size-16 shrink-0 items-center justify-center rounded-2xl border border-stone-100 bg-stone-50 text-stone-600 transition-transform duration-500 group-hover:scale-105 group-hover:border-stone-200'>
+            <div className='flex size-16 shrink-0 items-center justify-center rounded-2xl border border-stone-100 bg-stone-50 text-stone-600 transition-colors duration-300 group-hover:border-stone-200'>
               <CalendarDays className='size-7' />
             </div>
             <div className='mt-1'>
@@ -197,7 +197,7 @@ export default async function DashboardLaunchpad() {
                   </span>
                   <ArrowRight
                     aria-hidden='true'
-                    className='size-5 text-stone-300 transition duration-300 group-hover:translate-x-1 group-hover:text-stone-500'
+                    className='size-5 text-stone-300 transition duration-300 group-hover:text-stone-500'
                   />
                 </Link>
                 <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
@@ -242,7 +242,7 @@ export default async function DashboardLaunchpad() {
               </div>
             ) : (
               <div className='flex h-full flex-col items-center justify-center gap-3 py-6 opacity-80'>
-                <div className='rounded-2xl border border-stone-100 bg-stone-50 p-4 text-stone-400 transition-transform duration-500 group-hover:scale-105 group-hover:text-stone-500'>
+                <div className='rounded-2xl border border-stone-100 bg-stone-50 p-4 text-stone-400 transition-colors duration-300 group-hover:text-stone-500'>
                   <CalendarDays className='size-6' />
                 </div>
                 <Link
@@ -252,7 +252,7 @@ export default async function DashboardLaunchpad() {
                 </Link>
                 <div className='mt-1 flex items-center gap-2 text-sm font-medium text-stone-500 transition-colors group-hover:text-stone-600'>
                   <span>{t('viewYearEvents')}</span>
-                  <ArrowRight className='size-4 transition-transform group-hover:translate-x-1' />
+                  <ArrowRight className='size-4' />
                 </div>
               </div>
             )}
