@@ -13,12 +13,12 @@ export default function MemberNotesSection({ note }: { note: string }) {
   const isNoteLong = note.length > 300
 
   return (
-    <m.section layout variants={itemVariants}>
+    <m.section variants={itemVariants}>
       <h2 className='mb-4 flex items-center gap-2 text-base font-semibold text-stone-800 sm:text-lg'>
         <Info className='size-5 text-amber-600' />
         {t('notes')}
       </h2>
-      <div className='relative overflow-hidden rounded-2xl border border-stone-200/60 bg-white/80 p-5 backdrop-blur-sm sm:p-6'>
+      <div className='relative overflow-hidden rounded-2xl border border-stone-200/60 bg-white p-5 sm:p-6'>
         {note ? (
           <div className='flex flex-col'>
             <div

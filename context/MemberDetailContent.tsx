@@ -52,7 +52,6 @@ export default function MemberDetailContent({
 
   return (
     <m.div
-      layout
       variants={containerVariants}
       initial='hidden'
       animate='show'
@@ -78,12 +77,12 @@ export default function MemberDetailContent({
           <div className='space-y-8 lg:col-span-2'>
             <MemberNotesSection note={note} />
 
-            <m.section layout variants={itemVariants}>
+            <m.section variants={itemVariants}>
               <h2 className='mb-4 flex items-center gap-2 text-base font-semibold text-stone-800 sm:text-lg'>
                 <Users className='size-5 text-amber-600' />
                 {t('family')}
               </h2>
-              <div className='relative z-0 rounded-2xl border border-stone-200/60 bg-white/80 p-4 backdrop-blur-sm sm:p-6'>
+              <div className='relative z-0 rounded-2xl border border-stone-200/60 bg-white p-4 sm:p-6'>
                 <RelationshipManager
                   person={person}
                   isAdmin={isAdmin}

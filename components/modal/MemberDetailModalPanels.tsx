@@ -13,10 +13,11 @@ export function LoadingPanel() {
   return (
     <m.div
       key='loading'
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.2 }}
+      // Shown only when the load takes a while, so a fast load opens
+      // straight on the member instead of flashing a spinner.
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.12, delay: 0.2 }}
       className='flex min-h-125 flex-1 flex-col items-center justify-center gap-4'>
       <div className='size-10 animate-spin rounded-full border-4 border-amber-600 border-t-transparent'></div>
       <p className='font-medium text-stone-500'>{t('loadingMember')}</p>
@@ -35,10 +36,9 @@ export function ErrorPanel({
   return (
     <m.div
       key='error'
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.12 }}
       className='flex min-h-100 flex-1 flex-col items-center justify-center gap-4 p-8 text-center'>
       <div className='mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500 shadow-inner'>
         <AlertCircle className='size-8' />
@@ -70,10 +70,9 @@ export function EditPanel({
   return (
     <m.div
       key='editing'
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.12 }}
       className='custom-scrollbar flex-1 overflow-y-auto px-4 pt-16 pb-8 sm:px-8'>
       <h2 className='mb-6 font-serif text-xl font-semibold text-stone-800'>
         {t('editMember')}
@@ -103,10 +102,9 @@ export function CreatePanel({
   return (
     <m.div
       key='creating'
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.12 }}
       className='custom-scrollbar flex-1 overflow-y-auto px-4 pt-16 pb-8 sm:px-8'>
       <h2 className='mb-6 font-serif text-xl font-semibold text-stone-800'>
         {t('newMember')}
@@ -130,10 +128,9 @@ export function DetailPanel({
   return (
     <m.div
       key='details'
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.12 }}
       className='custom-scrollbar flex-1 overflow-y-auto'>
       <MemberDetailContent
         person={person}

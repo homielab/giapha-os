@@ -10,19 +10,11 @@ export interface RelationshipStats {
   daughterInLaw: number
 }
 
+// The whole detail view fades in once (150 ms). No per-section stagger or
+// spring: content that slides in piece by piece reads as lag in a dialog.
 export const containerVariants: Variants = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
+  show: { opacity: 1, transition: { duration: 0.15, ease: 'easeOut' } }
 }
 
-export const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 15 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { type: 'spring', stiffness: 200, damping: 20 }
-  }
-}
+export const itemVariants: Variants = {}

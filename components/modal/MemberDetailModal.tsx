@@ -51,7 +51,7 @@ export function ModalHeaderActions({
         /* In edit mode — show back button */
         <button
           onClick={onBack}
-          className='inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border border-stone-200/50 bg-stone-100/80 px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors duration-300 hover:-translate-y-1 hover:bg-stone-200'>
+          className='inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border border-stone-200/50 bg-stone-100/80 px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors duration-300 hover:bg-stone-200'>
           <ArrowLeft className='size-4' />
           <span className='hidden sm:inline'>{t('backToPrevious')}</span>
         </button>
@@ -157,7 +157,8 @@ function ModalBody({
     )
   }
 
-  return <AnimatePresence mode='wait'>{panel}</AnimatePresence>
+  // Panels swap at once (no exit-then-enter wait); each fades in briefly.
+  return panel
 }
 
 export default function MemberDetailModal() {
@@ -320,10 +321,10 @@ export default function MemberDetailModal() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
           ref={dialogRef}
           aria-label={dialogLabel}
-          className='items-center justify-center bg-stone-900/40 backdrop-blur-sm outline-none open:flex sm:p-6'>
+          className='items-center justify-center bg-stone-900/50 outline-none open:flex sm:p-6'>
           {/* Click-away backdrop (disabled while editing/creating to avoid accidental close) */}
           {!isEditing && !showCreateMember && (
             <button
@@ -335,13 +336,14 @@ export default function MemberDetailModal() {
           )}
 
           {/* Modal Content */}
+          {/* One short open/close: opacity and a 2% scale, both on the
+              compositor. No layout animation: the dialog grows when the
+              member loads and must not stretch while doing so. */}
           <m.div
-            layout
-            initial={{ scale: 0.96, opacity: 0, y: 15 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.96, opacity: 0, y: 15 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            layoutDependency={false}
+            initial={{ scale: 0.98, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.98, opacity: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             className='relative flex h-full w-full max-w-4xl flex-col overflow-hidden bg-white sm:h-auto sm:max-h-[90vh] sm:rounded-3xl sm:border sm:border-stone-200'>
             <ModalHeaderActions
               isEditing={isEditing}

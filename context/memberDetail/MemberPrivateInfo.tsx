@@ -17,7 +17,7 @@ export default function MemberPrivateInfo({
 }: MemberPrivateInfoProps) {
   const { t } = useI18n()
   return (
-    <m.div layout variants={itemVariants}>
+    <m.div variants={itemVariants}>
       {isAdmin ? (
         <div className='rounded-2xl border border-stone-200/80 bg-stone-50 p-5 sm:p-6'>
           <h3 className='mb-4 flex items-center gap-2 border-b border-stone-200/60 pb-3 text-base font-semibold text-stone-900 sm:text-base'>
