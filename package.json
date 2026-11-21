@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
-    "@supabase/supabase-js": "^2.119.0",
+    "@supabase/supabase-js": "^2.119.2",
     "d3-drag": "^3.0.1",
     "d3-force": "^3.0.1",
     "d3-selection": "^3.0.1",
@@ -27,7 +27,7 @@
     "html-to-image": "^1.11.13",
     "jspdf": "^4.2.1",
     "jszip": "^3.10.2",
-    "lucide-react": "^1.73.0",
+    "lucide-react": "^1.77.0",
     "next": "16.4.6",
     "papaparse": "^5.7.1",
     "postgres": "^4.1.1",
@@ -37,7 +37,7 @@
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@tailwindcss/postcss": "^4.3.5",
-    "@types/bun": "^1.4.4",
+    "@types/bun": "^1.4.5",
     "@types/d3-drag": "^3.0.7",
     "@types/d3-force": "^3.0.10",
     "@types/d3-selection": "^3.0.12",
