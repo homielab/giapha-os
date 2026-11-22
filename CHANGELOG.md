@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-11-22
+
+### Added
+
+- The member dialog and page show placeholders in the shape of the member view while the member, their family and descendants load, so nothing jumps when the data arrives.
+- The bubble map fits the whole family on screen once its layout settles (unless you already moved it); "Fit to screen" brings it back.
+
+### Changed
+
+- The member dialog opens with one short fade at a fixed height instead of a chain of animations, and no longer stretches as it loads; the content no longer blurs the page behind it.
+- Dashboard: one amber accent for every feature card, compact cards, a distinct icon for "Lineage order", a plain "Administrator" heading and no move or zoom effects on hover.
+- Events say what they are ("…'s birthday", "Death anniversary of …"), and the selected filter and the "Today" badge are easier to read.
+- Bubble map: the zoom and export controls sit in the toolbar row like the tree and mind map, and names are 14px.
+- Family tree: every spouse is marked with a ring (the "+" before a second spouse looked like an add button). Mind map: the expand buttons are easier to tap.
+- Gallery: year headings are smaller than the page title, photo cards are plain without hover zoom, and the member filter has a person icon.
+
+### Fixed
+
+- The timeline dots of the gallery were beside the line instead of on it.
+
 ## [2.6.0] - 2026-11-22
 
 ### Added
