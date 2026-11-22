@@ -17,7 +17,6 @@ interface FamilyNodeCardProps {
   onClickCard?: () => void
   onClickName?: (e: React.MouseEvent) => void
   isRingVisible?: boolean
-  isPlusVisible?: boolean
   level: number
 }
 
@@ -98,8 +97,7 @@ function FamilyNodeCard({
   person,
   onClickCard,
   onClickName,
-  isRingVisible = false,
-  isPlusVisible = false
+  isRingVisible = false
 }: FamilyNodeCardProps) {
   const { showAvatar, setMemberModalId } = useMemberListView()
 
@@ -117,7 +115,6 @@ function FamilyNodeCard({
         />
       )}
       {isRingVisible && <CornerBadge symbol='💍' />}
-      {isPlusVisible && <CornerBadge symbol='+' />}
 
       {/* 1. Avatar */}
       {showAvatar && <PersonAvatar person={person} />}

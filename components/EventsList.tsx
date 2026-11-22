@@ -302,8 +302,8 @@ export default function EventsList({
               className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                 filter === tab.key
                   ? filter === 'past'
-                    ? 'bg-stone-600 text-white'
-                    : 'bg-amber-500 text-white'
+                    ? 'border border-stone-300 bg-stone-200 text-stone-800'
+                    : 'border border-amber-300 bg-amber-100 text-amber-900'
                   : 'border border-stone-200/60 bg-white/80 text-stone-600 hover:border-amber-200 hover:text-amber-700'
               }`}>
               {tab.label}

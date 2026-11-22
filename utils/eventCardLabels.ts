@@ -24,6 +24,21 @@ export function daysUntilLabel(
 
 type Translate = (key: TranslationKey, values?: TranslationValues) => string
 
+/**
+ * What the event is, in words: "Sinh nhật …", "Giỗ …". A custom event keeps
+ * its own name. The icon alone does not tell a birthday from a death
+ * anniversary (nor does a screen reader).
+ */
+export function eventTitle(event: FamilyEvent, t: Translate): string {
+  if (event.type === 'birthday') {
+    return t('eventBirthdayTitle', { name: event.personName })
+  }
+  if (event.type === 'death_anniversary') {
+    return t('eventDeathTitle', { name: event.personName })
+  }
+  return event.personName
+}
+
 export function formatEventDateLabel(event: FamilyEvent, t: Translate): string {
   const weekdays = [
     t('weekdaySunday'),

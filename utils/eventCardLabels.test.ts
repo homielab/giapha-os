@@ -8,6 +8,7 @@ import {
 
 import {
   daysUntilLabel,
+  eventTitle,
   formatEventDateLabel,
   getEventYearsInfo
 } from './eventCardLabels'
@@ -275,5 +276,22 @@ describe('getEventYearsInfo: giỗ from a solar-only death date', () => {
     const event = nextGio(new Date(2021, 5, 1))
     expect(event.nextOccurrence.getFullYear()).toBe(2022)
     expect(getEventYearsInfo(event, false, t)).toBe('yearsSince:{"count":2}')
+  })
+})
+
+describe('eventTitle', () => {
+  const base = { personName: 'An' } as FamilyEvent
+
+  test('says which kind of day a member event is', () => {
+    expect(eventTitle({ ...base, type: 'birthday' }, t)).toStartWith(
+      'eventBirthdayTitle:'
+    )
+    expect(eventTitle({ ...base, type: 'death_anniversary' }, t)).toStartWith(
+      'eventDeathTitle:'
+    )
+  })
+
+  test('keeps the name of a custom event', () => {
+    expect(eventTitle({ ...base, type: 'custom_event' }, t)).toBe('An')
   })
 })

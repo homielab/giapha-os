@@ -108,11 +108,12 @@ const TreeNode = memo(function TreeNode({
           className={`relative z-10 flex h-full items-stretch ${ctx.showAvatar ? 'rounded-2xl border border-stone-200/80 bg-white' : ''}`}>
           <FamilyNodeCard person={data.person} level={level} />
 
-          {data.spouses.map((spouseData, idx) => (
+          {/* A ring before every spouse: each is married to the person on
+              the left (a "+" before the second read as an add button). */}
+          {data.spouses.map((spouseData) => (
             <div key={spouseData.person.id} className='relative flex'>
               <FamilyNodeCard
-                isRingVisible={idx === 0}
-                isPlusVisible={idx > 0}
+                isRingVisible
                 person={spouseData.person}
                 level={level}
               />

@@ -255,7 +255,8 @@ export function ExpandToggle({
       onClick={onToggle}
       type='button'
       {...EXPORT_IGNORE_PROPS}
-      className='flex size-5 items-center justify-center rounded border border-stone-200 bg-white text-stone-500 transition-colors hover:bg-amber-50 hover:text-amber-600'
+      // The visible box stays 20px; ::after widens the touch target to 40px
+      className="relative flex size-5 items-center justify-center rounded border border-stone-200 bg-white text-stone-500 transition-colors after:absolute after:-inset-2.5 after:content-[''] hover:bg-amber-50 hover:text-amber-600"
       title={isExpanded ? t('collapse') : t('expand')}
       aria-label={t('branchOf', { name })}
       aria-expanded={isExpanded}>

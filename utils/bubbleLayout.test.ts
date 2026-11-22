@@ -7,6 +7,7 @@ import {
   alphaDecayFor,
   avatarOffsets,
   bubbleNodeLabel,
+  fitTransform,
   pinRootNodes,
   shortNodeName
 } from './bubbleLayout'
@@ -124,5 +125,39 @@ describe('bubbleNodeLabel', () => {
         born
       )
     ).toBe('Nguyễn Văn An, born 1950 & Trần Thị Bình')
+  })
+})
+
+describe('fitTransform', () => {
+  test('centres a small map at 100%', () => {
+    expect(
+      fitTransform({ x: 0, y: 0, width: 100, height: 100 }, 800, 600)
+    ).toEqual({
+      x: 350,
+      y: 250,
+      k: 1
+    })
+  })
+
+  test('zooms out a map larger than the canvas so it fits', () => {
+    const t = fitTransform(
+      { x: -500, y: -200, width: 2000, height: 400 },
+      1000,
+      600
+    )
+    expect(t.k).toBeCloseTo(0.46)
+    // the map's centre lands on the canvas centre
+    expect(t.x + 500 * t.k).toBeCloseTo(500)
+    expect(t.y + 0 * t.k).toBeCloseTo(300)
+  })
+
+  test('an empty map keeps the identity', () => {
+    expect(fitTransform({ x: 0, y: 0, width: 0, height: 0 }, 800, 600)).toEqual(
+      {
+        x: 0,
+        y: 0,
+        k: 1
+      }
+    )
   })
 })

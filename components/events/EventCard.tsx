@@ -17,6 +17,7 @@ import { clickableProps } from '@/utils/a11y'
 import { getZodiacSign } from '@/utils/dateHelpers'
 import {
   daysUntilLabel,
+  eventTitle,
   formatEventDateLabel,
   getEventYearsInfo
 } from '@/utils/eventCardLabels'
@@ -69,7 +70,7 @@ function getDaysBadgeClasses(
   isPast: boolean,
   isSoon: boolean
 ) {
-  if (isToday) return 'bg-amber-400 text-white'
+  if (isToday) return 'bg-amber-100 text-amber-800'
   if (isPast) return 'bg-stone-200/80 text-stone-500'
   if (isSoon) return 'bg-red-100 text-red-600'
   return 'bg-stone-100 text-stone-500'
@@ -144,7 +145,7 @@ export default function EventCard({
                 ? 'text-stone-500'
                 : `text-stone-800 ${isClickable ? 'group-hover:text-amber-700' : ''}`
             }`}>
-            {event.personName}
+            {eventTitle(event, t)}
           </p>
           {isBirthday &&
             event.originDay &&
@@ -159,8 +160,8 @@ export default function EventCard({
             className={`inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-0.5 text-sm leading-tight font-medium whitespace-nowrap ${getDaysBadgeClasses(isToday, isPast, isSoon)}`}>
             {isToday && (
               <span className='relative flex size-1.5'>
-                <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-200 opacity-75' />
-                <span className='relative inline-flex size-1.5 rounded-full bg-white' />
+                <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75' />
+                <span className='relative inline-flex size-1.5 rounded-full bg-amber-600' />
               </span>
             )}
             {!isToday && <Clock className='size-2.5' />}

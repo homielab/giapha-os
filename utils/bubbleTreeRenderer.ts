@@ -7,7 +7,7 @@ import {
   type Simulation
 } from 'd3-force'
 import { select, type BaseType, type Selection } from 'd3-selection'
-import { zoom, type ZoomBehavior } from 'd3-zoom'
+import { zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom'
 import { RefObject } from 'react'
 
 import { AVATAR_VERSION } from '@/components/DefaultAvatar'
@@ -15,6 +15,7 @@ import { GraphLink, GraphNode } from '@/utils/bubbleGraph'
 import {
   alphaDecayFor,
   avatarOffsets,
+  fitTransform,
   pinRootNodes,
   shortNodeName
 } from '@/utils/bubbleLayout'
@@ -41,6 +42,31 @@ interface CreateBubbleTreeRendererOptions {
 // Builds the whole D3 scene (zoom, force simulation, nodes/links) and returns
 // a teardown function that releases every subscription it registered.
 // Throws on rendering failures; the caller owns error reporting.
+/**
+ * Zooms so the whole map fits the canvas (used once the layout settles and
+ * by the reset button).
+ */
+export function fitBubbleView(
+  svgElement: SVGSVGElement,
+  zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>,
+  duration = 300
+): void {
+  const content = svgElement.querySelector('g')
+  if (!content) return
+  const box = content.getBBox()
+  const t = fitTransform(box, svgElement.clientWidth, svgElement.clientHeight)
+  select(svgElement)
+    .transition()
+    .duration(duration)
+    .call(
+      zoomBehavior.transform as unknown as (
+        transition: unknown,
+        transform: unknown
+      ) => void,
+      zoomIdentity.translate(t.x, t.y).scale(t.k)
+    )
+}
+
 export function createBubbleTreeRenderer({
   svgRef,
   containerRef,
@@ -104,8 +130,13 @@ export function createBubbleTreeRenderer({
     .attr('cy', 0)
 
   // Zoom setup
+  // Set once the user pans or zooms: the map then stays where they put it.
+  let userMoved = false
   zoomBehavior = zoom<SVGSVGElement, unknown>()
     .scaleExtent([0.1, 4])
+    .on('start', (event) => {
+      if (event.sourceEvent) userMoved = true
+    })
     .on('zoom', (event) => {
       g.attr('transform', event.transform)
       // Only re-render React when the displayed percentage changes
@@ -252,7 +283,7 @@ export function createBubbleTreeRenderer({
       d.people[0].gender === 'male' ? '#3b82f6' : '#ec4899'
     )
     .attr('stroke-width', (d) => (d.isRoot ? 4 : 2))
-    .attr('class', 'shadow-md transition hover:scale-105 cursor-pointer')
+    .attr('class', 'cursor-pointer')
 
   // Avatars for everyone in the Family Unit
   if (showAvatar) {
@@ -296,8 +327,8 @@ export function createBubbleTreeRenderer({
     .attr('dy', (d) => d.radius + 18)
     .attr('text-anchor', 'middle')
     .attr('fill', '#44403c')
-    .attr('font-size', (d) => (d.isRoot ? '14px' : '12px'))
-    .attr('font-weight', (d) => (d.isRoot ? 'bold' : 'normal'))
+    .attr('font-size', '14px')
+    .attr('font-weight', (d) => (d.isRoot ? 600 : 400))
     .style('pointer-events', 'none')
     .text((d) => shortNodeName(d))
 
@@ -310,12 +341,18 @@ export function createBubbleTreeRenderer({
 
     nodeSelection!.attr('transform', (d) => `translate(${d.x},${d.y})`)
   })
+  // The layout has settled: show the whole family, unless the user already
+  // moved the map.
+  simulation!.on('end', () => {
+    if (!userMoved && zoomBehavior) fitBubbleView(svgRef.current!, zoomBehavior)
+  })
   return () => {
     svg.on('.zoom', null)
     svg.on('click', null)
     zoomBehavior.on('zoom', null)
     simulation.stop()
     simulation.on('tick', null)
+    simulation.on('end', null)
     nodeSelection.on('click', null)
     nodeSelection.on('keydown', null)
     nodeSelection.on('focus', null)

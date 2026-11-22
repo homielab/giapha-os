@@ -61,3 +61,38 @@ export function bubbleNodeLabel(
     )
     .join(' & ')
 }
+
+export interface Box {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/**
+ * The zoom that shows the whole map in the canvas with some margin: never
+ * above 100% (a small family stays at its real size) nor below the zoom
+ * limit.
+ */
+export function fitTransform(
+  content: Box,
+  canvasWidth: number,
+  canvasHeight: number,
+  margin = 40,
+  minScale = 0.1
+): { x: number; y: number; k: number } {
+  if (content.width <= 0 || content.height <= 0) {
+    return { x: 0, y: 0, k: 1 }
+  }
+  const k = Math.max(
+    minScale,
+    Math.min(
+      1,
+      (canvasWidth - margin * 2) / content.width,
+      (canvasHeight - margin * 2) / content.height
+    )
+  )
+  const cx = content.x + content.width / 2
+  const cy = content.y + content.height / 2
+  return { x: canvasWidth / 2 - cx * k, y: canvasHeight / 2 - cy * k, k }
+}

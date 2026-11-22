@@ -20,6 +20,7 @@ import Link from 'next/link'
 
 import { getServerTranslations } from '@/lib/i18n/server'
 import { getTodayLunar, vnToday } from '@/utils/dateHelpers'
+import { eventTitle } from '@/utils/eventCardLabels'
 import {
   computeEvents,
   eventHref,
@@ -215,7 +216,7 @@ export default async function DashboardLaunchpad() {
                         </div>
                         <div className='min-w-0 flex-1'>
                           <span className='block truncate text-sm font-medium text-stone-700'>
-                            {evt.personName}
+                            {eventTitle(evt, t)}
                           </span>
                           <span className='block pt-0.5 text-sm font-medium text-stone-500'>
                             {evt.daysUntil === 0
