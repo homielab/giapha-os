@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-11-22
+
+### Added
+
+- `/api/health` reports whether the app reaches its database (200 or 503, no data shown). On Vercel a daily cron calls it, so a Supabase Free project is no longer paused after a week without visits; self-hosted installs can call it from cron or an uptime monitor (see the install guide).
+
 ## [2.7.0] - 2026-11-22
 
 ### Added
