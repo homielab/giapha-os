@@ -125,6 +125,21 @@ The image has a built-in `HEALTHCHECK` that requests the `/login` page every 30 
 
 The image includes `docs/schema.sql` and `docs/migrations/`, so `/setup` and `/dashboard/upgrade` work as on Vercel. **Updating:** `git pull`, run `docker compose --env-file .env.local up -d --build` again, then open `/dashboard/upgrade` to run new migrations (if any).
 
+## Keep the database from pausing
+
+Supabase pauses a Free project after a week without database activity; the site then stops working until you restore the project in Supabase.
+
+- **Vercel:** nothing to do. Vercel calls `/api/health` once a day (the cron in `vercel.json`); it runs one tiny database query, so the project is not paused.
+- **Docker or your own server:** call that page daily, for example with `crontab -e`:
+
+  ```bash
+  0 3 * * * curl -fsS https://your-domain/api/health > /dev/null
+  ```
+
+  Or let a free monitoring service (UptimeRobot, cron-job.org) call `https://your-domain/api/health`.
+
+`/api/health` answers `{"status":"ok"}` (status 200) when the app reaches its database and 503 when it does not; it shows no data.
+
 ## Troubleshooting registration
 
 If you see `Failed to fetch` while registering after setup:

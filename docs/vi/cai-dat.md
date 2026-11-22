@@ -124,6 +124,21 @@ Image có sẵn `HEALTHCHECK` gọi trang `/login` mỗi 30 giây: `docker ps` h
 
 Image đã có sẵn `docs/schema.sql` và `docs/migrations/`, nên trang `/setup` và `/dashboard/upgrade` hoạt động như bản Vercel. **Cập nhật:** `git pull`, chạy lại lệnh `docker compose --env-file .env.local up -d --build`, rồi vào `/dashboard/upgrade` để chạy migration mới (nếu có).
 
+## Giữ database không bị tạm dừng
+
+Supabase gói Free tạm dừng (pause) project nếu một tuần không có truy cập database; khi đó trang web không chạy cho tới khi bạn vào Supabase bấm khôi phục.
+
+- **Vercel:** không cần làm gì. Mỗi ngày Vercel tự gọi `/api/health` (cron trong `vercel.json`), trang này chạy một truy vấn nhỏ vào database nên project không bị tạm dừng.
+- **Docker, máy chủ riêng:** cho máy gọi trang này mỗi ngày, ví dụ thêm vào `crontab -e`:
+
+  ```bash
+  0 3 * * * curl -fsS https://your-domain/api/health > /dev/null
+  ```
+
+  Hoặc dùng dịch vụ theo dõi miễn phí (UptimeRobot, cron-job.org) gọi `https://your-domain/api/health`.
+
+`/api/health` trả `{"status":"ok"}` (mã 200) khi ứng dụng kết nối được database, mã 503 khi không; trang không lộ dữ liệu nào.
+
 ## Xử lý lỗi khi đăng ký
 
 Sau khi cài đặt xong, nếu bạn gặp lỗi `Failed to fetch` khi đăng ký:
